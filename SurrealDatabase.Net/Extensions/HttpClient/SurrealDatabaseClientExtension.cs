@@ -7,8 +7,9 @@ namespace SurrealDatabase.Net.Extensions.HttpClient
 	public static class SurrealDatabaseClientExtension
 	{
 		public static System.Net.Http.HttpClient AddSurrealDatabaseHeaders(
-			this System.Net.Http.HttpClient httpClient, string nameSpace, string database, string username, string password)
+			this System.Net.Http.HttpClient httpClient, string baseAddress, string nameSpace, string database, string username, string password)
 		{
+			httpClient.BaseAddress = new Uri(baseAddress);
 			var headers = httpClient.DefaultRequestHeaders;
 			var authenticationString = $"{username}:{password}";
 			var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(authenticationString));

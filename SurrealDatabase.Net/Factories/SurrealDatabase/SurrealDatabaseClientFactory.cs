@@ -18,16 +18,16 @@ namespace SurrealDatabase.Net.Factories.SurrealDatabase
 				{
 					// BaseAddress = new Uri(host);
 				};
-				ConfigureHttpClient(httpClient, nameSpace, database, username, password);
+				ConfigureHttpClient(httpClient,url, nameSpace, database, username, password);
 
 				return new SurrealDatabaseClient(httpClient);
 			}
 
 			internal static void ConfigureHttpClient(
-				HttpClient httpClient, string nameSpace,string database,string username,string password)
+				HttpClient httpClient, string baseAddress, string nameSpace,string database,string username,string password)
 			{
 				ConfigureHttpClientCore(httpClient);
-				httpClient.AddSurrealDatabaseHeaders(nameSpace,database,username,password);
+				httpClient.AddSurrealDatabaseHeaders(baseAddress,nameSpace,database,username,password);
 			}
 
 			internal static void ConfigureHttpClientCore(HttpClient httpClient)
