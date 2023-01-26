@@ -416,6 +416,9 @@ FodyWeavers.xsd
 # Local History for Visual Studio Code
 .history/
 
+# Local History for Surreal CLI
+history.txt
+
 # Windows Installer files from build outputs
 *.cab
 *.msi

@@ -1,0 +1,7 @@
+<Project>
+    <PropertyGroup>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <WarningsAsErrors>$(WarningsAsErrors);FS0025</WarningsAsErrors>
+        <IncludeSymbols>True</IncludeSymbols>
+    </PropertyGroup>
+</Project>

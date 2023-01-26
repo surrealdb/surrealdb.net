@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="RestApi\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Preamble.fs" />
+    <Compile Include="Credentials.fs" />
+    <Compile Include="Config.fs" />
+    <Compile Include="Models.fs" />
+    <Compile Include="RestApi.fs" />
+  </ItemGroup>
+
+</Project>

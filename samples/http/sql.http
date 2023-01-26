@@ -1,0 +1,34 @@
+@auth = root:root
+
+### Request system information
+POST http://localhost:8010/sql
+NS: testns
+DB: testdb
+Accept: application/json
+Authorization: Basic {{auth}}
+
+INFO FOR KV;
+
+### Insert multiple people
+POST http://localhost:8010/sql
+NS: testns
+DB: testdb
+Accept: application/json
+Authorization: Basic {{auth}}
+
+INSERT INTO person
+	(firstName, lastName, age) VALUES
+	("John", "Doe", 19),
+	("Jane", "Doe", 17),
+	("John", "Smith", 18),
+	("Jane", "Smith", 16);
+
+
+### List all people
+POST http://localhost:8010/sql
+NS: testns
+DB: testdb
+Accept: application/json
+Authorization: Basic {{auth}}
+
+SELECT * FROM person WHERE age >= 18;
