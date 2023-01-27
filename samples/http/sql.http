@@ -7,7 +7,7 @@ DB: testdb
 Accept: application/json
 Authorization: Basic {{auth}}
 
-INFO FOR KV;
+INFO FOR DB;
 
 ### Insert multiple people
 POST http://localhost:8010/sql

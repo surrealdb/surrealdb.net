@@ -1,9 +1,7 @@
 ﻿module internal SurrealDB.Client.FSharp.RestApi
 
-open System
-open System.Globalization
 open System.Net.Http
-open System.Text.Json
+open System.Text.Json.Nodes
 
 [<AutoOpen>]
 module Constants =
@@ -16,6 +14,59 @@ module Constants =
     [<Literal>]
     let DATE_HEADER = "date"
 
+    [<Literal>]
+    let AUTHORIZATION_HEADER = "AUTHORIZATION"
+
+    [<Literal>]
+    let BASIC_SCHEME = "Basic"
+
+    [<Literal>]
+    let BEARER_SCHEME = "Bearer"
+
+    [<Literal>]
+    let NS_HEADER = "NS"
+
+    [<Literal>]
+    let DB_HEADER = "DB"
+
+/// <summary>
+/// Converts a credential to a list of headers.
+/// </summary>
+let credentialsAsHeaders credentials =
+    seq {
+        match credentials with
+        | Basic (user, password) ->
+            let auth =
+                String.toBase64 <| sprintf "%s:%s" user password
+
+            yield AUTHORIZATION_HEADER, sprintf "%s %s" BASIC_SCHEME auth
+        | Bearer jwt -> yield AUTHORIZATION_HEADER, sprintf "%s %s" BEARER_SCHEME jwt
+    }
+
+/// <summary>
+/// Converts a configuration to a list of headers.
+/// </summary>
+let configAsHeaders (config: SurrealConfig) =
+    seq {
+        match config.credentials with
+        | ValueSome credentials -> yield! credentialsAsHeaders credentials
+        | ValueNone -> ()
+
+        match config.ns with
+        | ValueSome ns -> yield NS_HEADER, ns
+        | ValueNone -> ()
+
+        match config.db with
+        | ValueSome db -> yield DB_HEADER, db
+        | ValueNone -> ()
+    }
+
+/// <summary>
+/// Apply a list of headers to a <see cref="HttpClient"/>'s default headers.
+/// Headers with the same name will be overwritten.
+/// </summary>
+/// <param name="headers">The headers to apply.</param>
+/// <param name="httpClient">The <see cref="HttpClient"/> to apply the headers to.</param>
 let applyDefaultHeaders headers (httpClient: HttpClient) =
     for (key, value) in headers do
         httpClient.DefaultRequestHeaders.Remove(key)
@@ -23,53 +74,84 @@ let applyDefaultHeaders headers (httpClient: HttpClient) =
 
         httpClient.DefaultRequestHeaders.Add(key, (value: string))
 
-let jsonSerializerOptions =
-    let o = JsonSerializerOptions()
-    // o.PropertyNamingPolicy <- JsonNamingPolicy.CamelCase
-    o
-
 type ErrorDetailsJson =
     { details: string
       code: int
       description: string
       information: string }
 
-let stringOrEmpty s = if isNull s then "" else s
+type ResponseDetailsJson =
+    { time: string
+      status: string
+      result: JsonNode }
 
 let readHeaderStrOpt (name: string) (response: HttpResponseMessage) =
     match response.Headers.TryGetValues(name) with
     | false, _ -> ValueNone
     | true, values -> values |> Seq.tryHeadValue
 
+let readHeaderStr (name: string) (defaultValue: string) (response: HttpResponseMessage) =
+    readHeaderStrOpt name response
+    |> ValueOption.defaultValue defaultValue
+
 let readServerInfo (response: HttpResponseMessage) : ServerInfo =
-    let version = readHeaderStrOpt VERSION_HEADER response
-    let name = readHeaderStrOpt SERVER_HEADER response
+    let version = readHeaderStr VERSION_HEADER "" response
+    let name = readHeaderStr SERVER_HEADER "" response
 
     { version = version; name = name }
 
 let readResponseHeaderInfo (response: HttpResponseMessage) : ResponseInfo =
-    let dateString = readHeaderStrOpt DATE_HEADER response
+    let dateString = readHeaderStr DATE_HEADER "" response
 
     let date =
-        lazy
-            (dateString
-             |> ValueOption.bind (fun s ->
-                 match DateTimeOffset.TryParse s with
-                 | true, dto -> ValueSome dto
-                 | false, _ -> ValueNone))
+        lazy (DateTimeOffset.tryParse dateString)
 
-    { timeString = ValueNone
-      time = lazy (ValueNone)
-      dateString = dateString
-      date = date }
+    { ResponseInfo.empty with
+        dateString = dateString
+        date = date }
 
-// let parseErrorDetails (response: HttpResponseMessage) =
-//     task {  }
-//     JsonSerializer.Deserialize<ErrorDetailsJson>(json, jsonSerializerOptions)
+let readSuccessResponse ct (response: HttpResponseMessage) =
+    task {
+        let responseInfo = readResponseHeaderInfo response
+        let! json = response.Content.ReadAsStringAsync ct
 
+        let infoJson =
+            Json.deserialize<ResponseDetailsJson> json
 
-// let toSurrealErrorDetails (json: ErrorDetailsJson) =
-//     { SurrealErrorDetails.details = stringOrEmpty json.details
-//       code = json.code
-//       description = stringOrEmpty json.description
-//       information = stringOrEmpty json.information }
+        let timeString = String.orEmpty infoJson.time
+        let time = lazy (TimeSpan.tryParse timeString)
+        let status = String.orEmpty infoJson.status
+        let server = readServerInfo response
+
+        return
+            infoJson.result,
+            { responseInfo with
+                timeString = timeString
+                time = time
+                status = status
+                server = server }
+    }
+
+// let readErrorResponse ct (response: HttpResponseMessage) =
+//     task {
+//         let responseInfo = readResponseHeaderInfo response
+//         let! json = response.Content.ReadAsStringAsync ct
+//         let infoJson = Json.deserialize<ErrorDetailsJson> json
+//         let status = "ERROR"
+//         let server = readServerInfo response
+
+//         let errorDetails =
+//             { ErrorDetails.empty with
+//                 code = infoJson.code
+//                 description = String.orEmpty infoJson.description
+//                 information = String.orEmpty infoJson.information
+//                 details = String.orEmpty infoJson.details }
+
+//         return
+//             infoJson.result,
+//             { responseInfo with
+//                 timeString = timeString
+//                 time = time
+//                 status = status
+//                 server = server }
+//     }

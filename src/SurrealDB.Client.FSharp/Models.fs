@@ -4,25 +4,39 @@ open System
 
 [<Struct>]
 type ServerInfo =
-    { version: string voption
-      name: string voption }
+    { version: string
+      name: string }
+    static member empty = { version = ""; name = "" }
 
 [<Struct>]
 type ResponseInfo =
-    { timeString: string voption
+    { timeString: string
       time: TimeSpan voption Lazy
+      dateString: string
       date: DateTimeOffset voption Lazy
-      dateString: string voption }
+      status: string
+      server: ServerInfo }
+    static member empty =
+        { timeString = ""
+          time = lazy (ValueNone)
+          dateString = ""
+          date = lazy (ValueNone)
+          status = ""
+          server = ServerInfo.empty }
 
 type SurrealError =
-    | ForbiddenError of ErrorDetails
-    | BadRequestError of ErrorDetails
+    | ClientError of ErrorDetails
     | ConnectionError of exn
 
 and [<Struct>] ErrorDetails =
-    { details: string voption
+    { details: string
       code: int
-      description: string voption
-      information: string voption
-      response: ResponseInfo
-      server: ServerInfo }
+      description: string
+      information: string
+      response: ResponseInfo }
+    static member empty =
+        { details = ""
+          code = 0
+          description = ""
+          information = ""
+          response = ResponseInfo.empty }
