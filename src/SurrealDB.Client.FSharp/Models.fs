@@ -1,6 +1,7 @@
 namespace SurrealDB.Client.FSharp
 
 open System
+open System.Text.Json
 
 [<Struct>]
 type ServerInfo =
@@ -30,6 +31,7 @@ type SurrealError =
     | UnknownError of ErrorDetails
     | StatusError of string
     | ConnectionError of exn
+    | DeserializeError of JsonException
     | ParseError of ParseErrorType
 
 and [<Struct>] ErrorDetails =

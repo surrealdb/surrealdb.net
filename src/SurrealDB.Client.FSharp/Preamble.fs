@@ -9,6 +9,12 @@ open System.Text.Json
 open System.Text.RegularExpressions
 
 [<RequireQualifiedAccess>]
+module ValueOption =
+    let ofOption = function
+        | Some x -> ValueSome x
+        | None -> ValueNone
+
+[<RequireQualifiedAccess>]
 module Seq =
     let inline getEnumerator (source: seq<'T>) = source.GetEnumerator()
     let inline moveNext (enumerator: IEnumerator<'T>) = enumerator.MoveNext()

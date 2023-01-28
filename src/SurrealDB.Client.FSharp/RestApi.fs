@@ -236,7 +236,7 @@ module internal Utilities =
 
 /// <summary>
 /// Updates the default headers of a given HTTP client, to math the given configuration.
-let applyConfigHeaders config httpClient =
+let applyConfig config httpClient =
     updateDefaultHeader ACCEPT_HEADER APPLICATION_JSON httpClient
 
     match config.credentials with
@@ -250,6 +250,8 @@ let applyConfigHeaders config httpClient =
     match config.db with
     | ValueSome db -> updateDefaultHeader DB_HEADER db httpClient
     | ValueNone -> ()
+
+    httpClient.BaseAddress <- Uri(config.baseUrl, UriKind.Absolute)
 
 /// <summary>
 /// This module contains calls to SurrealDB REST endpoints where the results and inputs are treated as JsonNode.

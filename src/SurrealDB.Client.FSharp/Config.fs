@@ -62,8 +62,7 @@ module SurrealCredentials =
 
 [<Struct>]
 type SurrealConfig =
-    { host: string
-      port: uint16
+    { baseUrl: string
       credentials: SurrealCredentials voption
       ns: string voption
       db: string voption }
@@ -73,10 +72,8 @@ type SurrealConfig =
 /// </summary>
 [<RequireQualifiedAccess>]
 type ConfigError =
-    /// Issued when the host is invalid.
-    | InvalidHost
-    /// Issued when the port is invalid.
-    | InvalidPort
+    /// Issued when the base url is invalid.
+    | InvalidBaseUrl
     /// Issued when the basic credentials are invalid.
     | InvalidBasicCredentials of BasicCredentialsError
     /// Issued when the bearer credentials are invalid.
@@ -92,13 +89,10 @@ module SurrealConfig =
     [<AutoOpen>]
     module Constants =
         [<Literal>]
-        let internal DEFAULT_HOST = "localhost"
+        let internal DEFAULT_BASEURL = "http://localhost:8000"
 
         [<Literal>]
-        let internal DEFAULT_PORT = 8000us
-
-        [<Literal>]
-        let internal MAX_HOST_LENGTH = 256
+        let internal MAX_BASEURL_LENGTH = 256
 
         [<Literal>]
         let internal MAX_NAMESPACE_LENGTH = 256
@@ -115,32 +109,25 @@ module SurrealConfig =
     /// <code>
     /// let config =
     ///    SurrealConfig.empty
-    ///    |> SurrealConfig.withHost "localhost"
-    ///    |> Result.bind (SurrealConfig.withPort 8080us)
+    ///    |> SurrealConfig.withBaseUrl "http://localhost:8080"
     ///    |> Result.bind (SurrealConfig.withBasicCredentials "root" "root")
     ///    |> Result.bind (SurrealConfig.withNamespace "testns")
     ///    |> Result.bind (SurrealConfig.withDatabase "testdb")
     /// </code>
     /// </example>
     let empty =
-        { host = DEFAULT_HOST
-          port = DEFAULT_PORT
+        { baseUrl = DEFAULT_BASEURL
           credentials = ValueNone
           ns = ValueNone
           db = ValueNone }
 
-    let withHost host config =
-        if String.isWhiteSpace host
-           || String.length host > MAX_HOST_LENGTH then
-            Error ConfigError.InvalidHost
+    let withBaseUrl baseUrl config =
+        if String.isWhiteSpace baseUrl
+           || String.length baseUrl > MAX_BASEURL_LENGTH
+           || not(System.Uri.IsWellFormedUriString(baseUrl, System.UriKind.Absolute)) then
+            Error ConfigError.InvalidBaseUrl
         else
-            Ok { config with host = host }
-
-    let withPort port config =
-        if port < 1us then
-            Error ConfigError.InvalidPort
-        else
-            Ok { config with port = port }
+            Ok { config with baseUrl = baseUrl }
 
     let withCredentials credentials config =
         { config with credentials = ValueSome credentials }
