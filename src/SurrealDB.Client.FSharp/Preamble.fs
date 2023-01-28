@@ -61,12 +61,13 @@ module TimeSpan =
 
     let internal fromMatch (match': Match) =
         let amount =
-                Double.tryParse (match'.Groups.["amount"].Value)
+            Double.tryParse (match'.Groups.["amount"].Value)
+
         let seconds =
             unitsToSeconds (match'.Groups.["unit"].Value)
 
         match amount, seconds with
-        | ValueSome amount, ValueSome seconds -> ValueSome (TimeSpan.FromSeconds(amount * seconds))
+        | ValueSome amount, ValueSome seconds -> ValueSome(TimeSpan.FromSeconds(amount * seconds))
         | _ -> ValueNone
 
     let tryParse s =
@@ -110,3 +111,6 @@ module Json =
 
     let deserialize<'a> (json: string) =
         JsonSerializer.Deserialize<'a>(json, defaultOptions)
+
+    let serialize<'a> (data: 'a) =
+        JsonSerializer.Serialize<'a>(data, defaultOptions)

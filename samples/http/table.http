@@ -1,0 +1,29 @@
+@auth = root:root
+
+### Select all records from a table
+GET http://localhost:8010/key/person
+NS: testns
+DB: testdb
+Accept: application/json
+Authorization: Basic {{auth}}
+
+### Insert a single record into a table with no key
+POST http://localhost:8010/key/person
+Content-Type: application/json
+NS: testns
+DB: testdb
+Accept: application/json
+Authorization: Basic {{auth}}
+
+{
+    "firstName": "John",
+    "lastName": "Doe",
+    "age": 20
+}
+
+### Deletes all records from a table
+DELETE http://localhost:8010/key/person
+NS: testns
+DB: testdb
+Accept: application/json
+Authorization: Basic {{auth}}

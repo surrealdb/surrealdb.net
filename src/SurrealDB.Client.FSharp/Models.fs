@@ -26,7 +26,11 @@ type ResponseInfo =
 
 type SurrealError =
     | ClientError of ErrorDetails
+    | ServerError of ErrorDetails
+    | UnknownError of ErrorDetails
+    | StatusError of string
     | ConnectionError of exn
+    | ParseError of ParseErrorType
 
 and [<Struct>] ErrorDetails =
     { details: string
@@ -40,3 +44,10 @@ and [<Struct>] ErrorDetails =
           description = ""
           information = ""
           response = ResponseInfo.empty }
+
+and ParseErrorType =
+    | NoContentResponse
+    | NoJsonResponse
+    | NoResultField
+    | NoResultAsCollection
+    | NoResultAsObject
