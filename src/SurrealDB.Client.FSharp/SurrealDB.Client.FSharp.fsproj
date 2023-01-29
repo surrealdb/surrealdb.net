@@ -11,10 +11,13 @@
   <ItemGroup>
     <Compile Include="Preamble.fs" />
     <Compile Include="Config.fs" />
-    <Compile Include="Models.fs" />
-    <Compile Include="RestApi.fs" />
-    <Compile Include="RestClients.fs" />
-    <Compile Include="Connection.fs" />
+    <Compile Include="Rest\Constants.fs" />
+    <Compile Include="Rest\Models.fs" />
+    <Compile Include="Rest\Utilities.fs" />
+    <Compile Include="Rest\Endpoints.fs" />
+    <Compile Include="Rest\JsonClient.fs" />
+    <Compile Include="Rest\KeyValueClient.fs" />
+    <Compile Include="Rest\Client.fs" />
   </ItemGroup>
 
 </Project>

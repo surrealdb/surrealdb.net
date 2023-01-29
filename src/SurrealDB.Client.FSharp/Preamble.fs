@@ -31,6 +31,13 @@ module Double =
         | false, _ -> ValueNone
 
 [<RequireQualifiedAccess>]
+module DateTime =
+    let tryParse (s: string) =
+        match DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.None) with
+        | true, date -> ValueSome date
+        | false, _ -> ValueNone
+
+[<RequireQualifiedAccess>]
 module DateTimeOffset =
     let tryParse (s: string) =
         match DateTimeOffset.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.None) with

@@ -29,7 +29,7 @@ Accept: application/json
 Authorization: Basic {{auth}}
 
 ### Select a single record from a table
-GET http://localhost:8010/key/person/john
+GET http://localhost:8010/key/person/john1
 NS: testns
 DB: testdb
 Accept: application/json

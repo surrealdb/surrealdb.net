@@ -5,9 +5,15 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02D6952E-29C5-4310-9DDD-FE4321AF7F22}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDB.Client", "src\SurrealDB.Client\SurrealDB.Client.csproj", "{29F61089-AB34-4E84-BD77-B2E257525CA7}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "SurrealDB.Client.FSharp", "src\SurrealDB.Client.FSharp\SurrealDB.Client.FSharp.fsproj", "{4703CB87-1BD7-4D20-9034-2D74A88CBDE2}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SurrealDB.Client.FSharp", "src\SurrealDB.Client.FSharp\SurrealDB.Client.FSharp.fsproj", "{4703CB87-1BD7-4D20-9034-2D74A88CBDE2}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{5E4ED990-9826-43E0-8722-59B3CE43286C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{EBCCC714-EB92-4EB8-9A93-DFDB35E20AF9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{716D8314-7D4B-4C12-BCC3-2BD40E0C22BF}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "SurrealDB.Client.FSharp.UnitTests", "test\SurrealDB.Client.FSharp.UnitTests\SurrealDB.Client.FSharp.UnitTests.fsproj", "{05B44779-022F-46DF-8FCF-EBBB6E16BE8B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,21 +21,21 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{29F61089-AB34-4E84-BD77-B2E257525CA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{29F61089-AB34-4E84-BD77-B2E257525CA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{29F61089-AB34-4E84-BD77-B2E257525CA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{29F61089-AB34-4E84-BD77-B2E257525CA7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4703CB87-1BD7-4D20-9034-2D74A88CBDE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4703CB87-1BD7-4D20-9034-2D74A88CBDE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4703CB87-1BD7-4D20-9034-2D74A88CBDE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4703CB87-1BD7-4D20-9034-2D74A88CBDE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05B44779-022F-46DF-8FCF-EBBB6E16BE8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05B44779-022F-46DF-8FCF-EBBB6E16BE8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05B44779-022F-46DF-8FCF-EBBB6E16BE8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05B44779-022F-46DF-8FCF-EBBB6E16BE8B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{29F61089-AB34-4E84-BD77-B2E257525CA7} = {02D6952E-29C5-4310-9DDD-FE4321AF7F22}
 		{4703CB87-1BD7-4D20-9034-2D74A88CBDE2} = {02D6952E-29C5-4310-9DDD-FE4321AF7F22}
+		{05B44779-022F-46DF-8FCF-EBBB6E16BE8B} = {5E4ED990-9826-43E0-8722-59B3CE43286C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {680BE589-DCEE-41D9-B3E8-7F0CAB20661E}
