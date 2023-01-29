@@ -7,7 +7,16 @@ DB: testdb
 Accept: application/json
 Authorization: Basic {{auth}}
 
-INFO FOR DB;
+INFO FOR NS;
+
+### Use a different database and namespace
+POST http://localhost:8010/sql
+NS: testns
+DB: testdb
+Accept: application/json
+Authorization: Basic {{auth}}
+
+USE NS testns DB testdb;
 
 ### Insert multiple people
 POST http://localhost:8010/sql
@@ -32,3 +41,14 @@ Accept: application/json
 Authorization: Basic {{auth}}
 
 SELECT * FROM person WHERE age >= 18;
+
+### Samples
+POST http://localhost:8010/sql
+NS: testns
+DB: testdb
+Accept: application/json
+Authorization: Basic {{auth}}
+
+SELECT * FROM <bool> "";
+SELECT * FROM <bool> "true";
+SELECT * FROM <bool> "false";

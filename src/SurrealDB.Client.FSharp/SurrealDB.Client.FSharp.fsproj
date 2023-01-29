@@ -13,7 +13,7 @@
     <Compile Include="Config.fs" />
     <Compile Include="Models.fs" />
     <Compile Include="RestApi.fs" />
-    <Compile Include="KeyValue.fs" />
+    <Compile Include="RestClients.fs" />
     <Compile Include="Connection.fs" />
   </ItemGroup>
 

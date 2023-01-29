@@ -5,7 +5,6 @@ open System
 open System.Collections.Generic
 open System.Globalization
 open System.Text
-open System.Text.Json
 open System.Text.RegularExpressions
 
 [<RequireQualifiedAccess>]
@@ -13,20 +12,6 @@ module ValueOption =
     let ofOption = function
         | Some x -> ValueSome x
         | None -> ValueNone
-
-[<RequireQualifiedAccess>]
-module Seq =
-    let inline getEnumerator (source: seq<'T>) = source.GetEnumerator()
-    let inline moveNext (enumerator: IEnumerator<'T>) = enumerator.MoveNext()
-    let inline getCurrent (enumerator: IEnumerator<'T>) = enumerator.Current
-
-    let tryHeadValue source =
-        use enumerator = getEnumerator source
-
-        if moveNext enumerator then
-            ValueSome(getCurrent enumerator)
-        else
-            ValueNone
 
 [<RequireQualifiedAccess>]
 module String =
@@ -88,28 +73,34 @@ module TimeSpan =
             else
                 ValueNone)
         |> ValueOption.bind fromMatch
-// else
-//     regex.Match(s)
-//     |> fun match' -> if match'.Success then
-//     if match'.Success then
-//         match Double.TryParse(match'.Groups.["amount"].Value) with
-//         | true, amount -> ValueSome (TimeSpan.FromTicks((Int64)(amount * (Double)TimeSpan.TicksPerSecond)))
-//         let amount = Decimal.Parse(match'.Groups.["amount"].Value, CultureInfo.InvariantCulture)
-//         let unit = match'.Groups.["unit"].Value
-//         let ticks =
-//             match unit with
-//             | "s" -> TimeSpan.TicksPerSecond
-//             | "ms" -> TimeSpan.TicksPerMillisecond
-//             | "µs" -> TimeSpan.TicksPerMillisecond / 1000L
-//             | "ns" -> 1L
-//             | _ -> failwithf "Invalid time unit: %s" unit
 
-//         ValueSome (TimeSpan((Int64)(amount * (Decimal)ticks)))
-//     else
-//         ValueNone
+[<RequireQualifiedAccess>]
+module Seq =
+    let inline getEnumerator (source: seq<'T>) = source.GetEnumerator()
+    let inline moveNext (enumerator: IEnumerator<'T>) = enumerator.MoveNext()
+    let inline getCurrent (enumerator: IEnumerator<'T>) = enumerator.Current
+
+    let tryHeadValue source =
+        use enumerator = getEnumerator source
+
+        if moveNext enumerator then
+            ValueSome(getCurrent enumerator)
+        else
+            ValueNone
+
+[<RequireQualifiedAccess>]
+module Array =
+    let tryHeadValue (source: 'a array) =
+        if source.Length > 0 then
+            ValueSome source.[0]
+        else
+            ValueNone
 
 [<RequireQualifiedAccess>]
 module Json =
+    open System.Text.Json
+    open System.Text.Json.Nodes
+
     let defaultOptions =
         let o = JsonSerializerOptions()
         // o.PropertyNamingPolicy <- JsonNamingPolicy.CamelCase
@@ -120,3 +111,63 @@ module Json =
 
     let serialize<'a> (data: 'a) =
         JsonSerializer.Serialize<'a>(data, defaultOptions)
+
+    let deserializeNode<'a> (json: JsonNode) =
+        json.Deserialize<'a>(defaultOptions)
+
+    let serializeNode<'a> (data: 'a) =
+        JsonSerializer.SerializeToNode<'a>(data, defaultOptions)
+
+[<RequireQualifiedAccess>]
+module Task =
+    open System.Threading.Tasks
+
+    let map (f: 'a -> 'b) (ma: Task<'a>) =
+        task {
+            let! a = ma
+            return f a
+        }
+
+    let bind (f: 'a -> Task<'b>) (ma: Task<'a>) =
+        task {
+            let! a = ma
+            return! f a
+        }
+
+[<RequireQualifiedAccess>]
+module TaskResult =
+    open System.Threading.Tasks
+
+    let map (f: 'a -> 'b) (ma: Task<Result<'a, 'e>>) =
+        task {
+            let! a = ma
+            return a |> Result.map f
+        }
+
+    let mapError (f: 'e -> 'e2) (ma: Task<Result<'a, 'e>>) =
+        task {
+            let! a = ma
+            return a |> Result.mapError f
+        }
+
+    let bind (f: 'a -> Task<Result<'b, 'e>>) (ma: Task<Result<'a, 'e>>) =
+        task {
+            let! a = ma
+            match a with
+            | Ok a -> return! f a
+            | Error e -> return Error e
+        }
+
+    let bindTask (f: 'a -> Task<'b>) (ma: Task<Result<'a, 'e>>) =
+        task {
+            let! a = ma
+            match a with
+            | Ok a -> return! f a |> Task.map Ok
+            | Error e -> return Error e
+        }
+
+    let bindResult (f: 'a -> Result<'b, 'e>) (ma: Task<Result<'a, 'e>>) =
+        task {
+            let! a = ma
+            return a |> Result.bind f
+        }
