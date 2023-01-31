@@ -1,14 +1,14 @@
 @auth = root:root
 
 ### Select all records from a table
-GET http://localhost:8010/key/person
+GET http://localhost:8010/key/people
 NS: testns
 DB: testdb
 Accept: application/json
 Authorization: Basic {{auth}}
 
 ### Insert a single record into a table with no key
-POST http://localhost:8010/key/person
+POST http://localhost:8010/key/people
 Content-Type: application/json
 NS: testns
 DB: testdb
@@ -22,21 +22,21 @@ Authorization: Basic {{auth}}
 }
 
 ### Deletes all records from a table
-DELETE http://localhost:8010/key/person
+DELETE http://localhost:8010/key/people
 NS: testns
 DB: testdb
 Accept: application/json
 Authorization: Basic {{auth}}
 
 ### Select a single record from a table
-GET http://localhost:8010/key/person/john1
+GET http://localhost:8010/key/people/john1
 NS: testns
 DB: testdb
 Accept: application/json
 Authorization: Basic {{auth}}
 
 ### Insert a single record into a table with no key
-POST http://localhost:8010/key/person/john
+POST http://localhost:8010/key/people/john
 Content-Type: application/json
 NS: testns
 DB: testdb
@@ -50,7 +50,7 @@ Authorization: Basic {{auth}}
 }
 
 ### Deletes all records from a table
-DELETE http://localhost:8010/key/person/john
+DELETE http://localhost:8010/key/people/john
 NS: testns
 DB: testdb
 Accept: application/json

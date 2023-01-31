@@ -1,8 +1,10 @@
 namespace SurrealDB.Client.FSharp.Rest
 
-open System.Text.Json.Nodes
 open System.Net
 open System.Net.Http
+open System.Text.Json
+open System.Text.Json.Nodes
+open System.Text.Json.Serialization
 open System.Threading
 
 open SurrealDB.Client.FSharp
@@ -109,32 +111,32 @@ module RestApiResult =
 
     type ItemResultJson =
         { status: string
-          detail: string
-          result: JsonNode
+          detail: string option
+          result: JsonNode option
           time: string }
 
-    let parse<'result> (cancellationToken: CancellationToken) (response: HttpResponseMessage) =
+    let parse<'result> (jsonOptions: JsonSerializerOptions) (cancellationToken: CancellationToken) (response: HttpResponseMessage) =
         task {
             let headers = HeadersInfo.parse response
             let! content = response.Content.ReadAsStringAsync(cancellationToken)
 
             let result =
                 if response.IsSuccessStatusCode then
-                    Json.deserialize<ItemResultJson []> content
+                    Json.deserialize<ItemResultJson []> jsonOptions content
                     |> Array.map (fun item ->
                         if item.status = STATUS_OK then
                             Ok
                                 { status = item.status
-                                  result = item.result
+                                  result = item.result |> Option.get
                                   time = item.time }
                         else
                             Error
                                 { status = item.status
-                                  detail = item.detail
+                                  detail = item.detail |> Option.defaultValue ""
                                   time = item.time })
                     |> Ok
                 else
-                    Json.deserialize<ErrorInfo> content |> Error
+                    Json.deserialize<ErrorInfo> jsonOptions content |> Error
 
             return { headers = headers; result = result }
         }

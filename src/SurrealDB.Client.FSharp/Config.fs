@@ -1,4 +1,4 @@
-﻿namespace SurrealDB.Client.FSharp
+namespace SurrealDB.Client.FSharp
 
 type SurrealCredentials =
     | Basic of user: string * password: string
@@ -134,12 +134,12 @@ module SurrealConfig =
 
     let withBasicCredentials user password config =
         SurrealCredentials.basicCredentials user password
-        |> Result.map (fun credentials -> { config with credentials = ValueSome credentials })
+        |> Result.map (fun credentials -> withCredentials credentials config)
         |> Result.mapError ConfigError.InvalidBasicCredentials
 
     let withBearerCredentials jwt config =
         SurrealCredentials.bearerCredentials jwt
-        |> Result.map (fun credentials -> { config with credentials = ValueSome credentials })
+        |> Result.map (fun credentials -> withCredentials credentials config)
         |> Result.mapError ConfigError.InvalidBearerCredentials
 
     let withNamespace ns config =

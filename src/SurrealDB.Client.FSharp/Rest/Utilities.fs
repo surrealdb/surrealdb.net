@@ -4,6 +4,7 @@ module internal SurrealDB.Client.FSharp.Rest.Utilities
 open System
 open System.Net.Http
 open System.Text
+open System.Text.Json
 open System.Text.Json.Nodes
 open System.Threading
 
@@ -28,69 +29,65 @@ let applyCredentialHeaders credentials httpClient =
         let value = sprintf "%s %s" BEARER_SCHEME jwt
         updateDefaultHeader AUTHORIZATION_HEADER value httpClient
 
-let executeRequest (request: HttpRequestMessage) (ct: CancellationToken) (httpClient: HttpClient) =
+let executeRequest (jsonOptions: JsonSerializerOptions) (request: HttpRequestMessage) (ct: CancellationToken) (httpClient: HttpClient) =
     task {
         let! response = httpClient.SendAsync(request, ct)
-        let! result = RestApiResult.parse<JsonNode> ct response
+        let! result = RestApiResult.parse<JsonNode> jsonOptions ct response
         return result
     }
 
-let executeEmptyRequest method url ct httpClient =
+let executeEmptyRequest jsonOptions method url ct httpClient =
     task {
         let url = Uri(url, UriKind.Relative)
         let request = new HttpRequestMessage(method, url)
-        return! executeRequest request ct httpClient
+        return! executeRequest jsonOptions request ct httpClient
     }
 
-let executeJsonRequest method url json ct httpClient =
+let executeJsonRequest jsonOptions method url json ct httpClient =
     task {
         let url = Uri(url, UriKind.Relative)
         let request = new HttpRequestMessage(method, url)
-        let json = Json.serialize<JsonNode> json
+        let json = Json.serialize<JsonNode> jsonOptions json
         request.Content <- new StringContent(json, Encoding.UTF8, APPLICATION_JSON)
-        return! executeRequest request ct httpClient
+        return! executeRequest jsonOptions request ct httpClient
     }
 
-let executeTextRequest method url text ct httpClient =
+let executeTextRequest jsonOptions method url text ct httpClient =
     task {
         let url = Uri(url, UriKind.Relative)
         let request = new HttpRequestMessage(method, url)
         request.Content <- new StringContent(text, Encoding.UTF8, TEXT_PLAIN)
-        return! executeRequest request ct httpClient
+        return! executeRequest jsonOptions request ct httpClient
     }
 
-let parseOneItem<'record> (response: RestApiResult<JsonNode>) =
+let parseFirstResponse (response: RestApiResult<JsonNode>) =
     match response.result with
     | Error err -> Error(ResponseError err)
-    | Ok arr ->
-        match arr.Length with
-        | 1 ->
-            match arr.[0] with
-            | Error err -> Error(ItemError err)
-            | Ok success -> Ok(Json.deserializeNode<'record> success.result)
-        | _ -> Error(UnexpectedError "Expected exactly one item in response")
+    | Ok arr when arr.Length = 1 ->
+        match arr.[0] with
+        | Error err -> Error(ItemError err)
+        | Ok nodes -> nodes.result.AsArray() |> Seq.toArray |> Ok
+    | _ -> Error(UnexpectedError "EXPECTED_ONE_RESPONSE")
+
+let parseManyItems<'record> jsonOptions response =
+    match parseFirstResponse response with
+    | Error err -> Error err
+    | Ok nodes ->
+        nodes
+        |> Array.map (Json.deserializeNode<'record> jsonOptions)
+        |> Ok
+
+let parseOneItem<'record> jsonOptions (response: RestApiResult<JsonNode>) =
+    match parseFirstResponse response with
+    | Error err -> Error err
+    | Ok nodes when nodes.Length = 1 ->
+        nodes.[0]
+        |> Json.deserializeNode<'record> jsonOptions
+        |> Ok
+    | _ -> Error(UnexpectedError "EXPECTED_SINGLE_RESPONSE")
 
 let parseNoItems<'record> (response: RestApiResult<JsonNode>) =
     match response.result with
     | Error err -> Error(ResponseError err)
-    | Ok arr ->
-        match arr.Length with
-        | 0 -> Ok()
-        | _ -> Error(UnexpectedError "Expected no items in response")
-
-let parseManyItems<'record> (response: RestApiResult<JsonNode>) =
-    match response.result with
-    | Error err -> Error(ResponseError err)
-    | Ok arr ->
-        let items = ResizeArray(arr.Length)
-        let rec loop index =
-            if index >= arr.Length then
-                Ok(items.ToArray())
-            else
-                match arr.[index] with
-                | Error err -> Error(ItemError err)
-                | Ok success ->
-                    let item = Json.deserializeNode<'record> success.result
-                    items.Add(item)
-                    loop (index + 1)
-        loop 0
+    | Ok arr when arr.Length = 1 -> Ok()
+    | _ -> Error(UnexpectedError "EXPECTED_NO_RESPONSE")

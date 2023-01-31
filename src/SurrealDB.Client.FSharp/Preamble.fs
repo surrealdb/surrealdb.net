@@ -108,22 +108,17 @@ module Json =
     open System.Text.Json
     open System.Text.Json.Nodes
 
-    let defaultOptions =
-        let o = JsonSerializerOptions()
-        // o.PropertyNamingPolicy <- JsonNamingPolicy.CamelCase
-        o
+    let deserialize<'a> (options: JsonSerializerOptions) (json: string) =
+        JsonSerializer.Deserialize<'a>(json, options)
 
-    let deserialize<'a> (json: string) =
-        JsonSerializer.Deserialize<'a>(json, defaultOptions)
+    let serialize<'a> (options: JsonSerializerOptions) (data: 'a) =
+        JsonSerializer.Serialize<'a>(data, options)
 
-    let serialize<'a> (data: 'a) =
-        JsonSerializer.Serialize<'a>(data, defaultOptions)
+    let deserializeNode<'a> (options: JsonSerializerOptions) (json: JsonNode) =
+        json.Deserialize<'a>(options)
 
-    let deserializeNode<'a> (json: JsonNode) =
-        json.Deserialize<'a>(defaultOptions)
-
-    let serializeNode<'a> (data: 'a) =
-        JsonSerializer.SerializeToNode<'a>(data, defaultOptions)
+    let serializeNode<'a> (options: JsonSerializerOptions) (data: 'a) =
+        JsonSerializer.SerializeToNode<'a>(data, options)
 
 [<RequireQualifiedAccess>]
 module Task =

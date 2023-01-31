@@ -1,12 +1,10 @@
 namespace SurrealDB.Client.FSharp.Rest
 
-open System.Net
 open System.Net.Http
+open System.Text.Json
 open System.Text.Json.Nodes
 open System.Threading
 open System.Threading.Tasks
-
-open SurrealDB.Client.FSharp
 
 type ISurrealRestJsonClient =
     abstract CreateAsync :
@@ -36,31 +34,31 @@ type ISurrealRestJsonClient =
 
     abstract SqlAsync : query: string * cancellationToken: CancellationToken -> Task<RestApiResult<JsonNode>>
 
-type internal SurrealRestJsonClient(config: SurrealConfig, httpClient: HttpClient) =
+type internal SurrealRestJsonClient(httpClient: HttpClient, jsonOptions: JsonSerializerOptions) =
      interface ISurrealRestJsonClient with
         member this.CreateAsync(table, record, cancellationToken) =
-            Endpoints.postKeyTable table record cancellationToken httpClient
+            Endpoints.postKeyTable jsonOptions table record cancellationToken httpClient
 
         member this.CreateAsync(table, id, record, cancellationToken) =
-            Endpoints.postKeyTableId table id record cancellationToken httpClient
+            Endpoints.postKeyTableId jsonOptions table id record cancellationToken httpClient
 
         member this.DeleteAllAsync(table, cancellationToken) =
-            Endpoints.deleteKeyTable table cancellationToken httpClient
+            Endpoints.deleteKeyTable jsonOptions table cancellationToken httpClient
 
         member this.DeleteAsync(table, id, cancellationToken) =
-            Endpoints.deleteKeyTableId table id cancellationToken httpClient
+            Endpoints.deleteKeyTableId jsonOptions table id cancellationToken httpClient
 
         member this.GetAllAsync(table, cancellationToken) =
-            Endpoints.getKeyTable table cancellationToken httpClient
+            Endpoints.getKeyTable jsonOptions table cancellationToken httpClient
 
         member this.GetAsync(table, id, cancellationToken) =
-            Endpoints.getKeyTableId table id cancellationToken httpClient
+            Endpoints.getKeyTableId jsonOptions table id cancellationToken httpClient
 
         member this.ModifyAsync(table, id, record, cancellationToken) =
-            Endpoints.patchKeyTableId table id record cancellationToken httpClient
-
-        member this.SqlAsync(query, cancellationToken) =
-            Endpoints.postSql query cancellationToken httpClient
+            Endpoints.patchKeyTableId jsonOptions table id record cancellationToken httpClient
 
         member this.UpdateAsync(table, id, record, cancellationToken) =
-            Endpoints.putKeyTableId table id record cancellationToken httpClient
+            Endpoints.putKeyTableId jsonOptions table id record cancellationToken httpClient
+
+        member this.SqlAsync(query, cancellationToken) =
+            Endpoints.postSql jsonOptions query cancellationToken httpClient

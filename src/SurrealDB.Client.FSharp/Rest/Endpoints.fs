@@ -36,8 +36,8 @@ let applyConfig config httpClient =
 /// <remarks>
 /// Assumes the HTTP client has the correct headers already set.
 /// </remarks>
-let postSql query ct httpClient =
-    executeTextRequest HttpMethod.Post "sql" query ct httpClient
+let postSql jsonOptions query ct httpClient =
+    executeTextRequest jsonOptions HttpMethod.Post "sql" query ct httpClient
 
 /// <summary>
 /// This HTTP RESTful endpoint selects all records in a specific table in the database.
@@ -50,8 +50,8 @@ let postSql query ct httpClient =
 /// <remarks>
 /// Assumes the HTTP client has the correct headers already set.
 /// </remarks>
-let getKeyTable table ct httpClient =
-    executeEmptyRequest HttpMethod.Get $"key/%s{table}" ct httpClient
+let getKeyTable jsonOptions table ct httpClient =
+    executeEmptyRequest jsonOptions HttpMethod.Get $"key/%s{table}" ct httpClient
 
 /// <summary>
 /// This HTTP RESTful endpoint creates a record in a specific table in the database.
@@ -65,8 +65,8 @@ let getKeyTable table ct httpClient =
 /// <remarks>
 /// Assumes the HTTP client has the correct headers already set.
 /// </remarks>
-let postKeyTable table record ct httpClient =
-    executeJsonRequest HttpMethod.Post $"key/%s{table}" record ct httpClient
+let postKeyTable jsonOptions table record ct httpClient =
+    executeJsonRequest jsonOptions HttpMethod.Post $"key/%s{table}" record ct httpClient
 
 /// <summary>
 /// This HTTP RESTful endpoint deletes all records from the specified table in the database.
@@ -79,8 +79,8 @@ let postKeyTable table record ct httpClient =
 /// <remarks>
 /// Assumes the HTTP client has the correct headers already set.
 /// </remarks>
-let deleteKeyTable table ct httpClient =
-    executeEmptyRequest HttpMethod.Delete $"key/%s{table}" ct httpClient
+let deleteKeyTable jsonOptions table ct httpClient =
+    executeEmptyRequest jsonOptions HttpMethod.Delete $"key/%s{table}" ct httpClient
 
 /// <summary>
 /// This HTTP RESTful endpoint selects a specific record from the database.
@@ -94,8 +94,8 @@ let deleteKeyTable table ct httpClient =
 /// <remarks>
 /// Assumes the HTTP client has the correct headers already set.
 /// </remarks>
-let getKeyTableId table id ct httpClient =
-    executeEmptyRequest HttpMethod.Get $"key/%s{table}/%s{id}" ct httpClient
+let getKeyTableId jsonOptions table id ct httpClient =
+    executeEmptyRequest jsonOptions HttpMethod.Get $"key/%s{table}/%s{id}" ct httpClient
 
 /// <summary>
 /// This HTTP RESTful endpoint creates a single specific record into the database.
@@ -110,8 +110,8 @@ let getKeyTableId table id ct httpClient =
 /// <remarks>
 /// Assumes the HTTP client has the correct headers already set.
 /// </remarks>
-let postKeyTableId table id record ct httpClient =
-    executeJsonRequest HttpMethod.Post $"key/%s{table}/%s{id}" record ct httpClient
+let postKeyTableId jsonOptions table id record ct httpClient =
+    executeJsonRequest jsonOptions HttpMethod.Post $"key/%s{table}/%s{id}" record ct httpClient
 
 /// <summary>
 /// This HTTP RESTful endpoint creates or updates a single specific record in the database.
@@ -126,8 +126,8 @@ let postKeyTableId table id record ct httpClient =
 /// <remarks>
 /// Assumes the HTTP client has the correct headers already set.
 /// </remarks>
-let putKeyTableId table id =
-    executeJsonRequest HttpMethod.Put $"key/%s{table}/%s{id}"
+let putKeyTableId jsonOptions table id =
+    executeJsonRequest jsonOptions HttpMethod.Put $"key/%s{table}/%s{id}"
 
 /// <summary>
 /// This HTTP RESTful endpoint creates or updates a single specific record in the database.
@@ -143,8 +143,8 @@ let putKeyTableId table id =
 /// <remarks>
 /// Assumes the HTTP client has the correct headers already set.
 /// </remarks>
-let patchKeyTableId table id record ct httpClient =
-    executeJsonRequest HttpMethod.Patch $"key/%s{table}/%s{id}" record ct httpClient
+let patchKeyTableId jsonOptions table id record ct httpClient =
+    executeJsonRequest jsonOptions HttpMethod.Patch $"key/%s{table}/%s{id}" record ct httpClient
 
 /// <summary>
 /// This HTTP RESTful endpoint deletes a single specific record from the database.
@@ -158,5 +158,5 @@ let patchKeyTableId table id record ct httpClient =
 /// <remarks>
 /// Assumes the HTTP client has the correct headers already set.
 /// </remarks>
-let deleteKeyTableId table id ct httpClient =
-    executeEmptyRequest HttpMethod.Delete $"key/%s{table}/%s{id}" ct httpClient
+let deleteKeyTableId jsonOptions table id ct httpClient =
+    executeEmptyRequest jsonOptions HttpMethod.Delete $"key/%s{table}/%s{id}" ct httpClient
