@@ -15,7 +15,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{716D
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "SurrealDB.Client.FSharp.UnitTests", "test\SurrealDB.Client.FSharp.UnitTests\SurrealDB.Client.FSharp.UnitTests.fsproj", "{05B44779-022F-46DF-8FCF-EBBB6E16BE8B}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HelloWorld", "samples\HelloWorld\HelloWorld.fsproj", "{8C2DE318-9B02-4012-92B3-858AFFC711A6}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "HelloWorld", "samples\HelloWorld\HelloWorld.fsproj", "{8C2DE318-9B02-4012-92B3-858AFFC711A6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7DD9481F-6389-4FEA-90CC-354BE6DAE4F7}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
