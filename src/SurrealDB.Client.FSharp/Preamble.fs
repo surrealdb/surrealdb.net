@@ -8,20 +8,11 @@ open System.Text
 open System.Text.RegularExpressions
 
 [<RequireQualifiedAccess>]
-module ValueOption =
-    let ofOption = function
-        | Some x -> ValueSome x
-        | None -> ValueNone
-
-[<RequireQualifiedAccess>]
 module String =
-    let inline isEmpty (s: string) = String.IsNullOrEmpty s
     let inline isWhiteSpace (s: string) = String.IsNullOrWhiteSpace s
 
     let inline internal toBase64 (s: string) =
         Convert.ToBase64String(Encoding.UTF8.GetBytes(s))
-
-    let orEmpty s = if isNull s then "" else s
 
 [<RequireQualifiedAccess>]
 module Double =
@@ -46,7 +37,7 @@ module DateTimeOffset =
 
 [<RequireQualifiedAccess>]
 module TimeSpan =
-    let regex =
+    let internal regex =
         Regex(@"^(?<amount>\d+(\.\d+)?)(?<unit>s|ms|µs|ns)$", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
 
     let internal unitsToSeconds unit' =
@@ -96,14 +87,6 @@ module Seq =
             ValueNone
 
 [<RequireQualifiedAccess>]
-module Array =
-    let tryHeadValue (source: 'a array) =
-        if source.Length > 0 then
-            ValueSome source.[0]
-        else
-            ValueNone
-
-[<RequireQualifiedAccess>]
 module Json =
     open System.Text.Json
     open System.Text.Json.Nodes
@@ -130,46 +113,12 @@ module Task =
             return f a
         }
 
-    let bind (f: 'a -> Task<'b>) (ma: Task<'a>) =
-        task {
-            let! a = ma
-            return! f a
-        }
-
 [<RequireQualifiedAccess>]
 module TaskResult =
     open System.Threading.Tasks
-
-    let map (f: 'a -> 'b) (ma: Task<Result<'a, 'e>>) =
-        task {
-            let! a = ma
-            return a |> Result.map f
-        }
 
     let mapError (f: 'e -> 'e2) (ma: Task<Result<'a, 'e>>) =
         task {
             let! a = ma
             return a |> Result.mapError f
-        }
-
-    let bind (f: 'a -> Task<Result<'b, 'e>>) (ma: Task<Result<'a, 'e>>) =
-        task {
-            let! a = ma
-            match a with
-            | Ok a -> return! f a
-            | Error e -> return Error e
-        }
-
-    let bindTask (f: 'a -> Task<'b>) (ma: Task<Result<'a, 'e>>) =
-        task {
-            let! a = ma
-            match a with
-            | Ok a -> return! f a |> Task.map Ok
-            | Error e -> return Error e
-        }
-
-    let bindResult (f: 'a -> Result<'b, 'e>) (ma: Task<Result<'a, 'e>>) =
-        task {
-            let! a = ma
-            return a |> Result.bind f
         }
