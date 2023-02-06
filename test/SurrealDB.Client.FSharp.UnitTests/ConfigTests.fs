@@ -1,4 +1,4 @@
-module SurrealDB.Client.FSharp.UnitTests
+module SurrealDB.Client.FSharp.ConfigTests
 
 open System
 open Xunit

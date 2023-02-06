@@ -39,15 +39,14 @@ module DateTimeOffset =
 [<RequireQualifiedAccess>]
 module TimeSpan =
     let internal regex =
-        Regex(@"^(?<amount>\d+(\.\d+)?)(?<unit>s|ms|µs|ns)$", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
+        Regex(@"^(?<amount>\d+(\.\d+)?)(?<unit>s|ms|µs)$", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
 
     let internal unitsToSeconds unit' =
         match unit' with
-        | "s" -> ValueSome 1.0
-        | "ms" -> ValueSome 1e-3
-        | "µs" -> ValueSome 1e-6
-        | "ns" -> ValueSome 1e-9
-        | _ -> ValueNone
+        | "s" -> 1.0
+        | "ms" -> 1e-3
+        | "µs" -> 1e-6
+        | _ -> failwithf "Unknown time unit: %s" unit'
 
     let internal fromMatch (match': Match) =
         let amount =
@@ -56,8 +55,12 @@ module TimeSpan =
         let seconds =
             unitsToSeconds (match'.Groups.["unit"].Value)
 
-        match amount, seconds with
-        | ValueSome amount, ValueSome seconds -> ValueSome(TimeSpan.FromSeconds(amount * seconds))
+        match amount with
+        | ValueSome amount ->
+            try
+                ValueSome(TimeSpan.FromSeconds(amount * seconds))
+            with
+            | :? OverflowException -> ValueNone
         | _ -> ValueNone
 
     let tryParse s =

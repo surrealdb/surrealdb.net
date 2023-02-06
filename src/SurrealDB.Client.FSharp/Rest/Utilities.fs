@@ -32,7 +32,7 @@ let applyCredentialHeaders credentials httpClient =
 let executeRequest (jsonOptions: JsonSerializerOptions) (request: HttpRequestMessage) (ct: CancellationToken) (httpClient: HttpClient) =
     task {
         let! response = httpClient.SendAsync(request, ct)
-        let! result = RestApiResult.parse<JsonNode> jsonOptions ct response
+        let! result = RestApiResult.parse jsonOptions ct response
         return result
     }
 

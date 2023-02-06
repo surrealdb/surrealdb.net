@@ -60,7 +60,7 @@ module ItemSuccessInfo =
           result = Unchecked.defaultof<'result>
           time = "" }
 
-    let mapResult f info =
+    let internal mapResult f info =
         { status = info.status
           time = info.time
           result = f info.result }
@@ -103,7 +103,7 @@ module RestApiResult =
         { headers = HeadersInfo.empty
           result = Error ErrorInfo.empty }
 
-    let mapResult f info =
+    let internal mapResult f info =
         { headers = info.headers
           result =
             info.result
@@ -115,7 +115,7 @@ module RestApiResult =
           result: JsonNode option
           time: string }
 
-    let parse<'result> (jsonOptions: JsonSerializerOptions) (cancellationToken: CancellationToken) (response: HttpResponseMessage) =
+    let parse (jsonOptions: JsonSerializerOptions) (cancellationToken: CancellationToken) (response: HttpResponseMessage) =
         task {
             let headers = HeadersInfo.parse response
             let! content = response.Content.ReadAsStringAsync(cancellationToken)
