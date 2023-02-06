@@ -15,13 +15,8 @@ let applyConfig config httpClient =
     | ValueSome credentials -> applyCredentialHeaders credentials httpClient
     | ValueNone -> ()
 
-    match config.ns with
-    | ValueSome ns -> updateDefaultHeader NS_HEADER ns httpClient
-    | ValueNone -> ()
-
-    match config.db with
-    | ValueSome db -> updateDefaultHeader DB_HEADER db httpClient
-    | ValueNone -> ()
+    updateDefaultHeader NS_HEADER config.ns httpClient
+    updateDefaultHeader DB_HEADER config.db httpClient
 
     httpClient.BaseAddress <- Uri(config.baseUrl, UriKind.Absolute)
 

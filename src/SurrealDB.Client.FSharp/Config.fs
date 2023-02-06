@@ -35,6 +35,8 @@ module SurrealCredentials =
     /// <param name="password">The password.</param>
     /// <returns>A result containing the credential or an error message.</returns>
     let basicCredentials user password =
+        let user = String.trimIfNotNull user
+        let password = String.trimIfNotNull password
         if String.isWhiteSpace user
            || String.length user > MAX_BASIC_DATA_LENGTH then
             Error BasicCredentialsError.InvalidUser
@@ -54,6 +56,7 @@ module SurrealCredentials =
     /// <param name="jwt">The JWT.</param>
     /// <returns>A result containing the credential or an error message.</returns>
     let bearerCredentials jwt =
+        let jwt = String.trimIfNotNull jwt
         if String.isWhiteSpace jwt
            || String.length jwt > MAX_JWT_LENGTH then
             Error BearerCredentialsError.InvalidJwt
@@ -64,8 +67,8 @@ module SurrealCredentials =
 type SurrealConfig =
     { baseUrl: string
       credentials: SurrealCredentials voption
-      ns: string voption
-      db: string voption }
+      ns: string
+      db: string }
 
 /// <summary>
 /// Represents the possible errors when creating a SurrealDB configuration.
@@ -118,8 +121,8 @@ module SurrealConfig =
     let empty =
         { baseUrl = DEFAULT_BASEURL
           credentials = ValueNone
-          ns = ValueNone
-          db = ValueNone }
+          ns = ""
+          db = "" }
 
     let withBaseUrl baseUrl config =
         if String.isWhiteSpace baseUrl
@@ -147,11 +150,11 @@ module SurrealConfig =
            || String.length ns > MAX_NAMESPACE_LENGTH then
             Error ConfigError.InvalidNamespace
         else
-            Ok { config with ns = ValueSome ns }
+            Ok { config with ns = ns }
 
     let withDatabase db config =
         if String.isWhiteSpace db
            || String.length db > MAX_DATABASE_LENGTH then
             Error ConfigError.InvalidDatabase
         else
-            Ok { config with db = ValueSome db }
+            Ok { config with db = db }

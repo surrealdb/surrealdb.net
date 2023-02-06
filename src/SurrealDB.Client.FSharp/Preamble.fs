@@ -10,6 +10,7 @@ open System.Text.RegularExpressions
 [<RequireQualifiedAccess>]
 module String =
     let inline isWhiteSpace (s: string) = String.IsNullOrWhiteSpace s
+    let inline trimIfNotNull (s: string) = if isNull s then s else s.Trim()
 
     let inline internal toBase64 (s: string) =
         Convert.ToBase64String(Encoding.UTF8.GetBytes(s))
@@ -97,8 +98,7 @@ module Json =
     let serialize<'a> (options: JsonSerializerOptions) (data: 'a) =
         JsonSerializer.Serialize<'a>(data, options)
 
-    let deserializeNode<'a> (options: JsonSerializerOptions) (json: JsonNode) =
-        json.Deserialize<'a>(options)
+    let deserializeNode<'a> (options: JsonSerializerOptions) (json: JsonNode) = json.Deserialize<'a>(options)
 
     let serializeNode<'a> (options: JsonSerializerOptions) (data: 'a) =
         JsonSerializer.SerializeToNode<'a>(data, options)
