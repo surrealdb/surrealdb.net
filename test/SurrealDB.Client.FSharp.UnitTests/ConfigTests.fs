@@ -7,107 +7,186 @@ open Swensen.Unquote
 
 open SurrealDB.Client.FSharp
 
-[<Fact>]
-let ``SurrealCredentials.basicCredentials`` () =
-    let testCases =
-        [ "root", "root", Ok(Basic("root", "root"))
-          "  root  ", "\troot\n", Ok(Basic("root", "root"))
-          null, null, Error BasicCredentialsError.InvalidUser
-          "", null, Error BasicCredentialsError.InvalidUser
-          String('u', 101), null, Error BasicCredentialsError.InvalidUser
-          "root", null, Error BasicCredentialsError.InvalidPassword
-          "root", "", Error BasicCredentialsError.InvalidPassword
-          "root", String('u', 101), Error BasicCredentialsError.InvalidPassword
+let expectErrors expectedErrors (configResult: Result<SurrealConfig, SurrealConfigError list>) =
+    match configResult with
+    | Ok config -> Assert.Fail(sprintf "Expected errors %A, got config: %A" expectedErrors config)
+    | Error errors ->
+        for error in expectedErrors do
+            Assert.Contains(error, errors)
 
-          ]
-
-    for (user, password, expected) in testCases do
-        test <@ SurrealCredentials.basicCredentials user password = expected @>
-
-[<Fact>]
-let ``SurrealCredentials.bearerCredentials`` () =
-    let sampleJwt =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-
-    let testCases =
-        [ sampleJwt, Ok(Bearer(sampleJwt))
-          $"  {sampleJwt}\t\n", Ok(Bearer(sampleJwt))
-          null, Error BearerCredentialsError.InvalidJwt
-          "", Error BearerCredentialsError.InvalidJwt
-          String('u', 0x2001), Error BearerCredentialsError.InvalidJwt ]
-
-    for (jwt, expected) in testCases do
-        test <@ SurrealCredentials.bearerCredentials jwt = expected @>
+let expectValid (baseUrl, ns, db, credentials) (configResult: Result<SurrealConfig, SurrealConfigError list>) =
+    match configResult with
+    | Ok config ->
+        Assert.Equal(baseUrl, config.BaseUrl)
+        Assert.Equal(ns, config.Namespace)
+        Assert.Equal(db, config.Database)
+        Assert.Equal(credentials, config.Credentials)
+    | Error errors -> Assert.Fail(sprintf "Expected config %A, got errors: %A" (baseUrl, ns, db, credentials) errors)
 
 [<Fact>]
-let ``SurrealConfig.empty`` () =
-    test <@ SurrealConfig.empty.baseUrl = "http://localhost:8000" @>
-    test <@ SurrealConfig.empty.credentials = ValueNone @>
-    test <@ SurrealConfig.empty.ns = "" @>
-    test <@ SurrealConfig.empty.db = "" @>
+let ``Building empty configuration`` () =
+    SurrealConfig.Builder().Build()
+    |> expectErrors [ InvalidBaseUrl SurrealConfig.EMPTY
+                      InvalidNamespace SurrealConfig.EMPTY
+                      InvalidDatabase SurrealConfig.EMPTY ]
+
+let invalidBaseUrlData () =
+    seq {
+        [| null; SurrealConfig.EMPTY |]
+        [| ""; SurrealConfig.EMPTY |]
+        [| " \r\n\t\f"; SurrealConfig.EMPTY |]
+
+        [| "invalid url"
+           SurrealConfig.FORMAT |]
+
+        [| "relative/url"
+           SurrealConfig.FORMAT |]
+
+        [| $"http://example.com/{String('b', 256)}"
+           SurrealConfig.TOO_LONG |]
+    }
+
+[<Theory>]
+[<MemberData(nameof (invalidBaseUrlData))>]
+let ``Building configuration with invalid base url`` (value: string) (error: string) =
+    SurrealConfig.Builder().WithBaseUrl(value).Build()
+    |> expectErrors [ InvalidBaseUrl error ]
+
+let invalidNsOrDbData () =
+    seq {
+        [| null; SurrealConfig.EMPTY |]
+        [| ""; SurrealConfig.EMPTY |]
+        [| " \r\n\t\f"; SurrealConfig.EMPTY |]
+
+        [| String('n', 257)
+           SurrealConfig.TOO_LONG |]
+    }
+
+[<Theory>]
+[<MemberData(nameof (invalidNsOrDbData))>]
+let ``Building configuration with invalid namespace`` (value: string) (error: string) =
+    SurrealConfig
+        .Builder()
+        .WithNamespace(value)
+        .Build()
+    |> expectErrors [ InvalidNamespace error ]
+
+[<Theory>]
+[<MemberData(nameof (invalidNsOrDbData))>]
+let ``Building configuration with invalid database`` (value: string) (error: string) =
+    SurrealConfig
+        .Builder()
+        .WithDatabase(value)
+        .Build()
+    |> expectErrors [ InvalidDatabase error ]
+
+let invalidJWTData () =
+    seq {
+        [| null; SurrealConfig.EMPTY |]
+        [| ""; SurrealConfig.EMPTY |]
+        [| " \r\n\t\f"; SurrealConfig.EMPTY |]
+
+        [| String('j', 8197)
+           SurrealConfig.TOO_LONG |]
+    }
+
+[<Theory>]
+[<MemberData(nameof (invalidJWTData))>]
+let ``Building configuration with invalid JWT bearer token`` (value: string) (error: string) =
+    SurrealConfig
+        .Builder()
+        .WithBearerCredentials(value)
+        .Build()
+    |> expectErrors [ InvalidJWT error ]
+
+let invalidBasicData () =
+    seq {
+        [| null :> obj
+           null
+           [ InvalidUser SurrealConfig.EMPTY
+             InvalidPassword SurrealConfig.EMPTY ] |]
+
+        [| " \r\n\t\f" :> obj
+           null
+           [ InvalidUser SurrealConfig.EMPTY
+             InvalidPassword SurrealConfig.EMPTY ] |]
+
+        [| String('u', 101) :> obj
+           null
+           [ InvalidUser SurrealConfig.TOO_LONG
+             InvalidPassword SurrealConfig.EMPTY ] |]
+
+        [| "root" :> obj
+           null
+           [ InvalidPassword SurrealConfig.EMPTY ] |]
+
+        [| null :> obj
+           " \r\n\t\f"
+           [ InvalidUser SurrealConfig.EMPTY
+             InvalidPassword SurrealConfig.EMPTY ] |]
+
+        [| null :> obj
+           String('p', 101)
+           [ InvalidUser SurrealConfig.EMPTY
+             InvalidPassword SurrealConfig.TOO_LONG ] |]
+
+        [| null :> obj
+           "root"
+           [ InvalidUser SurrealConfig.EMPTY ] |]
+    }
+
+[<Theory>]
+[<MemberData(nameof (invalidBasicData))>]
+let ``Building configuration with invalid basic credentials``
+    (user: string)
+    (password: string)
+    (errors: SurrealConfigError list)
+    =
+    SurrealConfig
+        .Builder()
+        .WithBasicCredentials(user, password)
+        .Build()
+    |> expectErrors errors
 
 [<Fact>]
-let ``SurrealConfig.withBaseUrl`` () =
-    let testCases =
-        [ "http://localhost:8000", Ok { SurrealConfig.empty with baseUrl = "http://localhost:8000" }
-          "https://localhost:8000", Ok { SurrealConfig.empty with baseUrl = "https://localhost:8000" }
-          "https://cloud.surrealdb.com", Ok { SurrealConfig.empty with baseUrl = "https://cloud.surrealdb.com" }
-          null, Error ConfigError.InvalidBaseUrl
-          "", Error ConfigError.InvalidBaseUrl
-          $"http://{String('s', 256)}", Error ConfigError.InvalidBaseUrl
-          "invalid url", Error ConfigError.InvalidBaseUrl
-          "relative/url", Error ConfigError.InvalidBaseUrl ]
-
-    for (baseUrl, expected) in testCases do
-        test <@ SurrealConfig.withBaseUrl baseUrl SurrealConfig.empty = expected @>
-
-[<Property>]
-let ``SurrealConfig.withCredentials`` (credentials: SurrealCredentials) =
-    let expected =
-        { SurrealConfig.empty with credentials = ValueSome credentials }
-
-    test <@ SurrealConfig.withCredentials credentials SurrealConfig.empty = expected @>
+let ``Building valid configuration without credentials`` () =
+    SurrealConfig
+        .Builder()
+        .WithBaseUrl("http://localhost:8010")
+        .WithNamespace("testns")
+        .WithDatabase("testdb")
+        .Build()
+    |> expectValid ("http://localhost:8010", "testns", "testdb", ValueNone)
 
 [<Fact>]
-let ``SurrealConfig.withBasicCredentials`` () =
-    let testCases =
-        [ "root", "root", Ok({ SurrealConfig.empty with credentials = ValueSome(Basic("root", "root")) })
-          null, null, Error(ConfigError.InvalidBasicCredentials BasicCredentialsError.InvalidUser)
-          "root", null, Error(ConfigError.InvalidBasicCredentials BasicCredentialsError.InvalidPassword)]
-
-    for (user, password, expected) in testCases do
-        test <@ SurrealConfig.withBasicCredentials user password SurrealConfig.empty = expected @>
-
-[<Fact>]
-let ``SurrealConfig.withBearerCredentials`` () =
-    let sampleJwt =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-
-    let testCases =
-        [ sampleJwt, Ok({ SurrealConfig.empty with credentials = ValueSome(Bearer(sampleJwt)) })
-          null, Error(ConfigError.InvalidBearerCredentials BearerCredentialsError.InvalidJwt)]
-
-    for (jwt, expected) in testCases do
-        test <@ SurrealConfig.withBearerCredentials jwt SurrealConfig.empty = expected @>
+let ``Building valid configuration with default base url`` () =
+    SurrealConfig
+        .Builder()
+        .WithDefaultBaseUrl()
+        .WithNamespace("testns")
+        .WithDatabase("testdb")
+        .Build()
+    |> expectValid ("http://localhost:8000", "testns", "testdb", ValueNone)
 
 [<Fact>]
-let ``SurrealConfig.withNamespace`` () =
-    let testCases =
-        [ "testns", Ok { SurrealConfig.empty with ns = "testns" }
-          null, Error ConfigError.InvalidNamespace
-          "", Error ConfigError.InvalidNamespace
-          String('s', 257), Error ConfigError.InvalidNamespace ]
-
-    for (ns, expected) in testCases do
-        test <@ SurrealConfig.withNamespace ns SurrealConfig.empty = expected @>
+let ``Building valid configuration with basic credentials`` () =
+    SurrealConfig
+        .Builder()
+        .WithBaseUrl("http://localhost:8010")
+        .WithNamespace("testns")
+        .WithDatabase("testdb")
+        .WithBasicCredentials("root", "root")
+        .Build()
+    |> expectValid ("http://localhost:8010", "testns", "testdb", ValueSome(SurrealCredentials.Basic("root", "root")))
 
 [<Fact>]
-let ``SurrealConfig.withDatabase`` () =
-    let testCases =
-        [ "testdb", Ok { SurrealConfig.empty with db = "testdb" }
-          null, Error ConfigError.InvalidDatabase
-          "", Error ConfigError.InvalidDatabase
-          String('s', 257), Error ConfigError.InvalidDatabase ]
-
-    for (db, expected) in testCases do
-        test <@ SurrealConfig.withDatabase db SurrealConfig.empty = expected @>
+let ``Building valid configuration with bearer credentials`` () =
+    let johnDoeToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    SurrealConfig
+        .Builder()
+        .WithBaseUrl("http://localhost:8010")
+        .WithNamespace("testns")
+        .WithDatabase("testdb")
+        .WithBearerCredentials(johnDoeToken)
+        .Build()
+    |> expectValid ("http://localhost:8010", "testns", "testdb", ValueSome(SurrealCredentials.Bearer(johnDoeToken)))

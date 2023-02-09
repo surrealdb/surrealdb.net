@@ -18,14 +18,14 @@ let updateDefaultHeader key value (httpClient: HttpClient) =
 
 let applyCredentialHeaders credentials httpClient =
     match credentials with
-    | Basic (user, password) ->
+    | SurrealCredentials.Basic (user, password) ->
         let auth =
             String.toBase64 <| sprintf "%s:%s" user password
 
         let value = sprintf "%s %s" BASIC_SCHEME auth
         updateDefaultHeader AUTHORIZATION_HEADER value httpClient
 
-    | Bearer jwt ->
+    | SurrealCredentials.Bearer jwt ->
         let value = sprintf "%s %s" BEARER_SCHEME jwt
         updateDefaultHeader AUTHORIZATION_HEADER value httpClient
 

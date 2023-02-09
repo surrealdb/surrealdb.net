@@ -8,17 +8,17 @@ open SurrealDB.Client.FSharp
 /// <summary>
 /// Updates the default headers of a given HTTP client, to match the given configuration.
 /// </summary>
-let applyConfig config httpClient =
+let applyConfig (config: SurrealConfig) httpClient =
     updateDefaultHeader ACCEPT_HEADER APPLICATION_JSON httpClient
 
-    match config.credentials with
+    match config.Credentials with
     | ValueSome credentials -> applyCredentialHeaders credentials httpClient
     | ValueNone -> ()
 
-    updateDefaultHeader NS_HEADER config.ns httpClient
-    updateDefaultHeader DB_HEADER config.db httpClient
+    updateDefaultHeader NS_HEADER config.Namespace httpClient
+    updateDefaultHeader DB_HEADER config.Database httpClient
 
-    httpClient.BaseAddress <- Uri(config.baseUrl, UriKind.Absolute)
+    httpClient.BaseAddress <- Uri(config.BaseUrl, UriKind.Absolute)
 
 /// <summary>
 /// The SQL endpoint enables advanced SurrealQL queries.

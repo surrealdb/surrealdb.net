@@ -17,11 +17,13 @@ let sample () =
     task {
 
         let config =
-            SurrealConfig.empty
-            |> SurrealConfig.withBaseUrl "http://localhost:8010"
-            |> Result.bind (SurrealConfig.withBasicCredentials "root" "root")
-            |> Result.bind (SurrealConfig.withNamespace "testns")
-            |> Result.bind (SurrealConfig.withDatabase "testdb")
+            SurrealConfig
+                .Builder()
+                .WithBaseUrl("http://localhost:8010")
+                .WithBasicCredentials("root", "root")
+                .WithNamespace("testns")
+                .WithDatabase("testdb")
+                .Build()
             |> function
                 | Ok c -> c
                 | Error err ->
