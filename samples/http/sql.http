@@ -8,6 +8,7 @@ Accept: application/json
 Authorization: Basic {{auth}}
 
 INFO FOR KV;
+USE NS testns DB testdb;
 
 ### Use a different database and namespace
 POST http://localhost:8010/sql
@@ -52,3 +53,12 @@ Authorization: Basic {{auth}}
 SELECT * FROM <bool> "";
 SELECT * FROM <bool> "true";
 SELECT * FROM <bool> "false";
+
+### Samples
+POST http://localhost:8010/sql
+NS: testns
+DB: testdb
+Accept: application/json
+Authorization: Basic {{auth}}
+
+DELETE FROM person;

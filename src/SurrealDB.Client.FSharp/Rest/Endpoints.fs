@@ -2,8 +2,121 @@ module SurrealDB.Client.FSharp.Rest.Endpoints
 
 open System
 open System.Net.Http
+open System.Text
+open System.Text.Json
+open System.Text.Json.Nodes
+open System.Threading
 
 open SurrealDB.Client.FSharp
+
+[<AutoOpen>]
+module internal Internals =
+    let parseHeaderInfo (response: HttpResponseMessage) =
+        let readHeader name defaultValue =
+            match response.Headers.TryGetValues name with
+            | true, values -> Seq.tryHeadValue values
+            | _ -> ValueNone
+            |> ValueOption.defaultValue defaultValue
+
+        let version = readHeader VERSION_HEADER ""
+        let server = readHeader SERVER_HEADER ""
+        let date = readHeader DATE_HEADER ""
+        let status = response.StatusCode
+
+        { version = version
+          server = server
+          date = date
+          status = status }
+
+    type StatementInfoJson =
+        { status: string
+          detail: string option
+          result: JsonNode option
+          time: string }
+
+    let parseApiResult
+        (jsonOptions: JsonSerializerOptions)
+        (cancellationToken: CancellationToken)
+        (response: HttpResponseMessage)
+        =
+        task {
+            let headers = parseHeaderInfo response
+            let! content = response.Content.ReadAsStringAsync(cancellationToken)
+
+            let result =
+                if response.IsSuccessStatusCode then
+                    Json.deserialize<StatementInfoJson []> jsonOptions content
+                    |> Array.map (fun json ->
+                        match json.result, json.detail with
+                        | Some result, _ ->
+                            { time = json.time
+                              status = json.status
+                              response = Ok result }
+                        | None, Some detail ->
+                            { time = json.time
+                              status = json.status
+                              response = Error detail }
+                        | None, None ->
+                            { time = json.time
+                              status = json.status
+                              response = Error "Missing result and detail" })
+                    |> Ok
+                else
+                    Json.deserialize<ErrorInfo> jsonOptions content
+                    |> Error
+
+            return { headers = headers; result = result }
+        }
+
+    let updateDefaultHeader key value (httpClient: HttpClient) =
+        httpClient.DefaultRequestHeaders.Remove(key)
+        |> ignore
+
+        httpClient.DefaultRequestHeaders.Add(key, (value: string))
+
+    let applyCredentialHeaders credentials httpClient =
+        match credentials with
+        | SurrealCredentials.Basic (user, password) ->
+            let auth =
+                String.toBase64 <| sprintf "%s:%s" user password
+
+            let value = sprintf "%s %s" BASIC_SCHEME auth
+            updateDefaultHeader AUTHORIZATION_HEADER value httpClient
+
+        | SurrealCredentials.Bearer jwt ->
+            let value = sprintf "%s %s" BEARER_SCHEME jwt
+            updateDefaultHeader AUTHORIZATION_HEADER value httpClient
+
+    let executeRequest (jsonOptions: JsonSerializerOptions) (request: HttpRequestMessage) (ct: CancellationToken) (httpClient: HttpClient) =
+        task {
+            let! response = httpClient.SendAsync(request, ct)
+            let! result = parseApiResult jsonOptions ct response
+            return result
+        }
+
+    let executeEmptyRequest jsonOptions method url ct httpClient =
+        task {
+            let url = Uri(url, UriKind.Relative)
+            let request = new HttpRequestMessage(method, url)
+            return! executeRequest jsonOptions request ct httpClient
+        }
+
+    let executeJsonRequest jsonOptions method url json ct httpClient =
+        task {
+            let url = Uri(url, UriKind.Relative)
+            let request = new HttpRequestMessage(method, url)
+            let json = Json.serialize<JsonNode> jsonOptions json
+            request.Content <- new StringContent(json, Encoding.UTF8, APPLICATION_JSON)
+            return! executeRequest jsonOptions request ct httpClient
+        }
+
+    let executeTextRequest jsonOptions method url text ct httpClient =
+        task {
+            let url = Uri(url, UriKind.Relative)
+            let request = new HttpRequestMessage(method, url)
+            request.Content <- new StringContent(text, Encoding.UTF8, TEXT_PLAIN)
+            return! executeRequest jsonOptions request ct httpClient
+        }
 
 /// <summary>
 /// Applies the configuration to the <see cref="HttpClient"/>.
