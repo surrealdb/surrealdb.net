@@ -12,8 +12,6 @@ open System.Text.Json.Serialization
 open System.Threading
 
 open Xunit
-open FsCheck.Xunit
-open Foq
 open Swensen.Unquote
 
 open SurrealDB.Client.FSharp
@@ -140,12 +138,7 @@ let ``postSql`` () =
                 .Build()
             |> resultValue
 
-        let jsonOptions =
-            JsonFSharpOptions
-                .Default()
-                //.WithAllowNullFields(true)
-                .WithSkippableOptionFields(true)
-                .ToJsonSerializerOptions()
+        let jsonOptions = SurrealConfig.defaultJsonOptions
 
         let query = "INFO FOR KV;"
         let apiResult = RestApiResult.empty ()

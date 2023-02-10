@@ -32,7 +32,8 @@ let sample () =
 
         printfn "Config: %A" config
 
-        let httpClient = new HttpClient()
+        use httpClient = new HttpClient()
+        let jsonOptions = SurrealConfig.defaultJsonOptions
 
         use client =
             new SurrealRestClient(config, httpClient)
@@ -51,7 +52,7 @@ let sample () =
               id = "" }
 
         let johnJson =
-            JsonSerializer.SerializeToNode(john, JsonSerializerOptions.Default)
+            JsonSerializer.SerializeToNode(john, jsonOptions)
 
         let! createJohnResult = client.Json.CreateAsync("people", "john", johnJson, ct)
 

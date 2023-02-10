@@ -32,8 +32,8 @@ let sample () =
 
         printfn "Config: %A" config
 
-        let httpClient = new HttpClient()
-        let jsonOptions = JsonSerializerOptions()
+        use httpClient = new HttpClient()
+        let jsonOptions = SurrealConfig.defaultJsonOptions
 
         Endpoints.applyConfig config httpClient
 
@@ -49,7 +49,7 @@ let sample () =
               id = "" }
 
         let johnJson =
-            JsonSerializer.SerializeToNode(john, JsonSerializerOptions.Default)
+            JsonSerializer.SerializeToNode(john, jsonOptions)
 
         let! createJohnResult = Endpoints.postKeyTableId jsonOptions "people" "john" johnJson ct httpClient
 

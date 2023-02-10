@@ -11,7 +11,6 @@ open System.Text.Json.Nodes
 open System.Threading
 
 open Xunit
-open FsCheck.Xunit
 open Swensen.Unquote
 
 open SurrealDB.Client.FSharp
@@ -237,38 +236,42 @@ let ``RestApiResult.parse with array result`` () =
 
         match actual.result with
         | Ok [| Ok actualItemResult |] ->
-            Assert.Equal(actualItemResult.status, "OK")
-            Assert.Equal(actualItemResult.time, "3.474ms")
+            test <@ actualItemResult.status = "OK" @>
+            test <@ actualItemResult.time = "3.474ms" @>
 
             let jArray =
                 Assert.IsType<JsonArray>(actualItemResult.result)
 
-            Assert.Equal(1, jArray.Count)
+            test <@ 1 = jArray.Count @>
             let elem = Assert.IsType<JsonObject>(jArray.[0])
-            Assert.Equal(4, elem.Count)
+            test <@ 4 = elem.Count @>
 
             match elem.TryGetPropertyValue("age") with
             | true, node ->
                 let node = Assert.IsAssignableFrom<JsonValue>(node)
-                Assert.Equal((true, 20), node.TryGetValue())
+                let actualValue = node.TryGetValue()
+                test <@ (true, 20) = actualValue @>
             | false, _ -> Assert.Fail "Expected property age"
 
             match elem.TryGetPropertyValue("firstName") with
             | true, node ->
                 let node = Assert.IsAssignableFrom<JsonValue>(node)
-                Assert.Equal((true, "John"), node.TryGetValue())
+                let actualValue = node.TryGetValue()
+                test <@ (true, "John") = actualValue @>
             | false, _ -> Assert.Fail "Expected property firstName"
 
             match elem.TryGetPropertyValue("lastName") with
             | true, node ->
                 let node = Assert.IsAssignableFrom<JsonValue>(node)
-                Assert.Equal((true, "Doe"), node.TryGetValue())
+                let actualValue = node.TryGetValue()
+                test <@ (true, "Doe") = actualValue @>
             | false, _ -> Assert.Fail "Expected property lastName"
 
             match elem.TryGetPropertyValue("id") with
             | true, node ->
                 let node = Assert.IsAssignableFrom<JsonValue>(node)
-                Assert.Equal((true, "people:j8cbt874jgipk2y9czth"), node.TryGetValue())
+                let actualValue = node.TryGetValue()
+                test <@ (true, "people:j8cbt874jgipk2y9czth") = actualValue @>
             | false, _ -> Assert.Fail "Expected property id"
 
         | _ -> Assert.Fail "Unexpected result"
@@ -309,9 +312,9 @@ let ``RestApiResult.parse with array error`` () =
 
         match actual.result with
         | Ok [| Error actualItemResult |] ->
-            Assert.Equal(actualItemResult.status, "ERR")
-            Assert.Equal(actualItemResult.time, "3.474ms")
-            Assert.Equal(actualItemResult.detail, "Database record `people:john` already exists")
+            test <@ actualItemResult.status = "ERR" @>
+            test <@ actualItemResult.time = "3.474ms" @>
+            test <@ actualItemResult.detail = "Database record `people:john` already exists" @>
 
         | _ -> Assert.Fail "Unexpected result"
     }

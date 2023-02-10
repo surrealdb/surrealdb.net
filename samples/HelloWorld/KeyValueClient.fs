@@ -33,14 +33,8 @@ let sample () =
 
         printfn "Config: %A" config
 
-        let jsonOptions =
-            JsonFSharpOptions
-                .Default()
-                .WithAllowNullFields(true)
-                .WithSkippableOptionFields(true)
-                .ToJsonSerializerOptions()
-
-        let httpClient = new HttpClient()
+        use httpClient = new HttpClient()
+        let jsonOptions = SurrealConfig.defaultJsonOptions
 
         use client =
             new SurrealRestClient(config, httpClient, jsonOptions)

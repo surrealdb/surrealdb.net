@@ -1,11 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Remove="RestApi\**" />
+    <PackageReference Include="FSharp.SystemTextJson" Version="1.1.23" />
   </ItemGroup>
 
   <ItemGroup>

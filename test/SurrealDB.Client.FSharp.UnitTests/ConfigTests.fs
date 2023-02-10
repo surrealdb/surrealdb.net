@@ -2,7 +2,6 @@ module SurrealDB.Client.FSharp.ConfigTests
 
 open System
 open Xunit
-open FsCheck.Xunit
 open Swensen.Unquote
 
 open SurrealDB.Client.FSharp
@@ -17,10 +16,10 @@ let expectErrors expectedErrors (configResult: Result<SurrealConfig, SurrealConf
 let expectValid (baseUrl, ns, db, credentials) (configResult: Result<SurrealConfig, SurrealConfigError list>) =
     match configResult with
     | Ok config ->
-        Assert.Equal(baseUrl, config.BaseUrl)
-        Assert.Equal(ns, config.Namespace)
-        Assert.Equal(db, config.Database)
-        Assert.Equal(credentials, config.Credentials)
+        test <@ baseUrl = config.BaseUrl @>
+        test <@ ns = config.Namespace @>
+        test <@ db = config.Database @>
+        test <@ credentials = config.Credentials @>
     | Error errors -> Assert.Fail(sprintf "Expected config %A, got errors: %A" (baseUrl, ns, db, credentials) errors)
 
 [<Fact>]

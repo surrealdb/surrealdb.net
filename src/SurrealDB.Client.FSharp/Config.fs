@@ -1,6 +1,8 @@
 namespace SurrealDB.Client.FSharp
 
 open System
+open System.Text.Json
+open System.Text.Json.Serialization
 
 /// <summary>
 /// Represents the possible authentication credentials.
@@ -68,6 +70,17 @@ module SurrealConfig =
 
     [<Literal>]
     let FORMAT = "FORMAT"
+
+    let configJsonOptionsFrom (configure: JsonFSharpOptions -> JsonFSharpOptions) (options: JsonFSharpOptions) =
+        (configure options)
+            .WithSkippableOptionFields(true)
+            .ToJsonSerializerOptions()
+
+    let configJsonOptions configure =
+        JsonFSharpOptions.Default()
+        |> configJsonOptionsFrom configure
+
+    let defaultJsonOptions = configJsonOptions id
 
 /// <summary>
 /// Represents a validated configuration for a SurrealDB client.
