@@ -6,8 +6,18 @@ open System.Net.Http
 open SurrealDB.Client.FSharp
 
 /// <summary>
-/// Updates the default headers of a given HTTP client, to match the given configuration.
+/// Applies the configuration to the <see cref="HttpClient"/>.
 /// </summary>
+/// <param name="config">The configuration to apply.</param>
+/// <param name="httpClient">The HTTP client to update.</param>
+/// <remarks>
+/// Assigns BaseAddress to <see cref="SurrealConfig.BaseUrl"/>
+/// Affects the following headers:
+/// - Accept: application/json
+/// - NS: <see cref="SurrealConfig.Namespace"/>
+/// - DB: <see cref="SurrealConfig.Database"/>
+/// - Authorization: <see cref="SurrealConfig.Credentials"/>
+/// </remarks>
 let applyConfig (config: SurrealConfig) httpClient =
     updateDefaultHeader ACCEPT_HEADER APPLICATION_JSON httpClient
 

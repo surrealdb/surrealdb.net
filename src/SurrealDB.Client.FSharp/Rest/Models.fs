@@ -9,7 +9,6 @@ open System.Threading
 
 open SurrealDB.Client.FSharp
 
-[<Struct>]
 type HeadersInfo =
     { version: string
       server: string
@@ -45,7 +44,6 @@ module HeadersInfo =
           date = date
           status = status }
 
-[<Struct>]
 type ItemSuccessInfo<'result> =
     { status: string
       result: 'result
@@ -65,7 +63,6 @@ module ItemSuccessInfo =
           time = info.time
           result = f info.result }
 
-[<Struct>]
 type ItemErrorInfo =
     { status: string
       detail: string
@@ -77,7 +74,6 @@ type ItemErrorInfo =
 module ItemErrorInfo =
     let empty () = { status = ""; detail = ""; time = "" }
 
-[<Struct>]
 type ErrorInfo =
     { details: string
       code: int
@@ -92,7 +88,6 @@ module ErrorInfo =
           description = ""
           information = "" }
 
-[<Struct>]
 type RestApiResult<'result> =
     { headers: HeadersInfo
       result: Result<Result<ItemSuccessInfo<'result>, ItemErrorInfo> [], ErrorInfo> }
@@ -115,7 +110,11 @@ module RestApiResult =
           result: JsonNode option
           time: string }
 
-    let parse (jsonOptions: JsonSerializerOptions) (cancellationToken: CancellationToken) (response: HttpResponseMessage) =
+    let parse
+        (jsonOptions: JsonSerializerOptions)
+        (cancellationToken: CancellationToken)
+        (response: HttpResponseMessage)
+        =
         task {
             let headers = HeadersInfo.parse response
             let! content = response.Content.ReadAsStringAsync(cancellationToken)
@@ -136,7 +135,8 @@ module RestApiResult =
                                   time = item.time })
                     |> Ok
                 else
-                    Json.deserialize<ErrorInfo> jsonOptions content |> Error
+                    Json.deserialize<ErrorInfo> jsonOptions content
+                    |> Error
 
             return { headers = headers; result = result }
         }

@@ -7,7 +7,7 @@ DB: testdb
 Accept: application/json
 Authorization: Basic {{auth}}
 
-INFO FOR NS;
+INFO FOR KV;
 
 ### Use a different database and namespace
 POST http://localhost:8010/sql

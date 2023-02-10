@@ -232,9 +232,8 @@ let ``RestApiResult.parse with array result`` () =
         response.Content <- new StringContent(contentJson, Encoding.UTF8, "application/json")
 
         let! actual = RestApiResult.parse jOptions cToken response
-        let actualHeaders = actual.headers
 
-        test <@ actualHeaders = headersInfo @>
+        test <@ actual.headers = headersInfo @>
 
         match actual.result with
         | Ok [| Ok actualItemResult |] ->
@@ -305,9 +304,8 @@ let ``RestApiResult.parse with array error`` () =
         response.Content <- new StringContent(contentJson, Encoding.UTF8, "application/json")
 
         let! actual = RestApiResult.parse jOptions cToken response
-        let actualHeaders = actual.headers
 
-        test <@ actualHeaders = headersInfo @>
+        test <@ actual.headers = headersInfo @>
 
         match actual.result with
         | Ok [| Error actualItemResult |] ->
