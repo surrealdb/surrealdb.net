@@ -90,23 +90,26 @@ let ``ItemSuccessInfo.empty`` () =
 
     test <@ actual = expected @>
 
-[<Fact>]
-let ``ItemSuccessInfo.timeSpan`` () =
-    let testCases =
-        [ "", ValueNone
-          "42.1µs", ValueSome(TimeSpan.FromMicroseconds 42.1)
-          "3.146ms", ValueSome(TimeSpan.FromMilliseconds 3.146)
-          "1.234s", ValueSome(TimeSpan.FromSeconds 1.234)
-          "2.3h", ValueNone
-          "12345678901234567890s", ValueNone ]
+let timeSpanCases () =
+    seq {
+        "", ValueNone
+        "42.1µs", ValueSome(TimeSpan.FromMicroseconds 42.1)
+        "3.146ms", ValueSome(TimeSpan.FromMilliseconds 3.146)
+        "1.234s", ValueSome(TimeSpan.FromSeconds 1.234)
+        "2.3h", ValueNone
+        "12345678901234567890s", ValueNone
+    }
+    |> Seq.map (fun (time, expected) -> [| time :> obj; expected |])
 
-    for (time, expected) in testCases do
-        let info =
-            { ItemSuccessInfo.empty () with time = time }
+[<Theory>]
+[<MemberData(nameof (timeSpanCases))>]
+let ``ItemSuccessInfo.timeSpan`` (time: string) (expected: TimeSpan voption) =
+    let info =
+        { ItemSuccessInfo.empty () with time = time }
 
-        let actual = info.timeSpan
+    let actual = info.timeSpan
 
-        test <@ actual = expected @>
+    test <@ actual = expected @>
 
 [<Fact>]
 let ``ItemErrorInfo.empty`` () =
@@ -116,23 +119,15 @@ let ``ItemErrorInfo.empty`` () =
 
     test <@ actual = expected @>
 
-[<Fact>]
-let ``ItemErrorInfo.timeSpan`` () =
-    let testCases =
-        [ "", ValueNone
-          "42.1µs", ValueSome(TimeSpan.FromMicroseconds 42.1)
-          "3.146ms", ValueSome(TimeSpan.FromMilliseconds 3.146)
-          "1.234s", ValueSome(TimeSpan.FromSeconds 1.234)
-          "2.3h", ValueNone
-          "12345678901234567890s", ValueNone ]
+[<Theory>]
+[<MemberData(nameof (timeSpanCases))>]
+let ``ItemErrorInfo.timeSpan`` (time: string) (expected: TimeSpan voption) =
+    let info =
+        { ItemErrorInfo.empty () with time = time }
 
-    for (time, expected) in testCases do
-        let info =
-            { ItemErrorInfo.empty () with time = time }
+    let actual = info.timeSpan
 
-        let actual = info.timeSpan
-
-        test <@ actual = expected @>
+    test <@ actual = expected @>
 
 [<Fact>]
 let ``ErrorInfo.empty`` () =
