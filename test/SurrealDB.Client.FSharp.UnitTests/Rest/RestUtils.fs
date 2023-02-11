@@ -1,8 +1,22 @@
 [<AutoOpen>]
-module SurrealDB.Client.FSharp.Rest.JsonUtils
+module SurrealDB.Client.FSharp.Rest.RestUtils
 
 open System.Collections.Generic
 open System.Text.Json.Nodes
+open System
+open System.Globalization
+open System.Net
+open System.Net.Http
+open System.Text
+open System.Text.Json
+open System.Text.Json.Nodes
+open System.Threading
+
+open Xunit
+open Swensen.Unquote
+
+open SurrealDB.Client.FSharp
+open SurrealDB.Client.FSharp.Rest
 
 let private (|JsonNodeType|_|) (node: JsonNode) =
     match node with
@@ -136,3 +150,33 @@ let jsonDiff (node1: JsonNode) (node2: JsonNode) =
     loop "$" node1 node2
 
     Seq.toList diffs
+
+let resultValue =
+    function
+    | Ok value -> value
+    | Error err -> failwith $"Expected Ok, got Error: %A{err}"
+
+let tryToOption =
+    function
+    | true, value -> Some value
+    | false, _ -> None
+
+let tryGetHeaders name (headers: Headers.HttpRequestHeaders) =
+    headers.TryGetValues(name)
+    |> tryToOption
+    |> Option.map Seq.toList
+
+let PORT = 8000
+let USER = "root"
+let PASS = "root"
+let NS = "testns"
+let DB = "testdb"
+let DUMMY_VERSION = "dummy-version"
+let DUMMY_SERVER = "dummy-server"
+let DUMMY_DATE = "Fri, 10 Feb 2023 20:49:37 GMT"
+
+let DUMMY_DATETIME =
+    DateTime.Parse(DUMMY_DATE, CultureInfo.InvariantCulture, DateTimeStyles.None)
+
+let DUMMY_DATETIMEOFFSET =
+    DateTimeOffset.Parse(DUMMY_DATE, CultureInfo.InvariantCulture, DateTimeStyles.None)

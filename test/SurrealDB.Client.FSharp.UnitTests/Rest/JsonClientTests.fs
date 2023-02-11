@@ -16,7 +16,7 @@ open SurrealDB.Client.FSharp
 open SurrealDB.Client.FSharp.Rest
 
 [<Trait(Category, UnitTest)>]
-module EndpointsTests =
+module JsonClientTests =
     let prepareTest statusCode (responseJson: string) =
         let config =
             SurrealConfig
@@ -55,115 +55,24 @@ module EndpointsTests =
 
         let cancellationTokenSource = new CancellationTokenSource()
 
+        let surrealClient: ISurrealRestClient =
+            new SurrealRestClient(config, httpClient, jsonOptions)
+
         let disposable =
             { new IDisposable with
                 member this.Dispose() =
                     cancellationTokenSource.Dispose()
-                    httpClient.Dispose() }
+                    surrealClient.Dispose() }
 
-        {| config = config
-           httpClient = httpClient
-           jsonOptions = jsonOptions
+        {| jsonOptions = jsonOptions
+           surrealClient = surrealClient
            requests = requests
            cancellationTokenSource = cancellationTokenSource
            cancellationToken = cancellationTokenSource.Token
            disposable = disposable |}
 
-    let applyConfigTestCases () =
-        let johnDoeToken =
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-
-        seq {
-            SurrealConfig
-                .Builder()
-                .WithBaseUrl("http://localhost:8010")
-                .WithNamespace("testns")
-                .WithDatabase("testdb")
-                .Build()
-            |> resultValue,
-            "testns",
-            "testdb",
-            "http://localhost:8010",
-            None
-
-            SurrealConfig
-                .Builder()
-                .WithBaseUrl("http://localhost:8010")
-                .WithNamespace("testns")
-                .WithDatabase("testdb")
-                .WithBasicCredentials("root", "root")
-                .Build()
-            |> resultValue,
-            "testns",
-            "testdb",
-            "http://localhost:8010",
-            Some "Basic cm9vdDpyb290"
-
-            SurrealConfig
-                .Builder()
-                .WithBaseUrl("http://localhost:8010")
-                .WithNamespace("testns")
-                .WithDatabase("testdb")
-                .WithBearerCredentials(johnDoeToken)
-                .Build()
-            |> resultValue,
-            "testns",
-            "testdb",
-            "http://localhost:8010",
-            Some $"Bearer {johnDoeToken}"
-        }
-        |> Seq.map (fun (config, ns, db, baseUrl, credentials) ->
-            [| config :> obj
-               ns
-               db
-               baseUrl
-               credentials |])
-
-    [<Theory>]
-    [<MemberData(nameof (applyConfigTestCases))>]
-    let ``applyConfig``
-        (config: SurrealConfig)
-        (expectedNs: string)
-        (expectedDb: string)
-        (expectedBaseUrl: string)
-        (expectedCredentials: string option)
-        =
-        use httpClient = new HttpClient()
-
-        httpClient |> Endpoints.applyConfig config
-
-        test <@ httpClient.BaseAddress = Uri(expectedBaseUrl) @>
-
-        let acceptHeader =
-            httpClient.DefaultRequestHeaders
-            |> tryGetHeaders ACCEPT_HEADER
-
-        test <@ acceptHeader = Some [ APPLICATION_JSON ] @>
-
-        let nsHeader =
-            httpClient.DefaultRequestHeaders
-            |> tryGetHeaders NS_HEADER
-
-        test <@ nsHeader = Some [ expectedNs ] @>
-
-        let dbHeader =
-            httpClient.DefaultRequestHeaders
-            |> tryGetHeaders DB_HEADER
-
-        test <@ dbHeader = Some [ expectedDb ] @>
-
-        let authHeader =
-            httpClient.DefaultRequestHeaders
-            |> tryGetHeaders AUTHORIZATION_HEADER
-
-        let expectedCredentials =
-            expectedCredentials
-            |> Option.map (fun value -> [ value ])
-
-        test <@ authHeader = expectedCredentials @>
-
     [<Fact>]
-    let ``postSql with error response`` () =
+    let ``SqlAsync with error response`` () =
         task {
             let expectedStatus = HttpStatusCode.BadRequest
 
@@ -185,7 +94,7 @@ module EndpointsTests =
                 USE NS testns DB testdb;
                 """
 
-            let! response = Endpoints.postSql testing.jsonOptions testing.httpClient testing.cancellationToken query
+            let! response = testing.surrealClient.Json.SqlAsync(query, testing.cancellationToken)
 
             test <@ testing.requests.Count = 1 @>
 
@@ -213,7 +122,8 @@ module EndpointsTests =
             let expectedResult: ErrorInfo =
                 { code = 400
                   details = "Request problems detected"
-                  description = "There is a problem with your request. Refer to the documentation for further information."
+                  description =
+                    "There is a problem with your request. Refer to the documentation for further information."
                   information =
                     "There was a problem with the database: Parse error on line 1 at character 0 when parsing 'INFO FO R KV;\r\nUSE NS testns DB testdb;'" }
 
@@ -227,7 +137,7 @@ module EndpointsTests =
         }
 
     [<Fact>]
-    let ``postSql with empty response`` () =
+    let ``SqlAsync with empty response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -246,7 +156,7 @@ module EndpointsTests =
 
             let query = "SELECT * FROM person WHERE age >= 18;"
 
-            let! response = Endpoints.postSql testing.jsonOptions testing.httpClient testing.cancellationToken query
+            let! response = testing.surrealClient.Json.SqlAsync(query, testing.cancellationToken)
 
             let expectedHeaders: HeadersInfo =
                 { version = DUMMY_VERSION
@@ -273,7 +183,7 @@ module EndpointsTests =
         }
 
     [<Fact>]
-    let ``postSql with array response`` () =
+    let ``SqlAsync with array response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -311,7 +221,7 @@ module EndpointsTests =
                 ("Jane", "Doe", 17);
                 """
 
-            let! response = Endpoints.postSql testing.jsonOptions testing.httpClient testing.cancellationToken query
+            let! response = testing.surrealClient.Json.SqlAsync(query, testing.cancellationToken)
 
             let expectedHeaders: HeadersInfo =
                 { version = DUMMY_VERSION
@@ -355,7 +265,7 @@ module EndpointsTests =
         }
 
     [<Fact>]
-    let ``postSql with multiple and mixed responses`` () =
+    let ``SqlAsync with multiple and mixed responses`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -387,7 +297,7 @@ module EndpointsTests =
                 USE NS testns DB testdb;
                 """
 
-            let! response = Endpoints.postSql testing.jsonOptions testing.httpClient testing.cancellationToken query
+            let! response = testing.surrealClient.Json.SqlAsync(query, testing.cancellationToken)
 
             let expectedHeaders: HeadersInfo =
                 { version = DUMMY_VERSION
@@ -435,7 +345,7 @@ module EndpointsTests =
         }
 
     [<Fact>]
-    let ``getKeyTable with array response`` () =
+    let ``GetAllAsync with array response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -467,7 +377,7 @@ module EndpointsTests =
 
             let table = "people"
 
-            let! response = Endpoints.getKeyTable testing.jsonOptions testing.httpClient testing.cancellationToken table
+            let! response = testing.surrealClient.Json.GetAllAsync(table, testing.cancellationToken)
 
             test <@ testing.requests.Count = 1 @>
 
@@ -521,7 +431,7 @@ module EndpointsTests =
         }
 
     [<Fact>]
-    let ``getKeyTable with missing result`` () =
+    let ``GetAllAsync with missing result`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -539,7 +449,7 @@ module EndpointsTests =
 
             let table = "people"
 
-            let! response = Endpoints.getKeyTable testing.jsonOptions testing.httpClient testing.cancellationToken table
+            let! response = testing.surrealClient.Json.GetAllAsync(table, testing.cancellationToken)
 
             let expectedHeaders: HeadersInfo =
                 { version = DUMMY_VERSION
@@ -583,7 +493,7 @@ module EndpointsTests =
         }
 
     [<Fact>]
-    let ``postKeyTable with array response`` () =
+    let ``CreateAsync with array response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -619,8 +529,7 @@ module EndpointsTests =
                     testing.jsonOptions
                 )
 
-            let! response =
-                Endpoints.postKeyTable testing.jsonOptions testing.httpClient testing.cancellationToken table record
+            let! response = testing.surrealClient.Json.CreateAsync(table, record, testing.cancellationToken)
 
             test <@ testing.requests.Count = 1 @>
 
@@ -679,7 +588,7 @@ module EndpointsTests =
         }
 
     [<Fact>]
-    let ``deleteKeyTable with array response`` () =
+    let ``DeleteAllAsync with array response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -698,7 +607,7 @@ module EndpointsTests =
 
             let table = "people"
 
-            let! response = Endpoints.deleteKeyTable testing.jsonOptions testing.httpClient testing.cancellationToken table
+            let! response = testing.surrealClient.Json.DeleteAllAsync(table, testing.cancellationToken)
 
             test <@ testing.requests.Count = 1 @>
 
@@ -735,7 +644,7 @@ module EndpointsTests =
         }
 
     [<Fact>]
-    let ``getKeyTableId with array response`` () =
+    let ``GetAsync with array response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -762,15 +671,16 @@ module EndpointsTests =
             let table = "people"
             let recordId = "dr3mc523txrii4cfuczh"
 
-            let! response =
-                Endpoints.getKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId
+            let! response = testing.surrealClient.Json.GetAsync(table, recordId, testing.cancellationToken)
 
             test <@ testing.requests.Count = 1 @>
 
             let request = testing.requests.[0]
 
             test <@ request.Method = HttpMethod.Get @>
-            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
 
             let content = request.Content
             test <@ isNull content @>
@@ -811,7 +721,7 @@ module EndpointsTests =
         }
 
     [<Fact>]
-    let ``postKeyTableId with array response`` () =
+    let ``CreateAsync one with array response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -846,17 +756,19 @@ module EndpointsTests =
                     }""",
                     testing.jsonOptions
                 )
+
             let recordId = "john"
 
-            let! response =
-                Endpoints.postKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId record
+            let! response = testing.surrealClient.Json.CreateAsync(table, recordId, record, testing.cancellationToken)
 
             test <@ testing.requests.Count = 1 @>
 
             let request = testing.requests.[0]
 
             test <@ request.Method = HttpMethod.Post @>
-            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
 
             let content = request.Content
             test <@ not (isNull content) @>
@@ -908,7 +820,7 @@ module EndpointsTests =
         }
 
     [<Fact>]
-    let ``postKeyTableId with error response`` () =
+    let ``CreateAsync with error response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -936,10 +848,10 @@ module EndpointsTests =
                     }""",
                     testing.jsonOptions
                 )
+
             let recordId = "john"
 
-            let! response =
-                Endpoints.postKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId record
+            let! response = testing.surrealClient.Json.CreateAsync(table, recordId, record, testing.cancellationToken)
 
             let expectedHeaders: HeadersInfo =
                 { version = DUMMY_VERSION
@@ -964,7 +876,7 @@ module EndpointsTests =
         }
 
     [<Fact>]
-    let ``putKeyTableId with array response`` () =
+    let ``InsertOrUpdateAsync with array response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -999,17 +911,20 @@ module EndpointsTests =
                     }""",
                     testing.jsonOptions
                 )
+
             let recordId = "john"
 
             let! response =
-                Endpoints.putKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId record
+                testing.surrealClient.Json.InsertOrUpdateAsync(table, recordId, record, testing.cancellationToken)
 
             test <@ testing.requests.Count = 1 @>
 
             let request = testing.requests.[0]
 
             test <@ request.Method = HttpMethod.Put @>
-            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
 
             let content = request.Content
             test <@ not (isNull content) @>
@@ -1061,7 +976,7 @@ module EndpointsTests =
         }
 
     [<Fact>]
-    let ``patchKeyTableId with array response`` () =
+    let ``PatchAsync with array response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1094,17 +1009,19 @@ module EndpointsTests =
                     }""",
                     testing.jsonOptions
                 )
+
             let recordId = "john"
 
-            let! response =
-                Endpoints.patchKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId record
+            let! response = testing.surrealClient.Json.PatchAsync(table, recordId, record, testing.cancellationToken)
 
             test <@ testing.requests.Count = 1 @>
 
             let request = testing.requests.[0]
 
             test <@ request.Method = HttpMethod.Patch @>
-            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
 
             let content = request.Content
             test <@ not (isNull content) @>
@@ -1156,7 +1073,7 @@ module EndpointsTests =
         }
 
     [<Fact>]
-    let ``deleteKeyTableId with empty response`` () =
+    let ``DeleteAsync with empty response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1176,15 +1093,16 @@ module EndpointsTests =
             let table = "people"
             let recordId = "dr3mc523txrii4cfuczh"
 
-            let! response =
-                Endpoints.deleteKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId
+            let! response = testing.surrealClient.Json.DeleteAsync(table, recordId, testing.cancellationToken)
 
             test <@ testing.requests.Count = 1 @>
 
             let request = testing.requests.[0]
 
             test <@ request.Method = HttpMethod.Delete @>
-            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
 
             let content = request.Content
             test <@ isNull content @>
