@@ -45,7 +45,7 @@ module internal Internals =
 
             let result =
                 if response.IsSuccessStatusCode then
-                    Json.deserialize<StatementInfoJson []> jsonOptions content
+                    JsonSerializer.Deserialize<StatementInfoJson[]>(content, jsonOptions)
                     |> Array.map (fun json ->
                         match json.result, json.detail with
                         | Some result, _ ->
@@ -62,7 +62,7 @@ module internal Internals =
                               response = Error "Missing result and detail" })
                     |> Ok
                 else
-                    Json.deserialize<ErrorInfo> jsonOptions content
+                    JsonSerializer.Deserialize<ErrorInfo>(content, jsonOptions)
                     |> Error
 
             return { headers = headers; result = result }
@@ -112,7 +112,7 @@ module internal Internals =
             let request = new HttpRequestMessage(method, url)
 
             let json =
-                Json.serialize<JsonNode> jsonOptions json
+                JsonSerializer.Serialize<JsonNode>(json, (jsonOptions: JsonSerializerOptions))
 
             request.Content <- new StringContent(json, Encoding.UTF8, APPLICATION_JSON)
             return! executeRequest jsonOptions httpClient ct request

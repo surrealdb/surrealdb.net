@@ -5,18 +5,7 @@ open System.Collections.Generic
 open System.Text.Json.Nodes
 open System
 open System.Globalization
-open System.Net
 open System.Net.Http
-open System.Text
-open System.Text.Json
-open System.Text.Json.Nodes
-open System.Threading
-
-open Xunit
-open Swensen.Unquote
-
-open SurrealDB.Client.FSharp
-open SurrealDB.Client.FSharp.Rest
 
 let private (|JsonNodeType|_|) (node: JsonNode) =
     match node with

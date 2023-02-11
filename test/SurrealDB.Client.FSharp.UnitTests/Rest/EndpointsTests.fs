@@ -1,7 +1,6 @@
 namespace SurrealDB.Client.FSharp.Rest
 
 open System
-open System.Globalization
 open System.Net
 open System.Net.Http
 open System.Text
@@ -244,7 +243,7 @@ module EndpointsTests =
 
             use _ = testing.disposable
 
-            let query = "SELECT * FROM person WHERE age >= 18;"
+            let query = "SELECT * FROM people WHERE age >= 18;"
 
             let! response = Endpoints.postSql testing.jsonOptions testing.httpClient testing.cancellationToken query
 
@@ -288,13 +287,13 @@ module EndpointsTests =
                         {
                             "age": 19,
                             "firstName": "John",
-                            "id": "person:dr3mc523txrii4cfuczh",
+                            "id": "people:dr3mc523txrii4cfuczh",
                             "lastName": "Doe"
                         },
                         {
                             "age": 17,
                             "firstName": "Jane",
-                            "id": "person:zi1e78q4onfh6wypk5bz",
+                            "id": "people:zi1e78q4onfh6wypk5bz",
                             "lastName": "Doe"
                         }
                         ]
@@ -305,7 +304,7 @@ module EndpointsTests =
 
             let query =
                 """
-                INSERT INTO person
+                INSERT INTO people
                 (firstName, lastName, age) VALUES
                 ("John", "Doe", 19),
                 ("Jane", "Doe", 17);
@@ -325,13 +324,13 @@ module EndpointsTests =
                 {
                     "age": 19,
                     "firstName": "John",
-                    "id": "person:dr3mc523txrii4cfuczh",
+                    "id": "people:dr3mc523txrii4cfuczh",
                     "lastName": "Doe"
                 },
                 {
                     "age": 17,
                     "firstName": "Jane",
-                    "id": "person:zi1e78q4onfh6wypk5bz",
+                    "id": "people:zi1e78q4onfh6wypk5bz",
                     "lastName": "Doe"
                 }
                 ]""",
@@ -450,13 +449,13 @@ module EndpointsTests =
                                 {
                                     "age": 19,
                                     "firstName": "John",
-                                    "id": "person:dr3mc523txrii4cfuczh",
+                                    "id": "people:dr3mc523txrii4cfuczh",
                                     "lastName": "Doe"
                                 },
                                 {
                                     "age": 17,
                                     "firstName": "Jane",
-                                    "id": "person:zi1e78q4onfh6wypk5bz",
+                                    "id": "people:zi1e78q4onfh6wypk5bz",
                                     "lastName": "Doe"
                                 }
                             ]
@@ -491,13 +490,13 @@ module EndpointsTests =
                         {
                             "age": 19,
                             "firstName": "John",
-                            "id": "person:dr3mc523txrii4cfuczh",
+                            "id": "people:dr3mc523txrii4cfuczh",
                             "lastName": "Doe"
                         },
                         {
                             "age": 17,
                             "firstName": "Jane",
-                            "id": "person:zi1e78q4onfh6wypk5bz",
+                            "id": "people:zi1e78q4onfh6wypk5bz",
                             "lastName": "Doe"
                         }
                     ]""",
@@ -553,13 +552,13 @@ module EndpointsTests =
                         {
                             "age": 19,
                             "firstName": "John",
-                            "id": "person:dr3mc523txrii4cfuczh",
+                            "id": "people:dr3mc523txrii4cfuczh",
                             "lastName": "Doe"
                         },
                         {
                             "age": 17,
                             "firstName": "Jane",
-                            "id": "person:zi1e78q4onfh6wypk5bz",
+                            "id": "people:zi1e78q4onfh6wypk5bz",
                             "lastName": "Doe"
                         }
                     ]""",
@@ -598,7 +597,7 @@ module EndpointsTests =
                                 {
                                     "age": 19,
                                     "firstName": "John",
-                                    "id": "person:dr3mc523txrii4cfuczh",
+                                    "id": "people:dr3mc523txrii4cfuczh",
                                     "lastName": "Doe"
                                 }
                             ]
@@ -653,7 +652,7 @@ module EndpointsTests =
                 JsonSerializer.Deserialize<JsonNode>(
                     """[
                         {
-                            "id": "person:dr3mc523txrii4cfuczh",
+                            "id": "people:dr3mc523txrii4cfuczh",
                             "firstName": "John",
                             "lastName": "Doe",
                             "age": 19
@@ -750,7 +749,7 @@ module EndpointsTests =
                                 {
                                     "age": 19,
                                     "firstName": "John",
-                                    "id": "person:dr3mc523txrii4cfuczh",
+                                    "id": "people:dr3mc523txrii4cfuczh",
                                     "lastName": "Doe"
                                 }
                             ]
@@ -787,7 +786,7 @@ module EndpointsTests =
                         {
                             "age": 19,
                             "firstName": "John",
-                            "id": "person:dr3mc523txrii4cfuczh",
+                            "id": "people:dr3mc523txrii4cfuczh",
                             "lastName": "Doe"
                         }
                     ]""",
@@ -826,7 +825,7 @@ module EndpointsTests =
                                 {
                                     "age": 19,
                                     "firstName": "John",
-                                    "id": "person:john",
+                                    "id": "people:john",
                                     "lastName": "Doe"
                                 }
                             ]
@@ -882,7 +881,7 @@ module EndpointsTests =
                 JsonSerializer.Deserialize<JsonNode>(
                     """[
                         {
-                            "id": "person:john",
+                            "id": "people:john",
                             "firstName": "John",
                             "lastName": "Doe",
                             "age": 19
@@ -979,7 +978,7 @@ module EndpointsTests =
                                 {
                                     "age": 24,
                                     "firstName": "John",
-                                    "id": "person:john",
+                                    "id": "people:john",
                                     "lastName": "Doe"
                                 }
                             ]
@@ -1035,7 +1034,7 @@ module EndpointsTests =
                 JsonSerializer.Deserialize<JsonNode>(
                     """[
                         {
-                            "id": "person:john",
+                            "id": "people:john",
                             "firstName": "John",
                             "lastName": "Doe",
                             "age": 24
@@ -1076,7 +1075,7 @@ module EndpointsTests =
                                 {
                                     "age": 24,
                                     "firstName": "Johnny",
-                                    "id": "person:john",
+                                    "id": "people:john",
                                     "lastName": "Doe"
                                 }
                             ]
@@ -1130,7 +1129,7 @@ module EndpointsTests =
                 JsonSerializer.Deserialize<JsonNode>(
                     """[
                         {
-                            "id": "person:john",
+                            "id": "people:john",
                             "firstName": "Johnny",
                             "lastName": "Doe",
                             "age": 24

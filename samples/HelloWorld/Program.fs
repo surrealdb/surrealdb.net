@@ -1,5 +1,5 @@
 (
-    RawEndpoints.sample()
+    //RawEndpoints.sample()
     //JsonClient.sample()
-    //KeyValueClient.sample()
+    KeyValueClient.sample()
 ).GetAwaiter().GetResult()

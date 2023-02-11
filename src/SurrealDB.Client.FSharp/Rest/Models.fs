@@ -1,11 +1,7 @@
 namespace SurrealDB.Client.FSharp.Rest
 
 open System.Net
-open System.Net.Http
-open System.Text.Json
 open System.Text.Json.Nodes
-open System.Text.Json.Serialization
-open System.Threading
 
 open SurrealDB.Client.FSharp
 
@@ -36,12 +32,32 @@ type RestApiResult =
     { headers: HeadersInfo
       result: Result<StatementInfo [], ErrorInfo> }
 
+type ResponseErrorInfo =
+    { headers: HeadersInfo
+      error: ErrorInfo }
+
+type ProtocolErrorInfo =
+    { headers: HeadersInfo
+      error: string }
+
 type StatementErrorInfo =
-    { time: string
+    { headers: HeadersInfo
+      time: string
       status: string
       detail: string }
 
+    member this.timeSpan = TimeSpan.tryParse this.time
+
+type StatementResultInfo<'result> =
+    { headers: HeadersInfo
+      time: string
+      status: string
+      result: 'result }
+
+    member this.timeSpan = TimeSpan.tryParse this.time
+
+
 type RequestError =
-    | ResponseError of ErrorInfo
+    | ResponseError of ResponseErrorInfo
     | StatementError of StatementErrorInfo
-    | UnexpectedError of string
+    | ProtocolError of ProtocolErrorInfo

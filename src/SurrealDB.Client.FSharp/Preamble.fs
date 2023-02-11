@@ -9,10 +9,9 @@ open System.Text.RegularExpressions
 
 [<RequireQualifiedAccess>]
 module String =
-    let inline isWhiteSpace (s: string) = String.IsNullOrWhiteSpace s
-    let inline trimIfNotNull (s: string) = if isNull s then s else s.Trim()
+    let isWhiteSpace (s: string) = String.IsNullOrWhiteSpace s
 
-    let inline internal toBase64 (s: string) =
+    let internal toBase64 (s: string) =
         Convert.ToBase64String(Encoding.UTF8.GetBytes(s))
 
 [<RequireQualifiedAccess>]
@@ -78,9 +77,9 @@ module TimeSpan =
 
 [<RequireQualifiedAccess>]
 module Seq =
-    let inline getEnumerator (source: seq<'T>) = source.GetEnumerator()
-    let inline moveNext (enumerator: IEnumerator<'T>) = enumerator.MoveNext()
-    let inline getCurrent (enumerator: IEnumerator<'T>) = enumerator.Current
+    let getEnumerator (source: seq<'T>) = source.GetEnumerator()
+    let moveNext (enumerator: IEnumerator<'T>) = enumerator.MoveNext()
+    let getCurrent (enumerator: IEnumerator<'T>) = enumerator.Current
 
     let tryHeadValue source =
         use enumerator = getEnumerator source
@@ -89,39 +88,3 @@ module Seq =
             ValueSome(getCurrent enumerator)
         else
             ValueNone
-
-[<RequireQualifiedAccess>]
-module Json =
-    open System.Text.Json
-    open System.Text.Json.Nodes
-
-    let deserialize<'a> (options: JsonSerializerOptions) (json: string) =
-        JsonSerializer.Deserialize<'a>(json, options)
-
-    let serialize<'a> (options: JsonSerializerOptions) (data: 'a) =
-        JsonSerializer.Serialize<'a>(data, options)
-
-    let deserializeNode<'a> (options: JsonSerializerOptions) (json: JsonNode) = json.Deserialize<'a>(options)
-
-    let serializeNode<'a> (options: JsonSerializerOptions) (data: 'a) =
-        JsonSerializer.SerializeToNode<'a>(data, options)
-
-[<RequireQualifiedAccess>]
-module Task =
-    open System.Threading.Tasks
-
-    let map (f: 'a -> 'b) (ma: Task<'a>) =
-        task {
-            let! a = ma
-            return f a
-        }
-
-[<RequireQualifiedAccess>]
-module TaskResult =
-    open System.Threading.Tasks
-
-    let mapError (f: 'e -> 'e2) (ma: Task<Result<'a, 'e>>) =
-        task {
-            let! a = ma
-            return a |> Result.mapError f
-        }

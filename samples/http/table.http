@@ -50,7 +50,7 @@ DB: testdb
 }
 
 ### Upsert a single record into a table
-PUT http://localhost:8010/key/people/john
+PUT http://localhost:8010/key/people/johnny
 Content-Type: application/json
 Accept: application/json
 Authorization: Basic {{auth}}
@@ -64,7 +64,7 @@ DB: testdb
 }
 
 ### Patch a single record on a table
-PATCH http://localhost:8010/key/people/john
+PATCH http://localhost:8010/key/people/john3
 Content-Type: application/json
 Accept: application/json
 Authorization: Basic {{auth}}
