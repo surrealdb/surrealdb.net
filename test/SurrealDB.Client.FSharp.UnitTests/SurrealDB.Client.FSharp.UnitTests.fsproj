@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="TestUtils.fs" />
     <Compile Include="ConfigTests.fs" />
     <Compile Include="Rest\JsonUtils.fs" />
     <Compile Include="Rest\ModelsTests.fs" />

@@ -1,10 +1,11 @@
-module SurrealDB.Client.FSharp.Rest.EndpointsTests
+namespace SurrealDB.Client.FSharp.Rest
 
 open System
 open System.Globalization
 open System.Net
 open System.Net.Http
 open System.Text
+open System.Text.Json
 open System.Text.Json.Nodes
 open System.Threading
 
@@ -14,444 +15,1231 @@ open Swensen.Unquote
 open SurrealDB.Client.FSharp
 open SurrealDB.Client.FSharp.Rest
 
-let resultValue =
-    function
-    | Ok value -> value
-    | Error err -> failwith $"Expected Ok, got Error: %A{err}"
+[<Trait(Category, UnitTest)>]
+module EndpointsTests =
 
-let tryToOption =
-    function
-    | true, value -> Some value
-    | false, _ -> None
+    let resultValue =
+        function
+        | Ok value -> value
+        | Error err -> failwith $"Expected Ok, got Error: %A{err}"
 
-let tryGetHeaders name (headers: Headers.HttpRequestHeaders) =
-    headers.TryGetValues(name)
-    |> tryToOption
-    |> Option.map Seq.toList
+    let tryToOption =
+        function
+        | true, value -> Some value
+        | false, _ -> None
 
-let applyConfigTestCases () =
-    let johnDoeToken =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    let tryGetHeaders name (headers: Headers.HttpRequestHeaders) =
+        headers.TryGetValues(name)
+        |> tryToOption
+        |> Option.map Seq.toList
 
-    seq {
-        SurrealConfig
-            .Builder()
-            .WithBaseUrl("http://localhost:8010")
-            .WithNamespace("testns")
-            .WithDatabase("testdb")
-            .Build()
-        |> resultValue,
-        "testns",
-        "testdb",
-        "http://localhost:8010",
-        None
+    let applyConfigTestCases () =
+        let johnDoeToken =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
-        SurrealConfig
-            .Builder()
-            .WithBaseUrl("http://localhost:8010")
-            .WithNamespace("testns")
-            .WithDatabase("testdb")
-            .WithBasicCredentials("root", "root")
-            .Build()
-        |> resultValue,
-        "testns",
-        "testdb",
-        "http://localhost:8010",
-        Some "Basic cm9vdDpyb290"
+        seq {
+            SurrealConfig
+                .Builder()
+                .WithBaseUrl("http://localhost:8010")
+                .WithNamespace("testns")
+                .WithDatabase("testdb")
+                .Build()
+            |> resultValue,
+            "testns",
+            "testdb",
+            "http://localhost:8010",
+            None
 
-        SurrealConfig
-            .Builder()
-            .WithBaseUrl("http://localhost:8010")
-            .WithNamespace("testns")
-            .WithDatabase("testdb")
-            .WithBearerCredentials(johnDoeToken)
-            .Build()
-        |> resultValue,
-        "testns",
-        "testdb",
-        "http://localhost:8010",
-        Some $"Bearer {johnDoeToken}"
-    }
-    |> Seq.map (fun (config, ns, db, baseUrl, credentials) ->
-        [| config :> obj
-           ns
-           db
-           baseUrl
-           credentials |])
+            SurrealConfig
+                .Builder()
+                .WithBaseUrl("http://localhost:8010")
+                .WithNamespace("testns")
+                .WithDatabase("testdb")
+                .WithBasicCredentials("root", "root")
+                .Build()
+            |> resultValue,
+            "testns",
+            "testdb",
+            "http://localhost:8010",
+            Some "Basic cm9vdDpyb290"
 
-[<Theory>]
-[<MemberData(nameof (applyConfigTestCases))>]
-let ``applyConfig``
-    (config: SurrealConfig)
-    (expectedNs: string)
-    (expectedDb: string)
-    (expectedBaseUrl: string)
-    (expectedCredentials: string option)
-    =
-    use httpClient = new HttpClient()
+            SurrealConfig
+                .Builder()
+                .WithBaseUrl("http://localhost:8010")
+                .WithNamespace("testns")
+                .WithDatabase("testdb")
+                .WithBearerCredentials(johnDoeToken)
+                .Build()
+            |> resultValue,
+            "testns",
+            "testdb",
+            "http://localhost:8010",
+            Some $"Bearer {johnDoeToken}"
+        }
+        |> Seq.map (fun (config, ns, db, baseUrl, credentials) ->
+            [| config :> obj
+               ns
+               db
+               baseUrl
+               credentials |])
 
-    httpClient |> Endpoints.applyConfig config
+    [<Theory>]
+    [<MemberData(nameof (applyConfigTestCases))>]
+    let ``applyConfig``
+        (config: SurrealConfig)
+        (expectedNs: string)
+        (expectedDb: string)
+        (expectedBaseUrl: string)
+        (expectedCredentials: string option)
+        =
+        use httpClient = new HttpClient()
 
-    test <@ httpClient.BaseAddress = Uri(expectedBaseUrl) @>
+        httpClient |> Endpoints.applyConfig config
 
-    let acceptHeader =
-        httpClient.DefaultRequestHeaders
-        |> tryGetHeaders ACCEPT_HEADER
+        test <@ httpClient.BaseAddress = Uri(expectedBaseUrl) @>
 
-    test <@ acceptHeader = Some [ APPLICATION_JSON ] @>
+        let acceptHeader =
+            httpClient.DefaultRequestHeaders
+            |> tryGetHeaders ACCEPT_HEADER
 
-    let nsHeader =
-        httpClient.DefaultRequestHeaders
-        |> tryGetHeaders NS_HEADER
+        test <@ acceptHeader = Some [ APPLICATION_JSON ] @>
 
-    test <@ nsHeader = Some [ expectedNs ] @>
+        let nsHeader =
+            httpClient.DefaultRequestHeaders
+            |> tryGetHeaders NS_HEADER
 
-    let dbHeader =
-        httpClient.DefaultRequestHeaders
-        |> tryGetHeaders DB_HEADER
+        test <@ nsHeader = Some [ expectedNs ] @>
 
-    test <@ dbHeader = Some [ expectedDb ] @>
+        let dbHeader =
+            httpClient.DefaultRequestHeaders
+            |> tryGetHeaders DB_HEADER
 
-    let authHeader =
-        httpClient.DefaultRequestHeaders
-        |> tryGetHeaders AUTHORIZATION_HEADER
+        test <@ dbHeader = Some [ expectedDb ] @>
 
-    let expectedCredentials =
-        expectedCredentials
-        |> Option.map (fun value -> [ value ])
+        let authHeader =
+            httpClient.DefaultRequestHeaders
+            |> tryGetHeaders AUTHORIZATION_HEADER
 
-    test <@ authHeader = expectedCredentials @>
+        let expectedCredentials =
+            expectedCredentials
+            |> Option.map (fun value -> [ value ])
 
-let PORT = 8000
-let USER = "root"
-let PASS = "root"
-let NS = "testns"
-let DB = "testdb"
-let DUMMY_VERSION = "dummy-version"
-let DUMMY_SERVER = "dummy-server"
-let DUMMY_DATE = "Fri, 10 Feb 2023 20:49:37 GMT"
+        test <@ authHeader = expectedCredentials @>
 
-let DUMMY_DATETIME =
-    DateTime.Parse(DUMMY_DATE, CultureInfo.InvariantCulture, DateTimeStyles.None)
+    let PORT = 8000
+    let USER = "root"
+    let PASS = "root"
+    let NS = "testns"
+    let DB = "testdb"
+    let DUMMY_VERSION = "dummy-version"
+    let DUMMY_SERVER = "dummy-server"
+    let DUMMY_DATE = "Fri, 10 Feb 2023 20:49:37 GMT"
 
-let DUMMY_DATETIMEOFFSET =
-    DateTimeOffset.Parse(DUMMY_DATE, CultureInfo.InvariantCulture, DateTimeStyles.None)
+    let DUMMY_DATETIME =
+        DateTime.Parse(DUMMY_DATE, CultureInfo.InvariantCulture, DateTimeStyles.None)
 
-let prepareTest statusCode (responseJson: string) =
-    let config =
-        SurrealConfig
-            .Builder()
-            .WithBaseUrl($"http://localhost:%d{PORT}")
-            .WithBasicCredentials(USER, PASS)
-            .WithNamespace(NS)
-            .WithDatabase(DB)
-            .Build()
-        |> resultValue
+    let DUMMY_DATETIMEOFFSET =
+        DateTimeOffset.Parse(DUMMY_DATE, CultureInfo.InvariantCulture, DateTimeStyles.None)
 
-    let requests = ResizeArray()
+    let prepareTest statusCode (responseJson: string) =
+        let config =
+            SurrealConfig
+                .Builder()
+                .WithBaseUrl($"http://localhost:%d{PORT}")
+                .WithBasicCredentials(USER, PASS)
+                .WithNamespace(NS)
+                .WithDatabase(DB)
+                .Build()
+            |> resultValue
 
-    let handler =
-        { new HttpMessageHandler() with
-            override this.SendAsync(request, ct) =
-                task {
-                    requests.Add(request)
-                    let response = new HttpResponseMessage(statusCode)
-                    response.Headers.Add(VERSION_HEADER, DUMMY_VERSION)
-                    response.Headers.Add(SERVER_HEADER, DUMMY_SERVER)
-                    response.Headers.Add(DATE_HEADER, DUMMY_DATE)
+        let requests = ResizeArray()
 
-                    let content =
-                        new StringContent(responseJson, Encoding.UTF8, APPLICATION_JSON)
+        let handler =
+            { new HttpMessageHandler() with
+                override this.SendAsync(request, ct) =
+                    task {
+                        requests.Add(request)
+                        let response = new HttpResponseMessage(statusCode)
+                        response.Headers.Add(VERSION_HEADER, DUMMY_VERSION)
+                        response.Headers.Add(SERVER_HEADER, DUMMY_SERVER)
+                        response.Headers.Add(DATE_HEADER, DUMMY_DATE)
 
-                    response.Content <- content
-                    return response
-                } }
+                        let content =
+                            new StringContent(responseJson, Encoding.UTF8, APPLICATION_JSON)
 
-    let httpClient = new HttpClient(handler)
+                        response.Content <- content
+                        return response
+                    } }
 
-    Endpoints.applyConfig config httpClient
+        let httpClient = new HttpClient(handler)
 
-    let jsonOptions = SurrealConfig.defaultJsonOptions
+        Endpoints.applyConfig config httpClient
 
-    let cancellationTokenSource = new CancellationTokenSource()
+        let jsonOptions = SurrealConfig.defaultJsonOptions
 
-    let disposable =
-        { new IDisposable with
-            member this.Dispose() =
-                cancellationTokenSource.Dispose()
-                httpClient.Dispose() }
+        let cancellationTokenSource = new CancellationTokenSource()
 
-    {| config = config
-       httpClient = httpClient
-       jsonOptions = jsonOptions
-       requests = requests
-       cancellationTokenSource = cancellationTokenSource
-       cancellationToken = cancellationTokenSource.Token
-       disposable = disposable |}
+        let disposable =
+            { new IDisposable with
+                member this.Dispose() =
+                    cancellationTokenSource.Dispose()
+                    httpClient.Dispose() }
 
-[<Fact>]
-let ``postSql with error response`` () =
-    task {
-        let expectedStatus = HttpStatusCode.BadRequest
+        {| config = config
+           httpClient = httpClient
+           jsonOptions = jsonOptions
+           requests = requests
+           cancellationTokenSource = cancellationTokenSource
+           cancellationToken = cancellationTokenSource.Token
+           disposable = disposable |}
 
-        let testing =
-            prepareTest
-                expectedStatus
-                """{
-  "code": 400,
-  "details": "Request problems detected",
-  "description": "There is a problem with your request. Refer to the documentation for further information.",
-  "information": "There was a problem with the database: Parse error on line 1 at character 0 when parsing 'INFO FO R KV;\r\nUSE NS testns DB testdb;'"
-}"""
+    [<Fact>]
+    let ``postSql with error response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.BadRequest
 
-        use _ = testing.disposable
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """{
+                        "code": 400,
+                        "details": "Request problems detected",
+                        "description": "There is a problem with your request. Refer to the documentation for further information.",
+                        "information": "There was a problem with the database: Parse error on line 1 at character 0 when parsing 'INFO FO R KV;\r\nUSE NS testns DB testdb;'"
+                    }"""
 
-        let query =
-            """INFO FO R KV;
-USE NS testns DB testdb;"""
+            use _ = testing.disposable
 
-        let! response =
-            testing.httpClient
-            |> Endpoints.postSql testing.jsonOptions query testing.cancellationToken
+            let query =
+                """
+                INFO FO R KV;
+                USE NS testns DB testdb;
+                """
 
-        test <@ testing.requests.Count = 1 @>
+            let! response = Endpoints.postSql testing.jsonOptions testing.httpClient testing.cancellationToken query
 
-        let request = testing.requests.[0]
+            test <@ testing.requests.Count = 1 @>
 
-        test <@ request.Method = HttpMethod.Post @>
-        test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/sql", UriKind.Absolute) @>
+            let request = testing.requests.[0]
 
-        match request.Content with
-        | :? StringContent as content ->
+            test <@ request.Method = HttpMethod.Post @>
+            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/sql", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ not (isNull content) @>
+
             let contentType = content.Headers.ContentType
             test <@ contentType.MediaType = TEXT_PLAIN @>
             test <@ contentType.CharSet = "utf-8" @>
 
             let! text = content.ReadAsStringAsync()
             test <@ text = query @>
-        | _ -> Assert.Fail "Expected StringContent"
 
-        let expectedHeaders: HeadersInfo =
-            { version = DUMMY_VERSION
-              server = DUMMY_SERVER
-              status = expectedStatus
-              date = DUMMY_DATE }
+            let expectedHeaders: HeadersInfo =
+                { version = DUMMY_VERSION
+                  server = DUMMY_SERVER
+                  status = expectedStatus
+                  date = DUMMY_DATE }
 
-        let expectedResult: ErrorInfo =
-            { code = 400
-              details = "Request problems detected"
-              description = "There is a problem with your request. Refer to the documentation for further information."
-              information =
-                "There was a problem with the database: Parse error on line 1 at character 0 when parsing 'INFO FO R KV;\r\nUSE NS testns DB testdb;'" }
+            let expectedResult: ErrorInfo =
+                { code = 400
+                  details = "Request problems detected"
+                  description = "There is a problem with your request. Refer to the documentation for further information."
+                  information =
+                    "There was a problem with the database: Parse error on line 1 at character 0 when parsing 'INFO FO R KV;\r\nUSE NS testns DB testdb;'" }
 
-        test <@ response.headers = expectedHeaders @>
-        test <@ response.headers.dateTime = ValueSome(DUMMY_DATETIME) @>
-        test <@ response.headers.dateTimeOffset = ValueSome(DUMMY_DATETIMEOFFSET) @>
+            test <@ response.headers = expectedHeaders @>
+            test <@ response.headers.dateTime = ValueSome(DUMMY_DATETIME) @>
+            test <@ response.headers.dateTimeOffset = ValueSome(DUMMY_DATETIMEOFFSET) @>
 
-        match response.result with
-        | Ok _ -> Assert.Fail "Expected error response"
-        | Error result -> test <@ result = expectedResult @>
-    }
+            match response.result with
+            | Ok _ -> Assert.Fail "Expected error response"
+            | Error result -> test <@ result = expectedResult @>
+        }
 
-[<Fact>]
-let ``postSql with empty response`` () =
-    task {
-        let expectedStatus = HttpStatusCode.OK
+    [<Fact>]
+    let ``postSql with empty response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
 
-        let testing =
-            prepareTest
-                expectedStatus
-                """[
- {
-   "time": "16.2ms",
-   "status": "OK",
-   "result": []
- }
-]"""
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "16.2ms",
+                            "status": "OK",
+                            "result": []
+                        }
+                    ]"""
 
-        use _ = testing.disposable
+            use _ = testing.disposable
 
-        let query = "SELECT * FROM person WHERE age >= 18;"
+            let query = "SELECT * FROM person WHERE age >= 18;"
 
-        let! response =
-            testing.httpClient
-            |> Endpoints.postSql testing.jsonOptions query testing.cancellationToken
+            let! response = Endpoints.postSql testing.jsonOptions testing.httpClient testing.cancellationToken query
 
-        let expectedHeaders: HeadersInfo =
-            { version = DUMMY_VERSION
-              server = DUMMY_SERVER
-              status = expectedStatus
-              date = DUMMY_DATE }
+            let expectedHeaders: HeadersInfo =
+                { version = DUMMY_VERSION
+                  server = DUMMY_SERVER
+                  status = expectedStatus
+                  date = DUMMY_DATE }
 
-        let expectedJson = JsonArray()
+            let expectedJson = JsonArray()
 
-        test <@ response.headers = expectedHeaders @>
+            test <@ response.headers = expectedHeaders @>
 
-        match response.result with
-        | Error _ -> Assert.Fail "Expected success response"
-        | Ok result ->
-            test <@ result.Length = 1 @>
-            let first = result.[0]
-            test <@ first.time = "16.2ms" @>
-            test <@ first.timeSpan = ValueSome(TimeSpan.FromMilliseconds(16.2)) @>
-            test <@ first.status = "OK" @>
-
-            match first.response with
+            match response.result with
             | Error _ -> Assert.Fail "Expected success response"
-            | Ok json -> test <@ jsonDiff json expectedJson = [] @>
-    }
+            | Ok result ->
+                test <@ result.Length = 1 @>
+                let first = result.[0]
+                test <@ first.time = "16.2ms" @>
+                test <@ first.timeSpan = ValueSome(TimeSpan.FromMilliseconds(16.2)) @>
+                test <@ first.status = "OK" @>
 
-[<Fact>]
-let ``postSql with array response`` () =
-    task {
-        let expectedStatus = HttpStatusCode.OK
+                match first.response with
+                | Error _ -> Assert.Fail "Expected success response"
+                | Ok json -> test <@ jsonDiff json expectedJson = [] @>
+        }
 
-        let testing =
-            prepareTest
-                expectedStatus
-                """[
-  {
-    "time": "151.3µs",
-    "status": "OK",
-    "result": [
-      {
-        "age": 19,
-        "firstName": "John",
-        "id": "person:dr3mc523txrii4cfuczh",
-        "lastName": "Doe"
-      },
-      {
-        "age": 17,
-        "firstName": "Jane",
-        "id": "person:zi1e78q4onfh6wypk5bz",
-        "lastName": "Doe"
-      }
-    ]
-  }
-]"""
+    [<Fact>]
+    let ``postSql with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
 
-        use _ = testing.disposable
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                    {
+                        "time": "151.3µs",
+                        "status": "OK",
+                        "result": [
+                        {
+                            "age": 19,
+                            "firstName": "John",
+                            "id": "person:dr3mc523txrii4cfuczh",
+                            "lastName": "Doe"
+                        },
+                        {
+                            "age": 17,
+                            "firstName": "Jane",
+                            "id": "person:zi1e78q4onfh6wypk5bz",
+                            "lastName": "Doe"
+                        }
+                        ]
+                    }
+                    ]"""
 
-        let query =
-            """INSERT INTO person
-            (firstName, lastName, age) VALUES
-            ("John", "Doe", 19),
-            ("Jane", "Doe", 17);"""
+            use _ = testing.disposable
 
-        let! response =
-            testing.httpClient
-            |> Endpoints.postSql testing.jsonOptions query testing.cancellationToken
+            let query =
+                """
+                INSERT INTO person
+                (firstName, lastName, age) VALUES
+                ("John", "Doe", 19),
+                ("Jane", "Doe", 17);
+                """
 
-        let expectedHeaders: HeadersInfo =
-            { version = DUMMY_VERSION
-              server = DUMMY_SERVER
-              status = expectedStatus
-              date = DUMMY_DATE }
+            let! response = Endpoints.postSql testing.jsonOptions testing.httpClient testing.cancellationToken query
 
-        let expectedJson =
-            JsonArray(
-                JsonObject(
-                    dict [ "firstName", JsonValue.Create("John") :> JsonNode
-                           "lastName", JsonValue.Create("Doe")
-                           "age", JsonValue.Create(19)
-                           "id", JsonValue.Create("person:dr3mc523txrii4cfuczh") ]
-                ),
-                JsonObject(
-                    dict [ "firstName", JsonValue.Create("Jane") :> JsonNode
-                           "lastName", JsonValue.Create("Doe")
-                           "age", JsonValue.Create(17)
-                           "id", JsonValue.Create("person:zi1e78q4onfh6wypk5bz") ]
+            let expectedHeaders: HeadersInfo =
+                { version = DUMMY_VERSION
+                  server = DUMMY_SERVER
+                  status = expectedStatus
+                  date = DUMMY_DATE }
+
+            let expectedJson =
+                JsonSerializer.Deserialize<JsonNode>(
+                    """[
+                {
+                    "age": 19,
+                    "firstName": "John",
+                    "id": "person:dr3mc523txrii4cfuczh",
+                    "lastName": "Doe"
+                },
+                {
+                    "age": 17,
+                    "firstName": "Jane",
+                    "id": "person:zi1e78q4onfh6wypk5bz",
+                    "lastName": "Doe"
+                }
+                ]""",
+                    testing.jsonOptions
                 )
-            )
 
-        test <@ response.headers = expectedHeaders @>
+            test <@ response.headers = expectedHeaders @>
 
-        match response.result with
-        | Error _ -> Assert.Fail "Expected success response"
-        | Ok result ->
-            test <@ result.Length = 1 @>
-            let first = result.[0]
-            test <@ first.time = "151.3µs" @>
-            test <@ first.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-            test <@ first.status = "OK" @>
-
-            match first.response with
+            match response.result with
             | Error _ -> Assert.Fail "Expected success response"
-            | Ok json -> test <@ jsonDiff json expectedJson = [] @>
-    }
+            | Ok result ->
+                test <@ result.Length = 1 @>
+                let first = result.[0]
+                test <@ first.time = "151.3µs" @>
+                test <@ first.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
+                test <@ first.status = "OK" @>
 
-[<Fact>]
-let ``postSql with multiple and mixed responses`` () =
-    task {
-        let expectedStatus = HttpStatusCode.OK
+                match first.response with
+                | Error _ -> Assert.Fail "Expected success response"
+                | Ok json -> test <@ jsonDiff json expectedJson = [] @>
+        }
 
-        let testing =
-            prepareTest
-                expectedStatus
-                """[
-  {
-    "time": "3.4s",
-    "status": "OK",
-    "result": {
-      "ns": {
-        "testns": "DEFINE NAMESPACE testns"
-      }
-    }
-  },
-  {
-    "time": "4.4µs",
-    "status": "OK",
-    "result": null
-  }
-]"""
+    [<Fact>]
+    let ``postSql with multiple and mixed responses`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
 
-        use _ = testing.disposable
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "3.4s",
+                            "status": "OK",
+                            "result": {
+                                "ns": {
+                                    "testns": "DEFINE NAMESPACE testns"
+                                }
+                            }
+                        },
+                        {
+                            "time": "4.4µs",
+                            "status": "OK",
+                            "result": null
+                        }
+                    ]"""
 
-        let query =
-            """INFO FOR KV;
-USE NS testns DB testdb;"""
+            use _ = testing.disposable
 
-        let! response =
-            testing.httpClient
-            |> Endpoints.postSql testing.jsonOptions query testing.cancellationToken
+            let query =
+                """
+                INFO FOR KV;
+                USE NS testns DB testdb;
+                """
 
-        let expectedHeaders: HeadersInfo =
-            { version = DUMMY_VERSION
-              server = DUMMY_SERVER
-              status = expectedStatus
-              date = DUMMY_DATE }
+            let! response = Endpoints.postSql testing.jsonOptions testing.httpClient testing.cancellationToken query
 
-        let expectedJson1 =
-            JsonObject(
-                dict [ "ns", JsonObject(dict [
-                    "testns", JsonValue.Create("DEFINE NAMESPACE testns") :> JsonNode
-                ]) :> JsonNode ]
-            )
+            let expectedHeaders: HeadersInfo =
+                { version = DUMMY_VERSION
+                  server = DUMMY_SERVER
+                  status = expectedStatus
+                  date = DUMMY_DATE }
 
-        let expectedJson2 : JsonNode = JsonValue.Create(null)
+            let expectedJson1 =
+                JsonSerializer.Deserialize<JsonNode>(
+                    """{
+                        "ns": {
+                            "testns": "DEFINE NAMESPACE testns"
+                        }
+                    }""",
+                    testing.jsonOptions
+                )
 
-        test <@ response.headers = expectedHeaders @>
+            let expectedJson2: JsonNode =
+                JsonSerializer.Deserialize<JsonNode>("""null""", testing.jsonOptions)
 
-        match response.result with
-        | Error _ -> Assert.Fail "Expected success response"
-        | Ok result ->
-            test <@ result.Length = 2 @>
+            test <@ response.headers = expectedHeaders @>
 
-            let statement = result.[0]
-            test <@ statement.time = "3.4s" @>
-            test <@ statement.timeSpan = ValueSome(TimeSpan.FromSeconds(3.4)) @>
-            test <@ statement.status = "OK" @>
-
-            match statement.response with
+            match response.result with
             | Error _ -> Assert.Fail "Expected success response"
-            | Ok json -> test <@ jsonDiff json expectedJson1 = [] @>
+            | Ok result ->
+                test <@ result.Length = 2 @>
 
-            let statement = result.[1]
-            test <@ statement.time = "4.4µs" @>
-            test <@ statement.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.0044)) @>
-            test <@ statement.status = "OK" @>
+                let statement = result.[0]
+                test <@ statement.time = "3.4s" @>
+                test <@ statement.timeSpan = ValueSome(TimeSpan.FromSeconds(3.4)) @>
+                test <@ statement.status = "OK" @>
 
-            match statement.response with
+                match statement.response with
+                | Error _ -> Assert.Fail "Expected success response"
+                | Ok json -> test <@ jsonDiff json expectedJson1 = [] @>
+
+                let statement = result.[1]
+                test <@ statement.time = "4.4µs" @>
+                test <@ statement.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.0044)) @>
+                test <@ statement.status = "OK" @>
+
+                match statement.response with
+                | Error _ -> Assert.Fail "Expected success response"
+                | Ok json -> test <@ jsonDiff json expectedJson2 = [] @>
+        }
+
+    [<Fact>]
+    let ``getKeyTable with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": [
+                                {
+                                    "age": 19,
+                                    "firstName": "John",
+                                    "id": "person:dr3mc523txrii4cfuczh",
+                                    "lastName": "Doe"
+                                },
+                                {
+                                    "age": 17,
+                                    "firstName": "Jane",
+                                    "id": "person:zi1e78q4onfh6wypk5bz",
+                                    "lastName": "Doe"
+                                }
+                            ]
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let! response = Endpoints.getKeyTable testing.jsonOptions testing.httpClient testing.cancellationToken table
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Get @>
+            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ isNull content @>
+
+            let expectedHeaders: HeadersInfo =
+                { version = DUMMY_VERSION
+                  server = DUMMY_SERVER
+                  status = expectedStatus
+                  date = DUMMY_DATE }
+
+            let expectedJson =
+                JsonSerializer.Deserialize<JsonNode>(
+                    """[
+                        {
+                            "age": 19,
+                            "firstName": "John",
+                            "id": "person:dr3mc523txrii4cfuczh",
+                            "lastName": "Doe"
+                        },
+                        {
+                            "age": 17,
+                            "firstName": "Jane",
+                            "id": "person:zi1e78q4onfh6wypk5bz",
+                            "lastName": "Doe"
+                        }
+                    ]""",
+                    testing.jsonOptions
+                )
+
+            test <@ response.headers = expectedHeaders @>
+
+            match response.result with
             | Error _ -> Assert.Fail "Expected success response"
-            | Ok json -> test <@ jsonDiff json expectedJson2 = [] @>
-    }
+            | Ok result ->
+                test <@ result.Length = 1 @>
+                let first = result.[0]
+                test <@ first.time = "151.3µs" @>
+                test <@ first.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
+                test <@ first.status = "OK" @>
+
+                match first.response with
+                | Error _ -> Assert.Fail "Expected success response"
+                | Ok json -> test <@ jsonDiff json expectedJson = [] @>
+        }
+
+    [<Fact>]
+    let ``getKeyTable with missing result`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK"
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let! response = Endpoints.getKeyTable testing.jsonOptions testing.httpClient testing.cancellationToken table
+
+            let expectedHeaders: HeadersInfo =
+                { version = DUMMY_VERSION
+                  server = DUMMY_SERVER
+                  status = expectedStatus
+                  date = DUMMY_DATE }
+
+            let expectedJson =
+                JsonSerializer.Deserialize<JsonNode>(
+                    """[
+                        {
+                            "age": 19,
+                            "firstName": "John",
+                            "id": "person:dr3mc523txrii4cfuczh",
+                            "lastName": "Doe"
+                        },
+                        {
+                            "age": 17,
+                            "firstName": "Jane",
+                            "id": "person:zi1e78q4onfh6wypk5bz",
+                            "lastName": "Doe"
+                        }
+                    ]""",
+                    testing.jsonOptions
+                )
+
+            test <@ response.headers = expectedHeaders @>
+
+            match response.result with
+            | Error _ -> Assert.Fail "Expected success response"
+            | Ok result ->
+                test <@ result.Length = 1 @>
+                let first = result.[0]
+                test <@ first.time = "151.3µs" @>
+                test <@ first.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
+                test <@ first.status = "OK" @>
+
+                match first.response with
+                | Error error -> test <@ error = "Missing result and detail" @>
+                | Ok _ -> Assert.Fail "Expected error response"
+        }
+
+    [<Fact>]
+    let ``postKeyTable with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": [
+                                {
+                                    "age": 19,
+                                    "firstName": "John",
+                                    "id": "person:dr3mc523txrii4cfuczh",
+                                    "lastName": "Doe"
+                                }
+                            ]
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let record =
+                JsonSerializer.Deserialize<JsonNode>(
+                    """{
+                        "age": 19,
+                        "firstName": "John",
+                        "lastName": "Doe"
+                    }""",
+                    testing.jsonOptions
+                )
+
+            let! response =
+                Endpoints.postKeyTable testing.jsonOptions testing.httpClient testing.cancellationToken table record
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Post @>
+            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ not (isNull content) @>
+
+            let contentType = content.Headers.ContentType
+            test <@ contentType.MediaType = APPLICATION_JSON @>
+            test <@ contentType.CharSet = "utf-8" @>
+
+            let! text = content.ReadAsStringAsync()
+
+            let expectedRequestBody =
+                JsonSerializer.Serialize(record, testing.jsonOptions)
+
+            test <@ text = expectedRequestBody @>
+
+            let expectedHeaders: HeadersInfo =
+                { version = DUMMY_VERSION
+                  server = DUMMY_SERVER
+                  status = expectedStatus
+                  date = DUMMY_DATE }
+
+            let expectedJson =
+                JsonSerializer.Deserialize<JsonNode>(
+                    """[
+                        {
+                            "id": "person:dr3mc523txrii4cfuczh",
+                            "firstName": "John",
+                            "lastName": "Doe",
+                            "age": 19
+                        }
+                    ]""",
+                    testing.jsonOptions
+                )
+
+            test <@ response.headers = expectedHeaders @>
+
+            match response.result with
+            | Error _ -> Assert.Fail "Expected success response"
+            | Ok result ->
+                test <@ result.Length = 1 @>
+                let first = result.[0]
+                test <@ first.time = "151.3µs" @>
+                test <@ first.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
+                test <@ first.status = "OK" @>
+
+                match first.response with
+                | Error _ -> Assert.Fail "Expected success response"
+                | Ok json -> test <@ jsonDiff json expectedJson = [] @>
+        }
+
+    [<Fact>]
+    let ``deleteKeyTable with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": []
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let! response = Endpoints.deleteKeyTable testing.jsonOptions testing.httpClient testing.cancellationToken table
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Delete @>
+            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ isNull content @>
+
+            let expectedHeaders: HeadersInfo =
+                { version = DUMMY_VERSION
+                  server = DUMMY_SERVER
+                  status = expectedStatus
+                  date = DUMMY_DATE }
+
+            let expectedJson = JsonArray()
+
+            test <@ response.headers = expectedHeaders @>
+
+            match response.result with
+            | Error _ -> Assert.Fail "Expected success response"
+            | Ok result ->
+                test <@ result.Length = 1 @>
+                let first = result.[0]
+                test <@ first.time = "151.3µs" @>
+                test <@ first.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
+                test <@ first.status = "OK" @>
+
+                match first.response with
+                | Error _ -> Assert.Fail "Expected success response"
+                | Ok json -> test <@ jsonDiff json expectedJson = [] @>
+        }
+
+    [<Fact>]
+    let ``getKeyTableId with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": [
+                                {
+                                    "age": 19,
+                                    "firstName": "John",
+                                    "id": "person:dr3mc523txrii4cfuczh",
+                                    "lastName": "Doe"
+                                }
+                            ]
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+            let recordId = "dr3mc523txrii4cfuczh"
+
+            let! response =
+                Endpoints.getKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Get @>
+            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ isNull content @>
+
+            let expectedHeaders: HeadersInfo =
+                { version = DUMMY_VERSION
+                  server = DUMMY_SERVER
+                  status = expectedStatus
+                  date = DUMMY_DATE }
+
+            let expectedJson =
+                JsonSerializer.Deserialize<JsonNode>(
+                    """[
+                        {
+                            "age": 19,
+                            "firstName": "John",
+                            "id": "person:dr3mc523txrii4cfuczh",
+                            "lastName": "Doe"
+                        }
+                    ]""",
+                    testing.jsonOptions
+                )
+
+            test <@ response.headers = expectedHeaders @>
+
+            match response.result with
+            | Error _ -> Assert.Fail "Expected success response"
+            | Ok result ->
+                test <@ result.Length = 1 @>
+                let first = result.[0]
+                test <@ first.time = "151.3µs" @>
+                test <@ first.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
+                test <@ first.status = "OK" @>
+
+                match first.response with
+                | Error _ -> Assert.Fail "Expected success response"
+                | Ok json -> test <@ jsonDiff json expectedJson = [] @>
+        }
+
+    [<Fact>]
+    let ``postKeyTableId with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": [
+                                {
+                                    "age": 19,
+                                    "firstName": "John",
+                                    "id": "person:john",
+                                    "lastName": "Doe"
+                                }
+                            ]
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let record =
+                JsonSerializer.Deserialize<JsonNode>(
+                    """{
+                        "age": 19,
+                        "firstName": "John",
+                        "lastName": "Doe"
+                    }""",
+                    testing.jsonOptions
+                )
+            let recordId = "john"
+
+            let! response =
+                Endpoints.postKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId record
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Post @>
+            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ not (isNull content) @>
+
+            let contentType = content.Headers.ContentType
+            test <@ contentType.MediaType = APPLICATION_JSON @>
+            test <@ contentType.CharSet = "utf-8" @>
+
+            let! text = content.ReadAsStringAsync()
+
+            let expectedRequestBody =
+                JsonSerializer.Serialize(record, testing.jsonOptions)
+
+            test <@ text = expectedRequestBody @>
+
+            let expectedHeaders: HeadersInfo =
+                { version = DUMMY_VERSION
+                  server = DUMMY_SERVER
+                  status = expectedStatus
+                  date = DUMMY_DATE }
+
+            let expectedJson =
+                JsonSerializer.Deserialize<JsonNode>(
+                    """[
+                        {
+                            "id": "person:john",
+                            "firstName": "John",
+                            "lastName": "Doe",
+                            "age": 19
+                        }
+                    ]""",
+                    testing.jsonOptions
+                )
+
+            test <@ response.headers = expectedHeaders @>
+
+            match response.result with
+            | Error _ -> Assert.Fail "Expected success response"
+            | Ok result ->
+                test <@ result.Length = 1 @>
+                let first = result.[0]
+                test <@ first.time = "151.3µs" @>
+                test <@ first.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
+                test <@ first.status = "OK" @>
+
+                match first.response with
+                | Error _ -> Assert.Fail "Expected success response"
+                | Ok json -> test <@ jsonDiff json expectedJson = [] @>
+        }
+
+    [<Fact>]
+    let ``postKeyTableId with error response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "ERR",
+                            "detail": "Database record `people:john` already exists"
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let record =
+                JsonSerializer.Deserialize<JsonNode>(
+                    """{
+                        "age": 19,
+                        "firstName": "John",
+                        "lastName": "Doe"
+                    }""",
+                    testing.jsonOptions
+                )
+            let recordId = "john"
+
+            let! response =
+                Endpoints.postKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId record
+
+            let expectedHeaders: HeadersInfo =
+                { version = DUMMY_VERSION
+                  server = DUMMY_SERVER
+                  status = expectedStatus
+                  date = DUMMY_DATE }
+
+            test <@ response.headers = expectedHeaders @>
+
+            match response.result with
+            | Error _ -> Assert.Fail "Expected success response"
+            | Ok result ->
+                test <@ result.Length = 1 @>
+                let first = result.[0]
+                test <@ first.time = "151.3µs" @>
+                test <@ first.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
+                test <@ first.status = "ERR" @>
+
+                match first.response with
+                | Error error -> test <@ error = "Database record `people:john` already exists" @>
+                | Ok _ -> Assert.Fail "Expected error response"
+        }
+
+    [<Fact>]
+    let ``putKeyTableId with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": [
+                                {
+                                    "age": 24,
+                                    "firstName": "John",
+                                    "id": "person:john",
+                                    "lastName": "Doe"
+                                }
+                            ]
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let record =
+                JsonSerializer.Deserialize<JsonNode>(
+                    """{
+                        "age": 24,
+                        "firstName": "John",
+                        "lastName": "Doe"
+                    }""",
+                    testing.jsonOptions
+                )
+            let recordId = "john"
+
+            let! response =
+                Endpoints.putKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId record
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Put @>
+            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ not (isNull content) @>
+
+            let contentType = content.Headers.ContentType
+            test <@ contentType.MediaType = APPLICATION_JSON @>
+            test <@ contentType.CharSet = "utf-8" @>
+
+            let! text = content.ReadAsStringAsync()
+
+            let expectedRequestBody =
+                JsonSerializer.Serialize(record, testing.jsonOptions)
+
+            test <@ text = expectedRequestBody @>
+
+            let expectedHeaders: HeadersInfo =
+                { version = DUMMY_VERSION
+                  server = DUMMY_SERVER
+                  status = expectedStatus
+                  date = DUMMY_DATE }
+
+            let expectedJson =
+                JsonSerializer.Deserialize<JsonNode>(
+                    """[
+                        {
+                            "id": "person:john",
+                            "firstName": "John",
+                            "lastName": "Doe",
+                            "age": 24
+                        }
+                    ]""",
+                    testing.jsonOptions
+                )
+
+            test <@ response.headers = expectedHeaders @>
+
+            match response.result with
+            | Error _ -> Assert.Fail "Expected success response"
+            | Ok result ->
+                test <@ result.Length = 1 @>
+                let first = result.[0]
+                test <@ first.time = "151.3µs" @>
+                test <@ first.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
+                test <@ first.status = "OK" @>
+
+                match first.response with
+                | Error _ -> Assert.Fail "Expected success response"
+                | Ok json -> test <@ jsonDiff json expectedJson = [] @>
+        }
+
+    [<Fact>]
+    let ``patchKeyTableId with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": [
+                                {
+                                    "age": 24,
+                                    "firstName": "Johnny",
+                                    "id": "person:john",
+                                    "lastName": "Doe"
+                                }
+                            ]
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let record =
+                JsonSerializer.Deserialize<JsonNode>(
+                    """{
+                        "firstName": "Johnny"
+                    }""",
+                    testing.jsonOptions
+                )
+            let recordId = "john"
+
+            let! response =
+                Endpoints.patchKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId record
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Patch @>
+            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ not (isNull content) @>
+
+            let contentType = content.Headers.ContentType
+            test <@ contentType.MediaType = APPLICATION_JSON @>
+            test <@ contentType.CharSet = "utf-8" @>
+
+            let! text = content.ReadAsStringAsync()
+
+            let expectedRequestBody =
+                JsonSerializer.Serialize(record, testing.jsonOptions)
+
+            test <@ text = expectedRequestBody @>
+
+            let expectedHeaders: HeadersInfo =
+                { version = DUMMY_VERSION
+                  server = DUMMY_SERVER
+                  status = expectedStatus
+                  date = DUMMY_DATE }
+
+            let expectedJson =
+                JsonSerializer.Deserialize<JsonNode>(
+                    """[
+                        {
+                            "id": "person:john",
+                            "firstName": "Johnny",
+                            "lastName": "Doe",
+                            "age": 24
+                        }
+                    ]""",
+                    testing.jsonOptions
+                )
+
+            test <@ response.headers = expectedHeaders @>
+
+            match response.result with
+            | Error _ -> Assert.Fail "Expected success response"
+            | Ok result ->
+                test <@ result.Length = 1 @>
+                let first = result.[0]
+                test <@ first.time = "151.3µs" @>
+                test <@ first.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
+                test <@ first.status = "OK" @>
+
+                match first.response with
+                | Error _ -> Assert.Fail "Expected success response"
+                | Ok json -> test <@ jsonDiff json expectedJson = [] @>
+        }
+
+    [<Fact>]
+    let ``deleteKeyTableId with empty response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": []
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+            let recordId = "dr3mc523txrii4cfuczh"
+
+            let! response =
+                Endpoints.deleteKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Delete @>
+            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ isNull content @>
+
+            let expectedHeaders: HeadersInfo =
+                { version = DUMMY_VERSION
+                  server = DUMMY_SERVER
+                  status = expectedStatus
+                  date = DUMMY_DATE }
+
+            let expectedJson = JsonArray()
+
+            test <@ response.headers = expectedHeaders @>
+
+            match response.result with
+            | Error _ -> Assert.Fail "Expected success response"
+            | Ok result ->
+                test <@ result.Length = 1 @>
+                let first = result.[0]
+                test <@ first.time = "151.3µs" @>
+                test <@ first.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
+                test <@ first.status = "OK" @>
+
+                match first.response with
+                | Error _ -> Assert.Fail "Expected success response"
+                | Ok json -> test <@ jsonDiff json expectedJson = [] @>
+        }

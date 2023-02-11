@@ -51,15 +51,15 @@ let sample () =
         let johnJson =
             JsonSerializer.SerializeToNode(john, jsonOptions)
 
-        let! createJohnResult = Endpoints.postKeyTableId jsonOptions "people" "john" johnJson ct httpClient
+        let! createJohnResult = Endpoints.postKeyTableId jsonOptions httpClient ct "people" "john" johnJson
 
         printfn "Create John result:\n%A" createJohnResult
 
-        let! peopleResult = Endpoints.getKeyTable jsonOptions "people" ct httpClient
+        let! peopleResult = Endpoints.getKeyTable jsonOptions httpClient ct "people"
 
         printfn "Get people result:\n%A" peopleResult
 
-        let! infoKv = Endpoints.postSql jsonOptions "INFO FOR KV;" ct httpClient
+        let! infoKv = Endpoints.postSql jsonOptions httpClient ct "INFO FOR KV;"
 
         printfn "INFO FOR KV:\n%A" infoKv
     }

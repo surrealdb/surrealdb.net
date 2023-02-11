@@ -1,4 +1,4 @@
-module SurrealDB.Client.FSharp.Rest.EndpointsTests
+namespace SurrealDB.Client.FSharp.Rest
 
 open System
 open System.Collections.Generic
@@ -21,84 +21,88 @@ open Xunit
 open SurrealDB.Client.FSharp
 open SurrealDB.Client.FSharp.Rest
 
+[<Xunit.Trait(Category, IntegrationTest)>]
+module EndpointsTests =
 
-let resultValue =
-    function
-    | Ok value -> value
-    | Error err -> failwith $"Expected Ok, got Error: %A{err}"
+    let resultValue =
+        function
+        | Ok value -> value
+        | Error err -> failwith $"Expected Ok, got Error: %A{err}"
 
-let DockerImage = "surrealdb/surrealdb:latest"
-let PORT = 8000
-let USER = "root"
-let PASS = "root"
-let NS = "testns"
-let DB = "testdb"
+    let DockerImage = "surrealdb/surrealdb:latest"
+    let PORT = 8000
+    let USER = "root"
+    let PASS = "root"
+    let NS = "testns"
+    let DB = "testdb"
 
-let startContainer () =
-    task {
-        let container =
-            ContainerBuilder()
-                .WithImage(DockerImage)
-                .WithEnvironment("USER", USER)
-                .WithEnvironment("PASS", PASS)
-                .WithEnvironment("STRICT", "false")
-                .WithPortBinding(PORT, true)
-                .WithCommand("start", "memory")
-                .Build()
+    let startContainer () =
+        task {
+            let container =
+                ContainerBuilder()
+                    .WithImage(DockerImage)
+                    .WithEnvironment("USER", USER)
+                    .WithEnvironment("PASS", PASS)
+                    .WithEnvironment("STRICT", "false")
+                    .WithPortBinding(PORT, true)
+                    .WithCommand("start", "memory")
+                    .Build()
 
-        do! container.StartAsync().ConfigureAwait(false)
+            do! container.StartAsync().ConfigureAwait(false)
 
-        let httpPort = container.GetMappedPublicPort(PORT)
+            let httpPort = container.GetMappedPublicPort(PORT)
 
-        let config =
-            SurrealConfig
-                .Builder()
-                .WithBaseUrl($"http://localhost:%d{httpPort}")
-                .WithBasicCredentials(USER, PASS)
-                .WithNamespace(NS)
-                .WithDatabase(DB)
-                .Build()
-            |> resultValue
+            let config =
+                SurrealConfig
+                    .Builder()
+                    .WithBaseUrl($"http://localhost:%d{httpPort}")
+                    .WithBasicCredentials(USER, PASS)
+                    .WithNamespace(NS)
+                    .WithDatabase(DB)
+                    .Build()
+                |> resultValue
 
-        let httpClient = new HttpClient()
+            let httpClient = new HttpClient()
 
-        Endpoints.applyConfig config httpClient
+            Endpoints.applyConfig config httpClient
 
-        let jsonOptions = SurrealConfig.defaultJsonOptions
+            let jsonOptions = SurrealConfig.defaultJsonOptions
 
-        let cancellationTokenSource = new CancellationTokenSource()
+            let cancellationTokenSource = new CancellationTokenSource()
 
-        let disposable =
-            { new IAsyncDisposable with
-                member this.DisposeAsync() =
-                    task {
-                        cancellationTokenSource.Dispose()
-                        httpClient.Dispose()
-                        do! container.StopAsync()
-                    }
-                    |> ValueTask }
+            let disposable =
+                { new IAsyncDisposable with
+                    member this.DisposeAsync() =
+                        task {
+                            cancellationTokenSource.Dispose()
+                            httpClient.Dispose()
+                            do! container.StopAsync()
+                        }
+                        |> ValueTask }
 
-        return
-            {| container = container
-               config = config
-               httpClient = httpClient
-               jsonOptions = jsonOptions
-               cancellationTokenSource = cancellationTokenSource
-               cancellationToken = cancellationTokenSource.Token
-               disposable = disposable |}
-    }
+            return
+                {| container = container
+                   config = config
+                   httpClient = httpClient
+                   jsonOptions = jsonOptions
+                   cancellationTokenSource = cancellationTokenSource
+                   cancellationToken = cancellationTokenSource.Token
+                   disposable = disposable |}
+        }
 
-//[<Fact>]
-//let ``Endpoints.postSql`` () =
-//    task {
-//        let! testing = startContainer ()
-//        use _ = testing.disposable
+    //[<Fact>]
+    let ``Endpoints.postSql`` () =
+        task {
+            let! testing = startContainer ()
+            use _ = testing.disposable
 
-//        let! result = Endpoints.getKeyTable testing.jsonOptions "people" testing.cancellationToken testing.httpClient
+            let table = "people"
+        
+            let! response = Endpoints.getKeyTable testing.jsonOptions testing.httpClient testing.cancellationToken table
 
-//        match result.headers.dateTime with
-//        | ValueSome dateTime ->
-//            test <@ dateTime <= DateTime.Now @>
-//            test <@ dateTime > DateTime.Now.AddMinutes(-1.0) @>
-//        | ValueNone -> ()
-//    }
+            match response.headers.dateTime with
+            | ValueSome dateTime ->
+                test <@ dateTime <= DateTime.Now @>
+                test <@ dateTime > DateTime.Now.AddMinutes(-1.0) @>
+            | ValueNone -> ()
+        }

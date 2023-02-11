@@ -1,14 +1,8 @@
-module SurrealDB.Client.FSharp.Rest.ModelsTests
+namespace SurrealDB.Client.FSharp.Rest
 
 open System
-open System.Collections.Generic
 open System.Globalization
-open System.Net
-open System.Net.Http
-open System.Text
-open System.Text.Json
 open System.Text.Json.Nodes
-open System.Threading
 
 open Xunit
 open Swensen.Unquote
@@ -16,35 +10,38 @@ open Swensen.Unquote
 open SurrealDB.Client.FSharp
 open SurrealDB.Client.FSharp.Rest
 
-let emptyHeaders =
-    { version = ""
-      server = ""
-      status = enum 0
-      date = "" }
+[<Trait(Category, UnitTest)>]
+module ModelsTests =
 
-let emptyStatement =
-    { time = ""
-      status = ""
-      response = Ok(JsonValue.Create(null)) }
+    let emptyHeaders =
+        { version = ""
+          server = ""
+          status = enum 0
+          date = "" }
 
-[<Fact>]
-let ``HeadersInfo.dateTime`` () =
-    let info =
-        { emptyHeaders with date = "Mon, 06 Feb 2023 16:52:39 GMT" }
+    let emptyStatement =
+        { time = ""
+          status = ""
+          response = Ok(JsonValue.Create(null)) }
 
-    let expectedDateTime =
-        DateTime.Parse(info.date, CultureInfo.InvariantCulture, DateTimeStyles.None)
+    [<Fact>]
+    let ``HeadersInfo.dateTime`` () =
+        let info =
+            { emptyHeaders with date = "Mon, 06 Feb 2023 16:52:39 GMT" }
 
-    let dateTime = info.dateTime
-    test <@ dateTime = ValueSome expectedDateTime @>
+        let expectedDateTime =
+            DateTime.Parse(info.date, CultureInfo.InvariantCulture, DateTimeStyles.None)
 
-[<Fact>]
-let ``HeadersInfo.dateTimeOffset`` () =
-    let info =
-        { emptyHeaders with date = "Mon, 06 Feb 2023 16:52:39 GMT" }
+        let dateTime = info.dateTime
+        test <@ dateTime = ValueSome expectedDateTime @>
 
-    let expectedDateTime =
-        DateTimeOffset.Parse(info.date, CultureInfo.InvariantCulture, DateTimeStyles.None)
+    [<Fact>]
+    let ``HeadersInfo.dateTimeOffset`` () =
+        let info =
+            { emptyHeaders with date = "Mon, 06 Feb 2023 16:52:39 GMT" }
 
-    let dateTimeOffset = info.dateTimeOffset
-    test <@ dateTimeOffset = ValueSome expectedDateTime @>
+        let expectedDateTime =
+            DateTimeOffset.Parse(info.date, CultureInfo.InvariantCulture, DateTimeStyles.None)
+
+        let dateTimeOffset = info.dateTimeOffset
+        test <@ dateTimeOffset = ValueSome expectedDateTime @>

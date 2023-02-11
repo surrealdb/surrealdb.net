@@ -29,13 +29,13 @@ NS: testns
 DB: testdb
 
 ### Select a single record from a table
-GET http://localhost:8010/key/people/john1
+GET http://localhost:8010/key/people/xo6dvwa7en8ya7zrnboe
 Accept: application/json
 Authorization: Basic {{auth}}
 NS: testns
 DB: testdb
 
-### Insert a single record into a table with no key
+### Insert a single record into a table with a key
 POST http://localhost:8010/key/people/john
 Content-Type: application/json
 Accept: application/json
@@ -49,7 +49,33 @@ DB: testdb
     "age": 20
 }
 
-### Deletes all records from a table
+### Upsert a single record into a table
+PUT http://localhost:8010/key/people/john
+Content-Type: application/json
+Accept: application/json
+Authorization: Basic {{auth}}
+NS: testns
+DB: testdb
+
+{
+    "firstName": "John",
+    "lastName": "Doe",
+    "age": 24
+}
+
+### Patch a single record on a table
+PATCH http://localhost:8010/key/people/john
+Content-Type: application/json
+Accept: application/json
+Authorization: Basic {{auth}}
+NS: testns
+DB: testdb
+
+{
+    "firstName": "Johnny",
+}
+
+### Deletes one record from a table
 DELETE http://localhost:8010/key/people/john
 Accept: application/json
 Authorization: Basic {{auth}}
