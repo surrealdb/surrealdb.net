@@ -24,7 +24,7 @@ type SurrealRestClient(config, httpClient, ?jsonOptions) =
 
     let jsonOptions =
         jsonOptions
-        |> Option.defaultValue SurrealConfig.defaultJsonOptions
+        |> Option.defaultValue Json.defaultOptions
 
     let jsonClient : ISurrealRestJsonClient =
         SurrealRestJsonClient(httpClient, jsonOptions)

@@ -51,7 +51,7 @@ module EndpointsTests =
 
         Endpoints.applyConfig config httpClient
 
-        let jsonOptions = SurrealConfig.defaultJsonOptions
+        let jsonOptions = Json.defaultOptions
 
         let cancellationTokenSource = new CancellationTokenSource()
 

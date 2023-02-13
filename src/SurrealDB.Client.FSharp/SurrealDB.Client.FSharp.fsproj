@@ -12,6 +12,7 @@
     <Compile Include="Preamble.fs" />
     <Compile Include="Constants.fs" />
     <Compile Include="SurrealId.fs" />
+    <Compile Include="Json.fs" />
     <Compile Include="Config.fs" />
     <Compile Include="Rest\Constants.fs" />
     <Compile Include="Rest\Models.fs" />

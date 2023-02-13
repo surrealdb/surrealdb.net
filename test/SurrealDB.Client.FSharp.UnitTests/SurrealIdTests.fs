@@ -93,14 +93,14 @@ module SurrealIdTests =
     [<Fact>]
     let ``Serialize as JSON``() =
         let data = [| SurrealId.Parse("people:john") |]
-        let actual = JsonSerializer.Serialize(data, SurrealConfig.defaultJsonOptions)
+        let actual = JsonSerializer.Serialize(data, Json.defaultOptions)
         let expected = "[\"people:john\"]"
         test <@ actual = expected @>
 
     [<Fact>]
     let ``Deserialize from JSON``() =
         let json = "[\"people:john\"]"
-        let actual = JsonSerializer.Deserialize<SurrealId[]>(json, SurrealConfig.defaultJsonOptions)
+        let actual = JsonSerializer.Deserialize<SurrealId[]>(json, Json.defaultOptions)
         let expected = [| SurrealId.Parse("people:john") |]
         test <@ actual = expected @>
 

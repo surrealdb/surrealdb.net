@@ -71,41 +71,6 @@ module SurrealConfig =
     [<Literal>]
     let FORMAT = "FORMAT"
 
-    /// <summary>
-    /// Creates a new <see cref="JsonSerializerOptions"/> instance from the given <see cref="JsonFSharpOptions"/>.
-    /// </summary>
-    /// <param name="options">The <see cref="JsonFSharpOptions"/> to use.</param>
-    /// <returns>A new <see cref="JsonSerializerOptions"/> instance.</returns>
-    /// <remarks>
-    /// The <see cref="JsonFSharpOptions"/> is configured to skip null fields on option types.
-    /// </remarks>
-    let configJsonOptionsFrom (options: JsonFSharpOptions) =
-        let options =
-            options
-                .WithSkippableOptionFields(true)
-                .ToJsonSerializerOptions()
-
-        options.Converters.Insert(0, SurrealIdConverter())
-
-        options
-
-    /// <summary>
-    /// Creates a new <see cref="JsonSerializerOptions"/> instance from the default
-    /// <see cref="JsonFSharpOptions"/>.
-    /// </summary>
-    let configJsonOptions () =
-        JsonFSharpOptions.Default()
-        |> configJsonOptionsFrom
-
-    /// <summary>
-    /// The default <see cref="JsonSerializerOptions"/> instance.
-    /// </summary>
-    /// <remarks>
-    /// Use this instance as much as possible to avoid creating new instances, which is expensive.
-    /// <see href="https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/configure-options?pivots=dotnet-6-0"/>
-    /// </remarks>
-    let defaultJsonOptions = configJsonOptions()
-
 /// <summary>
 /// Represents a validated configuration for a SurrealDB client.
 /// Use the <see cref="SurrealConfig.Builder"/> static method to start building a configuration.

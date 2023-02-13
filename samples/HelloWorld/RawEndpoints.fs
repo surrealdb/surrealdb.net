@@ -33,7 +33,7 @@ let sample () =
         printfn "Config: %A" config
 
         use httpClient = new HttpClient()
-        let jsonOptions = SurrealConfig.defaultJsonOptions
+        let jsonOptions = Json.defaultOptions
 
         Endpoints.applyConfig config httpClient
 
