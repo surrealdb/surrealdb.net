@@ -49,14 +49,14 @@ module JsonClientTests =
 
         let httpClient = new HttpClient(handler)
 
-        Endpoints.applyConfig config httpClient
+        do Endpoints.applyConfig config httpClient
 
         let jsonOptions = Json.defaultOptions
 
         let cancellationTokenSource = new CancellationTokenSource()
 
         let surrealClient: ISurrealRestClient =
-            new SurrealRestClient(config, httpClient, jsonOptions)
+            new SurrealRestClient(httpClient, jsonOptions)
 
         let disposable =
             { new IDisposable with

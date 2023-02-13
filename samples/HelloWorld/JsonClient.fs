@@ -34,9 +34,9 @@ let sample () =
 
         use httpClient = new HttpClient()
         let jsonOptions = Json.defaultOptions
+        do Endpoints.applyConfig config httpClient
 
-        use client =
-            new SurrealRestClient(config, httpClient)
+        use client = new SurrealRestClient(httpClient)
 
         let client = client :> ISurrealRestClient
 

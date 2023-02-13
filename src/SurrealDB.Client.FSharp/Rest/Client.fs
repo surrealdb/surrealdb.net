@@ -19,9 +19,7 @@ type ISurrealRestClient =
     /// </summary>
     abstract KeyValue : ISurrealRestKeyValueClient with get
 
-type SurrealRestClient(config, httpClient, ?jsonOptions) =
-    do Endpoints.applyConfig config httpClient
-
+type SurrealRestClient(httpClient, ?jsonOptions) =
     let jsonOptions =
         jsonOptions
         |> Option.defaultValue Json.defaultOptions
