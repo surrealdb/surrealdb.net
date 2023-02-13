@@ -14,6 +14,7 @@
     <Compile Include="SurrealId.fs" />
     <Compile Include="Json.fs" />
     <Compile Include="Config.fs" />
+    <Compile Include="Models.fs" />
     <Compile Include="Rest\Constants.fs" />
     <Compile Include="Rest\Models.fs" />
     <Compile Include="Rest\Endpoints.fs" />

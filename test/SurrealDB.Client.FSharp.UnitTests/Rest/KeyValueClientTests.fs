@@ -151,20 +151,10 @@ module KeyValueClientTests =
 
             test <@ jsonDiff requestJson expectedRequestJson = [] @>
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
             | Error _ -> Assert.Fail "Expected success response"
             | Ok result ->
-                test <@ result.headers = expectedHeaders @>
-                test <@ result.time = "151.3µs" @>
-                test <@ result.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ result.status = "OK" @>
-                test <@ result.result = expectedRecord @>
+                test <@ result = expectedRecord @>
         }
 
     [<Fact>]
@@ -224,20 +214,10 @@ module KeyValueClientTests =
 
             test <@ jsonDiff requestJson expectedRequestJson = [] @>
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
             | Error _ -> Assert.Fail "Expected success response"
             | Ok result ->
-                test <@ result.headers = expectedHeaders @>
-                test <@ result.time = "151.3µs" @>
-                test <@ result.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ result.status = "OK" @>
-                test <@ result.result = record @>
+                test <@ result = record @>
         }
 
     [<Fact>]
@@ -288,20 +268,10 @@ module KeyValueClientTests =
                     testing.cancellationToken
                 )
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
             | Error _ -> Assert.Fail "Expected success response"
             | Ok result ->
-                test <@ result.headers = expectedHeaders @>
-                test <@ result.time = "151.3µs" @>
-                test <@ result.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ result.status = "OK" @>
-                test <@ result.result = expectedRecord @>
+                test <@ result = expectedRecord @>
         }
 
     [<Fact>]
@@ -342,20 +312,10 @@ module KeyValueClientTests =
             let! response =
                 testing.surrealClient.KeyValue.CreateAsync(table, recordId, record, testing.cancellationToken)
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
             | Error _ -> Assert.Fail "Expected success response"
             | Ok result ->
-                test <@ result.headers = expectedHeaders @>
-                test <@ result.time = "151.3µs" @>
-                test <@ result.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ result.status = "OK" @>
-                test <@ result.result = record @>
+                test <@ result = record @>
         }
 
     [<Fact>]
@@ -406,20 +366,10 @@ module KeyValueClientTests =
                     testing.cancellationToken
                 )
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
             | Error _ -> Assert.Fail "Expected success response"
             | Ok result ->
-                test <@ result.headers = expectedHeaders @>
-                test <@ result.time = "151.3µs" @>
-                test <@ result.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ result.status = "OK" @>
-                test <@ result.result = expectedRecord @>
+                test <@ result = expectedRecord @>
         }
 
     [<Fact>]
@@ -460,20 +410,10 @@ module KeyValueClientTests =
             let! response =
                 testing.surrealClient.KeyValue.InsertOrUpdateAsync(table, recordId, record, testing.cancellationToken)
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
             | Error _ -> Assert.Fail "Expected success response"
             | Ok result ->
-                test <@ result.headers = expectedHeaders @>
-                test <@ result.time = "151.3µs" @>
-                test <@ result.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ result.status = "OK" @>
-                test <@ result.result = record @>
+                test <@ result = record @>
         }
 
     [<Fact>]
@@ -521,20 +461,10 @@ module KeyValueClientTests =
                     testing.cancellationToken
                 )
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
             | Error _ -> Assert.Fail "Expected success response"
             | Ok result ->
-                test <@ result.headers = expectedHeaders @>
-                test <@ result.time = "151.3µs" @>
-                test <@ result.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ result.status = "OK" @>
-                test <@ result.result = expectedRecord @>
+                test <@ result = expectedRecord @>
         }
 
     [<Fact>]
@@ -582,20 +512,10 @@ module KeyValueClientTests =
 
             let! response = testing.surrealClient.KeyValue.GetAllAsync<Person>(table, testing.cancellationToken)
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
             | Error _ -> Assert.Fail "Expected success response"
             | Ok result ->
-                test <@ result.headers = expectedHeaders @>
-                test <@ result.time = "151.3µs" @>
-                test <@ result.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ result.status = "OK" @>
-                test <@ result.result = expectedRecords @>
+                test <@ result = expectedRecords @>
         }
 
     [<Fact>]
@@ -634,20 +554,10 @@ module KeyValueClientTests =
 
             let! response = testing.surrealClient.KeyValue.GetAsync<Person>(table, recordId, testing.cancellationToken)
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
             | Error _ -> Assert.Fail "Expected success response"
             | Ok result ->
-                test <@ result.headers = expectedHeaders @>
-                test <@ result.time = "151.3µs" @>
-                test <@ result.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ result.status = "OK" @>
-                test <@ result.result = ValueSome expectedRecord @>
+                test <@ result = ValueSome expectedRecord @>
         }
 
     [<Fact>]
@@ -673,20 +583,10 @@ module KeyValueClientTests =
 
             let! response = testing.surrealClient.KeyValue.GetAsync<Person>(table, recordId, testing.cancellationToken)
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
             | Error _ -> Assert.Fail "Expected success response"
             | Ok result ->
-                test <@ result.headers = expectedHeaders @>
-                test <@ result.time = "151.3µs" @>
-                test <@ result.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ result.status = "OK" @>
-                test <@ result.result = ValueNone @>
+                test <@ result = ValueNone @>
         }
 
     [<Fact>]
@@ -711,20 +611,10 @@ module KeyValueClientTests =
 
             let! response = testing.surrealClient.KeyValue.DeleteAllAsync(table, testing.cancellationToken)
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
             | Error _ -> Assert.Fail "Expected success response"
             | Ok result ->
-                test <@ result.headers = expectedHeaders @>
-                test <@ result.time = "151.3µs" @>
-                test <@ result.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ result.status = "OK" @>
-                test <@ result.result = () @>
+                test <@ result = () @>
         }
 
     [<Fact>]
@@ -750,20 +640,10 @@ module KeyValueClientTests =
 
             let! response = testing.surrealClient.KeyValue.DeleteAsync(table, recordId, testing.cancellationToken)
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
             | Error _ -> Assert.Fail "Expected success response"
             | Ok result ->
-                test <@ result.headers = expectedHeaders @>
-                test <@ result.time = "151.3µs" @>
-                test <@ result.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ result.status = "OK" @>
-                test <@ result.result = () @>
+                test <@ result = () @>
         }
 
     [<Fact>]
@@ -800,12 +680,6 @@ module KeyValueClientTests =
                     testing.cancellationToken
                 )
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             let expectedError: ErrorInfo =
                 { code = 400
                   description = "There is a problem with your request. Refer to the documentation for further information."
@@ -813,9 +687,8 @@ module KeyValueClientTests =
                   information = "UNKNOWN" }
 
             match response with
-            | Error (ResponseError info) ->
-                test <@ info.headers = expectedHeaders @>
-                test <@ info.error = expectedError @>
+            | Error (ResponseError error) ->
+                test <@ error = expectedError @>
 
             | _ ->
                 Assert.Fail "Expected response error"
@@ -856,19 +729,9 @@ module KeyValueClientTests =
                     testing.cancellationToken
                 )
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
             | Error (StatementError error) ->
-                test <@ error.headers = expectedHeaders @>
-                test <@ error.time = "151.3µs" @>
-                test <@ error.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ error.status = "ERR" @>
-                test <@ error.detail = "Database record `people:john` already exists" @>
+                test <@ error = "Database record `people:john` already exists" @>
 
             | _ ->
                 Assert.Fail "Expected statement error"
@@ -928,16 +791,9 @@ module KeyValueClientTests =
                     testing.cancellationToken
                 )
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
-            | Error (ProtocolError info) ->
-                test <@ info.headers = expectedHeaders @>
-                test <@ info.error = EXPECTED_SINGLE_RESPONSE @>
+            | Error (ProtocolError error) ->
+                test <@ error = ApiResult.EXPECTED_SINGLE_STATEMENT @>
 
             | _ ->
                 Assert.Fail "Expected protocol error"
@@ -982,22 +838,12 @@ module KeyValueClientTests =
                     testing.cancellationToken
                 )
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
-            | Error (StatementError error) ->
-                test <@ error.headers = expectedHeaders @>
-                test <@ error.time = "151.3µs" @>
-                test <@ error.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ error.status = "OK" @>
-                test <@ error.detail = EXPECTED_SINGLE_ITEM @>
+            | Error (ProtocolError error) ->
+                test <@ error = Statement.EXPECTED_SINGLE_ITEM @>
 
             | _ ->
-                Assert.Fail "Expected statement error"
+                Assert.Fail $"Expected statement error, but got %A{response}"
         }
 
     [<Fact>]
@@ -1022,19 +868,9 @@ module KeyValueClientTests =
 
             let! response = testing.surrealClient.KeyValue.GetAllAsync<Person>(table, testing.cancellationToken)
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
-            | Error (StatementError error) ->
-                test <@ error.headers = expectedHeaders @>
-                test <@ error.time = "151.3µs" @>
-                test <@ error.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ error.status = "OK" @>
-                test <@ error.detail = EXPECTED_ARRAY @>
+            | Error (ProtocolError error) ->
+                test <@ error = Statement.EXPECTED_ARRAY @>
 
             | _ ->
                 Assert.Fail "Expected statement error"
@@ -1067,19 +903,9 @@ module KeyValueClientTests =
 
             let! response = testing.surrealClient.KeyValue.GetAsync<Person>(table, recordId, testing.cancellationToken)
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
-            | Error (StatementError error) ->
-                test <@ error.headers = expectedHeaders @>
-                test <@ error.time = "151.3µs" @>
-                test <@ error.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ error.status = "OK" @>
-                test <@ error.detail = EXPECTED_OPTIONAL_ITEM @>
+            | Error (ProtocolError error) ->
+                test <@ error = Statement.EXPECTED_OPTIONAL_ITEM @>
 
             | _ ->
                 Assert.Fail "Expected statement error"
@@ -1110,19 +936,9 @@ module KeyValueClientTests =
 
             let! response = testing.surrealClient.KeyValue.DeleteAllAsync(table, testing.cancellationToken)
 
-            let expectedHeaders: HeadersInfo =
-                { version = DUMMY_VERSION
-                  server = DUMMY_SERVER
-                  status = expectedStatus
-                  date = DUMMY_DATE }
-
             match response with
-            | Error (StatementError error) ->
-                test <@ error.headers = expectedHeaders @>
-                test <@ error.time = "151.3µs" @>
-                test <@ error.timeSpan = ValueSome(TimeSpan.FromMilliseconds(0.1513)) @>
-                test <@ error.status = "OK" @>
-                test <@ error.detail = EXPECTED_EMPTY_ARRAY @>
+            | Error (ProtocolError error) ->
+                test <@ error = Statement.EXPECTED_EMPTY_ARRAY @>
 
             | _ ->
                 Assert.Fail "Expected statement error"
