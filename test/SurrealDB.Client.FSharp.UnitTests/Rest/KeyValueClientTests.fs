@@ -15,6 +15,7 @@ open SurrealDB.Client.FSharp
 open SurrealDB.Client.FSharp.Rest
 
 [<Trait(Category, UnitTest)>]
+[<Trait(Area, REST)>]
 module KeyValueClientTests =
     type Person =
         { id: string

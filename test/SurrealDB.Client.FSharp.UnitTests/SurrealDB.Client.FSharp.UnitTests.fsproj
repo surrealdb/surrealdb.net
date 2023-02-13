@@ -10,6 +10,7 @@
   <ItemGroup>
     <Compile Include="TestUtils.fs" />
     <Compile Include="ConfigTests.fs" />
+    <Compile Include="SurrealIdTests.fs" />
     <Compile Include="Rest\RestUtils.fs" />
     <Compile Include="Rest\ModelsTests.fs" />
     <Compile Include="Rest\EndpointsTests.fs" />

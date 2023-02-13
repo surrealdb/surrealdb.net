@@ -7,6 +7,7 @@ open Swensen.Unquote
 open SurrealDB.Client.FSharp
 
 [<Trait(Category, UnitTest)>]
+[<Trait(Area, COMMON)>]
 module ConfigTests =
 
     let expectErrors expectedErrors (configResult: Result<SurrealConfig, SurrealConfigError list>) =
