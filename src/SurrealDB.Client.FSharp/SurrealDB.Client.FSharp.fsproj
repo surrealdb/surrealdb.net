@@ -17,10 +17,9 @@
     <Compile Include="Models.fs" />
     <Compile Include="Rest\Constants.fs" />
     <Compile Include="Rest\Models.fs" />
-    <Compile Include="Rest\Endpoints.fs" />
-    <Compile Include="Rest\JsonClient.fs" />
-    <Compile Include="Rest\KeyValueClient.fs" />
-    <Compile Include="Rest\Client.fs" />
+    <Compile Include="Rest\Internals.fs" />
+    <Compile Include="Rest\SurrealEndpoints.fs" />
+    <Compile Include="Rest\SurrealKeyTableEndpoints.fs" />
   </ItemGroup>
 
 </Project>

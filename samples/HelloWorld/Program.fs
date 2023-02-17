@@ -1,5 +1,3 @@
 (
-    //RawEndpoints.sample()
-    //JsonClient.sample()
-    KeyValueClient.sample()
+    SurrealEndpoints.sample()
 ).GetAwaiter().GetResult()

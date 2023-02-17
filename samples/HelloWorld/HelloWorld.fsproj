@@ -5,9 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="RawEndpoints.fs" />
-    <Compile Include="JsonClient.fs" />
-    <Compile Include="KeyValueClient.fs" />
+    <Compile Include="SurrealEndpoints.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

@@ -13,8 +13,7 @@
     <Compile Include="Rest\RestUtils.fs" />
     <Compile Include="Rest\ModelsTests.fs" />
     <Compile Include="Rest\EndpointsTests.fs" />
-    <Compile Include="Rest\JsonClientTests.fs" />
-    <Compile Include="Rest\KeyValueClientTests.fs" />
+    <Compile Include="Rest\SurrealEndpointsTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

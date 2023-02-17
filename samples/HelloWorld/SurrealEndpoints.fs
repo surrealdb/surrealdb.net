@@ -1,4 +1,4 @@
-module JsonClient
+module SurrealEndpoints
 
 type Person =
     { id: string
@@ -34,11 +34,8 @@ let sample () =
 
         use httpClient = new HttpClient()
         let jsonOptions = Json.defaultOptions
-        do Endpoints.applyConfig config httpClient
 
-        use client = new SurrealRestClient(httpClient)
-
-        let client = client :> ISurrealRestClient
+        let endpoints: ISurrealEndpoints = SurrealEndpoints(config, httpClient, jsonOptions)
 
         printfn "HttpClient base url: %A" httpClient.BaseAddress
         printfn "HttpClient headers:\n%O" httpClient.DefaultRequestHeaders
@@ -54,15 +51,15 @@ let sample () =
         let johnJson =
             JsonSerializer.SerializeToNode(john, jsonOptions)
 
-        let! createJohnResult = client.Json.CreateAsync("people", "john", johnJson, ct)
+        let! createJohnResult = endpoints.PostKeyTableId("people", "john", johnJson, ct)
 
         printfn "Create John result:\n%A" createJohnResult
 
-        let! peopleResult = client.Json.GetAllAsync("people", ct)
+        let! peopleResult = endpoints.GetKeyTable("people", ct)
 
         printfn "Get people result:\n%A" peopleResult
 
-        let! infoKv = client.Json.SqlAsync("INFO FOR KV;", ct)
+        let! infoKv = endpoints.PostSql("INFO FOR KV;", ct)
 
         printfn "INFO FOR KV:\n%A" infoKv
     }
