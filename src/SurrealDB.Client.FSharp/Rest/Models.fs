@@ -15,6 +15,11 @@ type HeadersInfo =
 
     member this.dateTime = DateTime.tryParse this.date
 
-type RestApiResult =
+type RestApiResult<'result> =
     { headers: HeadersInfo
-      result: ApiResult }
+      result: ApiResult<'result> }
+type RestApiResult = RestApiResult<JsonNode>
+
+type RestApiSingleResult<'result> =
+    { headers: HeadersInfo
+      result: ApiSingleResult<'result> }

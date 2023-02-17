@@ -28,7 +28,7 @@ type SurrealRestClient(httpClient, ?jsonOptions) =
         SurrealRestJsonClient(httpClient, jsonOptions)
 
     let keyValueClient : ISurrealRestKeyValueClient =
-        SurrealRestKeyValueClient(jsonClient, jsonOptions)
+        SurrealRestKeyValueClient(jsonClient, httpClient, jsonOptions)
 
     interface ISurrealRestClient with
         member this.Json = jsonClient

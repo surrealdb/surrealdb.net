@@ -17,6 +17,19 @@ open SurrealDB.Client.FSharp.Rest
 [<Trait(Category, UnitTest)>]
 [<Trait(Area, REST)>]
 module EndpointsTests =
+    type Person =
+        { id: string
+          firstName: string
+          lastName: string
+          age: int }
+
+    type PersonData =
+        { firstName: string
+          lastName: string
+          age: int }
+
+    type PersonFirstNamePatch = { firstName: string }
+
     let prepareTest statusCode (responseJson: string) =
         let config =
             SurrealConfig
@@ -213,7 +226,8 @@ module EndpointsTests =
             let expectedResult: ErrorInfo =
                 { code = 400
                   details = "Request problems detected"
-                  description = "There is a problem with your request. Refer to the documentation for further information."
+                  description =
+                    "There is a problem with your request. Refer to the documentation for further information."
                   information =
                     "There was a problem with the database: Parse error on line 1 at character 0 when parsing 'INFO FO R KV;\r\nUSE NS testns DB testdb;'" }
 
@@ -698,7 +712,8 @@ module EndpointsTests =
 
             let table = "people"
 
-            let! response = Endpoints.deleteKeyTable testing.jsonOptions testing.httpClient testing.cancellationToken table
+            let! response =
+                Endpoints.deleteKeyTable testing.jsonOptions testing.httpClient testing.cancellationToken table
 
             test <@ testing.requests.Count = 1 @>
 
@@ -770,7 +785,9 @@ module EndpointsTests =
             let request = testing.requests.[0]
 
             test <@ request.Method = HttpMethod.Get @>
-            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
 
             let content = request.Content
             test <@ isNull content @>
@@ -846,17 +863,26 @@ module EndpointsTests =
                     }""",
                     testing.jsonOptions
                 )
+
             let recordId = "john"
 
             let! response =
-                Endpoints.postKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId record
+                Endpoints.postKeyTableId
+                    testing.jsonOptions
+                    testing.httpClient
+                    testing.cancellationToken
+                    table
+                    recordId
+                    record
 
             test <@ testing.requests.Count = 1 @>
 
             let request = testing.requests.[0]
 
             test <@ request.Method = HttpMethod.Post @>
-            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
 
             let content = request.Content
             test <@ not (isNull content) @>
@@ -936,10 +962,17 @@ module EndpointsTests =
                     }""",
                     testing.jsonOptions
                 )
+
             let recordId = "john"
 
             let! response =
-                Endpoints.postKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId record
+                Endpoints.postKeyTableId
+                    testing.jsonOptions
+                    testing.httpClient
+                    testing.cancellationToken
+                    table
+                    recordId
+                    record
 
             let expectedHeaders: HeadersInfo =
                 { version = DUMMY_VERSION
@@ -999,17 +1032,26 @@ module EndpointsTests =
                     }""",
                     testing.jsonOptions
                 )
+
             let recordId = "john"
 
             let! response =
-                Endpoints.putKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId record
+                Endpoints.putKeyTableId
+                    testing.jsonOptions
+                    testing.httpClient
+                    testing.cancellationToken
+                    table
+                    recordId
+                    record
 
             test <@ testing.requests.Count = 1 @>
 
             let request = testing.requests.[0]
 
             test <@ request.Method = HttpMethod.Put @>
-            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
 
             let content = request.Content
             test <@ not (isNull content) @>
@@ -1094,17 +1136,26 @@ module EndpointsTests =
                     }""",
                     testing.jsonOptions
                 )
+
             let recordId = "john"
 
             let! response =
-                Endpoints.patchKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId record
+                Endpoints.patchKeyTableId
+                    testing.jsonOptions
+                    testing.httpClient
+                    testing.cancellationToken
+                    table
+                    recordId
+                    record
 
             test <@ testing.requests.Count = 1 @>
 
             let request = testing.requests.[0]
 
             test <@ request.Method = HttpMethod.Patch @>
-            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
 
             let content = request.Content
             test <@ not (isNull content) @>
@@ -1177,14 +1228,21 @@ module EndpointsTests =
             let recordId = "dr3mc523txrii4cfuczh"
 
             let! response =
-                Endpoints.deleteKeyTableId testing.jsonOptions testing.httpClient testing.cancellationToken table recordId
+                Endpoints.deleteKeyTableId
+                    testing.jsonOptions
+                    testing.httpClient
+                    testing.cancellationToken
+                    table
+                    recordId
 
             test <@ testing.requests.Count = 1 @>
 
             let request = testing.requests.[0]
 
             test <@ request.Method = HttpMethod.Delete @>
-            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
 
             let content = request.Content
             test <@ isNull content @>
@@ -1211,4 +1269,716 @@ module EndpointsTests =
                 match first.response with
                 | Error _ -> Assert.Fail "Expected success response"
                 | Ok json -> test <@ jsonDiff json expectedJson = [] @>
+        }
+
+
+    [<Fact>]
+    let ``Typed.getKeyTable with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": [
+                                {
+                                    "age": 19,
+                                    "firstName": "John",
+                                    "id": "people:dr3mc523txrii4cfuczh",
+                                    "lastName": "Doe"
+                                },
+                                {
+                                    "age": 17,
+                                    "firstName": "Jane",
+                                    "id": "people:zi1e78q4onfh6wypk5bz",
+                                    "lastName": "Doe"
+                                }
+                            ]
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let! response =
+                table
+                |> Endpoints.Typed.getKeyTable<Person> testing.jsonOptions testing.httpClient testing.cancellationToken
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Get @>
+            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ isNull content @>
+
+            let expectedItems =
+                [| { age = 19
+                     firstName = "John"
+                     id = "people:dr3mc523txrii4cfuczh"
+                     lastName = "Doe" }
+                   { age = 17
+                     firstName = "Jane"
+                     id = "people:zi1e78q4onfh6wypk5bz"
+                     lastName = "Doe" } |]
+
+            match response with
+            | Error error -> Assert.Fail $"Expected success response, but got error: %A{error}"
+            | Ok result -> test <@ result = expectedItems @>
+        }
+
+    [<Fact>]
+    let ``Typed.postKeyTableData with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": [
+                                {
+                                    "age": 19,
+                                    "firstName": "John",
+                                    "id": "people:dr3mc523txrii4cfuczh",
+                                    "lastName": "Doe"
+                                }
+                            ]
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let record: PersonData =
+                { age = 19
+                  firstName = "John"
+                  lastName = "Doe" }
+
+            let! response =
+                Endpoints.Typed.postKeyTableData<PersonData, Person>
+                    testing.jsonOptions
+                    testing.httpClient
+                    testing.cancellationToken
+                    table
+                    record
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Post @>
+            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ not (isNull content) @>
+
+            let contentType = content.Headers.ContentType
+            test <@ contentType.MediaType = APPLICATION_JSON @>
+            test <@ contentType.CharSet = "utf-8" @>
+
+            let! text = content.ReadAsStringAsync()
+
+            let expectedRequestBody =
+                JsonSerializer.Serialize(record, testing.jsonOptions)
+
+            test <@ text = expectedRequestBody @>
+
+            let expectedRecord: Person =
+                { age = 19
+                  firstName = "John"
+                  id = "people:dr3mc523txrii4cfuczh"
+                  lastName = "Doe" }
+
+            match response with
+            | Error error -> Assert.Fail $"Expected success response, but got error: %A{error}"
+            | Ok result -> test <@ result = expectedRecord @>
+        }
+
+    [<Fact>]
+    let ``Typed.postKeyTable with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": [
+                                {
+                                    "age": 19,
+                                    "firstName": "John",
+                                    "id": "people:dr3mc523txrii4cfuczh",
+                                    "lastName": "Doe"
+                                }
+                            ]
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let record: Person =
+                { id = ""
+                  age = 19
+                  firstName = "John"
+                  lastName = "Doe" }
+
+            let! response =
+                Endpoints.Typed.postKeyTable<Person>
+                    testing.jsonOptions
+                    testing.httpClient
+                    testing.cancellationToken
+                    table
+                    record
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Post @>
+            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ not (isNull content) @>
+
+            let contentType = content.Headers.ContentType
+            test <@ contentType.MediaType = APPLICATION_JSON @>
+            test <@ contentType.CharSet = "utf-8" @>
+
+            let! text = content.ReadAsStringAsync()
+
+            let expectedRequestBody =
+                JsonSerializer.Serialize(record, testing.jsonOptions)
+
+            test <@ text = expectedRequestBody @>
+
+            let expectedRecord: Person =
+                { age = 19
+                  firstName = "John"
+                  id = "people:dr3mc523txrii4cfuczh"
+                  lastName = "Doe" }
+
+            match response with
+            | Error error -> Assert.Fail $"Expected success response, but got error: %A{error}"
+            | Ok result -> test <@ result = expectedRecord @>
+        }
+
+    [<Fact>]
+    let ``Typed.deleteKeyTable with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": []
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let! response =
+                Endpoints.Typed.deleteKeyTable testing.jsonOptions testing.httpClient testing.cancellationToken table
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Delete @>
+            test <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ isNull content @>
+
+            match response with
+            | Error _ -> Assert.Fail "Expected success response"
+            | Ok result -> test <@ result = () @>
+        }
+
+    [<Fact>]
+    let ``Typed.getKeyTableId with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": [
+                                {
+                                    "age": 19,
+                                    "firstName": "John",
+                                    "id": "people:dr3mc523txrii4cfuczh",
+                                    "lastName": "Doe"
+                                }
+                            ]
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+            let recordId = "dr3mc523txrii4cfuczh"
+
+            let! response =
+                Endpoints.Typed.getKeyTableId<Person>
+                    testing.jsonOptions
+                    testing.httpClient
+                    testing.cancellationToken
+                    table
+                    recordId
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Get @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ isNull content @>
+
+            let expectedRecord: Person =
+                { age = 19
+                  firstName = "John"
+                  id = "people:dr3mc523txrii4cfuczh"
+                  lastName = "Doe" }
+
+            match response with
+            | Error error -> Assert.Fail $"Expected success response, but got error: %A{error}"
+            | Ok result -> test <@ result = ValueSome expectedRecord @>
+        }
+
+    [<Fact>]
+    let ``Typed.getKeyTableId with empty response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": []
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+            let recordId = "dr3mc523txrii4cfuczh"
+
+            let! response =
+                Endpoints.Typed.getKeyTableId<Person>
+                    testing.jsonOptions
+                    testing.httpClient
+                    testing.cancellationToken
+                    table
+                    recordId
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Get @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ isNull content @>
+
+            match response with
+            | Error error -> Assert.Fail $"Expected success response, but got error: %A{error}"
+            | Ok result -> test <@ result = ValueNone @>
+        }
+
+    [<Fact>]
+    let ``Typed.postKeyTableIdData with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": [
+                                {
+                                    "age": 19,
+                                    "firstName": "John",
+                                    "id": "people:john",
+                                    "lastName": "Doe"
+                                }
+                            ]
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let record: PersonData =
+                { age = 19
+                  firstName = "John"
+                  lastName = "Doe" }
+
+            let recordId = "john"
+
+            let! response =
+                Endpoints.Typed.postKeyTableIdData<PersonData, Person>
+                    testing.jsonOptions
+                    testing.httpClient
+                    testing.cancellationToken
+                    table
+                    recordId
+                    record
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Post @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ not (isNull content) @>
+
+            let contentType = content.Headers.ContentType
+            test <@ contentType.MediaType = APPLICATION_JSON @>
+            test <@ contentType.CharSet = "utf-8" @>
+
+            let! text = content.ReadAsStringAsync()
+
+            let expectedRequestBody =
+                JsonSerializer.Serialize(record, testing.jsonOptions)
+
+            test <@ text = expectedRequestBody @>
+
+            let expectedRecord: Person =
+                { id = "people:john"
+                  firstName = "John"
+                  lastName = "Doe"
+                  age = 19 }
+
+            match response with
+            | Error error -> Assert.Fail $"Expected success response, but got error: %A{error}"
+            | Ok result -> test <@ result = expectedRecord @>
+        }
+
+    [<Fact>]
+    let ``Typed.putKeyTableIdData with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": [
+                                {
+                                    "age": 24,
+                                    "firstName": "John",
+                                    "id": "people:john",
+                                    "lastName": "Doe"
+                                }
+                            ]
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let recordData: PersonData =
+                { age = 24
+                  firstName = "John"
+                  lastName = "Doe" }
+
+            let recordId = "john"
+
+            let! response =
+                Endpoints.Typed.putKeyTableIdData<PersonData, Person>
+                    testing.jsonOptions
+                    testing.httpClient
+                    testing.cancellationToken
+                    table
+                    recordId
+                    recordData
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Put @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ not (isNull content) @>
+
+            let contentType = content.Headers.ContentType
+            test <@ contentType.MediaType = APPLICATION_JSON @>
+            test <@ contentType.CharSet = "utf-8" @>
+
+            let! text = content.ReadAsStringAsync()
+
+            let expectedRequestBody =
+                JsonSerializer.Serialize(recordData, testing.jsonOptions)
+
+            test <@ text = expectedRequestBody @>
+
+            let expectedRecord: Person =
+                { id = "people:john"
+                  firstName = "John"
+                  lastName = "Doe"
+                  age = 24 }
+
+            match response with
+            | Error error -> Assert.Fail $"Expected success response, but got error: %A{error}"
+            | Ok result ->
+                test <@ result = expectedRecord @>
+        }
+
+    [<Fact>]
+    let ``Typed.putKeyTableId with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": [
+                                {
+                                    "age": 24,
+                                    "firstName": "John",
+                                    "id": "people:john",
+                                    "lastName": "Doe"
+                                }
+                            ]
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let record: Person =
+                { id = "people:john"
+                  age = 24
+                  firstName = "John"
+                  lastName = "Doe" }
+
+            let recordId = "john"
+
+            let! response =
+                Endpoints.Typed.putKeyTableId<Person>
+                    testing.jsonOptions
+                    testing.httpClient
+                    testing.cancellationToken
+                    table
+                    recordId
+                    record
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Put @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ not (isNull content) @>
+
+            let contentType = content.Headers.ContentType
+            test <@ contentType.MediaType = APPLICATION_JSON @>
+            test <@ contentType.CharSet = "utf-8" @>
+
+            let! text = content.ReadAsStringAsync()
+
+            let expectedRequestBody =
+                JsonSerializer.Serialize(record, testing.jsonOptions)
+
+            test <@ text = expectedRequestBody @>
+
+            let expectedRecord: Person =
+                { id = "people:john"
+                  firstName = "John"
+                  lastName = "Doe"
+                  age = 24 }
+
+            match response with
+            | Error error -> Assert.Fail $"Expected success response, but got error: %A{error}"
+            | Ok result ->
+                test <@ result = expectedRecord @>
+        }
+
+    [<Fact>]
+    let ``Typed.patchKeyTableIdData with array response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": [
+                                {
+                                    "age": 24,
+                                    "firstName": "Johnny",
+                                    "id": "people:john",
+                                    "lastName": "Doe"
+                                }
+                            ]
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+
+            let recordData : PersonFirstNamePatch =
+                    {
+                        firstName = "Johnny"
+                    }
+
+            let recordId = "john"
+
+            let! response =
+                Endpoints.Typed.patchKeyTableIdData
+                    testing.jsonOptions
+                    testing.httpClient
+                    testing.cancellationToken
+                    table
+                    recordId
+                    recordData
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Patch @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ not (isNull content) @>
+
+            let contentType = content.Headers.ContentType
+            test <@ contentType.MediaType = APPLICATION_JSON @>
+            test <@ contentType.CharSet = "utf-8" @>
+
+            let! text = content.ReadAsStringAsync()
+
+            let expectedRequestBody =
+                JsonSerializer.Serialize(recordData, testing.jsonOptions)
+
+            test <@ text = expectedRequestBody @>
+
+            let expectedRecord : Person =
+                        {
+                            id = "people:john"
+                            firstName = "Johnny"
+                            lastName = "Doe"
+                            age = 24
+                        }
+
+            match response with
+            | Error error -> Assert.Fail $"Expected success response, but got error: %A{error}"
+            | Ok result ->
+                test <@ result = expectedRecord @>
+        }
+
+    [<Fact>]
+    let ``Typed.deleteKeyTableId with empty response`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let testing =
+                prepareTest
+                    expectedStatus
+                    """[
+                        {
+                            "time": "151.3µs",
+                            "status": "OK",
+                            "result": []
+                        }
+                    ]"""
+
+            use _ = testing.disposable
+
+            let table = "people"
+            let recordId = "dr3mc523txrii4cfuczh"
+
+            let! response =
+                Endpoints.Typed.deleteKeyTableId
+                    testing.jsonOptions
+                    testing.httpClient
+                    testing.cancellationToken
+                    table
+                    recordId
+
+            test <@ testing.requests.Count = 1 @>
+
+            let request = testing.requests.[0]
+
+            test <@ request.Method = HttpMethod.Delete @>
+
+            test
+                <@ request.RequestUri = Uri($"http://localhost:%d{PORT}/key/%s{table}/%s{recordId}", UriKind.Absolute) @>
+
+            let content = request.Content
+            test <@ isNull content @>
+
+            match response with
+            | Error error -> Assert.Fail $"Expected success response, but got error: %A{error}"
+            | Ok result ->
+                test <@ result = () @>
         }
