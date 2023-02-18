@@ -29,7 +29,7 @@ type RequestResult<'result> = Result<'result, RequestError>
 type Statement<'result> =
     { time: string
       status: string
-      response: Result<'result, string> }
+      response: RequestResult<'result> }
 
     member this.timeSpan = TimeSpan.tryParse this.time
 
@@ -44,7 +44,7 @@ module Statement =
         | :? JsonArray as arr -> Ok arr
         | _ -> Error(ProtocolError ExpectedArray)
 
-    let private tryGetSingle (items: IList<'a>) =
+    let internal tryGetSingle (items: IList<'a>) =
         match items.Count with
         | 1 -> Ok items.[0]
         | _ -> Error(ProtocolError ExpectedSingleItem)
@@ -60,74 +60,67 @@ module Statement =
         | 0 -> Ok()
         | _ -> Error(ProtocolError ExpectedEmptyArray)
 
-    let tryGetRequiredRecordOf<'record> (statement: Statement<'record []>) : RequestResult<'record> =
-        statement.response
-        |> Result.mapError StatementError
-        |> Result.bind tryGetSingle
+    let private toStatement statement response =
+        { response = response; status = statement.status; time = statement.time }
 
-    let tryGetRequiredRecord<'record> (options: JsonSerializerOptions) (statement: Statement) : RequestResult<'record> =
+    let getRequiredRecordOf<'record> (statement: Statement<'record []>) : Statement<'record> =
         statement.response
-        |> Result.mapError StatementError
+        |> Result.bind tryGetSingle
+        |> toStatement statement
+
+    let getRequiredRecord<'record> (options: JsonSerializerOptions) (statement: Statement) : Statement<'record> =
+        statement.response
         |> Result.bind tryGetJsonArray
         |> Result.bind tryGetSingle
         |> Result.map (parseJson<'record> options)
+        |> toStatement statement
 
-    let tryGetOptionalRecordOf<'record> (statement: Statement<'record []>) : RequestResult<'record voption> =
+    let getOptionalRecordOf<'record> (statement: Statement<'record []>) : Statement<'record voption> =
         statement.response
-        |> Result.mapError StatementError
         |> Result.bind tryGetOptional
+        |> toStatement statement
 
-    let tryGetOptionalRecord<'record>
+    let getOptionalRecord<'record>
         (options: JsonSerializerOptions)
         (statement: Statement)
-        : RequestResult<'record voption> =
+        : Statement<'record voption> =
         statement.response
-        |> Result.mapError StatementError
         |> Result.bind tryGetJsonArray
         |> Result.bind tryGetOptional
         |> Result.map (ValueOption.map (parseJson<'record> options))
+        |> toStatement statement
 
-    let tryGetNoRecordsOf (statement: Statement<_ array>) : RequestResult<unit> =
+    let getNoRecordsOf (statement: Statement<_ array>) : Statement<unit> =
         statement.response
-        |> Result.mapError StatementError
         |> Result.bind tryGetEmpty
+        |> toStatement statement
 
-    let tryGetNoRecords (statement: Statement) : RequestResult<unit> =
+    let getNoRecords (statement: Statement) : Statement<unit> =
         statement.response
-        |> Result.mapError StatementError
         |> Result.bind tryGetJsonArray
         |> Result.bind tryGetEmpty
+        |> toStatement statement
 
-    let tryGetMultipleRecordsOf<'record> (statement: Statement<'record []>) : RequestResult<'record []> =
-        statement.response
-        |> Result.mapError StatementError
+    let getMultipleRecordsOf<'record> (statement: Statement<'record []>) : Statement<'record []> =
+        statement
 
-    let tryGetMultipleRecords<'record>
+    let getMultipleRecords<'record>
         (options: JsonSerializerOptions)
         (statement: Statement)
-        : RequestResult<'record []> =
+        : Statement<'record []> =
         statement.response
-        |> Result.mapError StatementError
         |> Result.bind tryGetJsonArray
         |> Result.map (parseJson<'record []> options)
+        |> toStatement statement
 
-type ApiResult<'result> = Result<Statement<'result> [], ErrorInfo>
-type ApiResult = ApiResult<JsonNode>
-type ApiSingleResult<'result> = Result<Statement<'result>, RequestError>
+type StatementsResult<'result> = RequestResult<Statement<'result> []>
+type StatementResult<'result> = RequestResult<Statement<'result>>
 
-module ApiSingleResult =
-    let tryGetRequiredRecord<'record> (response: ApiSingleResult<'record []>) : RequestResult<'record> =
+module StatementResult =
+    let ofStatementsResult<'result> (response: StatementsResult<'result>) : StatementResult<'result> =
         response
-        |> Result.bind Statement.tryGetRequiredRecordOf<'record>
+        |> Result.bind Statement.tryGetSingle
 
-    let tryGetMultipleRecords<'record> (response: ApiSingleResult<'record []>) : RequestResult<'record []> =
+    let toSimpleResult (response: StatementResult<'result>) : RequestResult<'result> =
         response
-        |> Result.bind Statement.tryGetMultipleRecordsOf<'record>
-
-    let tryGetOptionalRecord<'record> (response: ApiSingleResult<'record []>) : RequestResult<'record voption> =
-        response
-        |> Result.bind Statement.tryGetOptionalRecordOf<'record>
-
-    let tryGetNoRecords (response: ApiSingleResult<'record []>) : RequestResult<unit> =
-        response
-        |> Result.bind Statement.tryGetNoRecordsOf
+        |> Result.bind (fun statement -> statement.response)

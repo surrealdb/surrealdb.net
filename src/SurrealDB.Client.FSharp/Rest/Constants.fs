@@ -39,3 +39,6 @@ let STATUS_OK = "OK"
 
 [<Literal>]
 let STATUS_ERR = "ERR"
+
+[<Literal>]
+let EXPECTED_RESULT_OR_DETAIL = "EXPECTED_RESULT_OR_DETAIL"

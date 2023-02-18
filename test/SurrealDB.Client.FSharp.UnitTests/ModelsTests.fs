@@ -29,8 +29,12 @@ module ModelsTests =
     let janeJson =
         JsonSerializer.Serialize(jane, Json.defaultOptions)
 
+    let testStatement statement referenceStatement expectedResponse =
+        test <@ statement.time = referenceStatement.time @>
+        test <@ statement.status = referenceStatement.status @>
+        test <@ statement.response = expectedResponse @>
 
-    let tryGetRequiredRecordOkTestCases () =
+    let getRequiredRecordOkTestCases () =
         seq {
             $"[{johnJson}]", Ok john
             "[]", Error(ProtocolError ExpectedSingleItem)
@@ -40,8 +44,8 @@ module ModelsTests =
         |> Seq.map (fun (json, expected) -> [| json :> obj; expected |])
 
     [<Theory>]
-    [<MemberData(nameof (tryGetRequiredRecordOkTestCases))>]
-    let ``Statement.tryGetRequiredRecord with success response`` (json: string) expected =
+    [<MemberData(nameof (getRequiredRecordOkTestCases))>]
+    let ``Statement.getRequiredRecord with success response`` (json: string) expected =
         let statement: Statement =
             { time = "1s"
               status = "OK"
@@ -49,26 +53,26 @@ module ModelsTests =
 
         let result =
             statement
-            |> Statement.tryGetRequiredRecord<Person> Json.defaultOptions
+            |> Statement.getRequiredRecord<Person> Json.defaultOptions
 
-        test <@ result = expected @>
+        testStatement result statement expected
 
     [<Fact>]
-    let ``Statement.tryGetRequiredRecord with error response`` () =
+    let ``Statement.getRequiredRecord with error response`` () =
         let statement: Statement =
             { time = "1s"
               status = "ERR"
-              response = Error "Some error" }
+              response = Error (StatementError "Some error") }
 
-        let expected: Result<Person, _> = Error(StatementError "Some error")
+        let expected: RequestResult<Person> = Error(StatementError "Some error")
 
         let result =
             statement
-            |> Statement.tryGetRequiredRecord<Person> Json.defaultOptions
+            |> Statement.getRequiredRecord<Person> Json.defaultOptions
 
-        test <@ result = expected @>
+        testStatement result statement expected
 
-    let tryGetRequiredRecordOfOkTestCases () =
+    let getRequiredRecordOfOkTestCases () =
         seq {
             [| john |], Ok john
             [||], Error(ProtocolError ExpectedSingleItem)
@@ -77,8 +81,8 @@ module ModelsTests =
         |> Seq.map (fun (json, expected) -> [| json :> obj; expected |])
 
     [<Theory>]
-    [<MemberData(nameof (tryGetRequiredRecordOfOkTestCases))>]
-    let ``Statement.tryGetRequiredRecordOf with success response`` (response: Person []) expected =
+    [<MemberData(nameof (getRequiredRecordOfOkTestCases))>]
+    let ``Statement.getRequiredRecordOf with success response`` (response: Person []) expected =
         let statement: Statement<Person []> =
             { time = "1s"
               status = "OK"
@@ -86,12 +90,12 @@ module ModelsTests =
 
         let result =
             statement
-            |> Statement.tryGetRequiredRecordOf<Person>
+            |> Statement.getRequiredRecordOf<Person>
 
-        test <@ result = expected @>
+        testStatement result statement expected
 
 
-    let tryGetOptionalRecordOkTestCases () =
+    let getOptionalRecordOkTestCases () =
         seq {
             $"[{johnJson}]", Ok (ValueSome john)
             "[]", Ok ValueNone
@@ -101,8 +105,8 @@ module ModelsTests =
         |> Seq.map (fun (json, expected) -> [| json :> obj; expected |])
 
     [<Theory>]
-    [<MemberData(nameof (tryGetOptionalRecordOkTestCases))>]
-    let ``Statement.tryGetOptionalRecord with success response`` (json: string) expected =
+    [<MemberData(nameof (getOptionalRecordOkTestCases))>]
+    let ``Statement.getOptionalRecord with success response`` (json: string) expected =
         let statement: Statement =
             { time = "1s"
               status = "OK"
@@ -110,26 +114,26 @@ module ModelsTests =
 
         let result =
             statement
-            |> Statement.tryGetOptionalRecord<Person> Json.defaultOptions
+            |> Statement.getOptionalRecord<Person> Json.defaultOptions
 
-        test <@ result = expected @>
+        testStatement result statement expected
 
     [<Fact>]
-    let ``Statement.tryGetOptionalRecord with error response`` () =
+    let ``Statement.getOptionalRecord with error response`` () =
         let statement: Statement =
             { time = "1s"
               status = "ERR"
-              response = Error "Some error" }
+              response = Error (StatementError "Some error") }
 
-        let expected: Result<Person voption, _> = Error(StatementError "Some error")
+        let expected: RequestResult<Person voption> = Error(StatementError "Some error")
 
         let result =
             statement
-            |> Statement.tryGetOptionalRecord<Person> Json.defaultOptions
+            |> Statement.getOptionalRecord<Person> Json.defaultOptions
 
-        test <@ result = expected @>
+        testStatement result statement expected
 
-    let tryGetOptionalRecordOfOkTestCases () =
+    let getOptionalRecordOfOkTestCases () =
         seq {
             [| john |], Ok (ValueSome john)
             [||], Ok ValueNone
@@ -138,8 +142,8 @@ module ModelsTests =
         |> Seq.map (fun (json, expected) -> [| json :> obj; expected |])
 
     [<Theory>]
-    [<MemberData(nameof (tryGetOptionalRecordOfOkTestCases))>]
-    let ``Statement.tryGetOptionalRecordOf with success response`` (response: Person []) expected =
+    [<MemberData(nameof (getOptionalRecordOfOkTestCases))>]
+    let ``Statement.getOptionalRecordOf with success response`` (response: Person []) expected =
         let statement: Statement<Person []> =
             { time = "1s"
               status = "OK"
@@ -147,12 +151,12 @@ module ModelsTests =
 
         let result =
             statement
-            |> Statement.tryGetOptionalRecordOf<Person>
+            |> Statement.getOptionalRecordOf<Person>
 
-        test <@ result = expected @>
+        testStatement result statement expected
 
 
-    let tryGetNoRecordsOkTestCases () =
+    let getNoRecordsOkTestCases () =
         seq {
             "[]", Ok ()
             $"[{johnJson}]", Error(ProtocolError ExpectedEmptyArray)
@@ -161,8 +165,8 @@ module ModelsTests =
         |> Seq.map (fun (json, expected) -> [| json :> obj; expected |])
 
     [<Theory>]
-    [<MemberData(nameof (tryGetNoRecordsOkTestCases))>]
-    let ``Statement.tryGetNoRecords with success response`` (json: string) expected =
+    [<MemberData(nameof (getNoRecordsOkTestCases))>]
+    let ``Statement.getNoRecords with success response`` (json: string) expected =
         let statement: Statement =
             { time = "1s"
               status = "OK"
@@ -170,26 +174,26 @@ module ModelsTests =
 
         let result =
             statement
-            |> Statement.tryGetNoRecords
+            |> Statement.getNoRecords
 
-        test <@ result = expected @>
+        testStatement result statement expected
 
     [<Fact>]
-    let ``Statement.tryGetNoRecords with error response`` () =
+    let ``Statement.getNoRecords with error response`` () =
         let statement: Statement =
             { time = "1s"
               status = "ERR"
-              response = Error "Some error" }
+              response = Error (StatementError "Some error") }
 
-        let expected: Result<unit, _> = Error(StatementError "Some error")
+        let expected: RequestResult<unit> = Error(StatementError "Some error")
 
         let result =
             statement
-            |> Statement.tryGetNoRecords
+            |> Statement.getNoRecords
 
-        test <@ result = expected @>
+        testStatement result statement expected
 
-    let tryGetNoRecordsOfOkTestCases () =
+    let getNoRecordsOfOkTestCases () =
         seq {
             [||], Ok ()
             [| john |], Error (ProtocolError ExpectedEmptyArray)
@@ -197,8 +201,8 @@ module ModelsTests =
         |> Seq.map (fun (json, expected) -> [| json :> obj; expected |])
 
     [<Theory>]
-    [<MemberData(nameof (tryGetNoRecordsOfOkTestCases))>]
-    let ``Statement.tryGetNoRecordsOf with success response`` (response: Person []) expected =
+    [<MemberData(nameof (getNoRecordsOfOkTestCases))>]
+    let ``Statement.getNoRecordsOf with success response`` (response: Person []) expected =
         let statement: Statement<Person []> =
             { time = "1s"
               status = "OK"
@@ -206,12 +210,12 @@ module ModelsTests =
 
         let result =
             statement
-            |> Statement.tryGetNoRecordsOf
+            |> Statement.getNoRecordsOf
 
-        test <@ result = expected @>
+        testStatement result statement expected
 
 
-    let tryGetMultipleRecordsOkTestCases () =
+    let getMultipleRecordsOkTestCases () =
         seq {
             $"[{johnJson}]", Ok [|john|]
             "[]", Ok [||]
@@ -221,8 +225,8 @@ module ModelsTests =
         |> Seq.map (fun (json, expected) -> [| json :> obj; expected |])
 
     [<Theory>]
-    [<MemberData(nameof (tryGetMultipleRecordsOkTestCases))>]
-    let ``Statement.tryGetMultipleRecords with success response`` (json: string) expected =
+    [<MemberData(nameof (getMultipleRecordsOkTestCases))>]
+    let ``Statement.getMultipleRecords with success response`` (json: string) expected =
         let statement: Statement =
             { time = "1s"
               status = "OK"
@@ -230,36 +234,36 @@ module ModelsTests =
 
         let result =
             statement
-            |> Statement.tryGetMultipleRecords<Person> Json.defaultOptions
+            |> Statement.getMultipleRecords<Person> Json.defaultOptions
 
-        test <@ result = expected @>
+        testStatement result statement expected
 
     [<Fact>]
-    let ``Statement.tryGetMultipleRecords with error response`` () =
+    let ``Statement.getMultipleRecords with error response`` () =
         let statement: Statement =
             { time = "1s"
               status = "ERR"
-              response = Error "Some error" }
+              response = Error (StatementError "Some error") }
 
-        let expected: Result<Person[], _> = Error(StatementError "Some error")
+        let expected: RequestResult<Person[]> = Error(StatementError "Some error")
 
         let result =
             statement
-            |> Statement.tryGetMultipleRecords<Person> Json.defaultOptions
+            |> Statement.getMultipleRecords<Person> Json.defaultOptions
 
-        test <@ result = expected @>
+        testStatement result statement expected
 
-    let tryGetMultipleRecordsOfOkTestCases () =
+    let getMultipleRecordsOfOkTestCases () =
         seq {
-            [| john |], (Ok [|john|] : Result<Person[], RequestError>)
+            [| john |], (Ok [|john|] : RequestResult<Person[]>)
             [||], Ok [||]
             [| john; jane |], Ok [|john; jane|]
         }
         |> Seq.map (fun (json, expected) -> [| json :> obj; expected |])
 
     [<Theory>]
-    [<MemberData(nameof (tryGetMultipleRecordsOfOkTestCases))>]
-    let ``Statement.tryGetMultipleRecordsOf with success response`` (response: Person []) expected =
+    [<MemberData(nameof (getMultipleRecordsOfOkTestCases))>]
+    let ``Statement.getMultipleRecordsOf with success response`` (response: Person []) expected =
         let statement: Statement<Person []> =
             { time = "1s"
               status = "OK"
@@ -267,6 +271,6 @@ module ModelsTests =
 
         let result =
             statement
-            |> Statement.tryGetMultipleRecordsOf<Person>
+            |> Statement.getMultipleRecordsOf<Person>
 
-        test <@ result = expected @>
+        testStatement result statement expected

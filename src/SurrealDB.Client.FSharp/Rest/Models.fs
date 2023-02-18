@@ -17,9 +17,38 @@ type HeadersInfo =
 
 type RestApiResult<'result> =
     { headers: HeadersInfo
-      result: ApiResult<'result> }
-type RestApiResult = RestApiResult<JsonNode>
+      statements: StatementsResult<'result> }
 
 type RestApiSingleResult<'result> =
     { headers: HeadersInfo
-      result: ApiSingleResult<'result> }
+      statement: StatementResult<'result> }
+
+module RestApiSingleResult =
+    let private toResult result statement =
+        { headers = result.headers
+          statement = statement }
+
+    let ofRestApiResult<'result> (response: RestApiResult<'result>) : RestApiSingleResult<'result> =
+        response.statements
+        |> StatementResult.ofStatementsResult
+        |> fun statement -> { headers = response.headers; statement = statement }
+
+    let getRequiredRecord<'record> (response: RestApiSingleResult<'record []>) : RestApiSingleResult<'record> =
+        response.statement
+        |> Result.map Statement.getRequiredRecordOf
+        |> toResult response
+
+    let getMultipleRecords<'record> (response: RestApiSingleResult<'record []>) : RestApiSingleResult<'record []> =
+        response
+
+    let getOptionalRecord<'record>
+        (response: RestApiSingleResult<'record []>)
+        : RestApiSingleResult<'record voption> =
+        response.statement
+        |> Result.map Statement.getOptionalRecordOf<'record>
+        |> toResult response
+
+    let getNoRecords (response: RestApiSingleResult<'record []>) : RestApiSingleResult<unit> =
+        response.statement
+        |> Result.map Statement.getNoRecordsOf
+        |> toResult response

@@ -88,13 +88,3 @@ module Seq =
             ValueSome(getCurrent enumerator)
         else
             ValueNone
-
-[<RequireQualifiedAccess>]
-module TaskResult =
-    open System.Threading.Tasks
-    let mapSync (f: 'a -> 'b) (ma: Task<Result<'a, 'e>>) =
-        task {
-            match! ma with
-            | Ok a -> return Ok (f a)
-            | Error error -> return Error error
-        }

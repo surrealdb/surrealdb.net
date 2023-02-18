@@ -243,9 +243,9 @@ module SurrealEndpointsTests =
         test <@ response.headers.dateTimeOffset = ValueSome(DUMMY_DATETIMEOFFSET) @>
 
     let testResponseError (response: RestApiResult<JsonNode>) expectedError =
-        match response.result with
+        match response.statements with
         | Ok result -> Assert.Fail $"Expected error, got {result}"
-        | Error error -> test <@ error = expectedError @>
+        | Error error -> test <@ error = ResponseError expectedError @>
 
     let testResponseJson
         (response: RestApiResult<JsonNode>)
@@ -254,8 +254,8 @@ module SurrealEndpointsTests =
         expectedTimeSpan
         (expectedJson: string)
         =
-        match response.result with
-        | Error error -> Assert.Fail $"Expected json result, got {error}"
+        match response.statements with
+        | Error error -> Assert.Fail $"Expected success result, got {error}"
         | Ok result ->
             let expectedJson = JsonNode.Parse(expectedJson)
             test <@ result.Length = 1 @>
@@ -265,7 +265,7 @@ module SurrealEndpointsTests =
             test <@ first.status = expectedStatus @>
 
             match first.response with
-            | Error _ -> Assert.Fail "Expected success response"
+            | Error error -> Assert.Fail $"Expected success result, got {error}"
             | Ok json -> test <@ jsonDiff json expectedJson = [] @>
 
     let testResponseStatementError
@@ -275,8 +275,8 @@ module SurrealEndpointsTests =
         expectedTimeSpan
         (expectedError: string)
         =
-        match response.result with
-        | Error error -> Assert.Fail $"Expected json result, got {error}"
+        match response.statements with
+        | Error error -> Assert.Fail $"Expected success result, got {error}"
         | Ok result ->
             test <@ result.Length = 1 @>
             let first = result.[0]
@@ -285,7 +285,7 @@ module SurrealEndpointsTests =
             test <@ first.status = expectedStatus @>
 
             match first.response with
-            | Error error -> test <@ error = expectedError @>
+            | Error error -> test <@ error = StatementError expectedError @>
             | Ok json -> Assert.Fail $"Expected error, got {json}"
 
     let testResponseMultipleJson
@@ -295,8 +295,8 @@ module SurrealEndpointsTests =
         expectedTimeSpan
         (expectedJsons: string [])
         =
-        match response.result with
-        | Error error -> Assert.Fail $"Expected json result, got {error}"
+        match response.statements with
+        | Error error -> Assert.Fail $"Expected success result, got {error}"
         | Ok result ->
             test <@ result.Length = expectedJsons.Length @>
 
@@ -311,7 +311,7 @@ module SurrealEndpointsTests =
                 test <@ result.status = expectedStatus @>
 
                 match result.response with
-                | Error _ -> Assert.Fail "Expected success response"
+                | Error error -> Assert.Fail $"Expected success result, got {error}"
                 | Ok json -> test <@ jsonDiff json expectedJson = [] @>
 
     // Testing PostSql
@@ -498,7 +498,7 @@ module SurrealEndpointsTests =
             testRequestNoContent t
 
             testResponseHeaders response expectedStatus
-            testResponseStatementError response "OK" "3.4s" (TimeSpan.FromSeconds(3.4)) "EXPECTED_RESULT_OR_DETAIL"
+            testResponseStatementError response "OK" "3.4s" (TimeSpan.FromSeconds(3.4)) EXPECTED_RESULT_OR_DETAIL
         }
 
     [<Fact>]
@@ -537,6 +537,37 @@ module SurrealEndpointsTests =
 
             testResponseHeaders response expectedStatus
             testResponseJson response "OK" "151.3µs" (TimeSpan.FromMilliseconds(0.1513)) expectedJson
+        }
+
+    [<Fact>]
+    let ``GetKeyTable with statement error`` () =
+        task {
+            let expectedStatus = HttpStatusCode.OK
+
+            let expectedDetail = "Some error details"
+
+            let t =
+                sprintf
+                    """[
+                        {
+                            "status": "%s",
+                            "time": "%s",
+                            "detail": "%s"
+                        }
+                    ]""" "OK" "151.3µs" expectedDetail
+                |> prepareTest expectedStatus
+
+            use _ = t.disposable
+
+            let table = "people"
+
+            let! response = t.endpoints.GetKeyTable(table, t.cancellationToken)
+
+            testRequestHeaders t HttpMethod.Get $"http://localhost:%d{PORT}/key/{table}"
+            testRequestNoContent t
+
+            testResponseHeaders response expectedStatus
+            testResponseStatementError response "OK" "151.3µs" (TimeSpan.FromMilliseconds(0.1513)) expectedDetail
         }
 
     // Testing PostKeyTable

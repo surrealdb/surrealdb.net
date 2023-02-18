@@ -80,17 +80,18 @@ module internal Internals =
                         | None, Some detail ->
                             { time = json.time
                               status = json.status
-                              response = Error detail }
+                              response = Error (StatementError detail) }
                         | None, None ->
                             { time = json.time
                               status = json.status
-                              response = Error "EXPECTED_RESULT_OR_DETAIL" })
+                              response = Error (StatementError EXPECTED_RESULT_OR_DETAIL) })
                     |> Ok
                 else
                     JsonSerializer.Deserialize<ErrorInfo>(content, jsonOptions)
+                    |> ResponseError
                     |> Error
 
-            let response: RestApiResult<'result> = { headers = headers; result = result }
+            let response: RestApiResult<'result> = { headers = headers; statements = result }
 
             return response
         }
@@ -137,21 +138,6 @@ module internal Internals =
             request.Content <- new StringContent(text, Encoding.UTF8, TEXT_PLAIN)
             return! executeRequest<'result> jsonOptions httpClient ct request
         }
-
-    let tryGetSingleStatement (response: ApiResult<'result>) : ApiSingleResult<'result> =
-        match response with
-        | Error err -> Error(ResponseError err)
-        | Ok statements when statements.Length = 1 -> Ok statements.[0]
-        | _ -> Error(ProtocolError ExpectedSingleStatement)
-
-    let asSingleApiResult<'result> (response: RestApiResult<'result>) =
-        let singleResult = response.result |> tryGetSingleStatement
-
-        let singleResult: RestApiSingleResult<'result> =
-            { headers = response.headers
-              result = singleResult }
-
-        singleResult
 
     /// <summary>
     /// Applies the configuration to the <see cref="HttpClient"/>.
