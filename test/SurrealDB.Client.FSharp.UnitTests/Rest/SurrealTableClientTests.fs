@@ -17,7 +17,7 @@ open SurrealDB.Client.FSharp.Rest
 
 [<Trait(Category, UnitTest)>]
 [<Trait(Area, REST)>]
-module SurrealKeyTableEndpointsTests =
+module SurrealTableClientTests =
     type Person =
         { firstName: string
           lastName: string
@@ -48,7 +48,7 @@ module SurrealKeyTableEndpointsTests =
         { config: SurrealConfig
           httpClient: HttpClient
           jsonOptions: JsonSerializerOptions
-          endpoints: ISurrealKeyTableEndpoints
+          endpoints: ISurrealTableClient
           requests: ResizeArray<HttpRequestMessage>
           cancellationTokenSource: CancellationTokenSource
           cancellationToken: CancellationToken
@@ -93,8 +93,8 @@ module SurrealKeyTableEndpointsTests =
 
         let jsonOptions = Json.defaultOptions
 
-        let endpoints: ISurrealKeyTableEndpoints =
-            new SurrealKeyTableEndpoints(config, httpClient, Json.defaultOptions)
+        let endpoints: ISurrealTableClient =
+            new SurrealTableClient(config, httpClient, Json.defaultOptions)
 
         let cancellationTokenSource = new CancellationTokenSource()
 
@@ -338,7 +338,7 @@ module SurrealKeyTableEndpointsTests =
             | Ok result -> Assert.Fail $"Expected error, got {result}"
 
     [<Fact>]
-    let ``GetKeyTableResponse with error response`` () =
+    let ``ListResponseAsync with error response`` () =
         task {
             let expectedStatus = HttpStatusCode.BadRequest
 
@@ -349,7 +349,7 @@ module SurrealKeyTableEndpointsTests =
 
             let table = "people"
 
-            let! response = t.endpoints.GetKeyTableResponse<Person>(table, t.cancellationToken)
+            let! response = t.endpoints.ListResponseAsync<Person>(table, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Get $"http://localhost:%d{PORT}/key/{table}"
             testRequestNoContent t
@@ -359,7 +359,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``GetKeyTableResponse with missing result`` () =
+    let ``ListResponseAsync with missing result`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -374,7 +374,7 @@ module SurrealKeyTableEndpointsTests =
 
             let table = "people"
 
-            let! response = t.endpoints.GetKeyTableResponse<Person>(table, t.cancellationToken)
+            let! response = t.endpoints.ListResponseAsync<Person>(table, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Get $"http://localhost:%d{PORT}/key/{table}"
             testRequestNoContent t
@@ -390,7 +390,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``GetKeyTableResponse with array response`` () =
+    let ``ListResponseAsync with array response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -404,7 +404,7 @@ module SurrealKeyTableEndpointsTests =
 
             let table = "people"
 
-            let! response = t.endpoints.GetKeyTableResponse<Person>(table, t.cancellationToken)
+            let! response = t.endpoints.ListResponseAsync<Person>(table, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Get $"http://localhost:%d{PORT}/key/{table}"
             testRequestNoContent t
@@ -414,7 +414,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``GetKeyTable with array response`` () =
+    let ``ListAsync with array response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -428,7 +428,7 @@ module SurrealKeyTableEndpointsTests =
 
             let table = "people"
 
-            let! response = t.endpoints.GetKeyTable<Person>(table, t.cancellationToken)
+            let! response = t.endpoints.ListAsync<Person>(table, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Get $"http://localhost:%d{PORT}/key/{table}"
             testRequestNoContent t
@@ -436,10 +436,10 @@ module SurrealKeyTableEndpointsTests =
             testResult response expectedResult
         }
 
-    // Testing PostKeyTable[Response]
+    // Testing CreateAsync[Response]
 
     [<Fact>]
-    let ``PostPartialKeyTableResponse with error response`` () =
+    let ``CreatePartialResponseAsync with error response`` () =
         task {
             let expectedStatus = HttpStatusCode.BadRequest
 
@@ -455,7 +455,7 @@ module SurrealKeyTableEndpointsTests =
                   lastName = john.lastName
                   age = john.age }
 
-            let! response = t.endpoints.PostPartialKeyTableResponse<_, Person>(table, record, t.cancellationToken)
+            let! response = t.endpoints.CreatePartialResponseAsync<_, Person>(table, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Post $"http://localhost:%d{PORT}/key/{table}"
             do! testRequestDataContent t record
@@ -465,7 +465,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PostPartialKeyTableResponse with record response`` () =
+    let ``CreatePartialResponseAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -484,7 +484,7 @@ module SurrealKeyTableEndpointsTests =
                   lastName = john.lastName
                   age = john.age }
 
-            let! response = t.endpoints.PostPartialKeyTableResponse<_, Person>(table, record, t.cancellationToken)
+            let! response = t.endpoints.CreatePartialResponseAsync<_, Person>(table, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Post $"http://localhost:%d{PORT}/key/{table}"
             do! testRequestDataContent t record
@@ -494,7 +494,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PostPartialKeyTable with record response`` () =
+    let ``CreatePartialAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -513,7 +513,7 @@ module SurrealKeyTableEndpointsTests =
                   lastName = john.lastName
                   age = john.age }
 
-            let! response = t.endpoints.PostPartialKeyTable<_, Person>(table, record, t.cancellationToken)
+            let! response = t.endpoints.CreatePartialAsync<_, Person>(table, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Post $"http://localhost:%d{PORT}/key/{table}"
             do! testRequestDataContent t record
@@ -522,7 +522,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PostKeyTableResponse with error response`` () =
+    let ``CreateResponseAsync with error response`` () =
         task {
             let expectedStatus = HttpStatusCode.BadRequest
 
@@ -535,7 +535,7 @@ module SurrealKeyTableEndpointsTests =
 
             let record = john
 
-            let! response = t.endpoints.PostKeyTableResponse(table, record, t.cancellationToken)
+            let! response = t.endpoints.CreateResponseAsync(table, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Post $"http://localhost:%d{PORT}/key/{table}"
             do! testRequestDataContent t record
@@ -545,7 +545,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PostKeyTableResponse with record response`` () =
+    let ``CreateResponseAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -561,7 +561,7 @@ module SurrealKeyTableEndpointsTests =
 
             let record = john
 
-            let! response = t.endpoints.PostKeyTableResponse(table, record, t.cancellationToken)
+            let! response = t.endpoints.CreateResponseAsync(table, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Post $"http://localhost:%d{PORT}/key/{table}"
             do! testRequestDataContent t record
@@ -571,7 +571,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PostKeyTable with record response`` () =
+    let ``CreateAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -587,7 +587,7 @@ module SurrealKeyTableEndpointsTests =
 
             let record = john
 
-            let! response = t.endpoints.PostKeyTable(table, record, t.cancellationToken)
+            let! response = t.endpoints.CreateAsync(table, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Post $"http://localhost:%d{PORT}/key/{table}"
             do! testRequestDataContent t record
@@ -595,10 +595,10 @@ module SurrealKeyTableEndpointsTests =
             testResult response expectedResult
         }
 
-    // Testing DeleteKeyTable[Response]
+    // Testing DeleteAllAsync[Response]
 
     [<Fact>]
-    let ``DeleteKeyTableResponse with error response`` () =
+    let ``DeleteAllResponseAsync with error response`` () =
         task {
             let expectedStatus = HttpStatusCode.BadRequest
 
@@ -609,7 +609,7 @@ module SurrealKeyTableEndpointsTests =
 
             let table = "people"
 
-            let! response = t.endpoints.DeleteKeyTableResponse(table, t.cancellationToken)
+            let! response = t.endpoints.DeleteAllResponseAsync(table, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Delete $"http://localhost:%d{PORT}/key/{table}"
             testRequestNoContent t
@@ -619,7 +619,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``DeleteKeyTableResponse with no response`` () =
+    let ``DeleteAllResponseAsync with no response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -631,7 +631,7 @@ module SurrealKeyTableEndpointsTests =
 
             let table = "people"
 
-            let! response = t.endpoints.DeleteKeyTableResponse(table, t.cancellationToken)
+            let! response = t.endpoints.DeleteAllResponseAsync(table, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Delete $"http://localhost:%d{PORT}/key/{table}"
             testRequestNoContent t
@@ -641,7 +641,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``DeleteKeyTable with no response`` () =
+    let ``DeleteAllAsync with no response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -653,7 +653,7 @@ module SurrealKeyTableEndpointsTests =
 
             let table = "people"
 
-            let! response = t.endpoints.DeleteKeyTable(table, t.cancellationToken)
+            let! response = t.endpoints.DeleteAllAsync(table, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Delete $"http://localhost:%d{PORT}/key/{table}"
             testRequestNoContent t
@@ -661,10 +661,10 @@ module SurrealKeyTableEndpointsTests =
             testResult response ()
         }
 
-    // Testing GetKeyTableId[Response]
+    // Testing FindAsync[Response]
 
     [<Fact>]
-    let ``GetKeyTableIdResponse with error response`` () =
+    let ``FindResponseAsync with error response`` () =
         task {
             let expectedStatus = HttpStatusCode.BadRequest
 
@@ -676,7 +676,7 @@ module SurrealKeyTableEndpointsTests =
             let table = "people"
             let id = john.id.id
 
-            let! response = t.endpoints.GetKeyTableIdResponse<Person>(table, id, t.cancellationToken)
+            let! response = t.endpoints.FindResponseAsync<Person>(table, id, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Get $"http://localhost:%d{PORT}/key/{table}/{id}"
             testRequestNoContent t
@@ -686,7 +686,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``GetKeyTableIdResponse with record response`` () =
+    let ``FindResponseAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -701,7 +701,7 @@ module SurrealKeyTableEndpointsTests =
             let table = "people"
             let id = john.id.id
 
-            let! response = t.endpoints.GetKeyTableIdResponse<Person>(table, id, t.cancellationToken)
+            let! response = t.endpoints.FindResponseAsync<Person>(table, id, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Get $"http://localhost:%d{PORT}/key/{table}/{id}"
             testRequestNoContent t
@@ -711,7 +711,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``GetKeyTableIdResponse with empty response`` () =
+    let ``FindResponseAsync with empty response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -724,7 +724,7 @@ module SurrealKeyTableEndpointsTests =
             let table = "people"
             let id = john.id.id
 
-            let! response = t.endpoints.GetKeyTableIdResponse<Person>(table, id, t.cancellationToken)
+            let! response = t.endpoints.FindResponseAsync<Person>(table, id, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Get $"http://localhost:%d{PORT}/key/{table}/{id}"
             testRequestNoContent t
@@ -734,7 +734,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``GetKeyTableIdResponse with multiple records response`` () =
+    let ``FindResponseAsync with multiple records response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -747,7 +747,7 @@ module SurrealKeyTableEndpointsTests =
             let table = "people"
             let id = john.id.id
 
-            let! response = t.endpoints.GetKeyTableIdResponse<Person>(table, id, t.cancellationToken)
+            let! response = t.endpoints.FindResponseAsync<Person>(table, id, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Get $"http://localhost:%d{PORT}/key/{table}/{id}"
             testRequestNoContent t
@@ -763,7 +763,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``GetKeyTableId with record response`` () =
+    let ``FindAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -778,7 +778,7 @@ module SurrealKeyTableEndpointsTests =
             let table = "people"
             let id = john.id.id
 
-            let! response = t.endpoints.GetKeyTableId<Person>(table, id, t.cancellationToken)
+            let! response = t.endpoints.FindAsync<Person>(table, id, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Get $"http://localhost:%d{PORT}/key/{table}/{id}"
             testRequestNoContent t
@@ -787,7 +787,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``GetKeyTableId with empty response`` () =
+    let ``FindAsync with empty response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -800,7 +800,7 @@ module SurrealKeyTableEndpointsTests =
             let table = "people"
             let id = john.id.id
 
-            let! response = t.endpoints.GetKeyTableId<Person>(table, id, t.cancellationToken)
+            let! response = t.endpoints.FindAsync<Person>(table, id, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Get $"http://localhost:%d{PORT}/key/{table}/{id}"
             testRequestNoContent t
@@ -808,10 +808,10 @@ module SurrealKeyTableEndpointsTests =
             testResult response ValueNone
         }
 
-    // Testing PostKeyTableId[Response]
+    // Testing InsertAsync[Response]
 
     [<Fact>]
-    let ``PostPartialKeyTableIdResponse with error response`` () =
+    let ``InsertPartialResponseAsync with error response`` () =
         task {
             let expectedStatus = HttpStatusCode.BadRequest
 
@@ -829,7 +829,7 @@ module SurrealKeyTableEndpointsTests =
 
             let id = john.id.id
 
-            let! response = t.endpoints.PostPartialKeyTableIdResponse<_, Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.InsertPartialResponseAsync<_, Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Post $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -839,7 +839,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PostPartialKeyTableIdResponse with record response`` () =
+    let ``InsertPartialResponseAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -860,7 +860,7 @@ module SurrealKeyTableEndpointsTests =
 
             let id = john.id.id
 
-            let! response = t.endpoints.PostPartialKeyTableIdResponse<_, Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.InsertPartialResponseAsync<_, Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Post $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -870,7 +870,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PostPartialKeyTableIdResponse with empty response`` () =
+    let ``InsertPartialResponseAsync with empty response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -889,7 +889,7 @@ module SurrealKeyTableEndpointsTests =
 
             let id = john.id.id
 
-            let! response = t.endpoints.PostPartialKeyTableIdResponse<_, Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.InsertPartialResponseAsync<_, Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Post $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -905,7 +905,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PostPartialKeyTableId with record response`` () =
+    let ``InsertPartialAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -926,7 +926,7 @@ module SurrealKeyTableEndpointsTests =
 
             let id = john.id.id
 
-            let! response = t.endpoints.PostPartialKeyTableId<_, Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.InsertPartialAsync<_, Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Post $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -935,7 +935,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PostKeyTableIdResponse with error response`` () =
+    let ``InsertResponseAsync with error response`` () =
         task {
             let expectedStatus = HttpStatusCode.BadRequest
 
@@ -948,7 +948,7 @@ module SurrealKeyTableEndpointsTests =
             let record = john
             let id = john.id.id
 
-            let! response = t.endpoints.PostKeyTableIdResponse<Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.InsertResponseAsync<Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Post $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -958,7 +958,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PostKeyTableIdResponse with record response`` () =
+    let ``InsertResponseAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -974,7 +974,7 @@ module SurrealKeyTableEndpointsTests =
             let record = john
             let id = john.id.id
 
-            let! response = t.endpoints.PostKeyTableIdResponse<Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.InsertResponseAsync<Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Post $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -984,7 +984,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PostKeyTableIdResponse with empty response`` () =
+    let ``InsertResponseAsync with empty response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -998,7 +998,7 @@ module SurrealKeyTableEndpointsTests =
             let record = john
             let id = john.id.id
 
-            let! response = t.endpoints.PostKeyTableIdResponse<Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.InsertResponseAsync<Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Post $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -1014,7 +1014,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PostKeyTableId with record response`` () =
+    let ``InsertAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1030,7 +1030,7 @@ module SurrealKeyTableEndpointsTests =
             let record = john
             let id = john.id.id
 
-            let! response = t.endpoints.PostKeyTableId<Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.InsertAsync<Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Post $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -1038,10 +1038,10 @@ module SurrealKeyTableEndpointsTests =
             testResult response expectedResult
         }
 
-    // Testing PutKeyTableId[Response]
+    // Testing ReplaceAsync[Response]
 
     [<Fact>]
-    let ``PutPartialKeyTableIdResponse with error response`` () =
+    let ``ReplacePartialResponseAsync with error response`` () =
         task {
             let expectedStatus = HttpStatusCode.BadRequest
 
@@ -1059,7 +1059,7 @@ module SurrealKeyTableEndpointsTests =
 
             let id = john.id.id
 
-            let! response = t.endpoints.PutPartialKeyTableIdResponse<_, Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.ReplacePartialResponseAsync<_, Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Put $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -1069,7 +1069,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PutPartialKeyTableIdResponse with record response`` () =
+    let ``ReplacePartialResponseAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1090,7 +1090,7 @@ module SurrealKeyTableEndpointsTests =
 
             let id = john.id.id
 
-            let! response = t.endpoints.PutPartialKeyTableIdResponse<_, Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.ReplacePartialResponseAsync<_, Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Put $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -1100,7 +1100,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PutPartialKeyTableIdResponse with empty response`` () =
+    let ``ReplacePartialResponseAsync with empty response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1119,7 +1119,7 @@ module SurrealKeyTableEndpointsTests =
 
             let id = john.id.id
 
-            let! response = t.endpoints.PutPartialKeyTableIdResponse<_, Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.ReplacePartialResponseAsync<_, Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Put $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -1135,7 +1135,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PutPartialKeyTableId with record response`` () =
+    let ``ReplacePartialAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1156,7 +1156,7 @@ module SurrealKeyTableEndpointsTests =
 
             let id = john.id.id
 
-            let! response = t.endpoints.PutPartialKeyTableId<_, Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.ReplacePartialAsync<_, Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Put $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -1165,7 +1165,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PutKeyTableIdResponse with error response`` () =
+    let ``ReplaceResponseAsync with error response`` () =
         task {
             let expectedStatus = HttpStatusCode.BadRequest
 
@@ -1178,7 +1178,7 @@ module SurrealKeyTableEndpointsTests =
             let record = john
             let id = john.id.id
 
-            let! response = t.endpoints.PutKeyTableIdResponse<Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.ReplaceResponseAsync<Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Put $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -1188,7 +1188,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PutKeyTableIdResponse with record response`` () =
+    let ``ReplaceResponseAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1204,7 +1204,7 @@ module SurrealKeyTableEndpointsTests =
             let record = john
             let id = john.id.id
 
-            let! response = t.endpoints.PutKeyTableIdResponse<Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.ReplaceResponseAsync<Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Put $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -1214,7 +1214,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PutKeyTableIdResponse with empty response`` () =
+    let ``ReplaceResponseAsync with empty response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1228,7 +1228,7 @@ module SurrealKeyTableEndpointsTests =
             let record = john
             let id = john.id.id
 
-            let! response = t.endpoints.PutKeyTableIdResponse<Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.ReplaceResponseAsync<Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Put $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -1244,7 +1244,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PutKeyTableId with record response`` () =
+    let ``ReplaceAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1260,7 +1260,7 @@ module SurrealKeyTableEndpointsTests =
             let record = john
             let id = john.id.id
 
-            let! response = t.endpoints.PutKeyTableId<Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.ReplaceAsync<Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Put $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -1271,7 +1271,7 @@ module SurrealKeyTableEndpointsTests =
     // Testing PatchKeyTableIdResponse
 
     [<Fact>]
-    let ``PatchPartialKeyTableIdResponse with error response`` () =
+    let ``ModifyPartialResponseAsync with error response`` () =
         task {
             let expectedStatus = HttpStatusCode.BadRequest
 
@@ -1287,7 +1287,7 @@ module SurrealKeyTableEndpointsTests =
 
             let id = john.id.id
 
-            let! response = t.endpoints.PatchPartialKeyTableIdResponse<_, Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.ModifyPartialResponseAsync<_, Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Patch $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -1297,7 +1297,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PatchPartialKeyTableIdResponse with record response`` () =
+    let ``ModifyPartialResponseAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1316,7 +1316,7 @@ module SurrealKeyTableEndpointsTests =
 
             let id = john.id.id
 
-            let! response = t.endpoints.PatchPartialKeyTableIdResponse<_, Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.ModifyPartialResponseAsync<_, Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Patch $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -1326,7 +1326,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PatchPartialKeyTableIdResponse with empty response`` () =
+    let ``ModifyPartialResponseAsync with empty response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1343,7 +1343,7 @@ module SurrealKeyTableEndpointsTests =
 
             let id = john.id.id
 
-            let! response = t.endpoints.PatchPartialKeyTableIdResponse<_, Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.ModifyPartialResponseAsync<_, Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Patch $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -1359,7 +1359,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``PatchPartialKeyTableId with record response`` () =
+    let ``ModifyPartialAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1378,7 +1378,7 @@ module SurrealKeyTableEndpointsTests =
 
             let id = john.id.id
 
-            let! response = t.endpoints.PatchPartialKeyTableId<_, Person>(table, id, record, t.cancellationToken)
+            let! response = t.endpoints.ModifyPartialAsync<_, Person>(table, id, record, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Patch $"http://localhost:%d{PORT}/key/{table}/{id}"
             do! testRequestDataContent t record
@@ -1386,10 +1386,10 @@ module SurrealKeyTableEndpointsTests =
             testResult response expectedResult
         }
 
-    // Testing DeleteKeyTableId[Response]
+    // Testing DeleteAsync[Response]
 
     [<Fact>]
-    let ``DeleteKeyTableIdResponse with error response`` () =
+    let ``DeleteResponseAsync with error response`` () =
         task {
             let expectedStatus = HttpStatusCode.BadRequest
 
@@ -1401,7 +1401,7 @@ module SurrealKeyTableEndpointsTests =
             let table = "people"
             let id = john.id.id
 
-            let! response = t.endpoints.DeleteKeyTableIdResponse(table, id, t.cancellationToken)
+            let! response = t.endpoints.DeleteResponseAsync(table, id, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Delete $"http://localhost:%d{PORT}/key/{table}/{id}"
 
@@ -1410,7 +1410,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``DeleteKeyTableIdResponse with empty response`` () =
+    let ``DeleteResponseAsync with empty response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1423,7 +1423,7 @@ module SurrealKeyTableEndpointsTests =
             let table = "people"
             let id = john.id.id
 
-            let! response = t.endpoints.DeleteKeyTableIdResponse(table, id, t.cancellationToken)
+            let! response = t.endpoints.DeleteResponseAsync(table, id, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Delete $"http://localhost:%d{PORT}/key/{table}/{id}"
 
@@ -1432,7 +1432,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``DeleteKeyTableIdResponse with record response`` () =
+    let ``DeleteResponseAsync with record response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1447,7 +1447,7 @@ module SurrealKeyTableEndpointsTests =
             let table = "people"
             let id = john.id.id
 
-            let! response = t.endpoints.DeleteKeyTableIdResponse(table, id, t.cancellationToken)
+            let! response = t.endpoints.DeleteResponseAsync(table, id, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Delete $"http://localhost:%d{PORT}/key/{table}/{id}"
 
@@ -1461,7 +1461,7 @@ module SurrealKeyTableEndpointsTests =
         }
 
     [<Fact>]
-    let ``DeleteKeyTableId with empty response`` () =
+    let ``DeleteAsync with empty response`` () =
         task {
             let expectedStatus = HttpStatusCode.OK
 
@@ -1474,7 +1474,7 @@ module SurrealKeyTableEndpointsTests =
             let table = "people"
             let id = john.id.id
 
-            let! response = t.endpoints.DeleteKeyTableId(table, id, t.cancellationToken)
+            let! response = t.endpoints.DeleteAsync(table, id, t.cancellationToken)
 
             testRequestHeaders t HttpMethod.Delete $"http://localhost:%d{PORT}/key/{table}/{id}"
 

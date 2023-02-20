@@ -1,3 +1,3 @@
 (
-    SurrealEndpoints.sample()
+    SurrealJsonClient.sample()
 ).GetAwaiter().GetResult()

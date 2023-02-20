@@ -163,3 +163,20 @@ module internal Internals =
         updateDefaultHeader DB_HEADER config.Database httpClient
 
         httpClient.BaseAddress <- Uri(config.BaseUrl, UriKind.Absolute)
+
+    let toSimpleResult responseTask =
+        task {
+            let! response = responseTask
+
+            return StatementResult.toSimpleResult response.statement
+        }
+
+    let toTableResponse transform responseTask =
+        task {
+            let! response = responseTask
+
+            return
+                response
+                |> RestApiSingleResult.ofRestApiResult
+                |> transform
+        }

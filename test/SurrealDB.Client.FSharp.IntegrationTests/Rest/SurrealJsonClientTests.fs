@@ -23,12 +23,12 @@ open SurrealDB.Client.FSharp.Rest
 
 [<Trait(Category, IntegrationTest)>]
 [<Trait(Area, REST)>]
-module SurrealEndpointsIntegrationTests =
+module SurrealJsonClientTests =
     type Testing =
         { config: SurrealConfig
           httpClient: HttpClient
           jsonOptions: JsonSerializerOptions
-          endpoints: ISurrealEndpoints
+          endpoints: ISurrealJsonClient
           container: IContainer
           cancellationTokenSource: CancellationTokenSource
           cancellationToken: CancellationToken
@@ -76,8 +76,8 @@ module SurrealEndpointsIntegrationTests =
 
             let jsonOptions = Json.defaultOptions
 
-            let endpoints: ISurrealEndpoints =
-                new SurrealEndpoints(config, httpClient, jsonOptions)
+            let endpoints: ISurrealJsonClient =
+                new SurrealJsonClient(config, httpClient, jsonOptions)
 
             let cancellationTokenSource = new CancellationTokenSource()
 
@@ -203,7 +203,7 @@ module SurrealEndpointsIntegrationTests =
 
             // Test list of people with empty database
             let expectedJson = "[]"
-            let! response = t.endpoints.GetKeyTable(table, t.cancellationToken)
+            let! response = t.endpoints.ListAsync(table, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
             testResponseJson response "OK" expectedJson
 
@@ -220,7 +220,7 @@ module SurrealEndpointsIntegrationTests =
                 "lastName": "Doe",
                 "age": 42
             }"""
-            let! response = t.endpoints.PostKeyTable(table, record, t.cancellationToken)
+            let! response = t.endpoints.CreateAsync(table, record, t.cancellationToken)
             testResponseJsonWith
                 (fun diff ->
                     match diff.path, diff.diff with
@@ -234,7 +234,7 @@ module SurrealEndpointsIntegrationTests =
 
             // Test delete all people
             let expectedJson = "[]"
-            let! response = t.endpoints.DeleteKeyTable(table, t.cancellationToken)
+            let! response = t.endpoints.DeleteAllAsync(table, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
             testResponseJson response "OK" expectedJson
 
@@ -245,14 +245,14 @@ module SurrealEndpointsIntegrationTests =
                     "testns": "DEFINE NAMESPACE testns"
                 }
             }"""
-            let! response = t.endpoints.PostSql("INFO FOR KV;", t.cancellationToken)
+            let! response = t.endpoints.SqlAsync("INFO FOR KV;", t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
             testResponseJson response "OK" expectedJson
 
 
             // Test get a non-existent person by id
             let expectedJson = "[]"
-            let! response = t.endpoints.GetKeyTableId(table, johnId, t.cancellationToken)
+            let! response = t.endpoints.FindAsync(table, johnId, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
             testResponseJson response "OK" expectedJson
 
@@ -263,7 +263,7 @@ module SurrealEndpointsIntegrationTests =
                 "lastName": "Doe",
                 "age": 42
             }"""
-            let! response = t.endpoints.PostKeyTableId(table, johnId, record, t.cancellationToken)
+            let! response = t.endpoints.InsertAsync(table, johnId, record, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
             testResponseJson response "OK" expectedJson
 
@@ -274,7 +274,7 @@ module SurrealEndpointsIntegrationTests =
                 "lastName": "Doe",
                 "age": 42
             }"""
-            let! response = t.endpoints.PutKeyTableId(table, janeId, record, t.cancellationToken)
+            let! response = t.endpoints.ReplaceAsync(table, janeId, record, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
             testResponseJson response "OK" expectedJson
 
@@ -283,23 +283,23 @@ module SurrealEndpointsIntegrationTests =
             let record = JsonNode.Parse """{
                 "firstName": "Johnny"
             }"""
-            let! response = t.endpoints.PatchKeyTableId(table, johnId, record, t.cancellationToken)
+            let! response = t.endpoints.ModifyAsync(table, johnId, record, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
             testResponseJson response "OK" expectedJson
 
             // Test get all people
             let expectedJson = sprintf "[ %s, %s ]" janeJson johnnyJson
-            let! response = t.endpoints.GetKeyTable(table, t.cancellationToken)
+            let! response = t.endpoints.ListAsync(table, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
             testResponseJson response "OK" expectedJson
 
             // Test delete a person by id
             let expectedJson = """[]"""
-            let! response = t.endpoints.DeleteKeyTableId(table, johnId, t.cancellationToken)
+            let! response = t.endpoints.DeleteAsync(table, johnId, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
             testResponseJson response "OK" expectedJson
             let expectedJson = sprintf "[ %s ]" janeJson
-            let! response = t.endpoints.GetKeyTable(table, t.cancellationToken)
+            let! response = t.endpoints.ListAsync(table, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
             testResponseJson response "OK" expectedJson
         }

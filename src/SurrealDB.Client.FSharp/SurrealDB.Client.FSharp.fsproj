@@ -18,8 +18,8 @@
     <Compile Include="Rest\Constants.fs" />
     <Compile Include="Rest\Models.fs" />
     <Compile Include="Rest\Internals.fs" />
-    <Compile Include="Rest\SurrealEndpoints.fs" />
-    <Compile Include="Rest\SurrealKeyTableEndpoints.fs" />
+    <Compile Include="Rest\SurrealJsonClient.fs" />
+    <Compile Include="Rest\SurrealTableClient.fs" />
   </ItemGroup>
 
 </Project>
