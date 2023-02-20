@@ -49,6 +49,20 @@ DB: testdb
     "age": 20
 }
 
+### Insert a single record into a table with a key
+POST http://localhost:8010/key/people/jane
+Content-Type: application/json
+Accept: application/json
+Authorization: Basic {{auth}}
+NS: testns
+DB: testdb
+
+{
+    "firstName": "Jane",
+    "lastName": "Doe",
+    "age": 20
+}
+
 ### Upsert a single record into a table
 PUT http://localhost:8010/key/people/johnny
 Content-Type: application/json

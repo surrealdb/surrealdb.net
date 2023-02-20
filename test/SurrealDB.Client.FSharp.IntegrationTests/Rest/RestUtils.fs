@@ -83,33 +83,59 @@ let private appendKey (key: string) (path: string) =
     else
         $"%s{path}.%s{key}"
 
-let jsonDiff (node1: JsonNode) (node2: JsonNode) =
+type JsonDiff =
+    { path: JsonPathStep list
+      diff: JsonMismatch }
+
+and JsonPathStep =
+    | JsonIndex of int
+    | JsonKey of string
+
+and JsonMismatch =
+    | StringValueMismatch of leftValue: string * rightValue: string
+    | Int32ValueMismatch of leftValue: int32 * rightValue: int32
+    | NumberValueMismatch of leftValue: float * rightValue: float
+    | BooleanValueMismatch of leftValue: bool * rightValue: bool
+    | ArrayLengthMismatch of leftLength: int * rightLength: int * leftArray: JsonArray * rightArray: JsonArray
+    | TypeMismatch of leftType: string * rightType: string * leftNode: JsonNode * rightNode: JsonNode
+    | MissingLeftKey of leftKey: string * rightNode: JsonNode
+    | MissingRightKey of rightKey: string * leftNode: JsonNode
+    | UnknownJsonNodes of leftUnknown: bool * rightUnknown: bool * leftNode: JsonNode * rightNode: JsonNode
+
+let jsonDiff expectedFn (node1: JsonNode) (node2: JsonNode) =
     let diffs = ResizeArray()
-    let addError error = diffs.Add error
 
     let rec loop path (node1: JsonNode) (node2: JsonNode) =
+
+        let addError diff =
+            let path = path |> List.rev
+            let error = { path = path; diff = diff }
+
+            if not (expectedFn error) then
+                diffs.Add error
 
         match node1, node2 with
         | IsJsonString value1, IsJsonString value2 ->
             if value1 <> value2 then
-                addError $"Value mismatch at path %A{path}: %A{value1} vs %A{value2}"
+                addError <| StringValueMismatch(value1, value2)
         | IsJsonInt32 value1, IsJsonInt32 value2 ->
             if value1 <> value2 then
-                addError $"Value mismatch at path %A{path}: %A{value1} vs %A{value2}"
+                addError <| Int32ValueMismatch(value1, value2)
         | IsJsonNumber value1, IsJsonNumber value2 ->
             if value1 <> value2 then
-                addError $"Value mismatch at path %A{path}: %A{value1} vs %A{value2}"
+                addError <| NumberValueMismatch(value1, value2)
         | IsJsonBoolean value1, IsJsonBoolean value2 ->
             if value1 <> value2 then
-                addError $"Value mismatch at path %A{path}: %A{value1} vs %A{value2}"
+                addError <| BooleanValueMismatch(value1, value2)
         | IsJsonNull (), IsJsonNull () -> ()
 
         | IsJsonArray array1, IsJsonArray array2 ->
             if array1.Count <> array2.Count then
-                addError $"Array length mismatch at path %A{path}: %A{array1.Count} vs %A{array2.Count}"
+                addError
+                <| ArrayLengthMismatch(array1.Count, array2.Count, array1, array2)
             else
                 for i in 0 .. array1.Count - 1 do
-                    loop (appendIndex i path) array1.[i] array2.[i]
+                    loop (JsonIndex i :: path) array1.[i] array2.[i]
 
         | IsJsonObject obj1, IsJsonObject obj2 ->
             let dict1: IDictionary<string, JsonNode> = obj1
@@ -119,24 +145,28 @@ let jsonDiff (node1: JsonNode) (node2: JsonNode) =
                 dict1.Keys
                 |> Seq.append dict2.Keys
                 |> Seq.distinct
-                |> Seq.toList
 
             for key in allKeys do
                 match dict1.TryGetValue key, dict2.TryGetValue key with
-                | (true, value1), (true, value2) -> loop (appendKey key path) value1 value2
-                | (true, _), (false, _) -> addError $"Missing key at path %A{path}: %A{key}"
-                | (false, _), (true, _) -> addError $"Missing key at path %A{path}: %A{key}"
+                | (true, value1), (true, value2) -> loop (JsonKey key :: path) value1 value2
+                | (true, value1), (false, _) -> addError <| MissingRightKey(key, value1)
+                | (false, _), (true, value2) -> addError <| MissingLeftKey(key, value2)
                 | (false, _), (false, _) -> failwith "This should never happen"
 
         | JsonNodeType type1, JsonNodeType type2 when type1 <> type2 ->
-            addError $"Type mismatch at path %A{path}: %A{type1} vs %A{type2}"
-        | JsonNodeType _, node2 -> addError $"Unknown json node at path %A{path}: %A{node2.GetType().FullName}"
-        | node1, JsonNodeType _ -> addError $"Unknown json node at path %A{path}: %A{node1.GetType().FullName}"
+            addError
+            <| TypeMismatch(type1, type2, node1, node2)
+        | JsonNodeType _, node2 ->
+            addError
+            <| UnknownJsonNodes(false, true, node1, node2)
+        | node1, JsonNodeType _ ->
+            addError
+            <| UnknownJsonNodes(true, false, node1, node2)
         | node1, node2 ->
             addError
-                $"Unknown json nodes at path %A{path}: %A{node1.GetType().FullName} vs %A{node2.GetType().FullName}"
+            <| UnknownJsonNodes(true, true, node1, node2)
 
-    loop "$" node1 node2
+    loop [] node1 node2
 
     Seq.toList diffs
 

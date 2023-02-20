@@ -1,6 +1,7 @@
 namespace SurrealDB.Client.FSharp.Rest
 
 open System
+open System.Globalization
 open System.Net
 open System.Net.Http
 open System.Text
@@ -27,6 +28,21 @@ module SurrealEndpointsTests =
           cancellationToken: CancellationToken
           disposable: IDisposable }
 
+    let PORT = 8000
+    let USER = "root"
+    let PASS = "root"
+    let NS = "testns"
+    let DB = "testdb"
+    let DUMMY_VERSION = "dummy-version"
+    let DUMMY_SERVER = "dummy-server"
+    let DUMMY_DATE = "Fri, 10 Feb 2023 20:49:37 GMT"
+
+    let DUMMY_DATETIME =
+        DateTime.Parse(DUMMY_DATE, CultureInfo.InvariantCulture, DateTimeStyles.None)
+
+    let DUMMY_DATETIMEOFFSET =
+        DateTimeOffset.Parse(DUMMY_DATE, CultureInfo.InvariantCulture, DateTimeStyles.None)
+
     let prepareTestWith (config: SurrealConfig) statusCode (responseJson: string) =
         let requests = ResizeArray()
 
@@ -52,7 +68,7 @@ module SurrealEndpointsTests =
         let jsonOptions = Json.defaultOptions
 
         let endpoints: ISurrealEndpoints =
-            new SurrealEndpoints(config, httpClient, Json.defaultOptions)
+            new SurrealEndpoints(config, httpClient, jsonOptions)
 
         let cancellationTokenSource = new CancellationTokenSource()
 
