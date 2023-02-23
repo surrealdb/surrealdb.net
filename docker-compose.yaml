@@ -1,0 +1,14 @@
+version: '3.7'
+name: surrealdb-dotnet-client
+
+services:
+  db:
+    image: surrealdb/surrealdb:latest
+    ports:
+      - 8010:8000
+    environment:
+      - USER=root
+      - PASS=root
+      - STRICT=false
+
+    command: start memory

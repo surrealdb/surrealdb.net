@@ -1,0 +1,62 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02D6952E-29C5-4310-9DDD-FE4321AF7F22}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "SurrealDB.Client.FSharp", "src\SurrealDB.Client.FSharp\SurrealDB.Client.FSharp.fsproj", "{4703CB87-1BD7-4D20-9034-2D74A88CBDE2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{5E4ED990-9826-43E0-8722-59B3CE43286C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{EBCCC714-EB92-4EB8-9A93-DFDB35E20AF9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{716D8314-7D4B-4C12-BCC3-2BD40E0C22BF}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "SurrealDB.Client.FSharp.UnitTests", "test\SurrealDB.Client.FSharp.UnitTests\SurrealDB.Client.FSharp.UnitTests.fsproj", "{05B44779-022F-46DF-8FCF-EBBB6E16BE8B}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "HelloWorld", "samples\HelloWorld\HelloWorld.fsproj", "{8C2DE318-9B02-4012-92B3-858AFFC711A6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7DD9481F-6389-4FEA-90CC-354BE6DAE4F7}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+	EndProjectSection
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SurrealDB.Client.FSharp.IntegrationTests", "test\SurrealDB.Client.FSharp.IntegrationTests\SurrealDB.Client.FSharp.IntegrationTests.fsproj", "{4A03D87A-0411-4D92-A5C5-2404CD3FE065}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4703CB87-1BD7-4D20-9034-2D74A88CBDE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4703CB87-1BD7-4D20-9034-2D74A88CBDE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4703CB87-1BD7-4D20-9034-2D74A88CBDE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4703CB87-1BD7-4D20-9034-2D74A88CBDE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05B44779-022F-46DF-8FCF-EBBB6E16BE8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05B44779-022F-46DF-8FCF-EBBB6E16BE8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05B44779-022F-46DF-8FCF-EBBB6E16BE8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05B44779-022F-46DF-8FCF-EBBB6E16BE8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C2DE318-9B02-4012-92B3-858AFFC711A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C2DE318-9B02-4012-92B3-858AFFC711A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C2DE318-9B02-4012-92B3-858AFFC711A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C2DE318-9B02-4012-92B3-858AFFC711A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A03D87A-0411-4D92-A5C5-2404CD3FE065}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A03D87A-0411-4D92-A5C5-2404CD3FE065}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A03D87A-0411-4D92-A5C5-2404CD3FE065}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A03D87A-0411-4D92-A5C5-2404CD3FE065}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4703CB87-1BD7-4D20-9034-2D74A88CBDE2} = {02D6952E-29C5-4310-9DDD-FE4321AF7F22}
+		{05B44779-022F-46DF-8FCF-EBBB6E16BE8B} = {5E4ED990-9826-43E0-8722-59B3CE43286C}
+		{8C2DE318-9B02-4012-92B3-858AFFC711A6} = {716D8314-7D4B-4C12-BCC3-2BD40E0C22BF}
+		{4A03D87A-0411-4D92-A5C5-2404CD3FE065} = {5E4ED990-9826-43E0-8722-59B3CE43286C}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {680BE589-DCEE-41D9-B3E8-7F0CAB20661E}
+	EndGlobalSection
+EndGlobal

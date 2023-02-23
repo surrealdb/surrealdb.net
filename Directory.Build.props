@@ -1,0 +1,8 @@
+<Project>
+    <PropertyGroup>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <WarningsAsErrors>$(WarningsAsErrors);FS0025</WarningsAsErrors>
+        <IncludeSymbols>True</IncludeSymbols>
+        <TargetFramework>net6.0</TargetFramework>
+    </PropertyGroup>
+</Project>

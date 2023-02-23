@@ -1,0 +1,22 @@
+@auth = root:root
+@id = 1au200goby801yvt5cza
+
+### Select one record from a table
+GET http://localhost:8010/key/person/{{id}}
+NS: testns
+DB: testdb
+Accept: application/json
+Authorization: Basic {{auth}}
+
+### Creates a new record in a table
+POST http://localhost:8010/key/person/{{id}}
+NS: testns
+DB: testdb
+Accept: application/json
+Authorization: Basic {{auth}}
+
+{
+    "firstName": "John",
+    "lastName": "Doe",
+    "age": 42
+}

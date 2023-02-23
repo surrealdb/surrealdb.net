@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.SystemTextJson" Version="1.1.23" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Preamble.fs" />
+    <Compile Include="Constants.fs" />
+    <Compile Include="SurrealId.fs" />
+    <Compile Include="Json.fs" />
+    <Compile Include="Config.fs" />
+    <Compile Include="Models.fs" />
+    <Compile Include="Rest\Constants.fs" />
+    <Compile Include="Rest\Models.fs" />
+    <Compile Include="Rest\Internals.fs" />
+    <Compile Include="Rest\SurrealJsonClient.fs" />
+    <Compile Include="Rest\SurrealTableClient.fs" />
+  </ItemGroup>
+
+</Project>
