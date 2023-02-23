@@ -53,7 +53,16 @@ let sample () =
 
         let! createJohnResult = endpoints.InsertAsync("people", "john", johnJson, ct)
 
-        printfn "Create John result:\n%A" createJohnResult
+        printfn "Create John result headers:\n%A" createJohnResult.headers
+        match createJohnResult.statements with
+        | Ok statements ->
+            match statements.[0].response with
+            | Ok result ->
+                printfn "Create John result:\n%A" (result.ToString())
+            | Error err ->
+                printfn "Create John statement error:\n%A" err
+        | Error err ->
+            printfn "Create John request error:\n%A" err
 
         let! peopleResult = endpoints.ListAsync("people", ct)
 
