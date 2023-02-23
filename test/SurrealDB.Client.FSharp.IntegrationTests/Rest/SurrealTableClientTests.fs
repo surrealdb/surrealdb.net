@@ -23,12 +23,12 @@ open SurrealDB.Client.FSharp.Rest
 
 [<Trait(Category, IntegrationTest)>]
 [<Trait(Area, REST)>]
-module SurrealJsonClientTests =
+module SurrealTableClientTests =
     type Testing =
         { config: SurrealConfig
           httpClient: HttpClient
           jsonOptions: JsonSerializerOptions
-          endpoints: ISurrealJsonClient
+          endpoints: ISurrealTableClient
           container: IContainer
           cancellationTokenSource: CancellationTokenSource
           cancellationToken: CancellationToken
@@ -45,6 +45,19 @@ module SurrealJsonClientTests =
     let PASS = "root"
     let NS = "testns"
     let DB = "testdb"
+
+    type Person =
+        { id: SurrealId
+          firstName: string
+          lastName: string
+          age: int }
+
+    type PersonData =
+        { firstName: string
+          lastName: string
+          age: int }
+
+    type PersonFirstNamePatch = { firstName: string }
 
     let prepareTest () =
         task {
@@ -76,8 +89,8 @@ module SurrealJsonClientTests =
 
             let jsonOptions = Json.defaultOptions
 
-            let endpoints: ISurrealJsonClient =
-                new SurrealJsonClient(config, httpClient, jsonOptions)
+            let endpoints: ISurrealTableClient =
+                new SurrealTableClient(config, httpClient, jsonOptions)
 
             let cancellationTokenSource = new CancellationTokenSource()
 
@@ -102,7 +115,7 @@ module SurrealJsonClientTests =
                   disposable = disposable }
         }
 
-    let testResponseHeaders (response: RestApiResult<JsonNode>) expectedStatus =
+    let testResponseHeaders (response: RestApiSingleResult<'result>) expectedStatus =
         Assert.Matches("^surreal\-(\d+(\.\d+)*)(\-.*)?$", response.headers.version)
         test <@ response.headers.server = "SurrealDB" @>
         test <@ response.headers.status = expectedStatus @>
@@ -116,32 +129,43 @@ module SurrealJsonClientTests =
             Assert.InRange(dateTimeOffset, DateTimeOffset.Now.AddMinutes(-1.0), DateTimeOffset.Now.AddMinutes(1.0))
         | ValueNone -> Assert.Fail $"Expected dateTimeOffset to be set, got {response.headers.date}"
 
-    let testResponseError (response: RestApiResult<JsonNode>) expectedError =
-        match response.statements with
+    let testResponseError (response: RestApiSingleResult<'result>) expectedError =
+        match response.statement with
         | Ok result -> Assert.Fail $"Expected error, got {result}"
         | Error error -> test <@ error = ResponseError expectedError @>
 
-    let testResponseJsonWith expectedFn (response: RestApiResult<JsonNode>) expectedStatus (expectedJson: string) =
-        match response.statements with
+    let testResponseResultWith
+        (response: RestApiSingleResult<'result>)
+        expectedStatus
+        (expectedResult: 'result -> unit)
+        =
+        match response.statement with
         | Error error -> Assert.Fail $"Expected success result, got {error}"
-        | Ok result ->
-            let expectedJson = JsonNode.Parse(expectedJson)
-            test <@ result.Length = 1 @>
-            let first = result.[0]
-            Assert.NotNull(first.time)
-
-            match first.timeSpan with
+        | Ok statement ->
+            match statement.timeSpan with
             | ValueSome timeSpan -> Assert.True(timeSpan >= TimeSpan.Zero)
-            | ValueNone -> Assert.Fail $"Expected timeSpan to be set, got {first.time}"
+            | ValueNone -> Assert.Fail $"Expected timeSpan to be set, got {statement.time}"
 
-            test <@ first.status = expectedStatus @>
+            test <@ statement.status = expectedStatus @>
 
-            match first.response with
+            match statement.response with
             | Error error -> Assert.Fail $"Expected success result, got {error}"
-            | Ok json -> test <@ jsonDiff expectedFn json expectedJson = [] @>
+            | Ok result -> expectedResult result
 
-    let testResponseJson (response: RestApiResult<JsonNode>) expectedStatus (expectedJson: string) =
-        testResponseJsonWith (fun _ -> false) response expectedStatus expectedJson
+    let testResponseResult
+        (response: RestApiSingleResult<'result>)
+        expectedStatus
+        (expectedResult: 'result)
+        =
+        testResponseResultWith
+            response
+            expectedStatus
+            (fun result -> test <@ result = expectedResult @>)
+
+    let testResult (response: RequestResult<'result>) (expectedResult: 'result) =
+        match response with
+        | Error error -> Assert.Fail $"Expected success result, got {error}"
+        | Ok result -> test <@ result = expectedResult @>
 
     let testResponseStatementError
         (response: RestApiResult<JsonNode>)
@@ -170,163 +194,88 @@ module SurrealJsonClientTests =
             use _ = t.disposable
             let table = "people"
 
-            let johnId = "john"
-            let janeId = "jane"
+            let johnId = SurrealId.Create(table, "john")
+            let janeId = SurrealId.Create(table, "jane")
 
-            let johnJson =
-                sprintf
-                    """{
-                    "id": "%s:%s",
-                    "firstName": "John",
-                    "lastName": "Doe",
-                    "age": 42
-                }"""
-                    table
-                    johnId
+            let john =
+                { id = johnId
+                  firstName = "John"
+                  lastName = "Doe"
+                  age = 42 }
 
-            let janeJson =
-                sprintf
-                    """{
-                    "id": "%s:%s",
-                    "firstName": "Jane",
-                    "lastName": "Doe",
-                    "age": 42
-                }"""
-                    table
-                    janeId
+            let jane =
+                { john with
+                    id = janeId
+                    firstName = "Jane" }
 
-            let johnnyJson =
-                sprintf
-                    """{
-                    "id": "%s:%s",
-                    "firstName": "Johnny",
-                    "lastName": "Doe",
-                    "age": 42
-                }"""
-                    table
-                    johnId
+            let johnny = { john with firstName = "Johnny" }
 
 
             // Test list of people with empty database
-            let expectedJson = "[]"
-            let! response = t.endpoints.ListAsync(table, t.cancellationToken)
+            let expected : Person[] = [||]
+            let! response = t.endpoints.ListResponseAsync<Person>(table, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
-            testResponseJson response "OK" expectedJson
+            testResponseResult response "OK" expected
 
             // Test insert a person without an id
-            let expectedJson =
-                """[
-                {
-                    "firstName": "John",
-                    "lastName": "Doe",
-                    "age": 42
-                }
-            ]"""
+            let expected = john
+            let data = { firstName = "John"; lastName = "Doe"; age = 42 }
 
-            let record =
-                JsonNode.Parse
-                    """{
-                "firstName": "John",
-                "lastName": "Doe",
-                "age": 42
-            }"""
+            let! response = t.endpoints.CreatePartialResponseAsync<PersonData, Person>(table, data, t.cancellationToken)
 
-            let! response = t.endpoints.CreateAsync(table, record, t.cancellationToken)
-
-            testResponseJsonWith
-                (fun diff ->
-                    match diff.path, diff.diff with
-                    | JsonIndex 0 :: [], MissingRightKey ("id", node) ->
-                        match SurrealId.TryParse(node.ToString()) with
-                        | Ok id -> id.table = table && id.id <> ""
-                        | Error _ -> false
-                    | _ -> false)
-                response
-                "OK"
-                expectedJson
+            testResponseResultWith response "OK" (fun result ->
+                test <@ result.firstName = data.firstName @>
+                test <@ result.lastName = data.lastName @>
+                test <@ result.age = data.age @>
+                test <@ result.id.table = table @>
+                test <@ String.length result.id.id > 0 @>
+            )
 
             // Test delete all people
-            let expectedJson = "[]"
-            let! response = t.endpoints.DeleteAllAsync(table, t.cancellationToken)
+            let! response = t.endpoints.DeleteAllResponseAsync(table, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
-            testResponseJson response "OK" expectedJson
-
-
-            // Test a SQL query
-            let expectedJson =
-                """{
-                "ns": {
-                    "testns": "DEFINE NAMESPACE testns"
-                }
-            }"""
-
-            let! response = t.endpoints.SqlAsync("INFO FOR KV;", t.cancellationToken)
-            testResponseHeaders response HttpStatusCode.OK
-            testResponseJson response "OK" expectedJson
+            testResponseResult response "OK" ()
 
 
             // Test get a non-existent person by id
-            let expectedJson = "[]"
-            let! response = t.endpoints.FindAsync(table, johnId, t.cancellationToken)
+            let! response = t.endpoints.FindResponseAsync(table, johnId.id, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
-            testResponseJson response "OK" expectedJson
+            testResponseResult response "OK" ValueNone
 
             // Test create a person with an id
-            let expectedJson = sprintf "[ %s ]" johnJson
+            let expected = john
+            let data = { firstName = john.firstName; lastName = john.lastName; age = john.age }
 
-            let record =
-                JsonNode.Parse
-                    """{
-                "firstName": "John",
-                "lastName": "Doe",
-                "age": 42
-            }"""
-
-            let! response = t.endpoints.InsertAsync(table, johnId, record, t.cancellationToken)
+            let! response = t.endpoints.InsertPartialResponseAsync(table, johnId.id, data, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
-            testResponseJson response "OK" expectedJson
+            testResponseResult response "OK" expected
 
             // Test update a non-existent person by id
-            let expectedJson = sprintf "[ %s ]" janeJson
-
-            let record =
-                JsonNode.Parse
-                    """{
-                "firstName": "Jane",
-                "lastName": "Doe",
-                "age": 42
-            }"""
-
-            let! response = t.endpoints.ReplaceAsync(table, janeId, record, t.cancellationToken)
+            let expected = jane
+            let data = { firstName = jane.firstName; lastName = jane.lastName; age = jane.age }
+            let! response = t.endpoints.ReplacePartialResponseAsync(table, janeId.id, data, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
-            testResponseJson response "OK" expectedJson
+            testResponseResult response "OK" expected
 
             // Test patch an existing person by id
-            let expectedJson = sprintf "[ %s ]" johnnyJson
-
-            let record =
-                JsonNode.Parse
-                    """{
-                "firstName": "Johnny"
-            }"""
-
-            let! response = t.endpoints.ModifyAsync(table, johnId, record, t.cancellationToken)
+            let expected = johnny
+            let data = { firstName = johnny.firstName }
+            let! response = t.endpoints.ModifyPartialResponseAsync(table, johnId.id, data, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
-            testResponseJson response "OK" expectedJson
+            testResponseResult response "OK" expected
 
             // Test get all people
-            let expectedJson = sprintf "[ %s, %s ]" janeJson johnnyJson
-            let! response = t.endpoints.ListAsync(table, t.cancellationToken)
+            let expected = [| jane; johnny |]
+            let! response = t.endpoints.ListResponseAsync(table, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
-            testResponseJson response "OK" expectedJson
+            testResponseResult response "OK" expected
 
             // Test delete a person by id
-            let expectedJson = """[]"""
-            let! response = t.endpoints.DeleteAsync(table, johnId, t.cancellationToken)
+            let! response = t.endpoints.DeleteResponseAsync(table, johnId.id, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
-            testResponseJson response "OK" expectedJson
-            let expectedJson = sprintf "[ %s ]" janeJson
-            let! response = t.endpoints.ListAsync(table, t.cancellationToken)
+            testResponseResult response "OK" ()
+            let expected = [| jane |]
+            let! response = t.endpoints.ListResponseAsync(table, t.cancellationToken)
             testResponseHeaders response HttpStatusCode.OK
-            testResponseJson response "OK" expectedJson
+            testResponseResult response "OK" expected
         }

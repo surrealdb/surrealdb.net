@@ -9,6 +9,7 @@
     <Compile Include="TestUtils.fs" />
     <Compile Include="Rest\RestUtils.fs" />
     <Compile Include="Rest\SurrealJsonClientTests.fs" />
+    <Compile Include="Rest\SurrealTableClientTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
