@@ -1,0 +1,35 @@
+name: Main Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download SurrealDB
+        run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh
+
+      - name: Run SurrealDB root
+        run: surreal start --user root --pass root memory &
+
+      - name: Setup dotnet 6.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "6.0.x"
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --warnaserror
+
+      - name: Test
+        run: dotnet test --no-build

@@ -1,0 +1,17 @@
+namespace SurrealDb.Tests;
+
+public class VersionTests
+{
+    [Theory]
+    [InlineData("http://localhost:8000")]
+	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	public async Task ShouldGetVersion(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+
+        var client = surrealDbClientGenerator.Create(url);
+        string result = await client.Version();
+
+        result.Should().Be("surrealdb-1.0.0-beta.9+20230402.5eafebd");
+    }
+}
