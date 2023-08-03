@@ -15,7 +15,7 @@ public class BaseBenchmark
 
 	protected async Task InitializeSurrealDbClient(ISurrealDbClient client)
 	{
-		await client.Signin(new RootAuth { Username = "root", Password = "root" });
+		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 		await client.Use(Namespace, Database);
 	}
 

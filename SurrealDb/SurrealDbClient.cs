@@ -27,7 +27,7 @@ public class SurrealDbClient : ISurrealDbClient
 		: this(endpoint, null, null, null, null, httpClientFactory) { }
 
 	/// <summary>
-	/// Creates a new SurrealDbClient, with the defined endpoint.
+	/// Creates a new SurrealDbClient using a specific configuration.
 	/// </summary>
 	/// <param name="configuration">The configuration options for the SurrealDbClient.</param>
 	/// <param name="httpClientFactory">An IHttpClientFactory instance, or none.</param>
@@ -140,26 +140,26 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.Set(key, value, cancellationToken);
     }
 
-    public Task Signin(RootAuth root, CancellationToken cancellationToken = default)
+    public Task SignIn(RootAuth root, CancellationToken cancellationToken = default)
     {
-        return _engine.Signin(root, cancellationToken);
+        return _engine.SignIn(root, cancellationToken);
 	}
-	public Task Signin(NamespaceAuth nsAuth, CancellationToken cancellationToken = default)
+	public Task SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken = default)
 	{
-		return _engine.Signin(nsAuth, cancellationToken);
+		return _engine.SignIn(nsAuth, cancellationToken);
 	}
-	public Task Signin(DatabaseAuth dbAuth, CancellationToken cancellationToken = default)
+	public Task SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken = default)
 	{
-		return _engine.Signin(dbAuth, cancellationToken);
+		return _engine.SignIn(dbAuth, cancellationToken);
 	}
-	public Task<Jwt> Signin<T>(T scopeAuth, CancellationToken cancellationToken = default) where T : ScopeAuth
+	public Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken = default) where T : ScopeAuth
 	{
-		return _engine.Signin(scopeAuth, cancellationToken);
+		return _engine.SignIn(scopeAuth, cancellationToken);
 	}
 
-	public Task<Jwt> Signup<T>(T scopeAuth, CancellationToken cancellationToken = default) where T : ScopeAuth
+	public Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken = default) where T : ScopeAuth
 	{
-		return _engine.Signup(scopeAuth, cancellationToken);
+		return _engine.SignUp(scopeAuth, cancellationToken);
 	}
 
 	public void Unset(string key)

@@ -23,7 +23,7 @@ public class UpsertTests
 			string query = fileContent;
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 			await client.Query(query);
 
@@ -77,7 +77,7 @@ public class UpsertTests
 			string query = fileContent;
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 			await client.Query(query);
 

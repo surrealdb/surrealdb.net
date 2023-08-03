@@ -20,7 +20,7 @@ public class QueryTests
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			{
@@ -65,7 +65,7 @@ public class QueryTests
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			{
@@ -112,7 +112,7 @@ public class QueryTests
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			{
@@ -155,7 +155,7 @@ SELECT xyz FROM post;
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			{
@@ -201,7 +201,7 @@ CANCEL TRANSACTION;
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			{
@@ -247,7 +247,7 @@ CANCEL TRANSACTION;
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			{
@@ -293,7 +293,7 @@ CANCEL TRANSACTION;
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			{
@@ -339,7 +339,7 @@ CANCEL TRANSACTION;
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			{
@@ -385,7 +385,7 @@ CANCEL TRANSACTION;
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			{

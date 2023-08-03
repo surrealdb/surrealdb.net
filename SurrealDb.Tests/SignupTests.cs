@@ -2,12 +2,12 @@ using System.Text;
 
 namespace SurrealDb.Tests;
 
-public class SignupTests
+public class SignUpTests
 {
 	[Theory]
 	[InlineData("http://localhost:8000")]
 	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
-	public async Task ShouldSignupUsingScopeAuth(string url)
+	public async Task ShouldSignUpUsingScopeAuth(string url)
 	{
 		Jwt? jwt = null;
 
@@ -17,7 +17,7 @@ public class SignupTests
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/user.surql");
@@ -36,7 +36,7 @@ public class SignupTests
 				Password = "password123"
 			};
 
-			jwt = await client.Signup(authParams);
+			jwt = await client.SignUp(authParams);
 		};
 
 		await func.Should().NotThrowAsync();

@@ -151,21 +151,21 @@ public interface ISurrealDbClient
     /// </summary>
     /// <param name="root">Credentials to sign in as a root user</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-    Task Signin(RootAuth root, CancellationToken cancellationToken = default);
+    Task SignIn(RootAuth root, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Sign in as a namespace user.
 	/// </summary>
 	/// <param name="nsAuth">Credentials to sign in as a namespace user</param>
 	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-	Task Signin(NamespaceAuth nsAuth, CancellationToken cancellationToken = default);
+	Task SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Sign in as a database user.
 	/// </summary>
 	/// <param name="dbAuth">Credentials to sign in as a database user</param>
 	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-	Task Signin(DatabaseAuth dbAuth, CancellationToken cancellationToken = default);
+	Task SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Sign in as a scoped user.
@@ -174,7 +174,7 @@ public interface ISurrealDbClient
 	/// <param name="scopeAuth">Credentials to sign in as a scoped user</param>
 	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
 	/// <returns>The JSON Web Token that can be used to authenticate the user</returns>
-	Task<Jwt> Signin<T>(T scopeAuth, CancellationToken cancellationToken = default) where T : ScopeAuth;
+	Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken = default) where T : ScopeAuth;
 
 	/// <summary>
 	/// Sign up a new scoped user.
@@ -183,7 +183,7 @@ public interface ISurrealDbClient
 	/// <param name="scopeAuth">Credentials to sign up as a scoped user</param>
 	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
 	/// <returns>The JSON Web Token that can be used to authenticate the user</returns>
-	Task<Jwt> Signup<T>(T scopeAuth, CancellationToken cancellationToken = default) where T : ScopeAuth;
+	Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken = default) where T : ScopeAuth;
 
 	/// <summary>
 	/// Removes a parameter from this connection.

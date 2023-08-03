@@ -18,7 +18,7 @@ public class AuthenticateTests
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			{
@@ -47,7 +47,7 @@ public class AuthenticateTests
 				Password = "password123"
 			};
 
-			jwt = await client.Signup(authParams);
+			jwt = await client.SignUp(authParams);
 
 			await client.Authenticate(jwt);
 
@@ -73,7 +73,7 @@ public class AuthenticateTests
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			{
@@ -102,7 +102,7 @@ public class AuthenticateTests
 				Password = "password123"
 			};
 
-			jwt = await client.Signup(authParams);
+			jwt = await client.SignUp(authParams);
 
 			client.Invalidate();
 

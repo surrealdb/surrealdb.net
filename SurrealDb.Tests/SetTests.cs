@@ -19,7 +19,7 @@ public class SetTests
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			{
@@ -66,7 +66,7 @@ public class SetTests
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			var client = surrealDbClientGenerator.Create(url);
-			await client.Signin(new RootAuth { Username = "root", Password = "root" });
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			{

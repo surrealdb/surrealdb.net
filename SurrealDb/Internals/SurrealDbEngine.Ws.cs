@@ -83,24 +83,24 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         throw new NotImplementedException();
     }
 
-    public Task Signin(RootAuth root, CancellationToken cancellationToken)
+    public Task SignIn(RootAuth root, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
-	public Task Signin(NamespaceAuth nsAuth, CancellationToken cancellationToken)
+	public Task SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken)
 	{
 		throw new NotImplementedException();
 	}
-	public Task Signin(DatabaseAuth dbAuth, CancellationToken cancellationToken)
+	public Task SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken)
 	{
 		throw new NotImplementedException();
 	}
-	public Task<Jwt> Signin<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth
+	public Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth
 	{
 		throw new NotImplementedException();
 	}
 
-	public Task<Jwt> Signup<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth
+	public Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth
 	{
 		throw new NotImplementedException();
 	}

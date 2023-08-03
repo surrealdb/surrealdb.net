@@ -211,7 +211,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		_config.SetParam(key, value);
     }
 
-    public async Task Signin(RootAuth rootAuth, CancellationToken cancellationToken)
+    public async Task SignIn(RootAuth rootAuth, CancellationToken cancellationToken)
     {
         using var client = CreateHttpClient();
 		using var body = CreateBodyContent(rootAuth);
@@ -221,7 +221,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         _config.SetBasicAuth(rootAuth.Username, rootAuth.Password);
     }
-	public async Task Signin(NamespaceAuth nsAuth, CancellationToken cancellationToken)
+	public async Task SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken)
 	{
 		using var client = CreateHttpClient();
 		using var body = CreateBodyContent(nsAuth);
@@ -231,7 +231,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
 		_config.SetBasicAuth(nsAuth.Username, nsAuth.Password);
 	}
-	public async Task Signin(DatabaseAuth dbAuth, CancellationToken cancellationToken)
+	public async Task SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken)
 	{
 		using var client = CreateHttpClient();
 		using var body = CreateBodyContent(dbAuth);
@@ -241,7 +241,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
 		_config.SetBasicAuth(dbAuth.Username, dbAuth.Password);
 	}
-	public async Task<Jwt> Signin<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth
+	public async Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth
 	{
 		using var client = CreateHttpClient();
 		using var body = CreateBodyContent(scopeAuth);
@@ -256,7 +256,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		return new Jwt { Token = result.Token! };
 	}
 
-	public async Task<Jwt> Signup<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth
+	public async Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth
 	{
 		using var client = CreateHttpClient();
 		using var body = CreateBodyContent(scopeAuth);

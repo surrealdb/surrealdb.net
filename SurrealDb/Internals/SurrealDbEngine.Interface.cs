@@ -20,11 +20,11 @@ internal interface ISurrealDbEngine
     Task<List<T>> Select<T>(string table, CancellationToken cancellationToken);
     Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken);
     Task Set(string key, object value, CancellationToken cancellationToken);
-    Task Signin(RootAuth root, CancellationToken cancellationToken);
-	Task Signin(NamespaceAuth nsAuth, CancellationToken cancellationToken);
-	Task Signin(DatabaseAuth dbAuth, CancellationToken cancellationToken);
-	Task<Jwt> Signin<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth;
-	Task<Jwt> Signup<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth;
+    Task SignIn(RootAuth root, CancellationToken cancellationToken);
+	Task SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken);
+	Task SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken);
+	Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth;
+	Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth;
 	void Unset(string key);
 	Task<T> Upsert<T>(T data, CancellationToken cancellationToken) where T : Record;
 	Task Use(string ns, string db, CancellationToken cancellationToken);
