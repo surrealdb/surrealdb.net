@@ -28,7 +28,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         throw new NotImplementedException();
     }
 
-    public Task<T> Create<T>(string table, T data, CancellationToken cancellationToken)
+    public Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

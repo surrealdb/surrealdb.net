@@ -76,7 +76,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		var list = ExtractFirstResultValue<List<T>>(dbResponse)!;
 		return list.First();
 	}
-    public async Task<T> Create<T>(string table, T data, CancellationToken cancellationToken)
+    public async Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken)
 	{
 		using var client = CreateHttpClient();
 		using var body = CreateBodyContent(data);

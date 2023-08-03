@@ -10,7 +10,7 @@ internal interface ISurrealDbEngine
 	void Configure(string? ns, string? db, string? username, string? password);
 	Task Connect(CancellationToken cancellationToken);
     Task<T> Create<T>(T data, CancellationToken cancellationToken) where T : Record;
-    Task<T> Create<T>(string table, T data, CancellationToken cancellationToken);
+    Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken);
     Task Delete(string table, CancellationToken cancellationToken);
     Task<bool> Delete(Thing thing, CancellationToken cancellationToken);
     void Invalidate();

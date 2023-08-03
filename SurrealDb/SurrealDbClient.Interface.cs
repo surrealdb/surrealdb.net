@@ -50,7 +50,7 @@ public interface ISurrealDbClient
     /// <param name="data">The record to create.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>The record created.</returns>
-    Task<T> Create<T>(string table, T data, CancellationToken cancellationToken = default);
+    Task<T> Create<T>(string table, T? data = default, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes all records in a table from the database.

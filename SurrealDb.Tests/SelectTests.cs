@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace SurrealDb.Tests;
 
-public class Empty { }
+public class Empty : SurrealDbRecord { }
 public class Post : SurrealDbRecord
 {
     public string Title { get; set; } = string.Empty;

@@ -77,7 +77,7 @@ public class SurrealDbClient : ISurrealDbClient
     {
         return _engine.Create(data, cancellationToken);
     }
-    public Task<T> Create<T>(string table, T data, CancellationToken cancellationToken = default)
+    public Task<T> Create<T>(string table, T? data = default, CancellationToken cancellationToken = default)
     {
         return _engine.Create(table, data, cancellationToken);
     }
