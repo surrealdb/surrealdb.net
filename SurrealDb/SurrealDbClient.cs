@@ -18,26 +18,26 @@ public class SurrealDbClient : ISurrealDbClient
 	public Uri Uri { get; }
 
 	/// <summary>
-	/// Creates a new SurrealDbClient, with the defined address.
+	/// Creates a new SurrealDbClient, with the defined endpoint.
 	/// </summary>
-	/// <param name="address">The full address to access a SurrealDB instance.</param>
+	/// <param name="endpoint">The endpoint to access a SurrealDB instance.</param>
 	/// <param name="httpClientFactory">An IHttpClientFactory instance, or none.</param>
 	/// <exception cref="ArgumentException"></exception>
-	public SurrealDbClient(string address, IHttpClientFactory? httpClientFactory = null)
-		: this(address, null, null, null, null, httpClientFactory) { }
+	public SurrealDbClient(string endpoint, IHttpClientFactory? httpClientFactory = null)
+		: this(endpoint, null, null, null, null, httpClientFactory) { }
 
 	/// <summary>
-	/// Creates a new SurrealDbClient, with the defined address.
+	/// Creates a new SurrealDbClient, with the defined endpoint.
 	/// </summary>
 	/// <param name="configuration">The configuration options for the SurrealDbClient.</param>
 	/// <param name="httpClientFactory">An IHttpClientFactory instance, or none.</param>
 	/// <exception cref="ArgumentException"></exception>
 	/// <exception cref="ArgumentNullException"></exception>
 	public SurrealDbClient(SurrealDbOptions configuration, IHttpClientFactory? httpClientFactory = null)
-		: this(configuration.Address, configuration.Namespace, configuration.Database, configuration.Username, configuration.Password, httpClientFactory) { }
+		: this(configuration.Endpoint, configuration.Namespace, configuration.Database, configuration.Username, configuration.Password, httpClientFactory) { }
 
 	internal SurrealDbClient(
-		string? address,
+		string? endpoint,
 		string? ns,
 		string? db,
 		string? username, // TODO : Auth
@@ -45,10 +45,10 @@ public class SurrealDbClient : ISurrealDbClient
 		IHttpClientFactory? httpClientFactory = null // TODO : avoid n arguments
 	)
     {
-		if (address is null)
-			throw new ArgumentNullException(nameof(address));
+		if (endpoint is null)
+			throw new ArgumentNullException(nameof(endpoint));
 
-        Uri = new Uri(address);
+        Uri = new Uri(endpoint);
         _httpClientFactory = httpClientFactory;
 
         var protocol = Uri.Scheme;

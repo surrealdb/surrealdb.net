@@ -11,8 +11,8 @@ public static class SurrealDbHttpsClient
     public static ISurrealDbClient New(string host, IHttpClientFactory? httpClientFactory = null)
     {
         const string protocol = "https";
-		string address = $"{protocol}://{host}";
+		string endpoint = $"{protocol}://{host}";
 
-		return new SurrealDbClient(address, null, null, null, null, httpClientFactory);
+		return new SurrealDbClient(endpoint, null, null, null, null, httpClientFactory);
     }
 }

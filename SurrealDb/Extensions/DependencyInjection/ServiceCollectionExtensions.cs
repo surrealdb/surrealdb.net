@@ -86,10 +86,10 @@ public static class ServiceCollectionExtensions
 		ServiceLifetime lifetime = ServiceLifetime.Singleton
 	) where T : ISurrealDbClient
 	{
-		if (configuration.Address is null)
-			throw new ArgumentNullException(nameof(configuration.Address));
+		if (configuration.Endpoint is null)
+			throw new ArgumentNullException(nameof(configuration.Endpoint));
 
-		RegisterHttpClient(services, configuration.Address);
+		RegisterHttpClient(services, configuration.Endpoint);
 
 		var classClientType = typeof(SurrealDbClient);
 		var interfaceClientType = typeof(ISurrealDbClient);
@@ -110,9 +110,9 @@ public static class ServiceCollectionExtensions
 		return services;
 	}
 
-	private static void RegisterHttpClient(IServiceCollection services, string address)
+	private static void RegisterHttpClient(IServiceCollection services, string endpoint)
 	{
-		var uri = new Uri(address);
+		var uri = new Uri(endpoint);
 		string httpClientName = HttpClientHelper.GetHttpClientName(uri);
 
 		services.AddHttpClient(httpClientName, client =>

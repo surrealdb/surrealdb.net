@@ -26,13 +26,13 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
     private SurrealDbClient? _client;
     private DatabaseInfo? _databaseInfo;
 
-    public SurrealDbClient Create(string address)
+    public SurrealDbClient Create(string endpoint)
     {
         var services = new ServiceCollection();
 
 		var options = SurrealDbOptions
 			.Create()
-			.WithAddress(address)
+			.WithEndpoint(endpoint)
 			.Build();
 
 		services.AddSurreal(options);

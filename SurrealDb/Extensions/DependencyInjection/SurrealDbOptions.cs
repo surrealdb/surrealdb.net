@@ -5,12 +5,12 @@ namespace Microsoft.Extensions.DependencyInjection;
 public class SurrealDbOptions
 {
 	/// <summary>
-	/// Address to the SurrealDB instance.<br /><br />
+	/// Endpoint of the SurrealDB instance.<br /><br />
 	/// Examples:<br />
 	/// - http://localhost:8000<br />
 	/// - wss://cloud.surrealdb.com
 	/// </summary>
-	public string? Address { get; internal set; }
+	public string? Endpoint { get; internal set; }
 
 	/// <summary>
 	/// Default namespace to use when new <see cref="ISurrealDbClient"/> is generated.

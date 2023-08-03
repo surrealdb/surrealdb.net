@@ -24,7 +24,7 @@ Supported protocols:
 
 ##### As-is
 
-You can easily create a new SurrealDB client easily. All you have to do is define the `address` to the SurrealDB instance.
+You can easily create a new SurrealDB client easily. All you have to do is define the `endpoint` to the SurrealDB instance.
 
 ```csharp
 var client1 = new SurrealDbClient("http://localhost:8000");
@@ -35,7 +35,7 @@ var client2 = new SurrealDbClient("https://cloud.surrealdb.com");
 
 ##### Static constructor
 
-There are some static constructors that you can use for specific contexts. The advantage of this syntax is that all you only need to do is define the `host` and not the full `address`.
+There are some static constructors that you can use for specific contexts. The advantage of this syntax is that all you only need to do is define the `host` and not the `endpoint`.
 
 ```csharp
 var client1 = SurrealDbHttpClient.New("localhost:8000");
@@ -53,7 +53,7 @@ Last but not least, you can use Dependency Injection with the `services.AddSurre
 ```csharp
 var options = SurrealDbOptions
     .Create()
-    .WithAddress("http://localhost:8000")
+    .WithEndpoint("http://localhost:8000")
 	.WithNamespace("test")
 	.WithDatabase("test")
 	.WithUsername("root")
@@ -110,7 +110,7 @@ You can use the Connection String instead of having to deal with a `SurrealDbOpt
 services.AddSurreal(configuration.GetConnectionString("SurrealDB"));
 ```
 
-It will automatically create a new SurrealDB using the `Server address` and configure the client using the different values for `namespace`, `database`, `username` and `password`. Note that these values are optional but the `address` is still required.
+It will automatically create a new SurrealDB using the `Server endpoint` and configure the client using the different values for `namespace`, `database`, `username` and `password`. Note that these values are optional but the `endpoint` is still required.
 
 ###### Multiple instances
 

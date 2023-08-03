@@ -2,7 +2,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public class SurrealDbOptionsBuilder
 {
-	private string? _address;
+	private string? _endpoint;
 	private string? _namespace;
 	private string? _database;
 	private string? _username;
@@ -34,9 +34,9 @@ public class SurrealDbOptionsBuilder
 		{
 			switch (key.ToLowerInvariant())
 			{
-				case "address":
+				case "endpoint":
 				case "server":
-					_address = value;
+					_endpoint = value;
 					break;
 				case "namespace":
 				case "ns":
@@ -60,9 +60,9 @@ public class SurrealDbOptionsBuilder
 		return this;
 	}
 
-	public SurrealDbOptionsBuilder WithAddress(string? address)
+	public SurrealDbOptionsBuilder WithEndpoint(string? endpoint)
 	{
-		_address = address;
+		_endpoint = endpoint;
 		return this;
 	}
 
@@ -94,7 +94,7 @@ public class SurrealDbOptionsBuilder
 	{
 		return new SurrealDbOptions
 		{
-			Address = _address,
+			Endpoint = _endpoint,
 			Namespace = _namespace,
 			Database = _database,
 			Username = _username,
