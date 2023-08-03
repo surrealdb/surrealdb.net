@@ -17,7 +17,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0137C76C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{A83E82FA-2AD7-45FA-A949-9EFA5865D7AE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.Examples.WeatherApi", "SurrealDb.Examples.WeatherApi\SurrealDb.Examples.WeatherApi.csproj", "{3F00652A-B25B-4F22-9554-AF2F5002BED1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Examples.WeatherApi", "SurrealDb.Examples.WeatherApi\SurrealDb.Examples.WeatherApi.csproj", "{3F00652A-B25B-4F22-9554-AF2F5002BED1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Examples.Console", "SurrealDb.Examples.Console\SurrealDb.Examples.Console.csproj", "{94F5204B-B4DD-4B81-AA62-5D09C30BE864}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{3F00652A-B25B-4F22-9554-AF2F5002BED1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3F00652A-B25B-4F22-9554-AF2F5002BED1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3F00652A-B25B-4F22-9554-AF2F5002BED1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94F5204B-B4DD-4B81-AA62-5D09C30BE864}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94F5204B-B4DD-4B81-AA62-5D09C30BE864}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94F5204B-B4DD-4B81-AA62-5D09C30BE864}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94F5204B-B4DD-4B81-AA62-5D09C30BE864}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -55,6 +61,7 @@ Global
 		{35E27857-58E5-4500-8E0C-91B66EE746F2} = {0137C76C-4DE9-4846-B62A-02F40E3479B5}
 		{3ADDE8E8-A1BF-44C9-816D-1B2D5B86928C} = {0137C76C-4DE9-4846-B62A-02F40E3479B5}
 		{3F00652A-B25B-4F22-9554-AF2F5002BED1} = {A83E82FA-2AD7-45FA-A949-9EFA5865D7AE}
+		{94F5204B-B4DD-4B81-AA62-5D09C30BE864} = {A83E82FA-2AD7-45FA-A949-9EFA5865D7AE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {70C100EF-E131-45C0-9515-02FC4823BA20}
