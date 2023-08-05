@@ -105,13 +105,13 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.Invalidate(cancellationToken);
 	}
 
-	public Task<TOutput> Patch<TPatch, TOutput>(TPatch data, CancellationToken cancellationToken = default) where TPatch : Record
+	public Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken = default) where TMerge : Record
 	{
-		return _engine.Patch<TPatch, TOutput>(data, cancellationToken);
+		return _engine.Merge<TMerge, TOutput>(data, cancellationToken);
 	}
-	public Task<T> Patch<T>(Thing thing, Dictionary<string, object> data, CancellationToken cancellationToken = default)
+	public Task<T> Merge<T>(Thing thing, Dictionary<string, object> data, CancellationToken cancellationToken = default)
 	{
-		return _engine.Patch<T>(thing, data, cancellationToken);
+		return _engine.Merge<T>(thing, data, cancellationToken);
 	}
 
 	public Task<SurrealDbResponse> Query(

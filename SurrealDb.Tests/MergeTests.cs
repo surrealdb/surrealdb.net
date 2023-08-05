@@ -2,17 +2,17 @@ using System.Text;
 
 namespace SurrealDb.Tests;
 
-public class PostPatch : SurrealDbRecord
+public class PostMerge : SurrealDbRecord
 {
 	public string Content { get; set; } = string.Empty;
 }
 
-public class PatchTests
+public class MergeTests
 {
 	[Theory]
 	[InlineData("http://localhost:8000")]
 	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldPatchExistingPost(string url)
+	public async Task ShouldMergeExistingPost(string url)
 	{
 		List<Post>? list = null;
 		Post? result = null;
@@ -32,13 +32,13 @@ public class PatchTests
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 			await client.Query(query);
 
-			var patch = new PostPatch
+			var merge = new PostMerge
 			{
 				Id = new Thing("post", "first"),
 				Content = "[Edit] This is my first article"
 			};
 
-			result = await client.Patch<PostPatch, Post>(patch);
+			result = await client.Merge<PostMerge, Post>(merge);
 
 			list = await client.Select<Post>("post");
 		};
@@ -57,7 +57,7 @@ public class PatchTests
 	[Theory]
 	[InlineData("http://localhost:8000")]
 	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldPatchUsingDictionary(string url)
+	public async Task ShouldMergeUsingDictionary(string url)
 	{
 		List<Post>? list = null;
 		Post? result = null;
@@ -83,7 +83,7 @@ public class PatchTests
 				{ "content", "[Edit] This is my first article" }
 			};
 
-			result = await client.Patch<Post>(thing, data);
+			result = await client.Merge<Post>(thing, data);
 
 			list = await client.Select<Post>("post");
 		};

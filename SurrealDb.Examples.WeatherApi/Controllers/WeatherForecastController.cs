@@ -85,7 +85,7 @@ public class WeatherForecastController : ControllerBase
 	{
 		var thing = new Thing(Table, id);
 
-		return _surrealDbClient.Patch<WeatherForecast>(thing, data, cancellationToken);
+		return _surrealDbClient.Merge<WeatherForecast>(thing, data, cancellationToken);
 	}
 
 	/// <summary>

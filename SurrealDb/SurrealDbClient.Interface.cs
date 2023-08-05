@@ -85,12 +85,12 @@ public interface ISurrealDbClient : IDisposable
 	/// <summary>
 	/// Modifies the specified record in the database.
 	/// </summary>
-	/// <typeparam name="TPatch">The type of the patch update.</typeparam>
+	/// <typeparam name="TMerge">The type of the merge update.</typeparam>
 	/// <typeparam name="TOutput">The type of the record updated.</typeparam>
-	/// <param name="data">The record to patch.</param>
+	/// <param name="data">The data to merge with the current record.</param>
 	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
 	/// <returns>The record updated.</returns>
-	Task<TOutput> Patch<TPatch, TOutput>(TPatch data, CancellationToken cancellationToken = default) where TPatch : Record;
+	Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken = default) where TMerge : Record;
 
 	/// <summary>
 	/// Modifies the specified record in the database.
@@ -100,7 +100,7 @@ public interface ISurrealDbClient : IDisposable
 	/// <param name="data">A list of key-value pairs that contains properties to change.</param>
 	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
 	/// <returns>The record updated.</returns>
-	Task<T> Patch<T>(Thing thing, Dictionary<string, object> data, CancellationToken cancellationToken = default);
+	Task<T> Merge<T>(Thing thing, Dictionary<string, object> data, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Executes custom SurrealQL queries.

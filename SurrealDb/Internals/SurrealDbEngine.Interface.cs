@@ -14,8 +14,8 @@ internal interface ISurrealDbEngine : IDisposable
     Task Delete(string table, CancellationToken cancellationToken);
     Task<bool> Delete(Thing thing, CancellationToken cancellationToken);
 	Task Invalidate(CancellationToken cancellationToken);
-	Task<TOutput> Patch<TPatch, TOutput>(TPatch data, CancellationToken cancellationToken) where TPatch : Record;
-	Task<T> Patch<T>(Thing thing, Dictionary<string, object> data, CancellationToken cancellationToken);
+	Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken) where TMerge : Record;
+	Task<T> Merge<T>(Thing thing, Dictionary<string, object> data, CancellationToken cancellationToken);
 	Task<SurrealDbResponse> Query(string query, IReadOnlyDictionary<string, object> parameters, CancellationToken cancellationToken);
     Task<List<T>> Select<T>(string table, CancellationToken cancellationToken);
     Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken);

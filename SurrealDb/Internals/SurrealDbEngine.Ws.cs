@@ -155,7 +155,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		await SendRequest("invalidate", null, cancellationToken);
 	}
 
-	public async Task<TOutput> Patch<TPatch, TOutput>(TPatch data, CancellationToken cancellationToken) where TPatch : Record
+	public async Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken) where TMerge : Record
 	{
 		if (data.Id is null)
 			throw new SurrealDbException("Cannot create a record without an Id");
@@ -163,7 +163,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		var dbResponse = await SendRequest("merge", new() { data.Id.ToString(), data }, cancellationToken);
 		return dbResponse.GetValue<TOutput>()!;
 	}
-	public async Task<T> Patch<T>(Thing thing, Dictionary<string, object> data, CancellationToken cancellationToken)
+	public async Task<T> Merge<T>(Thing thing, Dictionary<string, object> data, CancellationToken cancellationToken)
 	{
 		var dbResponse = await SendRequest("merge", new() { thing, data }, cancellationToken);
 		return dbResponse.GetValue<T>()!;

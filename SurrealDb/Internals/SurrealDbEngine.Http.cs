@@ -121,7 +121,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		return Task.CompletedTask;
     }
 
-	public async Task<TOutput> Patch<TPatch, TOutput>(TPatch data, CancellationToken cancellationToken) where TPatch : Record
+	public async Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken) where TMerge : Record
 	{
 		using var client = CreateHttpClient();
 		using var body = CreateBodyContent(data);
@@ -136,7 +136,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		var list = ExtractFirstResultValue<List<TOutput>>(dbResponse)!;
 		return list.First();
 	}
-	public async Task<T> Patch<T>(Thing thing, Dictionary<string, object> data, CancellationToken cancellationToken)
+	public async Task<T> Merge<T>(Thing thing, Dictionary<string, object> data, CancellationToken cancellationToken)
 	{
 		using var client = CreateHttpClient();
 		using var body = CreateBodyContent(data);

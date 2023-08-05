@@ -17,7 +17,7 @@ var person = new Person
 var created = await db.Create("person", person);
 Console.WriteLine(ToJsonString(created));
 
-var updated = await db.Patch<ResponsibilityPatch, Person>(
+var updated = await db.Merge<ResponsibilityMerge, Person>(
 	new() { Id = new Thing("person", "jaime"), Marketing = true }
 );
 Console.WriteLine(ToJsonString(updated));
@@ -51,7 +51,7 @@ public class Name
 	public string? FirstName { get; set; }
 	public string? LastName { get; set; }
 }
-public class ResponsibilityPatch : Record
+public class ResponsibilityMerge : Record
 {
 	public bool Marketing { get; set; }
 }
