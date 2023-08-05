@@ -29,7 +29,7 @@ public class ParserTests
 {
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldParseThing(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -40,7 +40,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        var client = surrealDbClientGenerator.Create(url);
+		using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -131,7 +131,7 @@ public class ParserTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldParseString(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -142,7 +142,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        var client = surrealDbClientGenerator.Create(url);
+		using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -192,7 +192,7 @@ public class ParserTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldParseLong(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -203,7 +203,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        var client = surrealDbClientGenerator.Create(url);
+		using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -238,7 +238,7 @@ public class ParserTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldParseDecimal(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -249,7 +249,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        var client = surrealDbClientGenerator.Create(url);
+		using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -302,7 +302,7 @@ public class ParserTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldParseFloat(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -313,7 +313,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        var client = surrealDbClientGenerator.Create(url);
+		using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -366,7 +366,7 @@ public class ParserTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldParseDouble(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -377,7 +377,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        var client = surrealDbClientGenerator.Create(url);
+		using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -430,7 +430,7 @@ public class ParserTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldParseTimeSpan(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -441,7 +441,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        var client = surrealDbClientGenerator.Create(url);
+		using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -530,7 +530,7 @@ public class ParserTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldParseDateTime(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -541,7 +541,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        var client = surrealDbClientGenerator.Create(url);
+		using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 

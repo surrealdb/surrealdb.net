@@ -13,14 +13,14 @@ public class SignInTests
 {
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldSignInAsRootUser(string url)
     {
         Func<Task> func = async () => 
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-            var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         };
 
@@ -29,47 +29,54 @@ public class SignInTests
 
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldSignInUsingNamespaceAuth(string url)
 	{
+		Jwt? jwt = null;
+
 		Func<Task> func = async () =>
 		{
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			string query = "DEFINE LOGIN johndoe ON NAMESPACE PASSWORD 'password123'";
 			await client.Query(query);
 
-			await client.SignIn(
+			jwt = await client.SignIn(
 				new NamespaceAuth { Namespace = dbInfo.Namespace, Username = "johndoe", Password = "password123" }
 			);
 		};
 
 		await func.Should().NotThrowAsync();
+
+		jwt.Should().NotBeNull();
+		jwt!.Token.Should().BeValidJwt();
 	}
 
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldSignInUsingDatabaseAuth(string url)
 	{
+		Jwt? jwt = null;
+
 		Func<Task> func = async () =>
 		{
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
 			string query = "DEFINE LOGIN johndoe ON DATABASE PASSWORD 'password123'";
 			await client.Query(query);
 
-			await client.SignIn(
+			jwt = await client.SignIn(
 				new DatabaseAuth
 				{
 					Namespace = dbInfo.Namespace,
@@ -81,11 +88,14 @@ public class SignInTests
 		};
 
 		await func.Should().NotThrowAsync();
+
+		jwt.Should().NotBeNull();
+		jwt!.Token.Should().BeValidJwt();
 	}
 
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldSignInUsingScopeAuth(string url)
 	{
 		Jwt? jwt = null;
@@ -95,7 +105,7 @@ public class SignInTests
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 

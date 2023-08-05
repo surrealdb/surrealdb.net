@@ -8,7 +8,7 @@ public class SetTests
 {
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldSetParam(string url)
 	{
 		SurrealDbResponse? response = null;
@@ -18,7 +18,7 @@ public class SetTests
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -55,7 +55,7 @@ public class SetTests
 
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldUnsetParam(string url)
 	{
 		SurrealDbResponse? response = null;
@@ -65,7 +65,7 @@ public class SetTests
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -79,7 +79,7 @@ public class SetTests
 			}
 
 			await client.Set("status", "DRAFT");
-			client.Unset("status");
+			await client.Unset("status");
 
 			{
 				string query = "SELECT * FROM post WHERE status == $status;";

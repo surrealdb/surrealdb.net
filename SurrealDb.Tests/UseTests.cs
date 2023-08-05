@@ -1,10 +1,10 @@
-﻿namespace SurrealDb.Tests;
+namespace SurrealDb.Tests;
 
 public class UseTests
 {
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldUseTestDatabase(string url)
     {
         Func<Task> func = async () =>
@@ -12,7 +12,7 @@ public class UseTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
         };
 

@@ -27,8 +27,10 @@ Supported protocols:
 You can easily create a new SurrealDB client easily. All you have to do is define the `endpoint` to the SurrealDB instance.
 
 ```csharp
-var client1 = new SurrealDbClient("http://localhost:8000");
-var client2 = new SurrealDbClient("https://cloud.surrealdb.com");
+var clientHttp = new SurrealDbClient("http://localhost:8000");
+var clientHttps = new SurrealDbClient("https://cloud.surrealdb.com");
+var clientWs = new SurrealDbClient("ws://localhost:8000");
+var clientWss = new SurrealDbClient("wss://cloud.surrealdb.com");
 
 // Signin & Use ns/db
 ```
@@ -38,8 +40,10 @@ var client2 = new SurrealDbClient("https://cloud.surrealdb.com");
 There are some static constructors that you can use for specific contexts. The advantage of this syntax is that all you only need to do is define the `host` and not the `endpoint`.
 
 ```csharp
-var client1 = SurrealDbHttpClient.New("localhost:8000");
-var client2 = SurrealDbHttpsClient.New("cloud.surrealdb.com");
+var clientHttp = SurrealDbHttpClient.New("localhost:8000");
+var clientHttps = SurrealDbHttpsClient.New("cloud.surrealdb.com");
+var clientWs = SurrealDbWsClient.New("ws://localhost:8000");
+var clientWss = SurrealDbWssClient.New("wss://cloud.surrealdb.com");
 
 // Signin & Use ns/db
 ```

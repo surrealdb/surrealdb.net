@@ -93,11 +93,16 @@ public class SurrealDbClient : ISurrealDbClient
     public Task<bool> Delete(Thing thing, CancellationToken cancellationToken = default)
     {
         return _engine.Delete(thing, cancellationToken);
-    }
+	}
 
-    public void Invalidate()
+	public void Dispose()
+	{
+		_engine.Dispose();
+	}
+
+	public Task Invalidate(CancellationToken cancellationToken = default)
     {
-        _engine.Invalidate();
+        return _engine.Invalidate(cancellationToken);
 	}
 
 	public Task<TOutput> Patch<TPatch, TOutput>(TPatch data, CancellationToken cancellationToken = default) where TPatch : Record
@@ -144,11 +149,11 @@ public class SurrealDbClient : ISurrealDbClient
     {
         return _engine.SignIn(root, cancellationToken);
 	}
-	public Task SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken = default)
+	public Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken = default)
 	{
 		return _engine.SignIn(nsAuth, cancellationToken);
 	}
-	public Task SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken = default)
+	public Task<Jwt> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken = default)
 	{
 		return _engine.SignIn(dbAuth, cancellationToken);
 	}
@@ -162,9 +167,9 @@ public class SurrealDbClient : ISurrealDbClient
 		return _engine.SignUp(scopeAuth, cancellationToken);
 	}
 
-	public void Unset(string key)
+	public Task Unset(string key, CancellationToken cancellationToken = default)
     {
-        _engine.Unset(key);
+        return _engine.Unset(key, cancellationToken);
 	}
 
 	public Task<T> Upsert<T>(T data, CancellationToken cancellationToken = default) where T : Record
@@ -177,11 +182,8 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.Use(ns, db, cancellationToken);
     }
 
-    public async Task<string> Version()
+    public Task<string> Version(CancellationToken cancellationToken = default)
     {
-        var httpEngine = (_engine as SurrealDbHttpEngine) ?? new SurrealDbHttpEngine(Uri, _httpClientFactory);
-        using var client = httpEngine.CreateHttpClient();
-
-        return await client.GetStringAsync("/version");
+		return _engine.Version(cancellationToken);
     }
 }

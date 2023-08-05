@@ -24,7 +24,7 @@ public class SelectTests
 {
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldSelectFromEmptyTable(string url)
     {
         List<Empty>? result = null;
@@ -34,7 +34,7 @@ public class SelectTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -48,7 +48,7 @@ public class SelectTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldSelectFromPostTable(string url)
     {
         List<Post>? result = null;
@@ -63,7 +63,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
@@ -94,7 +94,7 @@ public class SelectTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldSelectSinglePostUsingTwoArguments(string url)
     {
         Post? result = null;
@@ -109,7 +109,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
@@ -128,7 +128,7 @@ public class SelectTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldSelectSinglePostUsingThing(string url)
     {
         Post? result = null;
@@ -143,7 +143,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
@@ -164,7 +164,7 @@ public class SelectTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldSelectSingleFromNumberId(string url)
     {
         RecordIdRecord? result = null;
@@ -179,7 +179,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
@@ -197,7 +197,7 @@ public class SelectTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldSelectSingleFromStringId(string url)
     {
         RecordIdRecord? result = null;
@@ -212,7 +212,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
@@ -230,7 +230,7 @@ public class SelectTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldSelectSingleFromGuidId(string url)
     {
         RecordIdRecord? result = null;
@@ -245,7 +245,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
@@ -278,7 +278,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
@@ -311,7 +311,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);

@@ -17,11 +17,11 @@ internal class SurrealDbResultConverter : JsonConverter<ISurrealDbResult>
 		using var doc = JsonDocument.ParseValue(ref reader);
 		var root = doc.RootElement;
 
-		if (root.TryGetProperty(StatusPropertyName, out var status))
+		if (root.TryGetProperty(StatusPropertyName, out var statusProperty))
 		{
-			var statusString = status.GetString();
+			var status = statusProperty.GetString();
 
-			if (statusString == OkStatus)
+			if (status == OkStatus)
 			{
 				var timeProperty = root.GetProperty(TimePropertyName);
 				var time = timeProperty.ValueKind == JsonValueKind.Null
@@ -30,13 +30,13 @@ internal class SurrealDbResultConverter : JsonConverter<ISurrealDbResult>
 
 				var value = root.GetProperty(ResultPropertyName).Clone();
 
-				return new SurrealDbOkResult(time, statusString, value);
+				return new SurrealDbOkResult(time, status, value);
 			}
 
 			return JsonSerializer.Deserialize<SurrealDbErrorResult>(root.GetRawText(), options);
 		}
 
-		if (root.TryGetProperty(CodePropertyName, out var _))
+		if (root.TryGetProperty(CodePropertyName, out _))
 			return JsonSerializer.Deserialize<SurrealDbProtocolErrorResult>(root.GetRawText(), options);
 
 		return new SurrealDbUnknownResult();

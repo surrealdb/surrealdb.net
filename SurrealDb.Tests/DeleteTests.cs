@@ -6,7 +6,7 @@ public class DeleteTests
 {
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldDeletePostTable(string url)
     {
         List<Post>? list = null;
@@ -21,7 +21,7 @@ public class DeleteTests
 
             string query = fileContent;
 
-            var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
@@ -38,7 +38,7 @@ public class DeleteTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldDeletePostRecord(string url)
     {
         List<Post>? list = null;
@@ -54,7 +54,7 @@ public class DeleteTests
 
             string query = fileContent;
 
-            var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
@@ -77,7 +77,7 @@ public class DeleteTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldDeletePostRecordUsingThing(string url)
     {
         List<Post>? list = null;
@@ -93,7 +93,7 @@ public class DeleteTests
 
             string query = fileContent;
 
-            var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
@@ -118,7 +118,7 @@ public class DeleteTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldTryToDeleteInexistentRecord(string url)
     {
         List<Post>? list = null;
@@ -134,7 +134,7 @@ public class DeleteTests
 
             string query = fileContent;
 
-            var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);

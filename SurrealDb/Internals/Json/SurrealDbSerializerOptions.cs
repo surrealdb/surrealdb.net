@@ -23,7 +23,7 @@ internal static class SurrealDbSerializerOptions
                 new TimeSpanValueConverter(),
                 new DateTimeValueConverter(),
 				new SurrealDbResultConverter(),
-
+				new SurrealDbWsResponseConverter(),
 			},
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,

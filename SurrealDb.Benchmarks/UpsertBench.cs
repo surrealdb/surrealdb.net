@@ -4,61 +4,89 @@ namespace SurrealDb.Benchmarks;
 
 public class UpsertBench : BaseBenchmark
 {
-	const string httpUrl = "http://localhost:8000";
-
-	private SurrealDbClientGenerator? _surrealDbClientGenerator;
-	private PostFaker? _postFaker;
+	private readonly SurrealDbClientGenerator[] _surrealDbClientGenerators = new SurrealDbClientGenerator[4];
+	private readonly PostFaker _postFaker = new();
+	private readonly Post[] _posts = new Post[4];
 
 	private ISurrealDbClient? _surrealdbHttpClient;
 	private ISurrealDbClient? _surrealdbHttpClientWithHttpClientFactory;
-
-	private Post? _post;
+	private ISurrealDbClient? _surrealdbWsTextClient;
 
 	[GlobalSetup]
 	public async Task GlobalSetup()
 	{
-		_surrealDbClientGenerator = new SurrealDbClientGenerator();
-		_postFaker = new PostFaker();
+		for (int index = 0; index < 4; index++)
+		{
+			var clientGenerator = new SurrealDbClientGenerator();
+			var dbInfo = clientGenerator.GenerateDatabaseInfo();
 
-		Use(_surrealDbClientGenerator.GenerateDatabaseInfo());
+			switch (index)
+			{
+				case 0:
+					_surrealdbHttpClient = new SurrealDbClient(HttpUrl);
+					await InitializeSurrealDbClient(_surrealdbHttpClient, dbInfo);
+					break;
+				case 1:
+					_surrealdbHttpClientWithHttpClientFactory = clientGenerator.Create(HttpUrl);
+					await InitializeSurrealDbClient(_surrealdbHttpClientWithHttpClientFactory, dbInfo);
+					break;
+				case 2:
+					_surrealdbWsTextClient = new SurrealDbClient(WsUrl);
+					await InitializeSurrealDbClient(_surrealdbWsTextClient, dbInfo, true);
+					break;
+			}
 
-		_surrealdbHttpClient = new SurrealDbClient(httpUrl);
-		await InitializeSurrealDbClient(_surrealdbHttpClient);
+			await SeedData(WsUrl, dbInfo);
 
-		_surrealdbHttpClientWithHttpClientFactory = _surrealDbClientGenerator.Create(httpUrl);
-		await InitializeSurrealDbClient(_surrealdbHttpClientWithHttpClientFactory);
-
-		await SeedData(httpUrl);
-
-		_post = await GetFirstPost(httpUrl);
+			_posts[index] = await GetFirstPost(WsUrl, dbInfo);
+		}
 	}
 
 	[GlobalCleanup]
 	public async Task GlobalCleanup()
 	{
-		if (_surrealDbClientGenerator is not null)
-			await _surrealDbClientGenerator.DisposeAsync();
+		foreach (var clientGenerator in _surrealDbClientGenerators!)
+		{
+			if (clientGenerator is not null)
+				await clientGenerator.DisposeAsync();
+		}
+
+		_surrealdbHttpClient?.Dispose();
+		_surrealdbHttpClientWithHttpClientFactory?.Dispose();
+		_surrealdbWsTextClient?.Dispose();
 	}
 
 	[Benchmark]
-	public Task<Post> HttpClient()
+	public Task<Post> Http()
 	{
-		var generatedPost = _postFaker!.Generate();
-
-		_post!.Title = generatedPost.Title;
-		_post!.Content = generatedPost.Content;
-
-		return _surrealdbHttpClient!.Upsert(_post);
+		return Run(_surrealdbHttpClient!, _postFaker, _posts[0]);
 	}
 
-    [Benchmark]
-    public Task<Post> HttpClientWithFactory()
+	[Benchmark]
+    public Task<Post> HttpWithClientFactory()
 	{
-		var generatedPost = _postFaker!.Generate();
+		return Run(_surrealdbHttpClientWithHttpClientFactory!, _postFaker, _posts[1]);
+	}
 
-		_post!.Title = generatedPost.Title;
-		_post!.Content = generatedPost.Content;
+	[Benchmark]
+	public Task<Post> WsText()
+	{
+		return Run(_surrealdbWsTextClient!, _postFaker, _posts[2]);
+	}
 
-		return _surrealdbHttpClientWithHttpClientFactory!.Upsert(_post);
+	[Benchmark]
+	public Task<Post> WsBinary()
+	{
+		throw new NotImplementedException();
+	}
+
+	private static Task<Post> Run(ISurrealDbClient surrealDbClient, PostFaker postFaker, Post post)
+	{
+		var generatedPost = postFaker.Generate();
+
+		post.Title = generatedPost.Title;
+		post.Content = generatedPost.Content;
+
+		return surrealDbClient.Upsert(post);
 	}
 }

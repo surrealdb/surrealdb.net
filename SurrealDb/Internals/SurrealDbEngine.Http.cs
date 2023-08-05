@@ -2,6 +2,7 @@ using SurrealDb.Exceptions;
 using SurrealDb.Internals.Auth;
 using SurrealDb.Internals.Constants;
 using SurrealDb.Internals.Helpers;
+using SurrealDb.Internals.Http;
 using SurrealDb.Internals.Json;
 using SurrealDb.Internals.Models;
 using SurrealDb.Models;
@@ -18,7 +19,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 {
     private readonly Uri _uri;
     private readonly IHttpClientFactory? _httpClientFactory;
-    private readonly SurrealDbEngineConfig _config = new();
+    private readonly SurrealDbHttpEngineConfig _config = new();
 
     public SurrealDbHttpEngine(Uri uri, IHttpClientFactory? httpClientFactory)
     {
@@ -69,7 +70,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		if (data.Id is null)
 			throw new SurrealDbException("Cannot create a record without an Id");
 
-		using var response = await client.PostAsync($"/key/{data.Id.Table}/{data.Id.Id}", body, cancellationToken);
+		using var response = await client.PostAsync($"/key/{data.Id.Table}/{data.Id.UnescapedId}", body, cancellationToken);
 
 		var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken);
 
@@ -98,12 +99,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken);
 		EnsuresFirstResultOk(dbResponse);
 	}
-
 	public async Task<bool> Delete(Thing thing, CancellationToken cancellationToken)
     {
         using var client = CreateHttpClient();
 
-		using var response = await client.DeleteAsync($"/key/{thing.Table}/{thing.Id}", cancellationToken);
+		using var response = await client.DeleteAsync($"/key/{thing.Table}/{thing.UnescapedId}", cancellationToken);
 
 		var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken);
 
@@ -111,9 +111,14 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		return list.Any(r => r is not null);
     }
 
-    public void Invalidate()
-    {
+	public void Dispose()
+	{
+	}
+
+	public Task Invalidate(CancellationToken _)
+	{
         _config.ResetAuth();
+		return Task.CompletedTask;
     }
 
 	public async Task<TOutput> Patch<TPatch, TOutput>(TPatch data, CancellationToken cancellationToken) where TPatch : Record
@@ -124,7 +129,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		if (data.Id is null)
 			throw new SurrealDbException("Cannot create a record without an Id");
 
-		using var response = await client.PatchAsync($"/key/{data.Id.Table}/{data.Id.Id}", body, cancellationToken);
+		using var response = await client.PatchAsync($"/key/{data.Id.Table}/{data.Id.UnescapedId}", body, cancellationToken);
 
 		var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken);
 
@@ -136,7 +141,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		using var client = CreateHttpClient();
 		using var body = CreateBodyContent(data);
 
-		using var response = await client.PatchAsync($"/key/{thing.Table}/{thing.Id}", body, cancellationToken);
+		using var response = await client.PatchAsync($"/key/{thing.Table}/{thing.UnescapedId}", body, cancellationToken);
 
 		var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken);
 
@@ -191,7 +196,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         using var client = CreateHttpClient();
 
-		using var response = await client.GetAsync($"/key/{thing.Table}/{thing.Id}", cancellationToken);
+		using var response = await client.GetAsync($"/key/{thing.Table}/{thing.UnescapedId}", cancellationToken);
 
 		var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken);
 
@@ -221,7 +226,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         _config.SetBasicAuth(rootAuth.Username, rootAuth.Password);
     }
-	public async Task SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken)
+	public async Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken)
 	{
 		using var client = CreateHttpClient();
 		using var body = CreateBodyContent(nsAuth);
@@ -229,9 +234,13 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		using var response = await client.PostAsync("/signin", body, cancellationToken);
 		response.EnsureSuccessStatusCode();
 
-		_config.SetBasicAuth(nsAuth.Username, nsAuth.Password);
+		var result = await DeserializeAuthResponse(response, cancellationToken);
+
+		_config.SetBearerAuth(result.Token!);
+
+		return new Jwt { Token = result.Token! };
 	}
-	public async Task SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken)
+	public async Task<Jwt> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken)
 	{
 		using var client = CreateHttpClient();
 		using var body = CreateBodyContent(dbAuth);
@@ -239,7 +248,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		using var response = await client.PostAsync("/signin", body, cancellationToken);
 		response.EnsureSuccessStatusCode();
 
-		_config.SetBasicAuth(dbAuth.Username, dbAuth.Password);
+		var result = await DeserializeAuthResponse(response, cancellationToken);
+
+		_config.SetBearerAuth(result.Token!);
+
+		return new Jwt { Token = result.Token! };
 	}
 	public async Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth
 	{
@@ -269,9 +282,10 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		return new Jwt { Token = result.Token! };
 	}
 
-	public void Unset(string key)
-    {
+	public Task Unset(string key, CancellationToken _)
+	{
         _config.RemoveParam(key);
+		return Task.CompletedTask;
     }
 
 	public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken) where T : Record
@@ -282,7 +296,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		if (data.Id is null)
 			throw new SurrealDbException("Cannot create a record without an Id");
 
-		using var response = await client.PutAsync($"/key/{data.Id.Table}/{data.Id.Id}", body, cancellationToken);
+		using var response = await client.PutAsync($"/key/{data.Id.Table}/{data.Id.UnescapedId}", body, cancellationToken);
 
 		var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken);
 
@@ -306,7 +320,13 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		_config.Use(ns, db);
     }
 
-    internal HttpClient CreateHttpClient(bool withAuth = true)
+	public async Task<string> Version(CancellationToken _)
+	{
+		using var client = CreateHttpClient();
+		return await client.GetStringAsync("/version");
+	}
+
+	internal HttpClient CreateHttpClient(bool withAuth = true)
     {
         var client = GetHttpClient();
         client.BaseAddress = _uri;

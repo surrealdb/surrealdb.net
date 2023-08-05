@@ -8,7 +8,7 @@ namespace SurrealDb;
 /// The entry point to communicate with a SurrealDB instance.
 /// Authenticate, use namespace/database, execute queries, etc...
 /// </summary>
-public interface ISurrealDbClient
+public interface ISurrealDbClient : IDisposable
 {
     /// <summary>
     /// The uri linked to the SurrealDB instance target.
@@ -76,10 +76,11 @@ public interface ISurrealDbClient
     /// <returns>Returns true if the record was removed successfully.</returns>
     Task<bool> Delete(Thing thing, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Invalidates the authentication for the current connection.
-    /// </summary>
-    void Invalidate();
+	/// <summary>
+	/// Invalidates the authentication for the current connection.
+	/// </summary>
+	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+	Task Invalidate(CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Modifies the specified record in the database.
@@ -158,14 +159,14 @@ public interface ISurrealDbClient
 	/// </summary>
 	/// <param name="nsAuth">Credentials to sign in as a namespace user</param>
 	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-	Task SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken = default);
+	Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Sign in as a database user.
 	/// </summary>
 	/// <param name="dbAuth">Credentials to sign in as a database user</param>
 	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-	Task SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken = default);
+	Task<Jwt> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Sign in as a scoped user.
@@ -189,7 +190,8 @@ public interface ISurrealDbClient
 	/// Removes a parameter from this connection.
 	/// </summary>
 	/// <param name="key">The name of the parameter.</param>
-	void Unset(string key);
+	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+	Task Unset(string key, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Updates or creates the specified record in the database.
@@ -208,9 +210,10 @@ public interface ISurrealDbClient
 	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
 	Task Use(string ns, string db, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Retrieve the version of the SurrealDB instance.
-    /// </summary>
-    /// <returns>The version of the SurrealDB instance</returns>
-    Task<string> Version();
+	/// <summary>
+	/// Retrieve the version of the SurrealDB instance.
+	/// </summary>
+	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+	/// <returns>The version of the SurrealDB instance</returns>
+	Task<string> Version(CancellationToken cancellationToken = default);
 }

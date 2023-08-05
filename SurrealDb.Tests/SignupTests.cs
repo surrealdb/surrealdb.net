@@ -6,7 +6,7 @@ public class SignUpTests
 {
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldSignUpUsingScopeAuth(string url)
 	{
 		Jwt? jwt = null;
@@ -16,7 +16,7 @@ public class SignUpTests
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 

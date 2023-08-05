@@ -1,3 +1,4 @@
+using SurrealDb.Exceptions;
 using SurrealDb.Internals.Models;
 using SurrealDb.Models.Response;
 using System.Net;
@@ -9,7 +10,7 @@ public class QueryTests
 {
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldQueryWithParams(string url)
 	{
 		SurrealDbResponse? response = null;
@@ -19,7 +20,7 @@ public class QueryTests
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -54,9 +55,11 @@ public class QueryTests
 
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldHaveOneProtocolErrorResult(string url)
 	{
+		bool isWebsocket = url.StartsWith("ws://", StringComparison.OrdinalIgnoreCase);
+
 		SurrealDbResponse? response = null;
 
 		Func<Task> func = async () =>
@@ -64,7 +67,7 @@ public class QueryTests
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -84,24 +87,31 @@ public class QueryTests
 			}
 		};
 
-		await func.Should().NotThrowAsync();
+		if (isWebsocket)
+		{
+			await func.Should().ThrowAsync<SurrealDbException>().WithMessage("There was a problem with the database: Parse error on line 1 at character 0 when parsing 'SELECT;'");
+		}
+		else
+		{
+			await func.Should().NotThrowAsync();
 
-		response.Should().NotBeNull().And.HaveCount(1);
+			response.Should().NotBeNull().And.HaveCount(1);
 
-		var firstResult = response![0];
-		firstResult.Should().BeOfType<SurrealDbProtocolErrorResult>();
+			var firstResult = response![0];
+			firstResult.Should().BeOfType<SurrealDbProtocolErrorResult>();
 
-		var errorResult = firstResult as SurrealDbProtocolErrorResult;
+			var errorResult = firstResult as SurrealDbProtocolErrorResult;
 
-		errorResult!.Code.Should().Be(HttpStatusCode.BadRequest);
-		errorResult!.Details.Should().Be("Request problems detected");
-		errorResult!.Description.Should().Be("There is a problem with your request. Refer to the documentation for further information.");
-		errorResult!.Information.Should().Be("There was a problem with the database: Parse error on line 1 at character 0 when parsing 'SELECT;'");
+			errorResult!.Code.Should().Be(HttpStatusCode.BadRequest);
+			errorResult!.Details.Should().Be("Request problems detected");
+			errorResult!.Description.Should().Be("There is a problem with your request. Refer to the documentation for further information.");
+			errorResult!.Information.Should().Be("There was a problem with the database: Parse error on line 1 at character 0 when parsing 'SELECT;'");
+		}
 	}
 
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldHave4Results(string url)
 	{
 		SurrealDbResponse? response = null;
@@ -111,7 +121,7 @@ public class QueryTests
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -144,7 +154,7 @@ SELECT xyz FROM post;
 
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldIterateOnOkResults(string url)
 	{
 		SurrealDbResponse? response = null;
@@ -154,7 +164,7 @@ SELECT xyz FROM post;
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -190,7 +200,7 @@ CANCEL TRANSACTION;
 
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldIterateOnErrorResults(string url)
 	{
 		SurrealDbResponse? response = null;
@@ -200,7 +210,7 @@ CANCEL TRANSACTION;
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -236,7 +246,7 @@ CANCEL TRANSACTION;
 
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldReturnFirstOkResult(string url)
 	{
 		SurrealDbResponse? response = null;
@@ -246,7 +256,7 @@ CANCEL TRANSACTION;
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -282,7 +292,7 @@ CANCEL TRANSACTION;
 
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldReturnFirstError(string url)
 	{
 		SurrealDbResponse? response = null;
@@ -292,7 +302,7 @@ CANCEL TRANSACTION;
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -328,7 +338,7 @@ CANCEL TRANSACTION;
 
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldHaveError(string url)
 	{
 		SurrealDbResponse? response = null;
@@ -338,7 +348,7 @@ CANCEL TRANSACTION;
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -374,7 +384,7 @@ CANCEL TRANSACTION;
 
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldGetValueFromIndex(string url)
 	{
 		SurrealDbResponse? response = null;
@@ -384,7 +394,7 @@ CANCEL TRANSACTION;
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 

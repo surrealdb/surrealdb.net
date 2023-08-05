@@ -23,7 +23,6 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
     private static readonly DatabaseInfoFaker _databaseInfoFaker = new();
 
     private ServiceProvider? _serviceProvider;
-    private SurrealDbClient? _client;
     private DatabaseInfo? _databaseInfo;
 
     public SurrealDbClient Create(string endpoint)
@@ -40,8 +39,7 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 		_serviceProvider = services.BuildServiceProvider(validateScopes: true);
         using var scope = _serviceProvider.CreateScope();
 
-        _client = scope.ServiceProvider.GetRequiredService<SurrealDbClient>();
-        return _client;
+        return scope.ServiceProvider.GetRequiredService<SurrealDbClient>();
     }
 
     public DatabaseInfo GenerateDatabaseInfo()
@@ -57,10 +55,12 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 
 	public async ValueTask DisposeAsync()
 	{
-		if (_databaseInfo is not null && _client is not null)
+		if (_databaseInfo is not null)
 		{
+			using var client = new SurrealDbClient("ws://localhost:8000/rpc");
+
 			string query = $"REMOVE DATABASE {_databaseInfo.Database};";
-			await _client.Query(query);
+			await client.Query(query);
 		}
 
 		Dispose();

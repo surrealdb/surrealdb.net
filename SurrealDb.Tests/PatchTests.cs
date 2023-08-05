@@ -11,7 +11,7 @@ public class PatchTests
 {
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldPatchExistingPost(string url)
 	{
 		List<Post>? list = null;
@@ -27,7 +27,7 @@ public class PatchTests
 
 			string query = fileContent;
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 			await client.Query(query);
@@ -56,7 +56,7 @@ public class PatchTests
 
 	[Theory]
 	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+	[InlineData("ws://localhost:8000/rpc")]
 	public async Task ShouldPatchUsingDictionary(string url)
 	{
 		List<Post>? list = null;
@@ -72,7 +72,7 @@ public class PatchTests
 
 			string query = fileContent;
 
-			var client = surrealDbClientGenerator.Create(url);
+			using var client = surrealDbClientGenerator.Create(url);
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 			await client.Query(query);
