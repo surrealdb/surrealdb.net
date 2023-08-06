@@ -7,13 +7,10 @@ public class BaseBenchmark
 	protected string HttpUrl { get; } = "http://localhost:8000";
 	protected string WsUrl { get; } = "ws://localhost:8000/rpc";
 
-	protected async Task InitializeSurrealDbClient(ISurrealDbClient client, DatabaseInfo databaseInfo, bool connect = false)
+	protected async Task InitializeSurrealDbClient(ISurrealDbClient client, DatabaseInfo databaseInfo)
 	{
 		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 		await client.Use(databaseInfo.Namespace, databaseInfo.Database);
-
-		if (connect)
-			await client.Connect();
 	}
 
 	protected async Task CreatePostTable(string url, DatabaseInfo databaseInfo)

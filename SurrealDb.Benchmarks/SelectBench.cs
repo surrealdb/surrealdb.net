@@ -2,7 +2,6 @@ using BenchmarkDotNet.Attributes;
 
 namespace SurrealDb.Benchmarks;
 
-[MemoryDiagnoser]
 public class SelectBench : BaseBenchmark
 {
 	private readonly SurrealDbClientGenerator[] _surrealDbClientGenerators = new SurrealDbClientGenerator[4];
@@ -31,7 +30,7 @@ public class SelectBench : BaseBenchmark
 					break;
 				case 2:
 					_surrealdbWsTextClient = new SurrealDbClient(WsUrl);
-					await InitializeSurrealDbClient(_surrealdbWsTextClient, dbInfo, true);
+					await InitializeSurrealDbClient(_surrealdbWsTextClient, dbInfo);
 					break;
 			}
 

@@ -1,3 +1,4 @@
+using Microsoft.IO;
 using SurrealDb.Exceptions;
 using SurrealDb.Internals.Auth;
 using SurrealDb.Internals.Helpers;
@@ -20,6 +21,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 {
 	private static readonly ConcurrentDictionary<string, SurrealDbWsEngine> _wsEngines = new();
 	private static readonly ConcurrentDictionary<string, SurrealWsTaskCompletionSource> _responseTasks = new();
+	private static readonly RecyclableMemoryStreamManager _memoryStreamManager = new();
 
 	private readonly string _id;
     private readonly Uri _uri;
@@ -39,17 +41,37 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
 		_id = id;
 		_uri = uri;
-		_wsClient = new WebsocketClient(_uri);
+		_wsClient = new WebsocketClient(_uri)
+		{
+			IsTextMessageConversionEnabled = false
+		};
 
 		_receiverSubscription = _wsClient.MessageReceived
 			.ObserveOn(TaskPoolScheduler.Default)
-			.Subscribe(message =>
-			{
-				if (message.MessageType == WebSocketMessageType.Text)
+			.Select(message =>
+				Observable.FromAsync(async (cancellationToken) =>
 				{
-					var response = JsonSerializer.Deserialize<ISurrealDbWsResponse>(message.Text, SurrealDbSerializerOptions.Default);
+					ISurrealDbWsResponse? response = null;
 
-					if (_responseTasks.TryRemove(response!.Id, out var responseTaskCompletionSource))
+					switch (message.MessageType)
+					{
+						case WebSocketMessageType.Text:
+							response = JsonSerializer.Deserialize<ISurrealDbWsResponse>(message.Text, SurrealDbSerializerOptions.Default);
+							break;
+						case WebSocketMessageType.Binary:
+							{
+								using var stream = _memoryStreamManager.GetStream(message.Binary);
+
+								response = await JsonSerializer.DeserializeAsync<ISurrealDbWsResponse>(
+									stream,
+									SurrealDbSerializerOptions.Default,
+									cancellationToken
+								);
+								break;
+							}
+					}
+
+					if (response is not null && _responseTasks.TryRemove(response.Id, out var responseTaskCompletionSource))
 					{
 						switch (response)
 						{
@@ -64,13 +86,10 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 								break;
 						}
 					}
-				}
-
-				if (message.MessageType == WebSocketMessageType.Binary)
-				{
-					// TODO
-				}
-			});
+				})
+			)
+			.Merge()
+			.Subscribe();
 	}
 
     public async Task Authenticate(Jwt jwt, CancellationToken cancellationToken)
@@ -283,7 +302,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		if (parameters is not null && parameters.Count > 0)
 			request.Add("params", parameters);
 
-		string payload = JsonSerializer.Serialize(request, SurrealDbSerializerOptions.Default);
+		using var stream = _memoryStreamManager.GetStream();
+		await JsonSerializer.SerializeAsync(stream, request, SurrealDbSerializerOptions.Default, cancellationToken);
+		stream.Seek(0, SeekOrigin.Begin);
+		using var reader = new StreamReader(stream);
+		string payload = await reader.ReadToEndAsync();
+
 		_wsClient.Send(payload);
 
 		var response = await taskCompletionSource.Task;

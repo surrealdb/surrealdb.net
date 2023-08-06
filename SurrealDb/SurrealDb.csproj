@@ -30,6 +30,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
+		<PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.3.2" />
 		<PackageReference Include="Superpower" Version="3.0.0" />
 		<PackageReference Include="System.Text.Json" Version="7.0.3" />
 		<PackageReference Include="Websocket.Client" Version="4.6.1" />

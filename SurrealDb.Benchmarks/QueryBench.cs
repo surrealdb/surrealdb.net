@@ -30,7 +30,7 @@ public class QueryBench : BaseBenchmark
 					break;
 				case 2:
 					_surrealdbWsTextClient = new SurrealDbClient(WsUrl);
-					await InitializeSurrealDbClient(_surrealdbWsTextClient, dbInfo, true);
+					await InitializeSurrealDbClient(_surrealdbWsTextClient, dbInfo);
 					break;
 			}
 
