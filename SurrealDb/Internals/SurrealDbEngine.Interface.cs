@@ -8,6 +8,7 @@ internal interface ISurrealDbEngine : IDisposable
 {
     Task Authenticate(Jwt jwt, CancellationToken cancellationToken);
 	void Configure(string? ns, string? db, string? username, string? password);
+	void Configure(string? ns, string? db, string? token = null);
 	Task Connect(CancellationToken cancellationToken);
     Task<T> Create<T>(T data, CancellationToken cancellationToken) where T : Record;
     Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken);

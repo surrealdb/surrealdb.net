@@ -106,6 +106,15 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		if (username is not null)
 			_config.SetBasicAuth(username, password);
 	}
+	public void Configure(string? ns, string? db, string? token = null)
+	{
+		// 💡 Pre-configuration before connect
+		if (ns is not null)
+			_config.Use(ns, db);
+
+		if (token is not null)
+			_config.SetBearerAuth(token);
+	}
 
 	public async Task Connect(CancellationToken cancellationToken)
 	{
@@ -119,6 +128,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
 		if (_config.Auth is BasicAuth basicAuth)
 			await SignIn(new RootAuth { Username = basicAuth.Username, Password = basicAuth.Password! }, cancellationToken);
+
+		if (_config.Auth is BearerAuth bearerAuth)
+			await Authenticate(new Jwt { Token = bearerAuth.Token }, cancellationToken);
 
 		_config.Reset();
 	}

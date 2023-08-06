@@ -16,7 +16,12 @@ internal class SurrealDbWsEngineConfig
 
 	public void SetBasicAuth(string username, string? password)
 	{
-		Auth = new BasicAuth { Username = username, Password = password };
+		Auth = new BasicAuth(username, password);
+	}
+
+	public void SetBearerAuth(string token)
+	{
+		Auth = new BearerAuth(token);
 	}
 
 	public void Reset()

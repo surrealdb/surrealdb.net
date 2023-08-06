@@ -1,3 +1,3 @@
 namespace SurrealDb.Internals.Auth;
 
-internal class NoAuth : IAuth { }
+internal record NoAuth : IAuth;

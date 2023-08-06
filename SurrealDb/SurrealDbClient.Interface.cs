@@ -22,16 +22,31 @@ public interface ISurrealDbClient : IDisposable
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     Task Authenticate(Jwt jwt, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Connects to the SurrealDB instance. This can improve performance to avoid cold starts.<br /><br />
-    /// 
-    /// * Using HTTP(S) protocol: has no real effect, except to detect if a connection is possible or not 
-    /// (throws exception if unable to connect)<br />
-    /// 
-    /// * Using WS(S) protocol: will start a websocket connection so that further calls will be triggered immediately
-    /// </summary>
-    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-    Task Connect(CancellationToken cancellationToken = default);
+	/// <summary>
+	/// Configures the client to use a specific namespace and database, with a user-defined root access.
+	/// </summary>
+	/// <param name="ns">The table namespace to use.</param>
+	/// <param name="db">The table database to use.</param>
+	/// <param name="username">The username with root access.</param>
+	/// <param name="password">The password with root access.</param>
+	void Configure(string? ns, string? db, string? username, string? password);
+
+	/// <summary>
+	/// Configures the client to use a specific namespace and database, with a JWT token identifier.
+	/// </summary>
+	/// <param name="ns">The table namespace to use.</param>
+	/// <param name="db">The table database to use.</param>
+	/// <param name="token">The value of the JWT token.</param>
+	void Configure(string? ns, string? db, string? token = null);
+
+	/// <summary>
+	/// Connects to the SurrealDB instance. This can improve performance to avoid cold starts.<br /><br />
+	/// 
+	/// * Using HTTP(S) protocol: initializes a new HTTP connection<br />
+	/// * Using WS(S) protocol: will start a websocket connection so that further calls will be triggered immediately
+	/// </summary>
+	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+	Task Connect(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates the specific record in the database.

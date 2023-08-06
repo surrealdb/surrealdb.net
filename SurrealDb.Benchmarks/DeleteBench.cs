@@ -22,15 +22,18 @@ public class DeleteBench : BaseBenchmark
 			{
 				case 0:
 					_surrealdbHttpClient = new SurrealDbClient(HttpUrl);
-					await InitializeSurrealDbClient(_surrealdbHttpClient, dbInfo);
+					InitializeSurrealDbClient(_surrealdbHttpClient, dbInfo);
+					await _surrealdbHttpClient.Connect();
 					break;
 				case 1:
 					_surrealdbHttpClientWithHttpClientFactory = clientGenerator.Create(HttpUrl);
-					await InitializeSurrealDbClient(_surrealdbHttpClientWithHttpClientFactory, dbInfo);
+					InitializeSurrealDbClient(_surrealdbHttpClientWithHttpClientFactory, dbInfo);
+					await _surrealdbHttpClientWithHttpClientFactory.Connect();
 					break;
 				case 2:
 					_surrealdbWsTextClient = new SurrealDbClient(WsUrl);
-					await InitializeSurrealDbClient(_surrealdbWsTextClient, dbInfo);
+					InitializeSurrealDbClient(_surrealdbWsTextClient, dbInfo);
+					await _surrealdbWsTextClient.Connect();
 					break;
 			}
 

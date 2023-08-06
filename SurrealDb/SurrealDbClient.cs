@@ -60,7 +60,7 @@ public class SurrealDbClient : ISurrealDbClient
             _ => throw new ArgumentException("This protocol is not supported."),
         };
 
-		_engine.Configure(ns, db, username, password);
+		Configure(ns, db, username, password);
 	}
 
 	public Task Authenticate(Jwt jwt, CancellationToken cancellationToken = default)
@@ -68,7 +68,16 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.Authenticate(jwt, cancellationToken);
     }
 
-    public Task Connect(CancellationToken cancellationToken = default)
+	public void Configure(string? ns, string? db, string? username, string? password)
+	{
+		_engine.Configure(ns, db, username, password);
+	}
+	public void Configure(string? ns, string? db, string? token = null)
+	{
+		_engine.Configure(ns, db, token);
+	}
+
+	public Task Connect(CancellationToken cancellationToken = default)
     {
         return _engine.Connect(cancellationToken);
     }
