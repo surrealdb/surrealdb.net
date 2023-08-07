@@ -41,7 +41,7 @@ public class ConnectTests
 			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			using var client = SurrealDbWsClient.New("localhost:8000/rpc", dbInfo.Namespace, dbInfo.Database);
+			using var client = SurrealDbWsClient.New("localhost:8000", dbInfo.Namespace, dbInfo.Database);
 
 			await client.Connect();
 

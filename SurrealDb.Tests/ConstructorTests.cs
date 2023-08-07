@@ -23,19 +23,19 @@ public class ConstructorTests
 	[Fact]
 	public void ShouldSupportWsProtocol()
     {
-        Func<Uri> func = () => new SurrealDbClient("ws://localhost:8000").Uri;
+        Func<Uri> func = () => new SurrealDbClient("ws://localhost:8000/rpc").Uri;
 
         func.Should().NotThrow();
-        func().AbsoluteUri.Should().Be("ws://localhost:8000/");
+        func().AbsoluteUri.Should().Be("ws://localhost:8000/rpc");
     }
 
     [Fact]
     public void ShouldSupportWssProtocol()
     {
-        Func<Uri> func = () => new SurrealDbClient("wss://cloud.SurrealDb.com").Uri;
+        Func<Uri> func = () => new SurrealDbClient("wss://cloud.SurrealDb.com/rpc").Uri;
 
         func.Should().NotThrow();
-        func().AbsoluteUri.Should().Be("wss://cloud.surrealdb.com/");
+        func().AbsoluteUri.Should().Be("wss://cloud.surrealdb.com/rpc");
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class ConstructorTests
 		Func<Uri> func = () => SurrealDbWsClient.New("localhost:8000").Uri;
 
 		func.Should().NotThrow();
-		func().AbsoluteUri.Should().Be("ws://localhost:8000/");
+		func().AbsoluteUri.Should().Be("ws://localhost:8000/rpc");
 	}
 
 	[Fact]
@@ -87,6 +87,6 @@ public class ConstructorTests
 		Func<Uri> func = () => SurrealDbWssClient.New("cloud.SurrealDb.com").Uri;
 
 		func.Should().NotThrow();
-		func().AbsoluteUri.Should().Be("wss://cloud.surrealdb.com/");
+		func().AbsoluteUri.Should().Be("wss://cloud.surrealdb.com/rpc");
 	}
 }

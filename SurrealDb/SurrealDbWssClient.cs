@@ -14,7 +14,7 @@ public static class SurrealDbWssClient
 	public static ISurrealDbClient New(string host, string? ns = null, string? db = null, string? username = null, string? password = null)
 	{
 		const string protocol = "wss";
-		string endpoint = $"{protocol}://{host}";
+		string endpoint = $"{protocol}://{host}/rpc";
 
 		return new SurrealDbClient(endpoint, ns, db, username, password, null);
 	}
