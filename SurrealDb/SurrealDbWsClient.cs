@@ -1,3 +1,5 @@
+using SurrealDb.Internals.Helpers;
+
 namespace SurrealDb;
 
 public static class SurrealDbWsClient
@@ -14,7 +16,7 @@ public static class SurrealDbWsClient
 	public static ISurrealDbClient New(string host, string? ns = null, string? db = null, string? username = null, string? password = null)
 	{
 		const string protocol = "ws";
-		string endpoint = $"{protocol}://{host}/rpc";
+		string endpoint = UriBuilderHelper.CreateEndpointFromProtocolAndHost(host, protocol, "/rpc");
 
 		return new SurrealDbClient(endpoint, ns, db, username, password, null);
 	}

@@ -1,3 +1,5 @@
+using SurrealDb.Internals.Helpers;
+
 namespace SurrealDb;
 
 public static class SurrealDbHttpsClient
@@ -11,7 +13,7 @@ public static class SurrealDbHttpsClient
     public static ISurrealDbClient New(string host, IHttpClientFactory? httpClientFactory = null)
     {
         const string protocol = "https";
-		string endpoint = $"{protocol}://{host}";
+		string endpoint = UriBuilderHelper.CreateEndpointFromProtocolAndHost(host, protocol);
 
 		return new SurrealDbClient(endpoint, null, null, null, null, httpClientFactory);
     }
