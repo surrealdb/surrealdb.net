@@ -15,8 +15,12 @@ public static class SurrealDbWssClient
 	/// <exception cref="ArgumentException"></exception>
 	public static ISurrealDbClient New(string host, string? ns = null, string? db = null, string? username = null, string? password = null)
 	{
+#if NET6_0_OR_GREATER
+		string endpoint = UriBuilderHelper.CreateEndpointFromProtocolAndHost(host, Uri.UriSchemeWss, "/rpc");
+#else
 		const string protocol = "wss";
 		string endpoint = UriBuilderHelper.CreateEndpointFromProtocolAndHost(host, protocol, "/rpc");
+#endif
 
 		return new SurrealDbClient(endpoint, ns, db, username, password, null);
 	}

@@ -12,9 +12,7 @@ public static class SurrealDbHttpClient
     /// <exception cref="ArgumentException"></exception>
     public static ISurrealDbClient New(string host, IHttpClientFactory? httpClientFactory = null)
 	{
-		const string protocol = "http";
-		string endpoint = UriBuilderHelper.CreateEndpointFromProtocolAndHost(host, protocol);
-
+		string endpoint = UriBuilderHelper.CreateEndpointFromProtocolAndHost(host, Uri.UriSchemeHttp);
 		return new SurrealDbClient(endpoint, null, null, null, null, httpClientFactory);
 	}
 }
