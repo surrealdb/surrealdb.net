@@ -136,5 +136,60 @@ public class CreateTests
         anotherPost!.Content.Should().Be("This is a new article created using the .NET SDK");
         anotherPost!.CreatedAt.Should().NotBeNull();
         anotherPost!.Status.Should().Be("DRAFT");
-    }
+	}
+
+	[Theory]
+	[InlineData("http://localhost:8000")]
+	[InlineData("ws://localhost:8000/rpc")]
+	public async Task ShouldCreateMultiplePosts(string url)
+	{
+		List<Post>? list = null;
+
+		Func<Task> func = async () =>
+		{
+			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+			string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/post.surql");
+			string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+			string query = fileContent;
+
+			using var client = surrealDbClientGenerator.Create(url);
+			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+			await client.Use(dbInfo.Namespace, dbInfo.Database);
+			await client.Query(query);
+
+			var posts = new List<Post>
+			{
+				new Post
+				{
+					Id = new Thing("post", "A"),
+					Title = "An article",
+					Content = "This is a new article"
+				},
+				new Post
+				{
+					Id = new Thing("post", "B"),
+					Title = "An article",
+					Content = "This is a new article"
+				},
+				new Post
+				{
+					Id = new Thing("post", "C"),
+					Title = "An article",
+					Content = "This is a new article"
+				}
+			};
+
+			var tasks = posts.Select(p => client.Create(p));
+			await Task.WhenAll(tasks.ToArray());
+
+			list = await client.Select<Post>("post");
+		};
+
+		await func.Should().NotThrowAsync();
+
+		list.Should().NotBeNull().And.HaveCount(5);
+	}
 }

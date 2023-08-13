@@ -4,7 +4,7 @@ internal class SurrealWsTaskCompletionSource : TaskCompletionSource<SurrealDbWsO
 {
 	public string WsEngineId { get; }
 
-	public SurrealWsTaskCompletionSource(in string wsEngineId)
+	public SurrealWsTaskCompletionSource(string wsEngineId)
 	{
 		WsEngineId = wsEngineId;
 	}

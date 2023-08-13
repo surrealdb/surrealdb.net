@@ -251,7 +251,7 @@ surreal start --log debug --user root --pass root memory
 Once ready, go to the root directory of the project and run the following command:
 
 ```
-dotnet watch test —project SurrealDb.Tests
+dotnet watch test --project SurrealDb.Tests
 ```
 
 ### Benchmarking

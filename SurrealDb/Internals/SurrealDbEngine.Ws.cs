@@ -295,7 +295,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 			cancellationToken.ThrowIfCancellationRequested();
 		}
 
-		var taskCompletionSource = new SurrealWsTaskCompletionSource(in _id);
+		var taskCompletionSource = new SurrealWsTaskCompletionSource(_id);
 
 		string id;
 
@@ -305,14 +305,14 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 			id = RandomHelper.CreateRandomId();
 		} while (!_responseTasks.TryAdd(id, taskCompletionSource));
 
-		var request = new Dictionary<string, object>
-		{
-			{ "id", id },
-			{ "method", method },
-		};
+		bool shouldSendParamsInRequest = parameters is not null && parameters.Count > 0;
 
-		if (parameters is not null && parameters.Count > 0)
-			request.Add("params", parameters);
+		var request = new SurrealDbWsRequest
+		{
+			Id = id,
+			Method = method,
+			Parameters = shouldSendParamsInRequest ? parameters : null,
+		};
 
 		using var stream = _memoryStreamManager.GetStream();
 		await JsonSerializer.SerializeAsync(stream, request, SurrealDbSerializerOptions.Default, cancellationToken);
