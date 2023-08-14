@@ -13,7 +13,7 @@ internal class DateTimeValueConverter : JsonConverter<DateTime>
             JsonTokenType.None or JsonTokenType.Null => default,
             JsonTokenType.String or JsonTokenType.PropertyName => GetValueFromString(reader.GetString()),
             JsonTokenType.Number => DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64()).UtcDateTime,
-            _ => throw new JsonException("Cannot deserialize Date to DateTime")
+            _ => throw new JsonException($"Cannot deserialize Date to {nameof(DateTime)}")
         };
 
         return value;

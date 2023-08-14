@@ -23,7 +23,9 @@ public class DecimalRecord : Record<decimal?> { }
 public class FloatRecord : Record<float?> { }
 public class DoubleRecord : Record<double?> { }
 public class DurationRecord : Record<TimeSpan> { }
-public class DatetimeRecord : Record<DateTime?> { }
+public class TimeOnlyRecord : Record<TimeOnly> { }
+public class DateTimeRecord : Record<DateTime?> { }
+public class DateOnlyRecord : Record<DateOnly?> { }
 
 public class ParserTests
 {
@@ -528,7 +530,107 @@ public class ParserTests
         }
     }
 
-    [Theory]
+	[Theory]
+	[InlineData("http://localhost:8000")]
+	[InlineData("ws://localhost:8000/rpc")]
+	public async Task ShouldParseTimeOnly(string url)
+	{
+		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/duration.surql");
+		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+		string query = fileContent;
+
+		using var client = surrealDbClientGenerator.Create(url);
+		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+		await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+		await client.Query(query);
+
+		var records = await client.Select<TimeOnlyRecord>("duration");
+
+		{
+			var noneRecord = records.Find(r => r.Name == "none");
+			noneRecord.Should().NotBeNull();
+			noneRecord!.Value.Should().Be(new TimeOnly());
+		}
+
+		{
+			var nanosecondRecord = records.Find(r => r.Name == "nanosecond");
+			nanosecondRecord.Should().NotBeNull();
+			nanosecondRecord!.Value.Should(); // TODO : Value = 2
+		}
+
+		{
+			var microsecondRecord = records.Find(r => r.Name == "microsecond");
+			microsecondRecord.Should().NotBeNull();
+			microsecondRecord!.Value.Should().Be(new TimeOnly(30)); // 30 ticks = 3 microseconds
+		}
+
+		{
+			var microsecondAliasRecord = records.Find(r => r.Name == "microsecond-alias");
+			microsecondAliasRecord.Should().NotBeNull();
+			microsecondAliasRecord!.Value.Should().Be(new TimeOnly(40)); // 40 ticks = 4 microseconds
+		}
+
+		{
+			var millisecondRecord = records.Find(r => r.Name == "millisecond");
+			millisecondRecord.Should().NotBeNull();
+			millisecondRecord!.Value.Should().Be(new TimeOnly(0, 0, 0, 50));
+		}
+
+		{
+			var secondRecord = records.Find(r => r.Name == "second");
+			secondRecord.Should().NotBeNull();
+			secondRecord!.Value.Should().Be(new TimeOnly(0, 0, 7));
+		}
+
+		{
+			var minuteRecord = records.Find(r => r.Name == "minute");
+			minuteRecord.Should().NotBeNull();
+			minuteRecord!.Value.Should().Be(new TimeOnly(0, 5));
+		}
+
+		{
+			var hourRecord = records.Find(r => r.Name == "hour");
+			hourRecord.Should().NotBeNull();
+			hourRecord!.Value.Should().Be(new TimeOnly(1, 0));
+		}
+
+		{
+			var dayRecord = records.Find(r => r.Name == "day");
+			dayRecord.Should().NotBeNull();
+			dayRecord!.Value.Should().Be(new TimeOnly());
+		}
+
+		{
+			var weekRecord = records.Find(r => r.Name == "week");
+			weekRecord.Should().NotBeNull();
+			weekRecord!.Value.Should().Be(new TimeOnly());
+		}
+
+		{
+			var yearRecord = records.Find(r => r.Name == "year");
+			yearRecord.Should().NotBeNull();
+			yearRecord!.Value.Should().Be(new TimeOnly());
+		}
+
+		{
+			var complexRecord = records.Find(r => r.Name == "complex");
+			complexRecord.Should().NotBeNull();
+			complexRecord!.Value.Should().Be(new TimeOnly(01, 30, 21, 350));
+		}
+
+		{
+			var halfHourRecord = records.Find(r => r.Name == "decimal");
+			halfHourRecord.Should().NotBeNull();
+			halfHourRecord!.Value.Should().Be(new TimeOnly());
+		}
+	}
+
+	[Theory]
     [InlineData("http://localhost:8000")]
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldParseDateTime(string url)
@@ -547,7 +649,7 @@ public class ParserTests
 
         await client.Query(query);
 
-        var records = await client.Select<DatetimeRecord>("datetime");
+        var records = await client.Select<DateTimeRecord>("datetime");
 
         {
             var noneRecord = records.Find(r => r.Name == "none");
@@ -599,4 +701,68 @@ public class ParserTests
             );
         }
     }
+
+	[Theory]
+	[InlineData("http://localhost:8000")]
+	[InlineData("ws://localhost:8000/rpc")]
+	public async Task ShouldParseDateOnly(string url)
+	{
+		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/datetime.surql");
+		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+		string query = fileContent;
+
+		using var client = surrealDbClientGenerator.Create(url);
+		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+		await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+		await client.Query(query);
+
+		var records = await client.Select<DateOnlyRecord>("datetime");
+
+		{
+			var noneRecord = records.Find(r => r.Name == "none");
+			noneRecord.Should().NotBeNull();
+			noneRecord!.Value.Should().BeNull();
+		}
+
+		{
+			var timeRecord = records.Find(r => r.Name == "time");
+			timeRecord.Should().NotBeNull();
+			timeRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
+		}
+
+		{
+			var nanoRecord = records.Find(r => r.Name == "nano");
+			nanoRecord.Should().NotBeNull();
+			nanoRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
+		}
+
+		{
+			var timezoneRecord = records.Find(r => r.Name == "timezone");
+			timezoneRecord.Should().NotBeNull();
+			timezoneRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
+		}
+
+		{
+			var timePlusDurationRecord = records.Find(r => r.Name == "time+duration");
+			timePlusDurationRecord.Should().NotBeNull();
+			timePlusDurationRecord!.Value.Should().Be(new DateOnly(2022, 7, 17));
+		}
+
+		{
+			var nanoPlusDurationRecord = records.Find(r => r.Name == "nano+duration");
+			nanoPlusDurationRecord.Should().NotBeNull();
+			nanoPlusDurationRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
+		}
+
+		{
+			var fullNanoRecord = records.Find(r => r.Name == "full-nano");
+			fullNanoRecord.Should().NotBeNull();
+			fullNanoRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
+		}
+	}
 }

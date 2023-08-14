@@ -14,7 +14,7 @@ internal class TimeSpanValueConverter : JsonConverter<TimeSpan>
 			JsonTokenType.None or JsonTokenType.Null => default,
 			JsonTokenType.String or JsonTokenType.PropertyName => GetValueFromString(reader.GetString()),
 			JsonTokenType.Number => TimeSpan.FromTicks(reader.GetInt64()),
-			_ => throw new JsonException("Cannot deserialize Duration to TimeSpan")
+			_ => throw new JsonException($"Cannot deserialize Duration to {nameof(TimeSpan)}")
 		};
 
 		return value;

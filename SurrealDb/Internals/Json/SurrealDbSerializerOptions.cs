@@ -22,6 +22,10 @@ internal static class SurrealDbSerializerOptions
                 new ThingConverter(),
                 new TimeSpanValueConverter(),
                 new DateTimeValueConverter(),
+#if NET6_0_OR_GREATER
+				new DateOnlyValueConverter(),
+				new TimeOnlyValueConverter(),
+#endif
 				new SurrealDbResultConverter(),
 				new SurrealDbWsResponseConverter(),
 			},
