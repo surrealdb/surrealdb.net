@@ -26,6 +26,9 @@ internal static class SurrealDbSerializerOptions
 				new DateOnlyValueConverter(),
 				new TimeOnlyValueConverter(),
 #endif
+				new Vector2ValueConverter(),
+				new Vector3ValueConverter(),
+				new Vector4ValueConverter(),
 				new SurrealDbResultConverter(),
 				new SurrealDbWsResponseConverter(),
 			},

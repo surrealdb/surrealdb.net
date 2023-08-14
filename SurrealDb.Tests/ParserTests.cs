@@ -1,5 +1,7 @@
 using FluentAssertions.Extensions;
+using System.Numerics;
 using System.Text;
+using System.Text.Json;
 
 namespace SurrealDb.Tests;
 
@@ -26,6 +28,9 @@ public class DurationRecord : Record<TimeSpan> { }
 public class TimeOnlyRecord : Record<TimeOnly> { }
 public class DateTimeRecord : Record<DateTime?> { }
 public class DateOnlyRecord : Record<DateOnly?> { }
+public class Vector2Record : Record<Vector2?> { }
+public class Vector3Record : Record<Vector3?> { }
+public class Vector4Record : Record<Vector4?> { }
 
 public class ParserTests
 {
@@ -286,7 +291,7 @@ public class ParserTests
         {
             var decimalRecord = records.Find(r => r.Name == "decimal");
             decimalRecord.Should().NotBeNull();
-            decimalRecord!.Value.Should().Be(41.5M);
+            decimalRecord!.Value.Should().Be(41.5m);
         }
 
         {
@@ -763,6 +768,150 @@ public class ParserTests
 			var fullNanoRecord = records.Find(r => r.Name == "full-nano");
 			fullNanoRecord.Should().NotBeNull();
 			fullNanoRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
+		}
+	}
+
+	[Theory]
+	[InlineData("http://localhost:8000")]
+	[InlineData("ws://localhost:8000/rpc")]
+	public async Task ShouldParseVector2(string url)
+	{
+		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/vector.surql");
+		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+		string query = fileContent;
+
+		using var client = surrealDbClientGenerator.Create(url);
+		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+		await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+		await client.Query(query);
+
+		{
+			var noneRecord = await client.Select<Vector2Record>("vector", "none");
+			noneRecord.Should().NotBeNull();
+			noneRecord!.Value.Should().BeNull();
+		}
+
+		{
+			Func<Task> act = async () => await client.Select<Vector2Record>("vector", "empty");
+			await act.Should().ThrowAsync<JsonException>().WithMessage("Cannot deserialize Vector2");
+		}
+
+		{
+			var vector2Record = await client.Select<Vector2Record>("vector", "vector2");
+			vector2Record.Should().NotBeNull();
+			vector2Record!.Value.Should().Be(new Vector2(2.5f, 0.5f));
+		}
+
+		{
+			var vector3Record = await client.Select<Vector2Record>("vector", "vector3");
+			vector3Record.Should().NotBeNull();
+			vector3Record!.Value.Should().Be(new Vector2(4, 9));
+		}
+
+		{
+			var vector4Record = await client.Select<Vector2Record>("vector", "vector4");
+			vector4Record.Should().NotBeNull();
+			vector4Record!.Value.Should().Be(new Vector2(2, 3));
+		}
+	}
+
+	[Theory]
+	[InlineData("http://localhost:8000")]
+	[InlineData("ws://localhost:8000/rpc")]
+	public async Task ShouldParseVector3(string url)
+	{
+		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/vector.surql");
+		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+		string query = fileContent;
+
+		using var client = surrealDbClientGenerator.Create(url);
+		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+		await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+		await client.Query(query);
+
+		{
+			var noneRecord = await client.Select<Vector3Record>("vector", "none");
+			noneRecord.Should().NotBeNull();
+			noneRecord!.Value.Should().BeNull();
+		}
+
+		{
+			Func<Task> act = async () => await client.Select<Vector3Record>("vector", "empty");
+			await act.Should().ThrowAsync<JsonException>().WithMessage("Cannot deserialize Vector3");
+		}
+
+		{
+			Func<Task> act = async () => await client.Select<Vector3Record>("vector", "vector2");
+			await act.Should().ThrowAsync<JsonException>().WithMessage("Cannot deserialize Vector3");
+		}
+
+		{
+			var vector3Record = await client.Select<Vector3Record>("vector", "vector3");
+			vector3Record.Should().NotBeNull();
+			vector3Record!.Value.Should().Be(new Vector3(4, 9, 16));
+		}
+
+		{
+			var vector4Record = await client.Select<Vector3Record>("vector", "vector4");
+			vector4Record.Should().NotBeNull();
+			vector4Record!.Value.Should().Be(new Vector3(2, 3, 4));
+		}
+	}
+
+	[Theory]
+	[InlineData("http://localhost:8000")]
+	[InlineData("ws://localhost:8000/rpc")]
+	public async Task ShouldParseVector4(string url)
+	{
+		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/vector.surql");
+		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+		string query = fileContent;
+
+		using var client = surrealDbClientGenerator.Create(url);
+		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+		await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+		await client.Query(query);
+
+		{
+			var noneRecord = await client.Select<Vector4Record>("vector", "none");
+			noneRecord.Should().NotBeNull();
+			noneRecord!.Value.Should().BeNull();
+		}
+
+		{
+			Func<Task> act = async () => await client.Select<Vector4Record>("vector", "empty");
+			await act.Should().ThrowAsync<JsonException>().WithMessage("Cannot deserialize Vector4");
+		}
+
+		{
+			Func<Task> act = async () => await client.Select<Vector4Record>("vector", "vector2");
+			await act.Should().ThrowAsync<JsonException>().WithMessage("Cannot deserialize Vector4");
+		}
+
+		{
+			Func<Task> act = async () => await client.Select<Vector4Record>("vector", "vector3");
+			await act.Should().ThrowAsync<JsonException>().WithMessage("Cannot deserialize Vector4");
+		}
+
+		{
+			var vector4Record = await client.Select<Vector4Record>("vector", "vector4");
+			vector4Record.Should().NotBeNull();
+			vector4Record!.Value.Should().Be(new Vector4(2, 3, 4, 5));
 		}
 	}
 }
