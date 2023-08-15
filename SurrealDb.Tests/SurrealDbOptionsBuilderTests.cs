@@ -15,6 +15,7 @@ public class SurrealDbOptionsBuilderTests
 		options.Database.Should().BeNull();
 		options.Username.Should().BeNull();
 		options.Password.Should().BeNull();
+		options.Token.Should().BeNull();
 	}
 
 	[Fact]
@@ -29,6 +30,7 @@ public class SurrealDbOptionsBuilderTests
 		options.Database.Should().BeNull();
 		options.Username.Should().BeNull();
 		options.Password.Should().BeNull();
+		options.Token.Should().BeNull();
 	}
 
 	[Fact]
@@ -43,6 +45,7 @@ public class SurrealDbOptionsBuilderTests
 		options.Database.Should().BeNull();
 		options.Username.Should().BeNull();
 		options.Password.Should().BeNull();
+		options.Token.Should().BeNull();
 	}
 
 	[Fact]
@@ -57,6 +60,7 @@ public class SurrealDbOptionsBuilderTests
 		options.Database.Should().Be("database");
 		options.Username.Should().BeNull();
 		options.Password.Should().BeNull();
+		options.Token.Should().BeNull();
 	}
 
 	[Fact]
@@ -71,6 +75,7 @@ public class SurrealDbOptionsBuilderTests
 		options.Database.Should().BeNull();
 		options.Username.Should().Be("username");
 		options.Password.Should().BeNull();
+		options.Token.Should().BeNull();
 	}
 
 	[Fact]
@@ -85,6 +90,22 @@ public class SurrealDbOptionsBuilderTests
 		options.Database.Should().BeNull();
 		options.Username.Should().BeNull();
 		options.Password.Should().Be("password");
+		options.Token.Should().BeNull();
+	}
+
+	[Fact]
+	public void ShouldCreateWithToken()
+	{
+		var options = new SurrealDbOptionsBuilder()
+			.WithToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c")
+			.Build();
+
+		options.Endpoint.Should().BeNull();
+		options.Namespace.Should().BeNull();
+		options.Database.Should().BeNull();
+		options.Username.Should().BeNull();
+		options.Password.Should().BeNull();
+		options.Token.Should().Be("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c");
 	}
 
 	[Fact]
@@ -101,6 +122,7 @@ public class SurrealDbOptionsBuilderTests
 		options.Database.Should().Be("test");
 		options.Username.Should().Be("root");
 		options.Password.Should().Be("root");
+		options.Token.Should().BeNull();
 	}
 
 	[Fact]
@@ -117,5 +139,23 @@ public class SurrealDbOptionsBuilderTests
 		options.Database.Should().Be("test");
 		options.Username.Should().Be("root");
 		options.Password.Should().Be("root");
+		options.Token.Should().BeNull();
+	}
+
+	[Fact]
+	public void ShouldCreateFromConnectionStringWithAccessToken()
+	{
+		string connectionString = "Endpoint=http://localhost:8000;NS=test;DB=test;Token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+
+		var options = new SurrealDbOptionsBuilder()
+			.FromConnectionString(connectionString)
+			.Build();
+
+		options.Endpoint.Should().Be("http://localhost:8000");
+		options.Namespace.Should().Be("test");
+		options.Database.Should().Be("test");
+		options.Username.Should().BeNull();
+		options.Password.Should().BeNull();
+		options.Token.Should().Be("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c");
 	}
 }

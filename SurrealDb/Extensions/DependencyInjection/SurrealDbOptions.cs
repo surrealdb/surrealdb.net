@@ -32,6 +32,11 @@ public class SurrealDbOptions
 	/// </summary>
 	public string? Password { get; internal set; }
 
+	/// <summary>
+	/// Default token (User auth) to use when new <see cref="ISurrealDbClient"/> is generated.
+	/// </summary>
+	public string? Token { get; internal set; }
+
 	public static SurrealDbOptionsBuilder Create()
 	{
 		return new SurrealDbOptionsBuilder();

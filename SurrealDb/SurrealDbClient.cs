@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Internals;
+using SurrealDb.Internals.Models;
 using SurrealDb.Models;
 using SurrealDb.Models.Auth;
 using SurrealDb.Models.Response;
@@ -24,7 +25,7 @@ public class SurrealDbClient : ISurrealDbClient
 	/// <param name="httpClientFactory">An IHttpClientFactory instance, or none.</param>
 	/// <exception cref="ArgumentException"></exception>
 	public SurrealDbClient(string endpoint, IHttpClientFactory? httpClientFactory = null)
-		: this(endpoint, null, null, null, null, httpClientFactory) { }
+		: this(new(endpoint, httpClientFactory)) { }
 
 	/// <summary>
 	/// Creates a new SurrealDbClient using a specific configuration.
@@ -34,22 +35,15 @@ public class SurrealDbClient : ISurrealDbClient
 	/// <exception cref="ArgumentException"></exception>
 	/// <exception cref="ArgumentNullException"></exception>
 	public SurrealDbClient(SurrealDbOptions configuration, IHttpClientFactory? httpClientFactory = null)
-		: this(configuration.Endpoint, configuration.Namespace, configuration.Database, configuration.Username, configuration.Password, httpClientFactory) { }
+		: this(new(configuration, httpClientFactory)) { }
 
-	internal SurrealDbClient(
-		string? endpoint,
-		string? ns,
-		string? db,
-		string? username, // TODO : Auth
-		string? password, // TODO : Auth
-		IHttpClientFactory? httpClientFactory = null // TODO : avoid n arguments
-	)
+	internal SurrealDbClient(SurrealDbClientParams parameters)
     {
-		if (endpoint is null)
-			throw new ArgumentNullException(nameof(endpoint));
+		if (parameters.Endpoint is null)
+			throw new ArgumentNullException(nameof(parameters.Endpoint));
 
-        Uri = new Uri(endpoint);
-        _httpClientFactory = httpClientFactory;
+        Uri = new Uri(parameters.Endpoint);
+        _httpClientFactory = parameters.HttpClientFactory;
 
         var protocol = Uri.Scheme;
 
@@ -60,7 +54,10 @@ public class SurrealDbClient : ISurrealDbClient
             _ => throw new ArgumentException("This protocol is not supported."),
         };
 
-		Configure(ns, db, username, password);
+		if (parameters.Username is not null)
+			Configure(parameters.Ns, parameters.Db, parameters.Username, parameters.Password);
+		else
+			Configure(parameters.Ns, parameters.Db, parameters.Token);
 	}
 
 	public Task Authenticate(Jwt jwt, CancellationToken cancellationToken = default)

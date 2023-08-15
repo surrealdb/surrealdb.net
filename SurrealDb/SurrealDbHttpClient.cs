@@ -13,6 +13,6 @@ public static class SurrealDbHttpClient
     public static ISurrealDbClient New(string host, IHttpClientFactory? httpClientFactory = null)
 	{
 		string endpoint = UriBuilderHelper.CreateEndpointFromProtocolAndHost(host, Uri.UriSchemeHttp);
-		return new SurrealDbClient(endpoint, null, null, null, null, httpClientFactory);
+		return new SurrealDbClient(endpoint, httpClientFactory);
 	}
 }

@@ -7,6 +7,7 @@ public class SurrealDbOptionsBuilder
 	private string? _database;
 	private string? _username;
 	private string? _password;
+	private string? _token;
 
 	/// <summary>
 	/// Parses the connection string and set the configuration accordingly.
@@ -54,6 +55,9 @@ public class SurrealDbOptionsBuilder
 				case "pass":
 					_password = value;
 					break;
+				case "token":
+					_token = value;
+					break;
 			}
 		}
 
@@ -90,6 +94,12 @@ public class SurrealDbOptionsBuilder
 		return this;
 	}
 
+	public SurrealDbOptionsBuilder WithToken(string? token)
+	{
+		_token = token;
+		return this;
+	}
+
 	public SurrealDbOptions Build()
 	{
 		return new SurrealDbOptions
@@ -98,7 +108,8 @@ public class SurrealDbOptionsBuilder
 			Namespace = _namespace,
 			Database = _database,
 			Username = _username,
-			Password = _password
+			Password = _password,
+			Token = _token
 		};
 	}
 }

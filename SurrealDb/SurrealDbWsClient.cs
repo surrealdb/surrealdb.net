@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Internals.Helpers;
 
 namespace SurrealDb;
@@ -12,8 +13,9 @@ public static class SurrealDbWsClient
 	/// <param name="db">The table database to connect to.</param>
 	/// <param name="username">The username to connect to (with root access).</param>
 	/// <param name="password">The password to connect to (with root access).</param>
+	/// <param name="token">The token to connect to (with user access).</param>
 	/// <exception cref="ArgumentException"></exception>
-	public static ISurrealDbClient New(string host, string? ns = null, string? db = null, string? username = null, string? password = null)
+	public static ISurrealDbClient New(string host, string? ns = null, string? db = null, string? username = null, string? password = null, string? token = null)
 	{
 #if NET6_0_OR_GREATER
 		string endpoint = UriBuilderHelper.CreateEndpointFromProtocolAndHost(host, Uri.UriSchemeWs, "/rpc");
@@ -22,6 +24,15 @@ public static class SurrealDbWsClient
 		string endpoint = UriBuilderHelper.CreateEndpointFromProtocolAndHost(host, protocol, "/rpc");
 #endif
 
-		return new SurrealDbClient(endpoint, ns, db, username, password, null);
+		var options = new SurrealDbOptions
+		{
+			Endpoint = endpoint,
+			Namespace = ns,
+			Database = db,
+			Username = username,
+			Password = password,
+			Token = token
+		};
+		return new SurrealDbClient(options, null);
 	}
 }
