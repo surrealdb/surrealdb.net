@@ -14,7 +14,7 @@ internal class SurrealDbWsResponseConverter : JsonConverter<ISurrealDbWsResponse
 		using var doc = JsonDocument.ParseValue(ref reader);
 		var root = doc.RootElement;
 
-		if (root.TryGetProperty(ResultPropertyName, out var resultProperty))
+		if (root.TryGetProperty(ResultPropertyName, out _))
 			return JsonSerializer.Deserialize<SurrealDbWsOkResponse>(root.GetRawText(), options);
 
 		if (root.TryGetProperty(ErrorPropertyName, out _))

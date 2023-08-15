@@ -1,4 +1,4 @@
-﻿using Superpower.Parsers;
+using Superpower.Parsers;
 using Superpower;
 using SurrealDb.Internals.Constants;
 
@@ -69,7 +69,7 @@ internal static class DateTimeParser
         from ______ in Character.EqualTo('.')
         from nano in TakeUntilDigit
         from _______ in Zone
-        let nanoVal = nano.PadRight(9, '0').Substring(0, 9)
+        let nanoVal = nano.PadRight(9, '0')[..9]
         let ticks = Math.Round(int.Parse(nanoVal) * TimeConstants.TicksPerNanosecond)
         select new DateTime(year, month, day, hour, minute, second, DateTimeKind.Utc).AddTicks((long)ticks);
 
