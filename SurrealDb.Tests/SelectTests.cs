@@ -263,7 +263,7 @@ public class SelectTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldSelectSingleFromObjectId(string url)
     {
         RecordIdRecord? result = null;
@@ -296,7 +296,7 @@ public class SelectTests
 
     [Theory]
     [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc", Skip = "NotImplemented")]
+    [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldSelectSingleFromArrayId(string url)
     {
         RecordIdRecord? result = null;
