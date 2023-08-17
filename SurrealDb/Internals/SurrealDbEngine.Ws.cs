@@ -191,12 +191,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		if (data.Id is null)
 			throw new SurrealDbException("Cannot create a record without an Id");
 
-		var dbResponse = await SendRequest("merge", new() { data.Id.ToString(), data }, cancellationToken);
+		var dbResponse = await SendRequest("merge", new() { data.Id.ToWsString(), data }, cancellationToken);
 		return dbResponse.GetValue<TOutput>()!;
 	}
 	public async Task<T> Merge<T>(Thing thing, Dictionary<string, object> data, CancellationToken cancellationToken)
 	{
-		var dbResponse = await SendRequest("merge", new() { thing, data }, cancellationToken);
+		var dbResponse = await SendRequest("merge", new() { thing.ToWsString(), data }, cancellationToken);
 		return dbResponse.GetValue<T>()!;
 	}
 
@@ -219,7 +219,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 	}
     public async Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken)
 	{
-		var dbResponse = await SendRequest("select", new() { thing.ToString() }, cancellationToken);
+		var dbResponse = await SendRequest("select", new() { thing.ToWsString() }, cancellationToken);
 		return dbResponse.GetValue<T?>();
 	}
 
@@ -272,7 +272,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		if (data.Id is null)
 			throw new SurrealDbException("Cannot create a record without an Id");
 
-		var dbResponse = await SendRequest("update", new() { data.Id.ToString(), data }, cancellationToken);
+		var dbResponse = await SendRequest("update", new() { data.Id.ToWsString(), data }, cancellationToken);
 		return dbResponse.GetValue<T>()!;
 	}
 
