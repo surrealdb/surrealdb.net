@@ -14,11 +14,17 @@ internal class TimeOnlyValueConverter : JsonConverter<TimeOnly>
 		{
 			JsonTokenType.None or JsonTokenType.Null => default,
 			JsonTokenType.String or JsonTokenType.PropertyName => GetValueFromString(reader.GetString()),
-			JsonTokenType.Number => new TimeOnly(reader.GetInt64()),
+			JsonTokenType.Number => GetValueFromNumber(reader.GetInt64()),
 			_ => throw new JsonException($"Cannot deserialize Duration to {nameof(TimeOnly)}")
 		};
 
 		return value;
+	}
+
+	private static TimeOnly GetValueFromNumber(long seconds)
+	{
+		var timeSpan = TimeSpan.FromSeconds(seconds);
+		return TimeOnly.FromTimeSpan(timeSpan);
 	}
 
 	private static TimeOnly GetValueFromString(string? value)

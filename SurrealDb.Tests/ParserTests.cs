@@ -24,7 +24,8 @@ public class LongRecord : Record<long?> { }
 public class DecimalRecord : Record<decimal?> { }
 public class FloatRecord : Record<float?> { }
 public class DoubleRecord : Record<double?> { }
-public class DurationRecord : Record<TimeSpan> { }
+public class DurationRecord : Record<Duration> { }
+public class TimeSpanRecord : Record<TimeSpan> { }
 public class TimeOnlyRecord : Record<TimeOnly> { }
 public class DateTimeRecord : Record<DateTime?> { }
 public class DateOnlyRecord : Record<DateOnly?> { }
@@ -435,110 +436,10 @@ public class ParserTests
         }
     }
 
-    [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
-    public async Task ShouldParseTimeSpan(string url)
-    {
-        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-        string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/duration.surql");
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
-		using var client = surrealDbClientGenerator.Create(url);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-        await client.Use(dbInfo.Namespace, dbInfo.Database);
-
-        await client.Query(query);
-
-        var records = await client.Select<DurationRecord>("duration");
-
-        {
-            var noneRecord = records.Find(r => r.Name == "none");
-            noneRecord.Should().NotBeNull();
-            noneRecord!.Value.TotalSeconds.Should().Be(0);
-        }
-
-        {
-            var nanosecondRecord = records.Find(r => r.Name == "nanosecond");
-            nanosecondRecord.Should().NotBeNull();
-            nanosecondRecord!.Value.TotalNanoseconds().Should(); // TODO : Value = 2
-        }
-
-        {
-            var microsecondRecord = records.Find(r => r.Name == "microsecond");
-            microsecondRecord.Should().NotBeNull();
-            microsecondRecord!.Value.TotalMicroseconds().Should().Be(3);
-        }
-
-        {
-            var microsecondAliasRecord = records.Find(r => r.Name == "microsecond-alias");
-            microsecondAliasRecord.Should().NotBeNull();
-            microsecondAliasRecord!.Value.TotalMicroseconds().Should().Be(4);
-        }
-
-        {
-            var millisecondRecord = records.Find(r => r.Name == "millisecond");
-            millisecondRecord.Should().NotBeNull();
-            millisecondRecord!.Value.TotalMilliseconds.Should().Be(50);
-        }
-
-        {
-            var secondRecord = records.Find(r => r.Name == "second");
-            secondRecord.Should().NotBeNull();
-            secondRecord!.Value.TotalSeconds.Should().Be(7);
-        }
-
-        {
-            var minuteRecord = records.Find(r => r.Name == "minute");
-            minuteRecord.Should().NotBeNull();
-            minuteRecord!.Value.TotalMinutes.Should().Be(5);
-        }
-
-        {
-            var hourRecord = records.Find(r => r.Name == "hour");
-            hourRecord.Should().NotBeNull();
-            hourRecord!.Value.TotalHours.Should().Be(1);
-        }
-
-        {
-            var dayRecord = records.Find(r => r.Name == "day");
-            dayRecord.Should().NotBeNull();
-            dayRecord!.Value.TotalDays.Should().Be(6);
-        }
-
-        {
-            var weekRecord = records.Find(r => r.Name == "week");
-            weekRecord.Should().NotBeNull();
-            weekRecord!.Value.TotalDays.Should().Be(196);
-        }
-
-        {
-            var yearRecord = records.Find(r => r.Name == "year");
-            yearRecord.Should().NotBeNull();
-            yearRecord!.Value.TotalDays.Should().Be(4380);
-        }
-
-        {
-            var complexRecord = records.Find(r => r.Name == "complex");
-            complexRecord.Should().NotBeNull();
-            complexRecord!.Value.TotalSeconds.Should().Be(5421.35);
-        }
-
-        {
-            var halfHourRecord = records.Find(r => r.Name == "decimal");
-            halfHourRecord.Should().NotBeNull();
-            halfHourRecord!.Value.TotalSeconds.Should().Be(0);
-        }
-    }
-
 	[Theory]
 	[InlineData("http://localhost:8000")]
 	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseTimeOnly(string url)
+	public async Task ShouldParseDuration(string url)
 	{
 		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -554,91 +455,403 @@ public class ParserTests
 
 		await client.Query(query);
 
-		var records = await client.Select<TimeOnlyRecord>("duration");
+		var records = await client.Select<DurationRecord>("duration");
 
 		{
 			var noneRecord = records.Find(r => r.Name == "none");
 			noneRecord.Should().NotBeNull();
-			noneRecord!.Value.Should().Be(new TimeOnly());
+
+			noneRecord!.Value.NanoSeconds.Should().Be(0);
+			noneRecord!.Value.MilliSeconds.Should().Be(0);
+			noneRecord!.Value.MicroSeconds.Should().Be(0);
+			noneRecord!.Value.Seconds.Should().Be(0);
+			noneRecord!.Value.Minutes.Should().Be(0);
+			noneRecord!.Value.Hours.Should().Be(0);
+			noneRecord!.Value.Days.Should().Be(0);
+			noneRecord!.Value.Weeks.Should().Be(0);
+			noneRecord!.Value.Years.Should().Be(0);
 		}
 
 		{
 			var nanosecondRecord = records.Find(r => r.Name == "nanosecond");
 			nanosecondRecord.Should().NotBeNull();
-			nanosecondRecord!.Value.Should(); // TODO : Value = 2
+			nanosecondRecord!.Value.NanoSeconds.Should().Be(2);
 		}
 
 		{
 			var microsecondRecord = records.Find(r => r.Name == "microsecond");
 			microsecondRecord.Should().NotBeNull();
-			microsecondRecord!.Value.Should().Be(new TimeOnly(30)); // 30 ticks = 3 microseconds
+			microsecondRecord!.Value.NanoSeconds.Should().Be(3000); // TODO : Fix this in SurrealDB
 		}
 
 		{
 			var microsecondAliasRecord = records.Find(r => r.Name == "microsecond-alias");
 			microsecondAliasRecord.Should().NotBeNull();
-			microsecondAliasRecord!.Value.Should().Be(new TimeOnly(40)); // 40 ticks = 4 microseconds
+			microsecondAliasRecord!.Value.NanoSeconds.Should().Be(4000); // TODO : Fix this in SurrealDB
 		}
 
 		{
 			var millisecondRecord = records.Find(r => r.Name == "millisecond");
 			millisecondRecord.Should().NotBeNull();
-			millisecondRecord!.Value.Should().Be(new TimeOnly(0, 0, 0, 50));
+			millisecondRecord!.Value.MilliSeconds.Should().Be(50);
 		}
 
 		{
 			var secondRecord = records.Find(r => r.Name == "second");
 			secondRecord.Should().NotBeNull();
-			secondRecord!.Value.Should().Be(new TimeOnly(0, 0, 7));
+			secondRecord!.Value.Seconds.Should().Be(7);
 		}
 
 		{
 			var minuteRecord = records.Find(r => r.Name == "minute");
 			minuteRecord.Should().NotBeNull();
-			minuteRecord!.Value.Should().Be(new TimeOnly(0, 5));
+			minuteRecord!.Value.Minutes.Should().Be(5);
 		}
 
 		{
 			var hourRecord = records.Find(r => r.Name == "hour");
 			hourRecord.Should().NotBeNull();
-			hourRecord!.Value.Should().Be(new TimeOnly(1, 0));
+			hourRecord!.Value.Hours.Should().Be(1);
 		}
 
 		{
 			var dayRecord = records.Find(r => r.Name == "day");
 			dayRecord.Should().NotBeNull();
-			dayRecord!.Value.Should().Be(new TimeOnly());
+			dayRecord!.Value.Days.Should().Be(6);
 		}
 
 		{
 			var weekRecord = records.Find(r => r.Name == "week");
 			weekRecord.Should().NotBeNull();
-			weekRecord!.Value.Should().Be(new TimeOnly());
+			weekRecord!.Value.Weeks.Should().Be(28);
 		}
 
 		{
 			var yearRecord = records.Find(r => r.Name == "year");
 			yearRecord.Should().NotBeNull();
-			yearRecord!.Value.Should().Be(new TimeOnly());
+			yearRecord!.Value.Years.Should().Be(12);
 		}
 
 		{
 			var complexRecord = records.Find(r => r.Name == "complex");
 			complexRecord.Should().NotBeNull();
-			complexRecord!.Value.Should().Be(new TimeOnly(01, 30, 21, 350));
+			complexRecord!.Value.MilliSeconds.Should().Be(350);
+			complexRecord!.Value.Seconds.Should().Be(21);
+			complexRecord!.Value.Minutes.Should().Be(30);
+			complexRecord!.Value.Hours.Should().Be(1);
 		}
 
 		{
 			var halfHourRecord = records.Find(r => r.Name == "decimal");
 			halfHourRecord.Should().NotBeNull();
-			halfHourRecord!.Value.Should().Be(new TimeOnly());
+			halfHourRecord!.Value.Seconds.Should().Be(0);
+		}
+	}
+
+	[Theory]
+	[InlineData("http://localhost:8000")]
+	[InlineData("ws://localhost:8000/rpc")]
+	public async Task ShouldParseDurationAsTimeSpan(string url)
+	{
+		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/duration.surql");
+		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+		string query = fileContent;
+
+		using var client = surrealDbClientGenerator.Create(url);
+		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+		await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+		await client.Query(query);
+
+		var records = await client.Select<TimeSpanRecord>("duration");
+
+		{
+			var noneRecord = records.Find(r => r.Name == "none");
+			noneRecord.Should().NotBeNull();
+			noneRecord!.Value.TotalSeconds.Should().Be(0);
+		}
+
+		{
+			var nanosecondRecord = records.Find(r => r.Name == "nanosecond");
+			nanosecondRecord.Should().NotBeNull();
+			nanosecondRecord!.Value.TotalNanoseconds().Should(); // TODO : Value = 2
+		}
+
+		{
+			var microsecondRecord = records.Find(r => r.Name == "microsecond");
+			microsecondRecord.Should().NotBeNull();
+			microsecondRecord!.Value.TotalMicroseconds().Should().Be(3);
+		}
+
+		{
+			var microsecondAliasRecord = records.Find(r => r.Name == "microsecond-alias");
+			microsecondAliasRecord.Should().NotBeNull();
+			microsecondAliasRecord!.Value.TotalMicroseconds().Should().Be(4);
+		}
+
+		{
+			var millisecondRecord = records.Find(r => r.Name == "millisecond");
+			millisecondRecord.Should().NotBeNull();
+			millisecondRecord!.Value.TotalMilliseconds.Should().Be(50);
+		}
+
+		{
+			var secondRecord = records.Find(r => r.Name == "second");
+			secondRecord.Should().NotBeNull();
+			secondRecord!.Value.TotalSeconds.Should().Be(7);
+		}
+
+		{
+			var minuteRecord = records.Find(r => r.Name == "minute");
+			minuteRecord.Should().NotBeNull();
+			minuteRecord!.Value.TotalMinutes.Should().Be(5);
+		}
+
+		{
+			var hourRecord = records.Find(r => r.Name == "hour");
+			hourRecord.Should().NotBeNull();
+			hourRecord!.Value.TotalHours.Should().Be(1);
+		}
+
+		{
+			var dayRecord = records.Find(r => r.Name == "day");
+			dayRecord.Should().NotBeNull();
+			dayRecord!.Value.TotalDays.Should().Be(6);
+		}
+
+		{
+			var weekRecord = records.Find(r => r.Name == "week");
+			weekRecord.Should().NotBeNull();
+			weekRecord!.Value.TotalDays.Should().Be(196);
+		}
+
+		{
+			var yearRecord = records.Find(r => r.Name == "year");
+			yearRecord.Should().NotBeNull();
+			yearRecord!.Value.TotalDays.Should().Be(4380);
+		}
+
+		{
+			var complexRecord = records.Find(r => r.Name == "complex");
+			complexRecord.Should().NotBeNull();
+			complexRecord!.Value.TotalSeconds.Should().Be(5421.35);
+		}
+
+		{
+			var halfHourRecord = records.Find(r => r.Name == "decimal");
+			halfHourRecord.Should().NotBeNull();
+			halfHourRecord!.Value.TotalSeconds.Should().Be(0);
+		}
+	}
+
+	[Theory]
+	[InlineData("http://localhost:8000")]
+	[InlineData("ws://localhost:8000/rpc")]
+	public async Task ShouldParseDurationAsString(string url)
+	{
+		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/duration.surql");
+		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+		string query = fileContent;
+
+		using var client = surrealDbClientGenerator.Create(url);
+		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+		await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+		await client.Query(query);
+
+		var records = await client.Select<StringRecord>("duration");
+
+		{
+			var noneRecord = records.Find(r => r.Name == "none");
+			noneRecord.Should().NotBeNull();
+			noneRecord!.Value.Should().BeNull();
+		}
+
+		{
+			var nanosecondRecord = records.Find(r => r.Name == "nanosecond");
+			nanosecondRecord.Should().NotBeNull();
+			nanosecondRecord!.Value.Should().Be("2ns");
+		}
+
+		{
+			var microsecondRecord = records.Find(r => r.Name == "microsecond");
+			microsecondRecord.Should().NotBeNull();
+			microsecondRecord!.Value.Should().Be("3000ns");
+		}
+
+		{
+			var microsecondAliasRecord = records.Find(r => r.Name == "microsecond-alias");
+			microsecondAliasRecord.Should().NotBeNull();
+			microsecondAliasRecord!.Value.Should().Be("4000ns");
+		}
+
+		{
+			var millisecondRecord = records.Find(r => r.Name == "millisecond");
+			millisecondRecord.Should().NotBeNull();
+			millisecondRecord!.Value.Should().Be("50ms");
+		}
+
+		{
+			var secondRecord = records.Find(r => r.Name == "second");
+			secondRecord.Should().NotBeNull();
+			secondRecord!.Value.Should().Be("7s");
+		}
+
+		{
+			var minuteRecord = records.Find(r => r.Name == "minute");
+			minuteRecord.Should().NotBeNull();
+			minuteRecord!.Value.Should().Be("5m");
+		}
+
+		{
+			var hourRecord = records.Find(r => r.Name == "hour");
+			hourRecord.Should().NotBeNull();
+			hourRecord!.Value.Should().Be("1h");
+		}
+
+		{
+			var dayRecord = records.Find(r => r.Name == "day");
+			dayRecord.Should().NotBeNull();
+			dayRecord!.Value.Should().Be("6d");
+		}
+
+		{
+			var weekRecord = records.Find(r => r.Name == "week");
+			weekRecord.Should().NotBeNull();
+			weekRecord!.Value.Should().Be("28w");
+		}
+
+		{
+			var yearRecord = records.Find(r => r.Name == "year");
+			yearRecord.Should().NotBeNull();
+			yearRecord!.Value.Should().Be("12y");
+		}
+
+		{
+			var complexRecord = records.Find(r => r.Name == "complex");
+			complexRecord.Should().NotBeNull();
+			complexRecord!.Value.Should().Be("1h30m21s350ms");
+		}
+
+		{
+			var halfHourRecord = records.Find(r => r.Name == "decimal");
+			halfHourRecord.Should().NotBeNull();
+			halfHourRecord!.Value.Should().Be("0ns");
 		}
 	}
 
 	[Theory]
     [InlineData("http://localhost:8000")]
     [InlineData("ws://localhost:8000/rpc")]
-    public async Task ShouldParseDateTime(string url)
+    public async Task ShouldParseTimeOnly(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/duration.surql");
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+        string query = fileContent;
+
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        await client.Query(query);
+
+        var records = await client.Select<TimeOnlyRecord>("duration");
+
+        {
+            var noneRecord = records.Find(r => r.Name == "none");
+            noneRecord.Should().NotBeNull();
+            noneRecord!.Value.Should().Be(new TimeOnly());
+        }
+
+        {
+            var nanosecondRecord = records.Find(r => r.Name == "nanosecond");
+            nanosecondRecord.Should().NotBeNull();
+            nanosecondRecord!.Value.Should(); // TODO : Value = 2
+        }
+
+        {
+            var microsecondRecord = records.Find(r => r.Name == "microsecond");
+            microsecondRecord.Should().NotBeNull();
+            microsecondRecord!.Value.Should().Be(new TimeOnly(30)); // 30 ticks = 3 microseconds
+        }
+
+        {
+            var microsecondAliasRecord = records.Find(r => r.Name == "microsecond-alias");
+            microsecondAliasRecord.Should().NotBeNull();
+            microsecondAliasRecord!.Value.Should().Be(new TimeOnly(40)); // 40 ticks = 4 microseconds
+        }
+
+        {
+            var millisecondRecord = records.Find(r => r.Name == "millisecond");
+            millisecondRecord.Should().NotBeNull();
+            millisecondRecord!.Value.Should().Be(new TimeOnly(0, 0, 0, 50));
+        }
+
+        {
+            var secondRecord = records.Find(r => r.Name == "second");
+            secondRecord.Should().NotBeNull();
+            secondRecord!.Value.Should().Be(new TimeOnly(0, 0, 7));
+        }
+
+        {
+            var minuteRecord = records.Find(r => r.Name == "minute");
+            minuteRecord.Should().NotBeNull();
+            minuteRecord!.Value.Should().Be(new TimeOnly(0, 5));
+        }
+
+        {
+            var hourRecord = records.Find(r => r.Name == "hour");
+            hourRecord.Should().NotBeNull();
+            hourRecord!.Value.Should().Be(new TimeOnly(1, 0));
+        }
+
+        {
+            var dayRecord = records.Find(r => r.Name == "day");
+            dayRecord.Should().NotBeNull();
+            dayRecord!.Value.Should().Be(new TimeOnly());
+        }
+
+        {
+            var weekRecord = records.Find(r => r.Name == "week");
+            weekRecord.Should().NotBeNull();
+            weekRecord!.Value.Should().Be(new TimeOnly());
+        }
+
+        {
+            var yearRecord = records.Find(r => r.Name == "year");
+            yearRecord.Should().NotBeNull();
+            yearRecord!.Value.Should().Be(new TimeOnly());
+        }
+
+        {
+            var complexRecord = records.Find(r => r.Name == "complex");
+            complexRecord.Should().NotBeNull();
+            complexRecord!.Value.Should().Be(new TimeOnly(01, 30, 21, 350));
+        }
+
+        {
+            var halfHourRecord = records.Find(r => r.Name == "decimal");
+            halfHourRecord.Should().NotBeNull();
+            halfHourRecord!.Value.Should().Be(new TimeOnly());
+        }
+    }
+
+	[Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseDateAsDateTime(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();

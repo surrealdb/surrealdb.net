@@ -18,6 +18,7 @@ internal static class SurrealDbSerializerOptions
 		var defaultConverters = new List<JsonConverter>
 		{
 			new ThingConverter(),
+			new DurationConverter(),
 			new TimeSpanValueConverter(),
 			new DateTimeValueConverter(),
 #if NET6_0_OR_GREATER
@@ -67,7 +68,7 @@ internal static class SurrealDbSerializerOptions
 		var options = new JsonSerializerOptions()
         {
             AllowTrailingCommas = true,
-			Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = SnakeCaseNamingPolicy.Instance,

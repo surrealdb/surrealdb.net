@@ -28,10 +28,6 @@ public partial class Thing : IEquatable<Thing>
 		return isSameRecordId;
 	}
 
-	public override string ToString()
-    {
-        return _raw.ToString();
-	}
 	public override bool Equals(object? obj)
 	{
 		if (obj is Thing other)
@@ -39,8 +35,12 @@ public partial class Thing : IEquatable<Thing>
 
 		return base.Equals(obj);
 	}
-	override public int GetHashCode()
+	public override int GetHashCode()
 	{
 		return HashCode.Combine(_raw);
+	}
+	public override string ToString()
+	{
+		return _raw.ToString();
 	}
 }
