@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json.Serialization;
 
-namespace SurrealDb.Internals.Models;
+namespace SurrealDb.Models.Response;
 
 /// <summary>
 /// A SurrealDB protocol error result that can be returned from a query request, either from a 400 or 500 error.

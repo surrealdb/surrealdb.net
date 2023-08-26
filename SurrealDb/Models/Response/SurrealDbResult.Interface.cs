@@ -1,4 +1,4 @@
-namespace SurrealDb.Internals.Models;
+namespace SurrealDb.Models.Response;
 
 /// <summary>
 /// The base SurrealDB result interface, result of a query request.

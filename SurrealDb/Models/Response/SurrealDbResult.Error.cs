@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace SurrealDb.Internals.Models;
+namespace SurrealDb.Models.Response;
 
 /// <summary>
 /// A SurrealDB error result that can be returned from a query request.

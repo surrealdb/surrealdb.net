@@ -1,7 +1,7 @@
 using SurrealDb.Internals.Json;
 using System.Text.Json;
 
-namespace SurrealDb.Internals.Models;
+namespace SurrealDb.Models.Response;
 
 /// <summary>
 /// A SurrealDB ok result that can be returned from a query request.

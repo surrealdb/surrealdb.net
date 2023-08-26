@@ -1,4 +1,4 @@
-using SurrealDb.Internals.Models;
+using SurrealDb.Models.Response;
 
 namespace SurrealDb.Exceptions;
 

@@ -1,4 +1,4 @@
-using SurrealDb.Internals.Models;
+using SurrealDb.Models.Response;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 

@@ -1,4 +1,4 @@
-namespace SurrealDb.Internals.Models;
+namespace SurrealDb.Models.Response;
 
 /// <summary>
 /// A SurrealDB unknown result that can be returned from a query request.
