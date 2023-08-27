@@ -1,0 +1,28 @@
+name: Docs Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup dotnet 6.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "6.0.x"
+
+      - run: dotnet tool update -g docfx
+
+      - run: docfx docs/docfx.json
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/_site
