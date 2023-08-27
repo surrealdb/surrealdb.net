@@ -11,25 +11,193 @@
 		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
+:root {
+	--text-color: #ffffff;
+	--back-color: #1a202d;
+	--dark-color: #363c4e;
+	--faint-color: #989cad;
+	--hover-color: #ff009e;
+	--popup-color: #272e3c;
+	--coder-color: #272e3c;
+	--boxes-color: #272e3c;
+	--input-color: #272e3c;
+	--split-color: #141416;
+	--darker-color: #1b202c;
+	--border-color: #363c4e;
+	--sidebar-color: #272e3c;
+}
+
 body {
 	font-family: var(--system-font-app);
+}
+
+h4 {
+	border-bottom: none;
+}
+
+li,
+n,
+p {
+	font-family: var(--system-font-app);
+	color: var(--faint-color);
+	font-weight: 400;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+}
+
+a,
+a:focus,
+a:hover,
+nav a:focus,
+nav a.sidebar-item:hover,
+nav a.sidebar-item:focus {
+	text-decoration: none;
+	transition: color 0.3s;
+}
+
+nav a.active,
+nav a.active:hover,
+nav a.active:focus {
+	color: var(--hover-color) !important;
+}
+
+a {
+	color: var(--text-color);
+}
+#breadcrumb a {
+	color: var(--faint-color);
+}
+
+a:hover,
+#breadcrumb a:hover,
+nav a:hover {
+	color: var(--hover-color) !important;
+}
+
+#toc ul.level1 > li > a,
+#toc ul.level1 > li > a:hover,
+#toc ul.level1 > li > a:focus,
+#toc ul.level1 > li > a.active,
+#toc ul.level1 > li > a.active:hover,
+#toc ul.level1 > li > a.active:focus {
+	background-color: transparent !important;
+}
+
+#sidebar {
+	background-color: var(--sidebar-color);
+}
+#breadcrumb,
+.main-panel {
+	background-color: var(--back-color);
 }
 
 .brand {
 	justify-content: center;
 	gap: 10px;
+	font-weight: bold;
 }
 .brand-title {
 	margin-top: 0;
 	display: flex;
 	align-items: center;
-	gap: 10px;
+	gap: 7px;
 }
 .brand-title-img {
 	height: 18px;
 	margin-bottom: -2px;
 }
+a.brand .brand-title {
+	color: inherit;
+}
+
+.sidesearch .search-icon,
+.toc-filter > .filter-icon {
+	font-size: 14px;
+	top: 7px;
+}
 
 .footer {
 	display: none;
+}
+
+pre,
+pre[class*="language-"] {
+	padding: 20px;
+	overflow: auto;
+	box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3),
+		inset 0 1px 1px rgba(255, 255, 255, 0.1);
+
+	margin: 0;
+	color: #fff;
+	text-align: left;
+	white-space: pre;
+	line-height: 1.75;
+	word-break: normal;
+	word-spacing: normal;
+	background-color: var(--coder-color);
+	font-family: var(--system-font-mono);
+	border-radius: 16px;
+	text-shadow: none;
+	font-size: 15px;
+
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+
+	-webkit-hyphens: none;
+	-moz-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+/* theme override of highlight.js (from okaida theme: https://github.com/PrismJS/prism/blob/master/themes/prism-okaidia.css) */
+.hljs-keyword,
+.hljs-built_in,
+.hljs-type {
+	color: #66d9ef;
+}
+
+.hljs-property,
+.hljs-attr,
+.hljs-symbol,
+.hljs-variable.constant,
+.hljs-deletion {
+	color: #f92672;
+}
+
+.hljs-comment,
+.hljs-doctag {
+	color: #8292a2;
+}
+
+.hljs-literal,
+.hljs-number {
+	color: #ae81ff;
+}
+
+.hljs-title,
+.hljs-params,
+.hljs-meta {
+	color: #e6db74;
+}
+
+.hljs-string,
+.hljs-addition {
+	color: #a6e22e;
+}
+
+.hljs-operator,
+.hljs-variable.language {
+	color: #f8f8f2;
+}
+
+.hljs-regex {
+	color: #fd971f;
+}
+
+.hljs-punctuation {
+	color: #f8f8f2;
 }

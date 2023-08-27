@@ -8,7 +8,7 @@ The official SurrealDB library for .NET
 
 ### Installation
 
-```
+```bash
 dotnet add package SurrealDb
 ```
 
@@ -240,13 +240,13 @@ Unit/Integration tests are written using [xUnit](https://xunit.net/) and [Fluent
 
 You will need a local SurrealDB instance alongside the tests. Start one using the following command:
 
-```
+```bash
 surreal start --log debug --user root --pass root memory
 ```
 
 Once ready, go to the root directory of the project and run the following command:
 
-```
+```bash
 dotnet watch test --project SurrealDb.Tests
 ```
 
@@ -256,13 +256,13 @@ This project also contains [benchmarks](https://benchmarkdotnet.org/) in order t
 
 You will need a local SurrealDB instance alongside the tests. Start one using the following command:
 
-```
+```bash
 surreal start --log debug --user root --pass root memory
 ```
 
 Once ready, go to the root directory of the project and run the following command:
 
-```
+```bash
 dotnet run -c Release --project SurrealDb.Benchmarks --filter '*'
 ```
 
@@ -272,12 +272,12 @@ The documentation website of this project is automatically generated using [docf
 
 If you want to contribute to the documentation, be sure to have .NET SDK on your computer (.NET 6.0 or higher) and then install the cli tool:
 
-```
+```bash
 dotnet tool update -g docfx
 ```
 
 Then run the following command to start the web server:
 
-```
+```bash
 docfx docs\docfx.json --serve
 ```
