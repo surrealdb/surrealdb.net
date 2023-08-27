@@ -17,7 +17,7 @@ dotnet add package SurrealDb
 Supported protocols:
 
 -   ✅ HTTP(S)
--   🚧 WS(S)
+-   ✅ WS(S)
 -   🚧 and more to come...
 
 #### Construct a new SurrealDB client
@@ -29,8 +29,8 @@ You can easily create a new SurrealDB client easily. All you have to do is defin
 ```csharp
 var clientHttp = new SurrealDbClient("http://localhost:8000");
 var clientHttps = new SurrealDbClient("https://cloud.surrealdb.com");
-var clientWs = new SurrealDbClient("ws://localhost:8000");
-var clientWss = new SurrealDbClient("wss://cloud.surrealdb.com");
+var clientWs = new SurrealDbClient("ws://localhost:8000/rpc");
+var clientWss = new SurrealDbClient("wss://cloud.surrealdb.com/rpc");
 
 // Signin & Use ns/db
 ```
@@ -42,8 +42,8 @@ There are some static constructors that you can use for specific contexts. The a
 ```csharp
 var clientHttp = SurrealDbHttpClient.New("localhost:8000");
 var clientHttps = SurrealDbHttpsClient.New("cloud.surrealdb.com");
-var clientWs = SurrealDbWsClient.New("ws://localhost:8000");
-var clientWss = SurrealDbWssClient.New("wss://cloud.surrealdb.com");
+var clientWs = SurrealDbWsClient.New("localhost:8000");
+var clientWss = SurrealDbWssClient.New("cloud.surrealdb.com");
 
 // Signin & Use ns/db
 ```
@@ -56,13 +56,13 @@ Last but not least, you can use Dependency Injection with the `services.AddSurre
 
 ```csharp
 var options = SurrealDbOptions
-    .Create()
-    .WithEndpoint("http://localhost:8000")
+	.Create()
+	.WithEndpoint("http://localhost:8000")
 	.WithNamespace("test")
 	.WithDatabase("test")
 	.WithUsername("root")
 	.WithPassword("root")
-    .Build();
+	.Build();
 
 services.AddSurreal(options);
 ```
@@ -74,12 +74,12 @@ public class MyClass
 {
 	private readonly ISurrealDbClient _client;
 
-    public MyClass(ISurrealDbClient client)
-    {
-        _client = client;
-    }
+	public MyClass(ISurrealDbClient client)
+	{
+		_client = client;
+	}
 
-    // ...
+	// ...
 }
 ```
 
@@ -222,11 +222,7 @@ public class WeatherForecastController : ControllerBase
 }
 ```
 
-## Documentation
-
-Full documentation is available at https://surrealdb.com/docs/integration/sdks/dotnet
-
-### How to contribute?
+## How to contribute?
 
 This project was written following testing best practices:
 
