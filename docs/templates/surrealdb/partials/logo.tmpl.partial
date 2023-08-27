@@ -1,0 +1,9 @@
+{{!Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license. See LICENSE file in the project root for full license information.}}
+
+<a class="brand" href="{{_rel}}index.html">
+  <img src="{{_rel}}{{{_appLogoPath}}}{{^_appLogoPath}}logo.svg{{/_appLogoPath}}" alt="" class="logomark">
+  <div class="brand-title">
+    <span>.NET SDK for</span>
+    <img inline src="{{_rel}}images/surrealdb.svg" alt="SurrealDB" class="brand-title-img" />
+  </div>
+</a>

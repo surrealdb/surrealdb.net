@@ -1,0 +1,7 @@
+- name: Home
+  href: index.html
+- name: Documentation
+  href: api/
+  homepage: api/SurrealDb.html
+- name: GitHub
+  href: https://github.com/surrealdb/surrealdb.net
