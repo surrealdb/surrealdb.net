@@ -1,0 +1,23 @@
+<Project>
+	<PropertyGroup>
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+		<CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+		<CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageVersion Include="CommunityToolkit.HighPerformance" Version="8.2.1" />
+		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="8.0.0-preview.7.23375.6" />
+		<PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0-preview.7.23375.6" />
+		<PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.0-preview.7.23375.6" />
+		<PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="8.0.0-preview.7.23375.6" />
+		<PackageVersion Include="Microsoft.Extensions.Options" Version="8.0.0-preview.7.23375.6" />
+		<PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0-preview.7.23375.6" />
+		<PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0-preview-23424-02" />
+		<PackageVersion Include="PolySharp" Version="1.13.2" />
+		<PackageVersion Include="System.Text.Json" Version="8.0.0-preview.7.23375.6" />
+		<PackageVersion Include="Testcontainers" Version="3.4.0" />
+		<PackageVersion Include="xunit" Version="2.4.2" />
+		<PackageVersion Include="xunit.runner.visualstudio" Version="2.4.5" />
+		<PackageVersion Include="coverlet.collector" Version="6.0.0" />
+	</ItemGroup>
+</Project>

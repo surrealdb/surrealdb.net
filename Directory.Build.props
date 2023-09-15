@@ -1,0 +1,9 @@
+<Project>
+    <PropertyGroup>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <LangVersion>preview</LangVersion>
+        <AnalysisMode>all</AnalysisMode>
+        <AnalysisLevel>latest-all</AnalysisLevel>
+    </PropertyGroup>
+</Project>

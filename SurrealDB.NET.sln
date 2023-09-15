@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".sln", ".sln", "{A415CA1E-096E-443E-96B7-9F4C13BB2528}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
+		global.json = global.json
+		nuget.config = nuget.config
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDB.NET", "src\SurrealDB.NET\SurrealDB.NET.csproj", "{8342DD45-0505-4CE7-8771-D1941997D670}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDB.NET.Tests", "tests\SurrealDB.NET.Tests\SurrealDB.NET.Tests.csproj", "{11240F88-21F7-44C2-81F0-3F2FD5902C0E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8342DD45-0505-4CE7-8771-D1941997D670}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8342DD45-0505-4CE7-8771-D1941997D670}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8342DD45-0505-4CE7-8771-D1941997D670}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8342DD45-0505-4CE7-8771-D1941997D670}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11240F88-21F7-44C2-81F0-3F2FD5902C0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11240F88-21F7-44C2-81F0-3F2FD5902C0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11240F88-21F7-44C2-81F0-3F2FD5902C0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11240F88-21F7-44C2-81F0-3F2FD5902C0E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E78431A0-C5ED-47AD-A362-34996E12E9F1}
+	EndGlobalSection
+EndGlobal
