@@ -1,14 +1,14 @@
 using Microsoft.Extensions.Configuration;
-using System.Text.Json;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-using SurrealDB.NET.Json;
-
 using Xunit.Abstractions;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SurrealDB.NET.TextRpc;
+using SurrealDB.NET.BinaryRpc;
+using SurrealDB.NET.Http;
 
 namespace SurrealDB.NET.Tests.Fixtures;
 
@@ -18,7 +18,11 @@ internal sealed class ServiceFixture : IDisposable
     private readonly ServiceProvider _serviceRoot;
     private readonly IServiceScope _serviceScope;
 
-    public ISurrealClient Client => _serviceScope.ServiceProvider.GetRequiredService<ISurrealClient>();
+    public ISurrealRpcClient TextRpc => _serviceScope.ServiceProvider.GetRequiredService<SurrealTextRpcClient>();
+
+    public ISurrealRpcClient BinaryRpc => _serviceScope.ServiceProvider.GetRequiredService<SurrealBinaryRpcClient>();
+
+	public ISurrealHttpClient Http => _serviceScope.ServiceProvider.GetRequiredService<SurrealHttpClient>();
 
     public void Dispose()
     {
@@ -41,17 +45,16 @@ internal sealed class ServiceFixture : IDisposable
                 logging.SetMinimumLevel(LogLevel.Trace);
                 logging.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, XunitLoggerProvider>());
             })
-            .AddSingleton<IConfiguration>(new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                [$"{SurrealOptions.Section}:Endpoint"] = $"ws://localhost:{surrealPort}/rpc",
-                [$"{SurrealOptions.Section}:DefaultNamespace"] = "test",
-                [$"{SurrealOptions.Section}:DefaultDatabase"] = "test",
-            }).Build())
+            .AddSingleton<IConfiguration>(new ConfigurationBuilder().Build())
             .AddSurrealDB()
             .Configure<SurrealOptions>(opt =>
             {
+				opt.DefaultNamespace = "test";
+				opt.DefaultDatabase = "test";
+				opt.Endpoint = new Uri($"http://localhost:{surrealPort}");
+				opt.Secure = false;
 				opt.JsonRequestOptions.WriteIndented = true;
+				opt.JsonResponseOptions.WriteIndented = true;
             })
             .BuildServiceProvider(new ServiceProviderOptions
             {
@@ -65,6 +68,7 @@ internal sealed class ServiceFixture : IDisposable
     private sealed class XunitOutputWriter : TextWriter
     {
         private readonly ITestOutputHelper _output;
+
         public XunitOutputWriter(ITestOutputHelper output)
         {
             _output = output;
@@ -76,22 +80,31 @@ internal sealed class ServiceFixture : IDisposable
             {
                 _output.WriteLine(value);
             }
-            catch { }
-        }
+#pragma warning disable CA1031 // Prevent lost logs from failing tests
+			catch { }
+#pragma warning restore CA1031
+		}
     }
 
     private sealed class XunitLogger : ILogger
     {
         private readonly ITestOutputHelper _xunit;
 
-        public XunitLogger(ITestOutputHelper xunit)
+		private sealed class EmptyDisposable : IDisposable
+		{
+			public void Dispose()
+			{
+			}
+		}
+
+		public XunitLogger(ITestOutputHelper xunit)
         {
             _xunit = xunit;
         }
 
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull
         {
-            throw new NotImplementedException();
+			return new EmptyDisposable();
         }
 
         public bool IsEnabled(LogLevel logLevel)
@@ -106,9 +119,11 @@ internal sealed class ServiceFixture : IDisposable
                 var message = formatter(state, exception);
                 _xunit.WriteLine(message);
             }
-            catch { }
-        }
-    }
+#pragma warning disable CA1031 // Prevent lost logs from failing tests
+			catch { }
+#pragma warning restore CA1031
+		}
+	}
 
     private sealed class XunitLoggerProvider : ILoggerProvider
     {

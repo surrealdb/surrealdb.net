@@ -1,10 +1,11 @@
-﻿using System.Text;
+using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace SurrealDB.NET.Json;
 
-public sealed class SurrealRecordIdJsonConverter : JsonConverter<Thing>
+public sealed class SurrealThingJsonConverter : JsonConverter<Thing>
 {
     public override Thing Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -13,7 +14,7 @@ public sealed class SurrealRecordIdJsonConverter : JsonConverter<Thing>
         var i = reader.ValueSpan.IndexOf(colon);
         
         if (i is -1)
-            throw new InvalidOperationException($"Can not deserialize JSON {reader.TokenType} to SurrealRecordId");
+            throw new SurrealException($"Can not deserialize JSON {reader.TokenType} to Thing");
         
         return new Thing
         {
@@ -22,8 +23,8 @@ public sealed class SurrealRecordIdJsonConverter : JsonConverter<Thing>
         };
     }
 
-    public override void Write(Utf8JsonWriter writer, Thing value, JsonSerializerOptions options)
+    public override void Write([NotNull] Utf8JsonWriter writer, Thing value, JsonSerializerOptions options)
     {
-        writer.WriteStringValue($"{value.Table}:{value.Id}");
+        writer.WriteStringValue($"{value.Table.Name}:{value.Id}");
     }
 }

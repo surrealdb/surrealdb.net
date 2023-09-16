@@ -6,6 +6,17 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace SurrealDB.NET.Tests.Fixtures;
 
+[CollectionDefinition(Name)]
+public sealed class SurrealDbCollectionFixture
+	: ICollectionFixture<SurrealDbFixture>
+{
+	// This class has no code, and is never created. Its purpose is simply
+	// to be the place to apply [CollectionDefinition] and all the
+	// ICollectionFixture<> interfaces.
+
+	public const string Name = "SurrealDB";
+}
+
 public sealed class SurrealDbFixture : IAsyncLifetime
 {
     private readonly IContainer _container;
@@ -51,7 +62,8 @@ public sealed class SurrealDbFixture : IAsyncLifetime
                 ValidateScopes = true,
             });
 
-        var root = di.GetRequiredKeyedService<ISurrealClient>("root");
+		using var rootScope = di.CreateScope();
+        var root = rootScope.ServiceProvider.GetRequiredKeyedService<ISurrealRpcClient>("text");
         await root.SigninRootAsync("root", "root").ConfigureAwait(false);
 
         _ = await root.QueryAsync("""
@@ -59,7 +71,7 @@ public sealed class SurrealDbFixture : IAsyncLifetime
             DEFINE FIELD email ON user TYPE string;
             DEFINE FIELD password ON user TYPE string;
             DEFINE INDEX index_user_email ON user COLUMNS email UNIQUE;
-            DEFINE TABLE post SCHEMAFULL;
+            DEFINE TABLE post SCHEMAFULL PERMISSIONS FULL;
             DEFINE FIELD content ON post TYPE string;
             DEFINE FIELD tags ON post TYPE option<string> DEFAULT NONE;
             """).ConfigureAwait(false);

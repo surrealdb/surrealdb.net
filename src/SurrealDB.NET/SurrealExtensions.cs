@@ -1,7 +1,6 @@
-using System.Text.Json.Serialization;
-
 using Microsoft.Extensions.DependencyInjection;
-
+using SurrealDB.NET.BinaryRpc;
+using SurrealDB.NET.Http;
 using SurrealDB.NET.Json;
 using SurrealDB.NET.TextRpc;
 
@@ -19,12 +18,17 @@ public static class SurrealExtensions
             .Configure(options =>
             {
                 options.JsonRequestOptions.Converters.Add(new SurrealTimeSpanJsonConverter());
-                options.JsonRequestOptions.Converters.Add(new SurrealRecordIdJsonConverter());
+                options.JsonRequestOptions.Converters.Add(new SurrealTableJsonConverter());
+                options.JsonRequestOptions.Converters.Add(new SurrealThingJsonConverter());
             })
             .PostConfigure(configure ?? (static _ => { }));
 
-        services.AddKeyedSingleton<ISurrealClient, SurrealTextRpcClient>("root");
-        services.AddScoped<ISurrealClient, SurrealTextRpcClient>();
+		services.AddHttpClient<SurrealHttpClient>();
+		services.AddScoped<ISurrealHttpClient>(di => di.GetRequiredService<SurrealHttpClient>());
+		services.AddScoped<SurrealTextRpcClient>();
+		services.AddKeyedScoped<ISurrealRpcClient>("text", (di, _) => di.GetRequiredService<SurrealTextRpcClient>());
+		services.AddScoped<SurrealBinaryRpcClient>();
+		services.AddKeyedScoped<ISurrealRpcClient>("binary", (di, _) => di.GetRequiredService<SurrealBinaryRpcClient>());
 
         return services;
     }

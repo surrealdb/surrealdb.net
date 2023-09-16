@@ -42,21 +42,21 @@ public sealed class SurrealJsonPatchBuilder<T> : IDisposable
 		_jsonWriter.WriteEndObject();
 	}
 
-	public SurrealJsonPatchBuilder<T> Add<TValue>(Expression<Func<T, TValue>> pointer, TValue value)
+	public SurrealJsonPatchBuilder<T> Add<TValue>(Expression<Func<T, TValue>> jsonPointer, TValue value)
 	{
-		WriteOperation("add"u8, pointer, value);
+		WriteOperation("add"u8, jsonPointer, value);
 		return this;
 	}
 
-	public SurrealJsonPatchBuilder<T> Remove<TValue>(Expression<Func<T, TValue>> pointer)
+	public SurrealJsonPatchBuilder<T> Remove<TValue>(Expression<Func<T, TValue>> jsonPointer)
 	{
-		WriteOperation("remove"u8, pointer);
+		WriteOperation("remove"u8, jsonPointer);
 		return this;
 	}
 
-	public SurrealJsonPatchBuilder<T> Replace<TValue>(Expression<Func<T, TValue>> pointer, TValue value)
+	public SurrealJsonPatchBuilder<T> Replace<TValue>(Expression<Func<T, TValue>> jsonPointer, TValue value)
 	{
-		WriteOperation("replace"u8, pointer, value);
+		WriteOperation("replace"u8, jsonPointer, value);
 		return this;
 	}
 
@@ -72,9 +72,9 @@ public sealed class SurrealJsonPatchBuilder<T> : IDisposable
 		return this;
 	}
 
-	public SurrealJsonPatchBuilder<T> Test<TValue>(Expression<Func<T, TValue>> pointer, TValue value)
+	public SurrealJsonPatchBuilder<T> Test<TValue>(Expression<Func<T, TValue>> jsonPointer, TValue value)
 	{
-		WriteOperation("test"u8, pointer, value);
+		WriteOperation("test"u8, jsonPointer, value);
 		return this;
 	}
 

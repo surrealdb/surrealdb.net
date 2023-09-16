@@ -1,8 +1,11 @@
+using SurrealDB.NET.Json;
+using System.Text.Json.Serialization;
+
 namespace SurrealDB.NET;
 
 public readonly record struct Thing
 {
-	public required string Table { get; init; }
+	public required Table Table { get; init; }
 
 	public string? Id { get; init; }
 
@@ -12,11 +15,11 @@ public readonly record struct Thing
 	{
 		-1 => new Thing
 		{
-			Table = span.ToString(),
+			Table = Table.FromReadOnlySpan(span),
 		},
 		var i when span.LastIndexOf(':') == i => new Thing
 		{
-			Table = span[..i].ToString(),
+			Table = Table.FromReadOnlySpan(span[..i]),
 			Id = span[(i + 1)..].ToString(),
 		},
 		_ => throw new SurrealException($"Invalid thing format: {span}")

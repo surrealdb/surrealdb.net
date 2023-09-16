@@ -13,6 +13,8 @@ public sealed class SurrealOptions
 
     public required string DefaultDatabase { get; set; }
 
+	public bool Secure { get; set; }
+
 	/// <summary>
 	/// Allows dropping entire tables. The default value is <see langword="false"/>.
 	/// </summary>

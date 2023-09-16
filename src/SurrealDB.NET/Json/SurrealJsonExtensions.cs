@@ -9,8 +9,8 @@ public static class SurrealJsonExtensions
 	public static void WriteThingValue([NotNull] this Utf8JsonWriter writer, in Thing thing)
 	{
 		writer.WriteStringValue(string.IsNullOrWhiteSpace(thing.Id)
-			? thing.Table
-			: $"{thing.Table}:{thing.Id}");
+			? thing.Table.Name
+			: $"{thing.Table.Name}:{thing.Id}");
 	}
 
 	public static void WriteRecordValueWithoutId<T>([NotNull] this Utf8JsonWriter writer, T record, JsonSerializerOptions options)

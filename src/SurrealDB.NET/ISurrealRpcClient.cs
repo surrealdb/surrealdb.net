@@ -1,6 +1,6 @@
 namespace SurrealDB.NET;
 
-public interface ISurrealClient : IDisposable
+public interface ISurrealRpcClient
 {
     Task UseAsync(string @namespace, string database, CancellationToken ct = default);
 

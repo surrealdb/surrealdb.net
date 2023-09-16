@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq.Expressions;
 using System.Net.WebSockets;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -46,7 +45,7 @@ internal readonly struct SurrealTextRpcResponse()
     }
 }
 
-public sealed partial class SurrealTextRpcClient : ISurrealClient
+internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposable
 {
     private ClientWebSocket _ws = new();
     private readonly CancellationTokenSource _cts = new();
@@ -673,7 +672,7 @@ public sealed partial class SurrealTextRpcClient : ISurrealClient
         if (_ws.State is WebSocketState.Open)
             return;
 
-        var endpoint = new Uri($"ws://{_options.Endpoint.Host}:{_options.Endpoint.Port}/rpc"); // TODO: wss://
+		var endpoint = new Uri($"{(_options.Secure ? "wss" : "ws")}://{_options.Endpoint.Host}:{_options.Endpoint.Port}/rpc");
 
         OnAttemptingToConnect(_logger, endpoint);
         await _ws.ConnectAsync(endpoint, ct).ConfigureAwait(false);
