@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq.Expressions;
 using System.Net.WebSockets;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -117,7 +118,7 @@ public sealed partial class SurrealTextRpcClient : ISurrealClient
     /// <returns>A running <see cref="Task"/> that will contain a bearer token if sign up was succesful.</returns>
     public async Task<string> SignupAsync<T>(string @namespace, string database, string scope, T identity, CancellationToken ct = default)
     {
-        using var request = BuildJsonRequest<(string @namespace, string database, string scope, T identity, JsonSerializerOptions JsonSerializerOptions)>("signup"u8, (@namespace, database, scope, identity, JsonSerializerOptions: _options.JsonRequestOptions), static (p, state) =>
+        using var request = BuildJsonRequest("signup"u8, (@namespace, database, scope, identity, _options.JsonRequestOptions), static (p, state) =>
         {
             p.WriteStartObject();
 
@@ -125,7 +126,7 @@ public sealed partial class SurrealTextRpcClient : ISurrealClient
             p.WriteString("DB"u8, state.database);
             p.WriteString("SC"u8, state.scope);
 
-            var ext = JsonSerializer.SerializeToElement<T>(state.identity, state.JsonSerializerOptions);
+            var ext = JsonSerializer.SerializeToElement<T>(state.identity, state.JsonRequestOptions);
             foreach (var prop in ext.EnumerateObject())
             {
                 p.WritePropertyName(prop.Name);
@@ -179,7 +180,7 @@ public sealed partial class SurrealTextRpcClient : ISurrealClient
     /// <returns>A running <see cref="Task"/> that will contain a bearer token if sign in was succesful.</returns>
     public async Task<string> SigninScopeAsync<T>(string @namespace, string database, string scope, T identity, CancellationToken ct = default)
     {
-        using var request = BuildJsonRequest<(string @namespace, string database, string scope, T identity, JsonSerializerOptions JsonSerializerOptions)>("signin"u8, (@namespace, database, scope, identity, JsonSerializerOptions: _options.JsonRequestOptions), static (p, state) =>
+        using var request = BuildJsonRequest("signin"u8, (@namespace, database, scope, identity, _options.JsonRequestOptions), static (p, state) =>
         {
             p.WriteStartObject();
 
@@ -187,7 +188,7 @@ public sealed partial class SurrealTextRpcClient : ISurrealClient
             p.WriteString("DB"u8, state.database);
             p.WriteString("SC"u8, state.scope);
 
-            var ext = JsonSerializer.SerializeToElement<T>(state.identity, state.JsonSerializerOptions);
+            var ext = JsonSerializer.SerializeToElement<T>(state.identity, state.JsonRequestOptions);
 
             foreach (var prop in ext.EnumerateObject())
             {
@@ -250,10 +251,10 @@ public sealed partial class SurrealTextRpcClient : ISurrealClient
     /// <returns>A running <see cref="Task"/>.</returns>
     public async Task LetAsync<T>(string name, T value, CancellationToken ct = default)
     {
-        using var request = BuildJsonRequest<(string name, T value, JsonSerializerOptions JsonSerializerOptions)>("let"u8, (name, value, JsonSerializerOptions: _options.JsonRequestOptions), static (p, state) =>
+        using var request = BuildJsonRequest("let"u8, (name, value, _options.JsonRequestOptions), static (p, state) =>
         {
             p.WriteStringValue(state.name);
-			JsonSerializer.Serialize<T>(p, state.value, state.JsonSerializerOptions);
+			JsonSerializer.Serialize<T>(p, state.value, state.JsonRequestOptions);
         });
 
         _ = await SendAsync(request, ct).ConfigureAwait(false);
@@ -365,12 +366,12 @@ public sealed partial class SurrealTextRpcClient : ISurrealClient
     /// <returns>A running <see cref="Task"/> that will contain the results of the query.</returns>
     public async Task<SurrealQueryResult> QueryAsync(string sql, object? vars = null, CancellationToken ct = default)
     {
-        using var request = BuildJsonRequest<(string sql, object vars, JsonSerializerOptions JsonSerializerOptions)>("query"u8, (sql, vars, JsonSerializerOptions: _options.JsonRequestOptions), static (p, state) =>
+        using var request = BuildJsonRequest("query"u8, (sql, vars, _options.JsonRequestOptions), static (p, state) =>
         {
             p.WriteStringValue(state.sql);
 
             if (state.vars is not null)
-				JsonSerializer.Serialize(p, state.vars, state.JsonSerializerOptions);
+				JsonSerializer.Serialize(p, state.vars, state.JsonRequestOptions);
         });
 
         var response = await SendAsync(request, ct).ConfigureAwait(false);
@@ -378,19 +379,22 @@ public sealed partial class SurrealTextRpcClient : ISurrealClient
         return new SurrealQueryResult(JsonSerializer.Deserialize<JsonElement>(response.Buffer.Span));
     }
 
-    /// <summary>
-    /// This method selects either all records in a table or a single record.
-    /// </summary>
-    /// <remarks>
-    /// See <see cref="https://surrealdb.com/docs/integration/websocket/text#select"/> for more information.
-    /// </remarks>
-    /// <typeparam name="T">The entity type to map the results to.</typeparam>
-    /// <param name="id">The specific record to select.</param>
-    /// <param name="ct">A token to cancel the operation.</param>
-    /// <returns>A running <see cref="Task"/> that will contain the results of the select.</returns>
-    public async Task<T?> SelectAsync<T>(Thing id, CancellationToken ct = default)
+	/// <summary>
+	/// This method selects either all records in a table or a single record.
+	/// </summary>
+	/// <remarks>
+	/// See <see cref="https://surrealdb.com/docs/integration/websocket/text#select"/> for more information.
+	/// </remarks>
+	/// <typeparam name="T">The entity type to map the results to.</typeparam>
+	/// <param name="thing">The specific record to select.</param>
+	/// <param name="ct">A token to cancel the operation.</param>
+	/// <returns>A running <see cref="Task"/> that will contain the results of the select.</returns>
+	public async Task<T?> SelectAsync<T>(Thing recordId, CancellationToken ct = default)
     {
-        using var request = BuildJsonRequest("select"u8, id, static (p, state) =>
+		if (!recordId.IsSpecific)
+			throw new SurrealException("Use SelectManyAsync to select a whole table");
+
+		using var request = BuildJsonRequest("select"u8, recordId, static (p, state) =>
         {
             p.WriteThingValue(state);
         });
@@ -412,12 +416,14 @@ public sealed partial class SurrealTextRpcClient : ISurrealClient
     /// <param name="table">The table to select from.</param>
     /// <param name="ct">A token to cancel the operation.</param>
     /// <returns>A running <see cref="Task"/> that will contain the results of the select.</returns>
-    public async Task<IEnumerable<T>> SelectAsync<T>(string table, CancellationToken ct = default)
-
+    public async Task<IEnumerable<T>> SelectManyAsync<T>(Thing table, CancellationToken ct = default)
     {
+		if (table.IsSpecific)
+			throw new SurrealException("Use SelectAsync to select a single record");
+
         using var request = BuildJsonRequest("select"u8, table, static (p, state) =>
         {
-            p.WriteStringValue(state);
+            p.WriteThingValue(state);
         });
 
         var response = await SendAsync(request, ct).ConfigureAwait(false);
@@ -440,10 +446,10 @@ public sealed partial class SurrealTextRpcClient : ISurrealClient
     /// <returns>A running <see cref="Task"/> that will contain the created record.</returns>
     public async Task<T> CreateAsync<T>(Thing id, T data, CancellationToken ct = default)
     {
-        using var request = BuildJsonRequest<(Thing id, T data, JsonSerializerOptions JsonSerializerOptions)>("create"u8, (id, data, JsonSerializerOptions: _options.JsonRequestOptions), static (p, state) =>
+        using var request = BuildJsonRequest("create"u8, (id, data, _options.JsonRequestOptions), static (p, state) =>
         {
             p.WriteThingValue(state.id);
-            p.WriteRecordValueWithoutId<T>(state.data, state.JsonSerializerOptions);
+            p.WriteRecordValueWithoutId<T>(state.data, state.JsonRequestOptions);
         });
 
         var response = await SendAsync(request, ct).ConfigureAwait(false);
@@ -588,13 +594,26 @@ public sealed partial class SurrealTextRpcClient : ISurrealClient
         return element.GetProperty("result"u8).Deserialize<IEnumerable<T>>(_options.JsonResponseOptions)!;
     }
 
-    public async Task PatchAsync(Thing thing, string data, CancellationToken ct = default)
+	/// <summary>
+	/// This method patches either all records in a table or a single record with specified patches
+	/// </summary>
+	/// <typeparam name="T">The record's mapped C# type.</typeparam>
+	/// <param name="thing">The record or table to patch.</param>
+	/// <param name="patches">A builder on which patch operations can be applied.</param>
+	/// <param name="ct">A token to cancel the operation.</param>
+	/// <returns>A running <see cref="Task"/>.</returns>
+	public async Task PatchAsync<T>(Thing thing, Action<SurrealJsonPatchBuilder<T>> patches, CancellationToken ct = default)
     {
-        using var request = BuildJsonRequest("patch"u8);
+        using var request = BuildJsonRequest("patch"u8, (thing, patches, _options.JsonRequestOptions), static (p, state) =>
+		{
+			p.WriteThingValue(state.thing);
+			p.WriteStartArray();
+			var builder = new SurrealJsonPatchBuilder<T>(p, state.JsonRequestOptions);
+			state.patches?.Invoke(builder);
+			p.WriteEndArray();
+		});
 
         _ = await SendAsync(request, ct).ConfigureAwait(false);
-
-        throw new NotImplementedException(); // TODO: We need a way to distinguish between patch and ignored properties
     }
 
 	/// <summary>

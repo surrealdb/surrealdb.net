@@ -392,7 +392,25 @@ public sealed class TextRpcTests : IClassFixture<SurrealDbFixture>, IDisposable
 			Assert.Equal(tags, m.Tags);
 	}
 
-	// TODO: patch
+	[Fact(DisplayName = "patch copy", Timeout = 5000)]
+	public async Task PatchAsync()
+	{
+		const string v = "test,tags,patch";
+		Thing id = $"post:{nameof(PatchAsync)}";
+		var created = await _di.Client.CreateAsync(id, new Post(v)).ConfigureAwait(false);
+		Assert.NotNull(created);
+
+		await _di.Client.PatchAsync<Post>(id, patch => patch
+			.Copy(p => p.Content, p => p.Tags))
+			.ConfigureAwait(false);
+
+		var post = await _di.Client.SelectAsync<Post>(id).ConfigureAwait(false);
+		Assert.NotNull(post);
+
+		Assert.Equal(v, post.Content);
+		Assert.Equal(v, post.Tags);
+	}
+
 	// TODO: delete
 }
 

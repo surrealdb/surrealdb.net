@@ -28,9 +28,9 @@ public interface ISurrealClient : IDisposable
 
     Task<SurrealQueryResult> QueryAsync(string sql, object? vars = null, CancellationToken ct = default);
 
-    Task<T?> SelectAsync<T>(Thing thing, CancellationToken ct = default);
+    Task<T?> SelectAsync<T>(Thing recordId, CancellationToken ct = default);
 
-    Task<IEnumerable<T>> SelectAsync<T>(string table, CancellationToken ct = default);
+    Task<IEnumerable<T>> SelectManyAsync<T>(Thing table, CancellationToken ct = default);
 
     Task<T> CreateAsync<T>(Thing thing, T data, CancellationToken ct = default);
 
@@ -44,7 +44,7 @@ public interface ISurrealClient : IDisposable
     
     Task<IEnumerable<T>> MergeAsync<T>(string table, object merger, CancellationToken ct = default);
 
-    Task PatchAsync(Thing thing, string data, CancellationToken ct = default);
+    Task PatchAsync<T>(Thing thing, Action<SurrealJsonPatchBuilder<T>> patches, CancellationToken ct = default);
 
     Task<T?> DeleteAsync<T>(Thing thing, CancellationToken ct = default);
 }
