@@ -32,7 +32,7 @@ internal class SurrealBinaryRpcClient : ISurrealRpcClient
 		throw new NotImplementedException();
 	}
 
-	public Task<T> InsertAsync<T>(string table, T data, CancellationToken ct = default)
+	public Task<T> InsertAsync<T>(Table table, T data, CancellationToken ct = default)
 	{
 		throw new NotImplementedException();
 	}

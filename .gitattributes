@@ -247,3 +247,4 @@
 *.z filter=lfs diff=lfs merge=lfs -text
 *.zip filter=lfs diff=lfs merge=lfs -text
 *.zipx filter=lfs diff=lfs merge=lfs -text
+Data/*.surql filter=lfs diff=lfs merge=lfs -text

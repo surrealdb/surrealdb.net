@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using SurrealDB.NET.Json;
@@ -24,31 +24,16 @@ public readonly record struct SurrealQueryResult
 
         throw new InvalidOperationException($"Surreal query result was an error: {set.Result.Deserialize<string>()}");
     }
-
-    private readonly record struct SurrealQueryResultPage
-    {
-        [JsonPropertyName("result")]
-        public JsonElement Result { get; init; }
-
-        [JsonPropertyName("status")]
-        public string Status { get; init; }
-
-        [JsonPropertyName("time"), JsonConverter(typeof(SurrealTimeSpanJsonConverter))]
-        public TimeSpan Time { get; init; }
-    }
 }
 
-#if DEBUG
-internal static class DebugHelpers
+internal readonly record struct SurrealQueryResultPage
 {
-    public static string ToJson(this object? obj, JsonSerializerOptions? options = null)
-    {
-        return JsonSerializer.Serialize(obj, options ?? new JsonSerializerOptions { WriteIndented = true });
-    }
+	[JsonPropertyName("result")]
+	public JsonElement Result { get; init; }
 
-    public static string ToJson(this IEnumerable<byte>? obj, JsonSerializerOptions? options = null)
-    {
-        return JsonSerializer.Serialize(JsonSerializer.Deserialize<JsonDocument>(obj.ToArray()), options ?? new JsonSerializerOptions { WriteIndented = true });
-    }
+	[JsonPropertyName("status")]
+	public string Status { get; init; }
+
+	[JsonPropertyName("time"), JsonConverter(typeof(SurrealTimeSpanJsonConverter))]
+	public TimeSpan Time { get; init; }
 }
-#endif

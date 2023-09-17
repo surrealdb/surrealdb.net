@@ -1,9 +1,6 @@
 using System.Reflection;
-using System.Text.Json.Serialization;
-
-using SurrealDB.NET.Json;
 using SurrealDB.NET.Tests.Fixtures;
-
+using SurrealDB.NET.Tests.Schema;
 using Xunit.Abstractions;
 
 namespace SurrealDB.NET.Tests;
@@ -612,24 +609,3 @@ public sealed class SurrealTextRpcTests : IDisposable
 		Assert.Null(deleted);
 	}
 }
-
-file sealed record User(
-	[property: JsonPropertyName("email")]
-	string Email,
-	[property: JsonPropertyName("password")]
-	string Password)
-{
-	[JsonPropertyName("id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault), JsonConverter(typeof(SurrealThingJsonConverter))]
-	public Thing Id { get; init; }
-};
-
-file sealed record Post(
-	[property: JsonPropertyName("content")]
-	string Content)
-{
-	[JsonPropertyName("id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault), JsonConverter(typeof(SurrealThingJsonConverter))]
-	public Thing Id { get; init; }
-
-	[JsonPropertyName("tags")]
-	public string? Tags { get; init; }
-};

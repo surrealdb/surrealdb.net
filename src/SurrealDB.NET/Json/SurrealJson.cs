@@ -8,11 +8,19 @@ namespace SurrealDB.NET.Json;
 
 public static class SurrealJson
 {
-    public static JsonElement BytesToJsonElement(ReadOnlySpan<byte> json)
+	internal static JsonElement BytesToJsonElement(ReadOnlySpan<byte> json)
     {
         var reader = new Utf8JsonReader(json);
         return JsonElement.ParseValue(ref reader);
     }
+
+	internal static JsonElement BytesToJsonElement(Stream json)
+	{
+		Span<byte> buffer = stackalloc byte[(int)json.Length];
+		json.Read(buffer);
+		var reader = new Utf8JsonReader(buffer);
+		return JsonElement.ParseValue(ref reader);
+	}
 
 	internal static void WritePathFromExpression<T, TProperty>(this Utf8JsonWriter writer, ReadOnlySpan<byte> utf8key, Expression<Func<T, TProperty>> expression, JsonSerializerOptions options)
 	{

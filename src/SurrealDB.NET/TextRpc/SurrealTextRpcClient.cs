@@ -472,11 +472,11 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
 	/// <param name="data">One or multiple record(s).</param>
 	/// <param name="ct">A token to cancel the operation.</param>
 	/// <returns>A running <see cref="Task"/> that will contain the inserted records.</returns>
-	public async Task<T> InsertAsync<T>(string table, T data, CancellationToken ct = default)
+	public async Task<T> InsertAsync<T>(Table table, T data, CancellationToken ct = default)
     {
         using var request = BuildJsonRequest("insert"u8, (table, data, _options.JsonRequestOptions), static (p, state) =>
         {
-            p.WriteStringValue(state.table);
+            p.WriteStringValue(state.table.Name);
 			JsonSerializer.Serialize<T>(p, state.data, state.JsonRequestOptions);
         });
 
@@ -719,8 +719,8 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
 
         if (isError)
         {
-            OnError(_logger, JsonSerializer.Deserialize<JsonDocument>(response));
-            throw new SurrealException(JsonSerializer.Deserialize<SurrealError>(ref reader));
+            OnError(_logger, JsonSerializer.Deserialize<JsonDocument>(response, _options.JsonResponseOptions));
+            throw new SurrealException(JsonSerializer.Deserialize<SurrealError>(ref reader, _options.JsonResponseOptions));
         }
     }
 

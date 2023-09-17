@@ -1,4 +1,4 @@
-﻿namespace SurrealDB.NET;
+namespace SurrealDB.NET;
 
 public readonly record struct Table
 {
@@ -12,7 +12,8 @@ public readonly record struct Table
 
 	public static Table FromReadOnlySpan(ReadOnlySpan<char> span)
 	{
-		// TODO: Validate the table name
+		if (span.IsEmpty || span.IsWhiteSpace())
+			throw new SurrealException("Surreal Table must be non-empty string consisting of alpha-numeric characters");
 
 		return new Table
 		{

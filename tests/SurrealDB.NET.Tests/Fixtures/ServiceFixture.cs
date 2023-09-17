@@ -22,7 +22,7 @@ internal sealed class ServiceFixture : IDisposable
 
     public ISurrealRpcClient BinaryRpc => _serviceScope.ServiceProvider.GetRequiredService<SurrealBinaryRpcClient>();
 
-	public ISurrealHttpClient Http => _serviceScope.ServiceProvider.GetRequiredService<SurrealHttpClient>();
+	public ISurrealHttpClient Http => _serviceScope.ServiceProvider.GetRequiredService<SurrealJsonHttpClient>();
 
     public void Dispose()
     {

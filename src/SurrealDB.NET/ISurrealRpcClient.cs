@@ -34,7 +34,7 @@ public interface ISurrealRpcClient
 
     Task<T> CreateAsync<T>(Thing thing, T data, CancellationToken ct = default);
 
-    Task<T> InsertAsync<T>(string table, T data, CancellationToken ct = default);
+    Task<T> InsertAsync<T>(Table table, T data, CancellationToken ct = default);
 
     Task<T> UpdateAsync<T>(Thing thing, T data, CancellationToken ct = default);
 

@@ -23,8 +23,8 @@ public static class SurrealExtensions
             })
             .PostConfigure(configure ?? (static _ => { }));
 
-		services.AddHttpClient<SurrealHttpClient>();
-		services.AddScoped<ISurrealHttpClient>(di => di.GetRequiredService<SurrealHttpClient>());
+		services.AddHttpClient<SurrealJsonHttpClient>();
+		services.AddScoped<ISurrealHttpClient>(di => di.GetRequiredService<SurrealJsonHttpClient>());
 		services.AddScoped<SurrealTextRpcClient>();
 		services.AddKeyedScoped<ISurrealRpcClient>("text", (di, _) => di.GetRequiredService<SurrealTextRpcClient>());
 		services.AddScoped<SurrealBinaryRpcClient>();
