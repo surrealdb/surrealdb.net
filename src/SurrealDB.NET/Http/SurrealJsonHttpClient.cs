@@ -2,7 +2,9 @@ using Microsoft.Extensions.Options;
 using SurrealDB.NET.Json;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Web;
 
 namespace SurrealDB.NET.Http;
 
@@ -73,7 +75,7 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 	public async Task<IEnumerable<T>> GetAllAsync<T>(Table table, CancellationToken ct = default)
 	{
 		var element = await _client.GetFromJsonAsync<JsonElement>($"/key/{table.Name}", ct).ConfigureAwait(false);
-		ThrowOnError(element);
+		SurrealJson.ThrowOnError(element);
 		return element.EnumerateArray().First().GetProperty("result"u8).Deserialize<IEnumerable<T>>() ?? throw new SurrealException("Can not deserialize JSON null to IEnumerable<T>");
 	}
 
@@ -82,7 +84,7 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 		using var response = await _client.PostAsJsonAsync($"/key/{table.Name}", data, _options.JsonRequestOptions, ct).ConfigureAwait(false);
 		response.EnsureSuccessStatusCode();
 		var element = await response.Content.ReadFromJsonAsync<JsonElement>(_options.JsonResponseOptions, ct).ConfigureAwait(false);
-		ThrowOnError(element);
+		SurrealJson.ThrowOnError(element);
 		return element.EnumerateArray().First().GetProperty("result"u8).EnumerateArray().First().Deserialize<T>()!;
 	}
 
@@ -95,7 +97,7 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 	public async Task<T?> GetAsync<T>(Thing thing, CancellationToken ct = default)
 	{
 		var element = await _client.GetFromJsonAsync<JsonElement>($"key/{thing.Table.Name}/{thing.Id}", ct).ConfigureAwait(false);
-		ThrowOnError(element);
+		SurrealJson.ThrowOnError(element);
 		return element.EnumerateArray().First().GetProperty("result"u8).EnumerateArray().First().Deserialize<T>();
 	}
 
@@ -107,7 +109,7 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 		using var response = await _client.PostAsJsonAsync($"key/{thing.Table.Name}/{thing.Id}", data, _options.JsonRequestOptions, ct).ConfigureAwait(false);
 		response.EnsureSuccessStatusCode();
 		var element = await response.Content.ReadFromJsonAsync<JsonElement>(ct).ConfigureAwait(false);
-		ThrowOnError(element);
+		SurrealJson.ThrowOnError(element);
 		return element.EnumerateArray().First().GetProperty("result"u8).EnumerateArray().First().Deserialize<T>()!;
 	}
 
@@ -119,7 +121,7 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 		using var response = await _client.PutAsJsonAsync($"key/{thing.Table.Name}/{thing.Id}", data, _options.JsonRequestOptions, ct).ConfigureAwait(false);
 		response.EnsureSuccessStatusCode();
 		var element = await response.Content.ReadFromJsonAsync<JsonElement>(ct).ConfigureAwait(false);
-		ThrowOnError(element);
+		SurrealJson.ThrowOnError(element);
 		return element.EnumerateArray().First().GetProperty("result"u8).EnumerateArray().First().Deserialize<T>();
 	}
 
@@ -131,7 +133,7 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 		using var response = await _client.PatchAsJsonAsync($"key/{thing.Table.Name}/{thing.Id}", merge, _options.JsonRequestOptions, ct).ConfigureAwait(false);
 		response.EnsureSuccessStatusCode();
 		var element = await response.Content.ReadFromJsonAsync<JsonElement>(ct).ConfigureAwait(false);
-		ThrowOnError(element);
+		SurrealJson.ThrowOnError(element);
 		return element.EnumerateArray().First().GetProperty("result"u8).EnumerateArray().First().Deserialize<T>();
 	}
 
@@ -179,6 +181,7 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 		response.EnsureSuccessStatusCode();
 		var responseStream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
 		var element = SurrealJson.BytesToJsonElement(responseStream);
+		SurrealJson.ThrowOnError(element);
 		return element.GetProperty("token"u8).GetString() ?? throw new SurrealException("Token not found");
 	}
 
@@ -211,10 +214,11 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 		response.EnsureSuccessStatusCode();
 		var responseStream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
 		var element = SurrealJson.BytesToJsonElement(responseStream);
+		SurrealJson.ThrowOnError(element);
 		return element.GetProperty("token"u8).GetString() ?? throw new SurrealException("Token not found");
 	}
 
-	public async Task<string> SigninNamespaceAsync<T>(string @namespace, T user, CancellationToken ct = default)
+	public async Task<string> SigninNamespaceAsync(string @namespace, string username, string password, CancellationToken ct = default)
 	{
 		using var request = new HttpRequestMessage(HttpMethod.Post, "/signin");
 		using var stream = new MemoryStream();
@@ -222,14 +226,8 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 
 		writer.WriteStartObject();
 		writer.WriteString("ns"u8, @namespace);
-
-		var ext = JsonSerializer.SerializeToElement(user, _options.JsonRequestOptions);
-		foreach (var prop in ext.EnumerateObject())
-		{
-			writer.WritePropertyName(prop.Name);
-			prop.Value.WriteTo(writer);
-		}
-
+		writer.WriteString("user"u8, username);
+		writer.WriteString("pass"u8, password);
 		writer.WriteEndObject();
 
 		await writer.FlushAsync(ct).ConfigureAwait(false);
@@ -241,6 +239,7 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 		response.EnsureSuccessStatusCode();
 		var responseStream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
 		var element = SurrealJson.BytesToJsonElement(responseStream);
+		SurrealJson.ThrowOnError(element);
 		return element.GetProperty("token"u8).GetString() ?? throw new SurrealException("Token not found");
 	}
 
@@ -264,19 +263,39 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 		response.EnsureSuccessStatusCode();
 		var responseStream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
 		var element = SurrealJson.BytesToJsonElement(responseStream);
+		SurrealJson.ThrowOnError(element);
 		return element.GetProperty("token"u8).GetString() ?? throw new SurrealException("Token not found");
 	}
 
-	public async Task<SurrealQueryResult> QueryAsync(string query, CancellationToken ct = default)
+	public async Task<SurrealQueryResult> QueryAsync(string query, object? vars = null, CancellationToken ct = default)
 	{
-		using var request = new HttpRequestMessage(HttpMethod.Post, "/sql");
+		var queryParameters = vars?.GetType().GetProperties().Select(p =>
+		{
+			var n = _options.JsonRequestOptions.PropertyNamingPolicy?.ConvertName(p.Name) ?? p.Name;
+			var v = p.GetValue(vars);
+
+			if (v is Thing thing)
+				return (n, $"{thing.Table.Name}:{thing.Id}");
+
+			if (v is Table table)
+				return (n, table.Name);
+
+			var encoded = HttpUtility.UrlEncode(p.GetValue(vars)?.ToString() ?? "");
+			return (n, encoded);
+		}).ToArray();
+
+		using var request = new HttpRequestMessage(HttpMethod.Post, queryParameters switch
+		{
+			[] or null => "/sql",
+			[var o] => $"/sql?{o.n}={o.Item2}",
+			[var on, .. var rest] => $"/sql?{on.n}={on.Item2}{rest.Select(r => $"&{r.n}={r.Item2}")}",
+		});
 
 		request.Content = new StringContent(query);
-
 		using var response = await _client.SendAsync(request, ct).ConfigureAwait(false);
 		response.EnsureSuccessStatusCode();
-		var stream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
-		var element = await JsonSerializer.DeserializeAsync<JsonElement>(stream, cancellationToken: ct).ConfigureAwait(false);
+		var element = await response.Content.ReadFromJsonAsync<JsonElement>(ct).ConfigureAwait(false);
+		SurrealJson.ThrowOnError(element);
 		return new SurrealQueryResult(element);
 	}
 
@@ -293,30 +312,5 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 	public async Task<string> VersionAsync(CancellationToken ct = default)
 	{
 		return await _client.GetStringAsync(_versionUri, ct).ConfigureAwait(false);
-	}
-
-	private void ThrowOnError(JsonElement element)
-	{
-		if (element.ValueKind is JsonValueKind.Array)
-		{
-			var errors = element
-				.EnumerateArray()
-				.Where(r => r.TryGetProperty("status"u8, out var status) && status.GetString() is "ERR");
-
-			if (errors.Any())
-				throw new AggregateException("Multiple surrealdb errors occured", errors
-					.Select(e => e.GetProperty("result"u8).GetString()).Select(m => new SurrealException(m)));
-		}
-		else if (element.ValueKind is JsonValueKind.Object)
-		{
-			if (element.TryGetProperty("error"u8, out var error))
-			{
-				throw new SurrealException(error.GetString()!);
-			}
-			if (element.TryGetProperty("status"u8, out var status) && status.GetString() is "ERR")
-			{
-				throw new SurrealException(element.GetProperty("result"u8).GetString()!);
-			}
-		}
 	}
 }

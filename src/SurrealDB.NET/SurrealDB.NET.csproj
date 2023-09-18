@@ -1,9 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-    </PropertyGroup>
-    
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.HighPerformance" />
         <PackageReference Include="Microsoft.Extensions.Http" />

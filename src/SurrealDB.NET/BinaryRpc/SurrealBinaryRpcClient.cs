@@ -52,12 +52,12 @@ internal class SurrealBinaryRpcClient : ISurrealRpcClient
 		throw new NotImplementedException();
 	}
 
-	public Task<SurrealLiveQueryId> LiveAsync<T>(string table, Func<T, SurrealEventType, Task> callback, bool diff = false, CancellationToken ct = default)
+	public Task<SurrealLiveQueryId> LiveAsync<T>(Table table, Func<T, SurrealEventType, Task> callback, bool diff = false, CancellationToken ct = default)
 	{
 		throw new NotImplementedException();
 	}
 
-	public Task<SurrealLiveQueryId> LiveAsync<T>(string table, Action<T, SurrealEventType> callback, bool diff = false, CancellationToken ct = default)
+	public Task<SurrealLiveQueryId> LiveAsync<T>(Table table, Action<T, SurrealEventType> callback, bool diff = false, CancellationToken ct = default)
 	{
 		throw new NotImplementedException();
 	}

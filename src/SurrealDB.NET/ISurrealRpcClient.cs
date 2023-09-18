@@ -20,9 +20,9 @@ public interface ISurrealRpcClient
 
     Task UnsetAsync(string name, CancellationToken ct = default);
 
-    Task<SurrealLiveQueryId> LiveAsync<T>(string table, Func<T, SurrealEventType, Task> callback, bool diff = false, CancellationToken ct = default);
+    Task<SurrealLiveQueryId> LiveAsync<T>(Table table, Func<T, SurrealEventType, Task> callback, bool diff = false, CancellationToken ct = default);
 
-    Task<SurrealLiveQueryId> LiveAsync<T>(string table, Action<T, SurrealEventType> callback, bool diff = false, CancellationToken ct = default);
+    Task<SurrealLiveQueryId> LiveAsync<T>(Table table, Action<T, SurrealEventType> callback, bool diff = false, CancellationToken ct = default);
 
     Task KillAsync(SurrealLiveQueryId queryId, CancellationToken ct = default);
 

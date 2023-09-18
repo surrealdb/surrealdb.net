@@ -278,7 +278,7 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
         _ = await SendAsync(request, ct).ConfigureAwait(false);
     }
 
-    private readonly ConcurrentDictionary<SurrealLiveQueryId, Func<JsonElement, SurrealEventType, Task>> _liveQueryHandlers = new();
+    private readonly ConcurrentDictionary<Guid, Func<JsonElement, SurrealEventType, Task>> _liveQueryHandlers = new();
 
     /// <summary>
     /// This methods initiates a live query for a specified table name.
@@ -292,21 +292,20 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
     /// <param name="diff">If set to true, live notifications will contain an array of JSON Patches instead of the entire record</param>
     /// <param name="ct">A token to cancel the operation.</param>
     /// <returns>A running <see cref="Task"/> that will contain an id that can be matched to notifications.</returns>
-    public async Task<SurrealLiveQueryId> LiveAsync<T>(string table, Func<T, SurrealEventType, Task> callback, bool diff = false, CancellationToken ct = default)
-
+    public async Task<SurrealLiveQueryId> LiveAsync<T>(Table table, Func<T, SurrealEventType, Task> callback, bool diff = false, CancellationToken ct = default)
     {
         using var request = BuildJsonRequest("live"u8, (table, diff), static (p, state) =>
         {
-            p.WriteStringValue(state.table);
+            p.WriteStringValue(state.table.Name);
             if (state.diff)
                 p.WriteBooleanValue(true);
         });
 
         var response = await SendAsync(request, ct).ConfigureAwait(false);
 
-        var liveId = new SurrealLiveQueryId(ParseSingle<Guid>(response.Buffer.Span));
+        var liveId = new SurrealLiveQueryId(ParseSingle<Guid>(response.Buffer.Span), this);
 
-        _liveQueryHandlers[liveId] = async (result, type) =>
+        _liveQueryHandlers[liveId.Id] = async (result, type) =>
         {
             var record = JsonSerializer.Deserialize<T>(result);
             await callback(record!, type).ConfigureAwait(false);
@@ -315,10 +314,9 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
         return liveId;
     }
 
-    /// <inheritdoc cref="LiveAsync{T}(string, Func{T, SurrealEventType, Task}, bool, CancellationToken)"/>
+    /// <inheritdoc cref="LiveAsync{T}(Table, Func{T, SurrealEventType, Task}, bool, CancellationToken)"/>
     /// <param name="callback">A synchronous handler for notifications</param>
-    public async Task<SurrealLiveQueryId> LiveAsync<T>(string table, Action<T, SurrealEventType> callback, bool diff = false, CancellationToken ct = default)
-
+    public async Task<SurrealLiveQueryId> LiveAsync<T>(Table table, Action<T, SurrealEventType> callback, bool diff = false, CancellationToken ct = default)
         => await LiveAsync<T>(table, (r, t) =>
         {
             callback(r, t);
@@ -344,7 +342,7 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
 
         try
         {
-            if (!_liveQueryHandlers.TryRemove(queryId, out _))
+            if (!_liveQueryHandlers.TryRemove(queryId.Id, out _))
                 throw new SurrealException("Failed to remove live query handler");
         }
         finally
@@ -700,31 +698,14 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
         OnRequestSent(_logger, request);
         var response = await tcs.Task.ConfigureAwait(false);
         OnResponseReceived(_logger, response);
-        ThrowOnError(response.Buffer.Span);
+        SurrealJson.ThrowOnError(SurrealJson.BytesToJsonElement(response.Buffer.Span));
         return response;
     }
 
     [LoggerMessage(EventId = 3, EventName = nameof(OnError), Level = LogLevel.Debug, Message = "Received error response: {Error}")]
     static partial void OnError(ILogger logger, JsonDocument? error);
 
-    private void ThrowOnError(ReadOnlySpan<byte> response)
-    {
-        var reader = new Utf8JsonReader(response);
-
-        var isError = reader.Read()
-            && reader.TokenType is JsonTokenType.StartObject
-            && reader.Read()
-            && reader.TokenType is JsonTokenType.PropertyName
-            && reader.ValueTextEquals("error"u8);
-
-        if (isError)
-        {
-            OnError(_logger, JsonSerializer.Deserialize<JsonDocument>(response, _options.JsonResponseOptions));
-            throw new SurrealException(JsonSerializer.Deserialize<SurrealError>(ref reader, _options.JsonResponseOptions));
-        }
-    }
-
-    private async Task StartListening()
+	private async Task StartListening()
     {
         var buffer = new ArraySegment<byte>(new byte[4096]);
 
@@ -802,9 +783,7 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
 
             OnNotificationReceived(_logger, liveQueryNotification);
 
-            var liveQueryId = new SurrealLiveQueryId(liveQueryNotification.Result.Id);
-
-            await _liveQueryHandlers[liveQueryId].Invoke(liveQueryNotification.Result.Result, liveQueryNotification.Result.Action.ToUpperInvariant() switch
+            await _liveQueryHandlers[liveQueryNotification.Result.Id].Invoke(liveQueryNotification.Result.Result, liveQueryNotification.Result.Action.ToUpperInvariant() switch
             {
                 "CREATE" => SurrealEventType.Create,
                 "UPDATE" => SurrealEventType.Update,

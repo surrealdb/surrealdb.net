@@ -125,9 +125,11 @@ internal sealed class ServiceFixture : IDisposable
 		}
 	}
 
-    private sealed class XunitLoggerProvider : ILoggerProvider
-    {
-        private readonly ITestOutputHelper _xunit;
+#pragma warning disable CA1812 // DI
+	private sealed class XunitLoggerProvider : ILoggerProvider
+#pragma warning restore CA1812
+	{
+		private readonly ITestOutputHelper _xunit;
 
         public XunitLoggerProvider(ITestOutputHelper xunit)
         {

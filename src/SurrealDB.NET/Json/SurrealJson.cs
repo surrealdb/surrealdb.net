@@ -58,4 +58,32 @@ public static class SurrealJson
 
 		writer.WriteString(utf8key, buffer.Slice(offset, buffer.Length - offset));
 	}
+
+	public static void ThrowOnError(JsonElement element)
+	{
+		if (element.ValueKind is JsonValueKind.Array)
+		{
+			var errors = element
+				.EnumerateArray()
+				.Where(r => r.TryGetProperty("status"u8, out var status) && status.GetString() is "ERR");
+
+			if (errors.Any())
+				throw new AggregateException("Multiple surrealdb errors occured", errors
+					.Select(e => e.GetProperty("result"u8).GetString()).Select(m => new SurrealException(m ?? "SurrealDB server responded with error but no message")));
+		}
+		else if (element.ValueKind is JsonValueKind.Object)
+		{
+			if (element.TryGetProperty("error"u8, out var error))
+			{
+				if (error.ValueKind is JsonValueKind.String)
+					throw new SurrealException(error.GetString()!);
+				else if (error.ValueKind is JsonValueKind.Object && error.TryGetProperty("message"u8, out var message))
+					throw new SurrealException(message.GetString()!);
+			}
+			if (element.TryGetProperty("status"u8, out var status) && status.GetString() is "ERR")
+			{
+				throw new SurrealException(element.GetProperty("result"u8).GetString()!);
+			}
+		}
+	}
 }

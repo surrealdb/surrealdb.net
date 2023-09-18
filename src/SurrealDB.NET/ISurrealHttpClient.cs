@@ -44,13 +44,13 @@ public interface ISurrealHttpClient
 	Task<string> SigninScopeAsync<T>(string @namespace, string database, string scope, T user, CancellationToken ct = default);
 
 	// https://surrealdb.com/docs/integration/http#signin
-	Task<string> SigninNamespaceAsync<T>(string @namespace, T user, CancellationToken ct = default);
+	Task<string> SigninNamespaceAsync(string @namespace, string username, string password, CancellationToken ct = default);
 
 	// https://surrealdb.com/docs/integration/http#signin
 	Task<string> SigninRootAsync(string username, string password, CancellationToken ct = default);
 
 	// https://surrealdb.com/docs/integration/http#sql
-	Task<SurrealQueryResult> QueryAsync(string query, CancellationToken ct = default);
+	Task<SurrealQueryResult> QueryAsync(string query, object? vars = null, CancellationToken ct = default);
 
 	//https://surrealdb.com/docs/integration/http#status
 	Task<bool> StatusAsync(CancellationToken ct = default);

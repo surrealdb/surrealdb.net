@@ -2,6 +2,7 @@ using System.Reflection;
 using SurrealDB.NET.Tests.Fixtures;
 using SurrealDB.NET.Tests.Schema;
 using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace SurrealDB.NET.Tests;
 
@@ -176,7 +177,8 @@ public sealed class SurrealTextRpcTests : IDisposable
 
 		});
 
-		Assert.Throws<InvalidOperationException>(() => result.Get<Post>());
+		var ex = Assert.ThrowsAny<Exception>(() => result.Get<Post>());
+		Assert.True(ex is SurrealException || ex is AggregateException agg && agg.InnerExceptions.All(e => e is SurrealException));
 	}
 
 	[Fact(DisplayName = "query on no results should yield an empty collection", Timeout = 5000)]
@@ -421,10 +423,12 @@ public sealed class SurrealTextRpcTests : IDisposable
 		var created = await _di.TextRpc.CreateAsync(id, new Post(content));
 		Assert.NotNull(created);
 
-		await Assert.ThrowsAsync<SurrealException>(() => _di.TextRpc.PatchAsync<Post>(id, patch => patch
+		var ex = await Assert.ThrowsAnyAsync<Exception>(() => _di.TextRpc.PatchAsync<Post>(id, patch => patch
 			.Add(p => p.Tags, tags)
 			.Test(p => p.Content, content + "nope")))
 			;
+
+		Assert.True(ex is SurrealException || ex is AggregateException agg && agg.InnerExceptions.All(e => e is SurrealException));
 	}
 
 	[Fact(DisplayName = "patch remove + test ok", Timeout = 5000)]
@@ -465,10 +469,11 @@ public sealed class SurrealTextRpcTests : IDisposable
 		});
 		Assert.NotNull(created);
 
-		await Assert.ThrowsAsync<SurrealException>(() => _di.TextRpc.PatchAsync<Post>(id, patch => patch
+		var ex = await Assert.ThrowsAnyAsync<Exception>(() => _di.TextRpc.PatchAsync<Post>(id, patch => patch
 			.Remove(p => p.Tags)
-			.Test(p => p.Content, content + "nope")))
-			;
+			.Test(p => p.Content, content + "nope")));
+
+		Assert.True(ex is SurrealException || ex is AggregateException agg && agg.InnerExceptions.All(e => e is SurrealException));
 	}
 
 	[Fact(DisplayName = "patch replace + test ok", Timeout = 5000)]
@@ -487,8 +492,7 @@ public sealed class SurrealTextRpcTests : IDisposable
 
 		await _di.TextRpc.PatchAsync<Post>(id, patch => patch
 			.Replace(p => p.Tags, newTags)
-			.Test(p => p.Content, content))
-			;
+			.Test(p => p.Content, content));
 
 		var post = await _di.TextRpc.SelectAsync<Post>(id);
 		Assert.NotNull(post);
@@ -511,10 +515,11 @@ public sealed class SurrealTextRpcTests : IDisposable
 		});
 		Assert.NotNull(created);
 
-		await Assert.ThrowsAsync<SurrealException>(() => _di.TextRpc.PatchAsync<Post>(id, patch => patch
+		var ex = await Assert.ThrowsAnyAsync<Exception>(() => _di.TextRpc.PatchAsync<Post>(id, patch => patch
 			.Replace(p => p.Tags, newTags)
-			.Test(p => p.Content, content + "nope")))
-			;
+			.Test(p => p.Content, content + "nope")));
+
+		Assert.True(ex is SurrealException || ex is AggregateException agg && agg.InnerExceptions.All(e => e is SurrealException));
 	}
 
 	[Fact(DisplayName = "patch copy + test ok", Timeout = 5000)]
@@ -545,10 +550,11 @@ public sealed class SurrealTextRpcTests : IDisposable
 		var created = await _di.TextRpc.CreateAsync(id, new Post(content));
 		Assert.NotNull(created);
 
-		await Assert.ThrowsAsync<SurrealException>(() => _di.TextRpc.PatchAsync<Post>(id, patch => patch
+		var ex = await Assert.ThrowsAnyAsync<Exception>(() => _di.TextRpc.PatchAsync<Post>(id, patch => patch
 			.Copy(p => p.Content, p => p.Tags)
-			.Test(p => p.Content, content + "nope")))
-			;
+			.Test(p => p.Content, content + "nope")));
+
+		Assert.True(ex is SurrealException || ex is AggregateException agg && agg.InnerExceptions.All(e => e is SurrealException));
 	}
 
 	[Fact(DisplayName = "patch move + test ok", Timeout = 5000)]
@@ -562,8 +568,7 @@ public sealed class SurrealTextRpcTests : IDisposable
 
 		await _di.TextRpc.PatchAsync<Post>(id, patch => patch
 			.Test(p => p.Content, content)
-			.Move(p => p.Tags, p => p.Content))
-			;
+			.Move(p => p.Tags, p => p.Content));
 
 		var post = await _di.TextRpc.SelectAsync<Post>(id);
 		Assert.NotNull(post);
@@ -581,10 +586,11 @@ public sealed class SurrealTextRpcTests : IDisposable
 		var created = await _di.TextRpc.CreateAsync(id, new Post(content) { Tags = tags });
 		Assert.NotNull(created);
 
-		await Assert.ThrowsAsync<SurrealException>(() => _di.TextRpc.PatchAsync<Post>(id, patch => patch
+		var ex = await Assert.ThrowsAnyAsync<Exception>(() => _di.TextRpc.PatchAsync<Post>(id, patch => patch
 			.Move(p => p.Tags, p => p.Content)
-			.Test(p => p.Content, content + "nope")))
-			;
+			.Test(p => p.Content, content + "nope")));
+
+		Assert.True(ex is SurrealException || ex is AggregateException agg && agg.InnerExceptions.All(e => e is SurrealException));
 	}
 
 	[Fact(DisplayName = "delete existing", Timeout = 5000)]
