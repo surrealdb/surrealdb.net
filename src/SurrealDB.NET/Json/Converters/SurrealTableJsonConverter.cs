@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SurrealDB.NET.Json;
+namespace SurrealDB.NET.Json.Converters;
 
 public sealed class SurrealTableJsonConverter : JsonConverter<Table>
 {

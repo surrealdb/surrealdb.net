@@ -2,7 +2,6 @@ using Microsoft.Extensions.Options;
 using SurrealDB.NET.Json;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Web;
 

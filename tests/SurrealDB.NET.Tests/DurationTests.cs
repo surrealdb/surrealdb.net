@@ -1,6 +1,5 @@
 ﻿using System.Text;
-
-using SurrealDB.NET.Json;
+using SurrealDB.NET.Json.Converters;
 
 namespace SurrealDB.NET.Tests;
 

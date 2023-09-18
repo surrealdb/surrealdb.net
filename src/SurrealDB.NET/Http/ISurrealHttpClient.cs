@@ -1,4 +1,4 @@
-namespace SurrealDB.NET;
+namespace SurrealDB.NET.Http;
 
 public interface ISurrealHttpClient
 {

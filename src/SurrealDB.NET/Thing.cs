@@ -1,7 +1,6 @@
-using SurrealDB.NET.Json;
-using System.Text.Json.Serialization;
-
 namespace SurrealDB.NET;
+
+#pragma warning disable CA2225
 
 public readonly record struct Thing
 {

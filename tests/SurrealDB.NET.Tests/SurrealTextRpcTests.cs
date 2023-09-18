@@ -1,8 +1,9 @@
 using System.Reflection;
+using SurrealDB.NET.Errors;
+using SurrealDB.NET.Rpc;
 using SurrealDB.NET.Tests.Fixtures;
 using SurrealDB.NET.Tests.Schema;
 using Xunit.Abstractions;
-using Xunit.Sdk;
 
 namespace SurrealDB.NET.Tests;
 
@@ -58,7 +59,7 @@ public sealed class SurrealTextRpcTests : IDisposable
 	{
 		var user = new User($"{Guid.NewGuid()}@testing.com", "testing");
 		var signupToken = await _di.TextRpc.SignupAsync("test", "test", "account", user);
-		var signinToken = await _di.TextRpc.SigninScopeAsync("test", "test", "account", user);
+		var signinToken = await _di.TextRpc.SigninAsync("test", "test", "account", user);
 
 		Assert.NotNull(signupToken);
 		Assert.NotNull(signinToken);
@@ -381,7 +382,7 @@ public sealed class SurrealTextRpcTests : IDisposable
 		}
 
 		const string tags = "surrealdb,merge,tests";
-		var merged = await _di.TextRpc.MergeAsync<Post>("post", new
+		var merged = await _di.TextRpc.BulkMergeAsync<Post>("post", new
 		{
 			tags
 

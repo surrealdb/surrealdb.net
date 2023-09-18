@@ -1,8 +1,7 @@
-using SurrealDB.NET.Json;
 using System.Linq.Expressions;
 using System.Text.Json;
 
-namespace SurrealDB.NET;
+namespace SurrealDB.NET.Json;
 
 public sealed class SurrealJsonPatchBuilder<T> : IDisposable
 {

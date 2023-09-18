@@ -1,5 +1,7 @@
 namespace SurrealDB.NET;
 
+#pragma warning disable CA2225
+
 public readonly record struct Table
 {
 	public required string Name { get; init; }

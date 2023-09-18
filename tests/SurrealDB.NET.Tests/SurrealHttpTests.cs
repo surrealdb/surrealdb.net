@@ -1,3 +1,4 @@
+using SurrealDB.NET.Errors;
 using SurrealDB.NET.Tests.Fixtures;
 using SurrealDB.NET.Tests.Schema;
 using Xunit.Abstractions;

@@ -3,6 +3,7 @@ using DotNet.Testcontainers.Containers;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SurrealDB.NET.Rpc;
 
 namespace SurrealDB.NET.Tests.Fixtures;
 

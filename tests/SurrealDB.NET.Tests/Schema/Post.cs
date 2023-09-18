@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using SurrealDB.NET.Json;
+using SurrealDB.NET.Json.Converters;
 
 namespace SurrealDB.NET.Tests.Schema;
 

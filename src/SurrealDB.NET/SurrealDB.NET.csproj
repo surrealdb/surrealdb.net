@@ -16,5 +16,9 @@
 	<ItemGroup>
 		<InternalsVisibleTo Include="SurrealDB.NET.Tests" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<Using Include="SurrealDB.NET.Errors" />
+	</ItemGroup>
     
 </Project>

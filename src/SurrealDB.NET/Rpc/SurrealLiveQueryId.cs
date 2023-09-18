@@ -1,19 +1,19 @@
-namespace SurrealDB.NET;
+namespace SurrealDB.NET.Rpc;
 
 public readonly record struct SurrealLiveQueryId : IAsyncDisposable
 {
-    public Guid Id { get; }
+	public Guid Id { get; }
 
-    internal SurrealLiveQueryId(Guid id, ISurrealRpcClient client)
-    {
-        Id = id;
+	internal SurrealLiveQueryId(Guid id, ISurrealRpcClient client)
+	{
+		Id = id;
 		_client = new WeakReference<ISurrealRpcClient>(client);
-    }
+	}
 
-    public override string ToString()
-    {
-        return Id.ToString();
-    }
+	public override string ToString()
+	{
+		return Id.ToString();
+	}
 
 	internal readonly WeakReference<ISurrealRpcClient> _client;
 

@@ -6,9 +6,8 @@ using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using SurrealDB.NET.TextRpc;
-using SurrealDB.NET.BinaryRpc;
 using SurrealDB.NET.Http;
+using SurrealDB.NET.Rpc;
 
 namespace SurrealDB.NET.Tests.Fixtures;
 
@@ -20,7 +19,7 @@ internal sealed class ServiceFixture : IDisposable
 
     public ISurrealRpcClient TextRpc => _serviceScope.ServiceProvider.GetRequiredService<SurrealTextRpcClient>();
 
-    public ISurrealRpcClient BinaryRpc => _serviceScope.ServiceProvider.GetRequiredService<SurrealBinaryRpcClient>();
+    //public ISurrealRpcClient BinaryRpc => _serviceScope.ServiceProvider.GetRequiredService<SurrealBinaryRpcClient>();
 
 	public ISurrealHttpClient Http => _serviceScope.ServiceProvider.GetRequiredService<SurrealJsonHttpClient>();
 

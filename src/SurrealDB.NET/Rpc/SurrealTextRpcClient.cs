@@ -12,7 +12,7 @@ using Microsoft.Extensions.Options;
 
 using SurrealDB.NET.Json;
 
-namespace SurrealDB.NET.TextRpc;
+namespace SurrealDB.NET.Rpc;
 
 internal readonly struct SurrealTextRpcRequest() : IDisposable
 {
@@ -165,6 +165,31 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
     }
 
     /// <summary>
+    /// Signs in using a namespace user.
+    /// </summary>
+    /// <remarks>
+    /// See <see href="https://surrealdb.com/docs/integration/websocket/text#signin"/> for more information.
+    /// </remarks>
+    /// <param name="username">The root username.</param>
+    /// <param name="password">The root password.</param>
+    /// <param name="ct">A token to cancel the operation.</param>
+    /// <returns>A running <see cref="Task"/> that will contain a bearer token if sign in was succesful.</returns>
+    public async Task<string> SigninNamespaceAsync(string @namespace, string username, string password, CancellationToken ct = default)
+    {
+        using var request = BuildJsonRequest("signin"u8, (@namespace, username, password), static (p, state) =>
+        {
+            p.WriteStartObject();
+            p.WriteString("NS"u8, state.@namespace);
+            p.WriteString("user"u8, state.username);
+            p.WriteString("pass"u8, state.password);
+            p.WriteEndObject();
+        });
+
+        var response = await SendAsync(request, ct).ConfigureAwait(false);
+        return ParseSingle<string>(response.Buffer.Span) ?? throw new SurrealException("Failed to deserialize token from json");
+    }
+
+    /// <summary>
     /// This method allows you to signin a SC user against SurrealDB.
     /// </summary>
     /// <remarks>
@@ -177,7 +202,7 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
     /// <param name="identity">Specifies any variables used by the scope's <c>SIGNIN</c> method.</param>
     /// <param name="ct">A token to cancel the operation.</param>
     /// <returns>A running <see cref="Task"/> that will contain a bearer token if sign in was succesful.</returns>
-    public async Task<string> SigninScopeAsync<T>(string @namespace, string database, string scope, T identity, CancellationToken ct = default)
+    public async Task<string> SigninAsync<T>(string @namespace, string database, string scope, T identity, CancellationToken ct = default)
     {
         using var request = BuildJsonRequest("signin"u8, (@namespace, database, scope, identity, _options.JsonRequestOptions), static (p, state) =>
         {
@@ -386,12 +411,9 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
 	/// <param name="thing">The specific record to select.</param>
 	/// <param name="ct">A token to cancel the operation.</param>
 	/// <returns>A running <see cref="Task"/> that will contain the results of the select.</returns>
-	public async Task<T?> SelectAsync<T>(Thing recordId, CancellationToken ct = default)
+	public async Task<T?> SelectAsync<T>(Thing thing, CancellationToken ct = default)
     {
-		if (!recordId.IsSpecific)
-			throw new SurrealException("Use SelectManyAsync to select a whole table");
-
-		using var request = BuildJsonRequest("select"u8, recordId, static (p, state) =>
+		using var request = BuildJsonRequest("select"u8, thing, static (p, state) =>
         {
             p.WriteThingValue(state);
         });
@@ -413,14 +435,11 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
     /// <param name="table">The table to select from.</param>
     /// <param name="ct">A token to cancel the operation.</param>
     /// <returns>A running <see cref="Task"/> that will contain the results of the select.</returns>
-    public async Task<IEnumerable<T>> SelectManyAsync<T>(Thing table, CancellationToken ct = default)
+    public async Task<IEnumerable<T>> SelectManyAsync<T>(Table table, CancellationToken ct = default)
     {
-		if (table.IsSpecific)
-			throw new SurrealException("Use SelectAsync to select a single record");
-
         using var request = BuildJsonRequest("select"u8, table, static (p, state) =>
         {
-            p.WriteThingValue(state);
+            p.WriteStringValue(state.Name);
         });
 
         var response = await SendAsync(request, ct).ConfigureAwait(false);
@@ -524,12 +543,12 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
     /// <param name="data">The new content of all records.</param>
     /// <param name="ct">A token to cancel the operation.</param>
     /// <returns>A running <see cref="Task"/> that will the updated records.</returns>
-    public async Task<IEnumerable<T>> BulkUpdateAsync<T>(string table, T data, CancellationToken ct = default)
+    public async Task<IEnumerable<T>> BulkUpdateAsync<T>(Table table, T data, CancellationToken ct = default)
     { 
-        using var request = BuildJsonRequest<(string table, T data, JsonSerializerOptions JsonSerializerOptions)>("update"u8, (table, data, JsonSerializerOptions: _options.JsonRequestOptions), static (p, state) =>
+        using var request = BuildJsonRequest("update"u8, (table, data, _options.JsonRequestOptions), static (p, state) =>
         {
-            p.WriteStringValue(state.table);
-			JsonSerializer.Serialize<T>(p, state.data, state.JsonSerializerOptions);
+            p.WriteStringValue(state.table.Name);
+			JsonSerializer.Serialize<T>(p, state.data, state.JsonRequestOptions);
         });
 
         var response = await SendAsync(request, ct).ConfigureAwait(false);
@@ -576,12 +595,12 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
     /// <param name="merger">An anonymous object that represents the data to be merged.</param>
     /// <param name="ct">A token to cancel the operation.</param>
     /// <returns>A running <see cref="Task"/> that will contain the result of the merge.</returns>
-    public async Task<IEnumerable<T>> MergeAsync<T>(string table, object merger, CancellationToken ct = default)
+    public async Task<IEnumerable<T>> BulkMergeAsync<T>(Table table, object merger, CancellationToken ct = default)
     {
-        using var request = BuildJsonRequest("merge"u8, (table, merger, JsonSerializerOptions: _options.JsonRequestOptions), static (p, state) =>
+        using var request = BuildJsonRequest("merge"u8, (table, merger, _options.JsonRequestOptions), static (p, state) =>
         {
-            p.WriteStringValue(state.table);
-			JsonSerializer.Serialize(p, state.merger, state.JsonSerializerOptions);
+            p.WriteStringValue(state.table.Name);
+			JsonSerializer.Serialize(p, state.merger, state.JsonRequestOptions);
         });
 
         var response = await SendAsync(request, ct).ConfigureAwait(false);
@@ -592,14 +611,12 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
     }
 
 	/// <summary>
-	/// This method patches either all records in a table or a single record with specified patches
+	/// This method patches a single record with specified patches.
 	/// </summary>
 	/// <typeparam name="T">The record's mapped C# type.</typeparam>
 	/// <param name="thing">The record or table to patch.</param>
 	/// <param name="patches">A builder on which patch operations can be applied.</param>
-	/// <param name="ct">A token to cancel the operation.</param>
-	/// <returns>A running <see cref="Task"/>.</returns>
-	public async Task PatchAsync<T>(Thing thing, Action<SurrealJsonPatchBuilder<T>> patches, CancellationToken ct = default)
+	public async Task<T> PatchAsync<T>(Thing thing, Action<SurrealJsonPatchBuilder<T>> patches, CancellationToken ct = default)
     {
         using var request = BuildJsonRequest("patch"u8, (thing, patches, _options.JsonRequestOptions), static (p, state) =>
 		{
@@ -610,20 +627,46 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
 			p.WriteEndArray();
 		});
 
-        _ = await SendAsync(request, ct).ConfigureAwait(false);
+        var response = await SendAsync(request, ct).ConfigureAwait(false);
+
+        var element = SurrealJson.BytesToJsonElement(response.Buffer.Span);
+
+        return element.GetProperty("result"u8).Deserialize<T>(_options.JsonResponseOptions)!;
     }
 
-	/// <summary>
-	/// This method deletes either all records in a table or a single record.
+    /// <summary>
+	/// This method patches all records in a table with specified patches.
 	/// </summary>
-	/// <remarks>
-	/// See <see cref="https://surrealdb.com/docs/integration/websocket/text#delete"/> for more information.
-	/// </remarks>
 	/// <typeparam name="T">The record's mapped C# type.</typeparam>
-	/// <param name="thing">The record to delete</param>
-	/// <param name="ct">A token to cancel the operation.</param>
-	/// <returns>A running <see cref="Task"/> that will contain the deleted record.</returns>
-	public async Task<T?> DeleteAsync<T>(Thing thing, CancellationToken ct = default)
+	/// <param name="table">The table to patch.</param>
+	/// <param name="patches">A builder on which patch operations can be applied.</param>
+	public async Task<IEnumerable<T>> BulkPatchAsync<T>(Table table, Action<SurrealJsonPatchBuilder<T>> patches, CancellationToken ct = default)
+    {
+        using var request = BuildJsonRequest("patch"u8, (table, patches, _options.JsonRequestOptions), static (p, state) =>
+        {
+            p.WriteStringValue(state.table.Name);
+            p.WriteStartArray();
+            var builder = new SurrealJsonPatchBuilder<T>(p, state.JsonRequestOptions);
+            state.patches?.Invoke(builder);
+            p.WriteEndArray();
+        });
+
+        var response = await SendAsync(request, ct).ConfigureAwait(false);
+
+        var element = SurrealJson.BytesToJsonElement(response.Buffer.Span);
+
+        return element.GetProperty("result"u8).Deserialize<IEnumerable<T>>(_options.JsonResponseOptions)!;
+    }
+
+    /// <summary>
+    /// This method deletes either all records in a table or a single record.
+    /// </summary>
+    /// <remarks>
+    /// See <see cref="https://surrealdb.com/docs/integration/websocket/text#delete"/> for more information.
+    /// </remarks>
+    /// <typeparam name="T">The record's mapped C# type.</typeparam>
+    /// <param name="thing">The record to delete</param>
+    public async Task<T?> DeleteAsync<T>(Thing thing, CancellationToken ct = default)
     {
 		if (!thing.IsSpecific && !_options.AllowDeleteOnFullTable)
 			throw new SurrealException($"Option '{nameof(_options.AllowDeleteOnFullTable)}' is disabled. Set this to true to allow full table deletion");

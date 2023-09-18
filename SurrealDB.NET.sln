@@ -22,8 +22,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDB.NET", "src\Surrea
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDB.NET.Tests", "tests\SurrealDB.NET.Tests\SurrealDB.NET.Tests.csproj", "{11240F88-21F7-44C2-81F0-3F2FD5902C0E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDB.NET.AspNetCore", "SurrealDB.NET.AspNetCore\SurrealDB.NET.AspNetCore.csproj", "{18BE03A9-9CF8-4D4E-9942-4B656E8CFFA1}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,10 +36,6 @@ Global
 		{11240F88-21F7-44C2-81F0-3F2FD5902C0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11240F88-21F7-44C2-81F0-3F2FD5902C0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11240F88-21F7-44C2-81F0-3F2FD5902C0E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{18BE03A9-9CF8-4D4E-9942-4B656E8CFFA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{18BE03A9-9CF8-4D4E-9942-4B656E8CFFA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{18BE03A9-9CF8-4D4E-9942-4B656E8CFFA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{18BE03A9-9CF8-4D4E-9942-4B656E8CFFA1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
