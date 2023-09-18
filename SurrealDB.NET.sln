@@ -8,17 +8,21 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".sln", ".sln", "{A415CA1E-0
 		.editorconfig = .editorconfig
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
+		CODE_OF_CONDUCT.md = CODE_OF_CONDUCT.md
 		Directory.Build.props = Directory.Build.props
 		Directory.Packages.props = Directory.Packages.props
 		global.json = global.json
+		LICENSE = LICENSE
 		nuget.config = nuget.config
+		README.md = README.md
+		SECURITY.md = SECURITY.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDB.NET", "src\SurrealDB.NET\SurrealDB.NET.csproj", "{8342DD45-0505-4CE7-8771-D1941997D670}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDB.NET.Tests", "tests\SurrealDB.NET.Tests\SurrealDB.NET.Tests.csproj", "{11240F88-21F7-44C2-81F0-3F2FD5902C0E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDB.NET.AspNetCore", "SurrealDB.NET.AspNetCore\SurrealDB.NET.AspNetCore.csproj", "{18BE03A9-9CF8-4D4E-9942-4B656E8CFFA1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDB.NET.AspNetCore", "SurrealDB.NET.AspNetCore\SurrealDB.NET.AspNetCore.csproj", "{18BE03A9-9CF8-4D4E-9942-4B656E8CFFA1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
