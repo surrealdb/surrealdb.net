@@ -2,6 +2,8 @@ namespace SurrealDB.NET;
 
 public interface ISurrealHttpClient
 {
+	void AttachToken(string token);
+
 	// https://surrealdb.com/docs/integration/http#export
 	Task ExportAsync(Stream destination, CancellationToken ct = default);
 

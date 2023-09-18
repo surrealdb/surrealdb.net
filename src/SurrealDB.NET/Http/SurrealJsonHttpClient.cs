@@ -11,7 +11,6 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 	private readonly HttpClient _client;
 	private SurrealOptions _options;
 	private readonly IDisposable? _changeToken;
-	internal string? Token;
 
 	public SurrealJsonHttpClient(HttpClient client, IOptionsMonitor<SurrealOptions> options)
 	{
@@ -33,6 +32,11 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 	public void Dispose()
 	{
 		_changeToken?.Dispose();
+	}
+
+	public void AttachToken(string token)
+	{
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 	}
 
 	public async Task ExportAsync(Stream destination, CancellationToken ct = default)
@@ -68,8 +72,9 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 
 	public async Task<IEnumerable<T>> GetAllAsync<T>(Table table, CancellationToken ct = default)
 	{
-		return await _client.GetFromJsonAsync<IEnumerable<T>>($"/key/{table.Name}", ct).ConfigureAwait(false)
-			?? throw new SurrealException("Response was JSON null");
+		var element = await _client.GetFromJsonAsync<JsonElement>($"/key/{table.Name}", ct).ConfigureAwait(false);
+		ThrowOnError(element);
+		return element.EnumerateArray().First().GetProperty("result"u8).Deserialize<IEnumerable<T>>() ?? throw new SurrealException("Can not deserialize JSON null to IEnumerable<T>");
 	}
 
 	public async Task<T> InsertAsync<T>(Table table, T data, CancellationToken ct = default)
@@ -89,37 +94,45 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 
 	public async Task<T?> GetAsync<T>(Thing thing, CancellationToken ct = default)
 	{
-		return await _client.GetFromJsonAsync<T>($"key/{thing.Table.Name}/{thing.Id}", ct).ConfigureAwait(false);
+		var element = await _client.GetFromJsonAsync<JsonElement>($"key/{thing.Table.Name}/{thing.Id}", ct).ConfigureAwait(false);
+		ThrowOnError(element);
+		return element.EnumerateArray().First().GetProperty("result"u8).EnumerateArray().First().Deserialize<T>();
 	}
 
 	public async Task<T> CreateAsync<T>(Thing thing, T data, CancellationToken ct = default)
 	{
+		if (!thing.IsSpecific)
+			return await InsertAsync(thing.Table, data, ct).ConfigureAwait(false);
+
 		using var response = await _client.PostAsJsonAsync($"key/{thing.Table.Name}/{thing.Id}", data, _options.JsonRequestOptions, ct).ConfigureAwait(false);
 		response.EnsureSuccessStatusCode();
-		var result = await response.Content.ReadFromJsonAsync<SurrealQueryResultPage>(ct).ConfigureAwait(false);
-		if (result == default)
-			throw new SurrealException("Response was JSON null");
-
-		var innerResults = result.Result.Deserialize<IEnumerable<T>>();
-
-		if (innerResults is null)
-			throw new SurrealException("Failed to deserialize response to T");
-
-		return innerResults.First();
+		var element = await response.Content.ReadFromJsonAsync<JsonElement>(ct).ConfigureAwait(false);
+		ThrowOnError(element);
+		return element.EnumerateArray().First().GetProperty("result"u8).EnumerateArray().First().Deserialize<T>()!;
 	}
 
 	public async Task<T?> UpdateAsync<T>(Thing thing, T data, CancellationToken ct = default)
 	{
+		if (!thing.IsSpecific)
+			throw new SurrealException("SurrealDB.NET can only update single records over HTTP");
+
 		using var response = await _client.PutAsJsonAsync($"key/{thing.Table.Name}/{thing.Id}", data, _options.JsonRequestOptions, ct).ConfigureAwait(false);
 		response.EnsureSuccessStatusCode();
-		return await response.Content.ReadFromJsonAsync<T>(ct).ConfigureAwait(false);
+		var element = await response.Content.ReadFromJsonAsync<JsonElement>(ct).ConfigureAwait(false);
+		ThrowOnError(element);
+		return element.EnumerateArray().First().GetProperty("result"u8).EnumerateArray().First().Deserialize<T>();
 	}
 
 	public async Task<T?> MergeAsync<T>(Thing thing, object merge, CancellationToken ct = default)
 	{
+		if (!thing.IsSpecific)
+			throw new SurrealException("SurrealDB.NET can only merge into single records over HTTP");
+
 		using var response = await _client.PatchAsJsonAsync($"key/{thing.Table.Name}/{thing.Id}", merge, _options.JsonRequestOptions, ct).ConfigureAwait(false);
 		response.EnsureSuccessStatusCode();
-		return await response.Content.ReadFromJsonAsync<T>(ct).ConfigureAwait(false);
+		var element = await response.Content.ReadFromJsonAsync<JsonElement>(ct).ConfigureAwait(false);
+		ThrowOnError(element);
+		return element.EnumerateArray().First().GetProperty("result"u8).EnumerateArray().First().Deserialize<T>();
 	}
 
 	public async Task<T?> DeleteAsync<T>(Thing thing, CancellationToken ct = default)
@@ -166,9 +179,7 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 		response.EnsureSuccessStatusCode();
 		var responseStream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
 		var element = SurrealJson.BytesToJsonElement(responseStream);
-		Token = element.GetProperty("token"u8).GetString() ?? throw new SurrealException("Token not found");
-		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
-		return Token;
+		return element.GetProperty("token"u8).GetString() ?? throw new SurrealException("Token not found");
 	}
 
 	public async Task<string> SigninScopeAsync<T>(string @namespace, string database, string scope, T user, CancellationToken ct = default)
@@ -200,9 +211,7 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 		response.EnsureSuccessStatusCode();
 		var responseStream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
 		var element = SurrealJson.BytesToJsonElement(responseStream);
-		Token = element.GetProperty("token"u8).GetString() ?? throw new SurrealException("Token not found");
-		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
-		return Token;
+		return element.GetProperty("token"u8).GetString() ?? throw new SurrealException("Token not found");
 	}
 
 	public async Task<string> SigninNamespaceAsync<T>(string @namespace, T user, CancellationToken ct = default)
@@ -232,9 +241,7 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 		response.EnsureSuccessStatusCode();
 		var responseStream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
 		var element = SurrealJson.BytesToJsonElement(responseStream);
-		Token = element.GetProperty("token"u8).GetString() ?? throw new SurrealException("Token not found");
-		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
-		return Token;
+		return element.GetProperty("token"u8).GetString() ?? throw new SurrealException("Token not found");
 	}
 
 	public async Task<string> SigninRootAsync(string username, string password, CancellationToken ct = default)
@@ -257,9 +264,7 @@ internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 		response.EnsureSuccessStatusCode();
 		var responseStream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
 		var element = SurrealJson.BytesToJsonElement(responseStream);
-		Token = element.GetProperty("token"u8).GetString() ?? throw new SurrealException("Token not found");
-		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
-		return Token;
+		return element.GetProperty("token"u8).GetString() ?? throw new SurrealException("Token not found");
 	}
 
 	public async Task<SurrealQueryResult> QueryAsync(string query, CancellationToken ct = default)

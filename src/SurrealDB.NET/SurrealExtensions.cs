@@ -3,6 +3,7 @@ using SurrealDB.NET.BinaryRpc;
 using SurrealDB.NET.Http;
 using SurrealDB.NET.Json;
 using SurrealDB.NET.TextRpc;
+using System.Net.Http.Headers;
 
 namespace SurrealDB.NET;
 

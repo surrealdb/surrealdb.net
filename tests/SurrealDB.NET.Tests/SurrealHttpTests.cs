@@ -1,6 +1,5 @@
 using SurrealDB.NET.Tests.Fixtures;
 using SurrealDB.NET.Tests.Schema;
-using System.ComponentModel;
 using Xunit.Abstractions;
 
 namespace SurrealDB.NET.Tests;
@@ -32,9 +31,10 @@ public sealed class SurrealHttpTests : IDisposable
 			File.Delete(filename);
 
 		{
-			await _di.Http.SigninRootAsync("root", "root");
+			var root = _di.Http;
+			root.AttachToken(await root.SigninRootAsync("root", "root"));
 			using var fileStream = File.OpenWrite(filename);
-			await _di.Http.ExportAsync(fileStream);
+			await root.ExportAsync(fileStream);
 		}
 		
 		using var assertStream = File.OpenRead(filename);
@@ -54,8 +54,10 @@ public sealed class SurrealHttpTests : IDisposable
 	{
 		var filename = @"C:\dev\s-e-f\surrealdb.net\tests\SurrealDB.NET.Tests\Data\surreal_deal_v1.surql";
 		using var s = File.OpenRead(filename);
-		await _di.Http.SigninRootAsync("root", "root");
-		await _di.Http.ImportAsync(s);
+		var root = _di.Http;
+		var token = await root.SigninRootAsync("root", "root");
+		root.AttachToken(token);
+		await root.ImportAsync(s);
 	}
 
 	[Fact(DisplayName = "GET /key/:table on multiple records", Timeout = 5000)]
@@ -109,7 +111,7 @@ public sealed class SurrealHttpTests : IDisposable
 		Assert.NotNull(created);
 
 		const string updatedContent = "Updated content";
-		var updated = await _di.Http.UpdateAsync("post", new Post(updatedContent));
+		var updated = await _di.Http.UpdateAsync(created.Id, new Post(updatedContent));
 		Assert.NotNull(updated);
 		Assert.Equal(updatedContent, updated.Content);
 	}
@@ -121,7 +123,7 @@ public sealed class SurrealHttpTests : IDisposable
 		Assert.NotNull(created);
 
 		const string tags = "tags here";
-		var updated = await _di.Http.MergeAsync<Post>("post", new
+		var updated = await _di.Http.MergeAsync<Post>(created.Id, new
 		{
 			tags
 		});
