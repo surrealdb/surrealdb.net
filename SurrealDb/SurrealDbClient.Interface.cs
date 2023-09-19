@@ -92,6 +92,13 @@ public interface ISurrealDbClient : IDisposable
     Task<bool> Delete(Thing thing, CancellationToken cancellationToken = default);
 
 	/// <summary>
+	/// Checks the status of the database server and storage engine.
+	/// </summary>
+	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+	/// <returns>Returns true if the database server and storage engine are healthy.</returns>
+	Task<bool> Health(CancellationToken cancellationToken = default);
+
+	/// <summary>
 	/// Invalidates the authentication for the current connection.
 	/// </summary>
 	/// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>

@@ -3,7 +3,6 @@ using SurrealDb.Exceptions;
 using SurrealDb.Internals.Auth;
 using SurrealDb.Internals.Helpers;
 using SurrealDb.Internals.Json;
-using SurrealDb.Internals.Models;
 using SurrealDb.Internals.Ws;
 using SurrealDb.Models;
 using SurrealDb.Models.Auth;
@@ -179,6 +178,22 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		_wsEngines.TryRemove(_id, out _);
 
 		_wsClient.Dispose();
+	}
+
+	public async Task<bool> Health(CancellationToken cancellationToken)
+	{
+		if (_wsClient.IsStarted)
+			return true;
+
+		try
+		{
+			await _wsClient.StartOrFail();
+			return true;
+		}
+		catch (Exception)
+		{
+			return false;
+		}
 	}
 
 	public async Task Invalidate(CancellationToken cancellationToken)

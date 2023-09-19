@@ -106,6 +106,11 @@ public class SurrealDbClient : ISurrealDbClient
 		_engine.Dispose();
 	}
 
+	public Task<bool> Health(CancellationToken cancellationToken = default)
+	{
+		return _engine.Health(cancellationToken);
+	}
+
 	public Task Invalidate(CancellationToken cancellationToken = default)
     {
         return _engine.Invalidate(cancellationToken);

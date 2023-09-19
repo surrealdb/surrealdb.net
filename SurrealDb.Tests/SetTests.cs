@@ -1,4 +1,3 @@
-using SurrealDb.Internals.Models;
 using SurrealDb.Models.Response;
 using System.Text;
 

@@ -125,6 +125,21 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 			_singleHttpClient.Value.Dispose();
 	}
 
+	public async Task<bool> Health(CancellationToken cancellationToken)
+	{
+		using var wrapper = CreateHttpClientWrapper();
+
+		try
+		{
+			using var response = await wrapper.Instance.GetAsync("/health", cancellationToken);
+			return response.IsSuccessStatusCode;
+		}
+		catch (HttpRequestException)
+		{
+			return false;
+		}
+	}
+
 	public Task Invalidate(CancellationToken _)
 	{
         _config.ResetAuth();
