@@ -16,6 +16,7 @@ public partial class Thing
 	/// <param name="table">Table name</param>
 	/// <param name="id">Table id</param>
 	/// <exception cref="ArgumentException"></exception>
+	/// <exception cref="NotImplementedException"></exception>
 	public static Thing From<T>(ReadOnlySpan<char> table, T id)
 	{
 		if (id is null)

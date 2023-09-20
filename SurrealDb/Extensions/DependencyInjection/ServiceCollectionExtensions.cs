@@ -17,6 +17,7 @@ public static class ServiceCollectionExtensions
 	/// <param name="connectionString">Connection string to a SurrealDB instance.</param>
 	/// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
 	/// <returns>Service collection</returns>
+	/// <exception cref="ArgumentException"></exception>
 	/// <exception cref="ArgumentOutOfRangeException"></exception>
 	/// <exception cref="ArgumentNullException"></exception>
 	public static IServiceCollection AddSurreal(
@@ -36,6 +37,7 @@ public static class ServiceCollectionExtensions
 	/// <param name="connectionString">Connection string to a SurrealDB instance.</param>
 	/// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
 	/// <returns>Service collection</returns>
+	/// <exception cref="ArgumentException"></exception>
 	/// <exception cref="ArgumentOutOfRangeException"></exception>
 	/// <exception cref="ArgumentNullException"></exception>
 	public static IServiceCollection AddSurreal<T>(
@@ -87,7 +89,7 @@ public static class ServiceCollectionExtensions
 	) where T : ISurrealDbClient
 	{
 		if (configuration.Endpoint is null)
-			throw new ArgumentNullException(nameof(configuration));
+			throw new ArgumentNullException(nameof(configuration), "The endpoint is required.");
 
 		RegisterHttpClient(services, configuration.Endpoint);
 
@@ -144,7 +146,7 @@ public static class ServiceCollectionExtensions
 				});
 				break;
 			default:
-				throw new ArgumentOutOfRangeException(nameof(lifetime), lifetime, null);
+				throw new ArgumentOutOfRangeException(nameof(lifetime), lifetime, "Invalid service lifetime.");
 		}
 	}
 }

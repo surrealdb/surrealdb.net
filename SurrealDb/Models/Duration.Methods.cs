@@ -7,6 +7,8 @@ public readonly partial struct Duration
 	/// <summary>
 	/// Converts the <see cref="Duration"/> to a <see cref="TimeSpan"/> unit.
 	/// </summary>
+	/// <exception cref="ArgumentOutOfRangeException"></exception>
+	/// <exception cref="OverflowException"></exception>
 	public TimeSpan ToTimeSpan()
 	{
 		const int DAYS_PER_WEEK = 7;

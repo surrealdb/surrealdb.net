@@ -14,6 +14,7 @@ public class SurrealDbOptionsBuilder
 	/// </summary>
 	/// <param name="connectionString">Connection string to connect to a SurrealDB instance.</param>
 	/// <exception cref="ArgumentException"></exception>
+	/// <exception cref="ArgumentNullException"></exception>
 	public SurrealDbOptionsBuilder FromConnectionString(string connectionString)
 	{
 		var properties = connectionString
