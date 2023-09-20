@@ -40,7 +40,7 @@ public class SurrealDbClient : ISurrealDbClient
 	internal SurrealDbClient(SurrealDbClientParams parameters)
     {
 		if (parameters.Endpoint is null)
-			throw new ArgumentNullException(nameof(parameters.Endpoint));
+			throw new ArgumentNullException(nameof(parameters));
 
         Uri = new Uri(parameters.Endpoint);
         _httpClientFactory = parameters.HttpClientFactory;

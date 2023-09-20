@@ -38,7 +38,7 @@ public class ConnectTests
 
 		Func<Task> func = async () =>
 		{
-			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+			using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 			dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
 			using var client = SurrealDbWsClient.New("localhost:8000", dbInfo.Namespace, dbInfo.Database);

@@ -87,7 +87,7 @@ public static class ServiceCollectionExtensions
 	) where T : ISurrealDbClient
 	{
 		if (configuration.Endpoint is null)
-			throw new ArgumentNullException(nameof(configuration.Endpoint));
+			throw new ArgumentNullException(nameof(configuration));
 
 		RegisterHttpClient(services, configuration.Endpoint);
 

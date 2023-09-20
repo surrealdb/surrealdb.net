@@ -4,8 +4,9 @@ namespace SurrealDb.Benchmarks;
 
 public class BaseBenchmark
 {
-	protected string HttpUrl { get; } = "http://localhost:8000";
-	protected string WsUrl { get; } = "ws://localhost:8000/rpc";
+	public static string Host { get; } = "localhost:8000";
+	protected string HttpUrl { get; } = $"http://{Host}";
+	protected string WsUrl { get; } = $"ws://{Host}/rpc";
 
 	protected void InitializeSurrealDbClient(ISurrealDbClient client, DatabaseInfo databaseInfo)
 	{

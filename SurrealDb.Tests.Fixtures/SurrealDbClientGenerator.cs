@@ -38,9 +38,8 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 		services.AddSurreal(options);
 
 		_serviceProvider = services.BuildServiceProvider(validateScopes: true);
-        using var scope = _serviceProvider.CreateScope();
 
-        return scope.ServiceProvider.GetRequiredService<SurrealDbClient>();
+        return _serviceProvider.GetRequiredService<SurrealDbClient>();
     }
 
     public DatabaseInfo GenerateDatabaseInfo()
@@ -58,7 +57,7 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 	{
 		if (_databaseInfo is not null)
 		{
-			using var client = new SurrealDbClient("http://localhost:8000");
+			using var client = new SurrealDbClient("http://localhost:8000", _serviceProvider!.GetRequiredService<IHttpClientFactory>());
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(_databaseInfo.Namespace, _databaseInfo.Database);
 
