@@ -55,7 +55,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 					switch (message.MessageType)
 					{
 						case WebSocketMessageType.Text:
-							response = JsonSerializer.Deserialize<ISurrealDbWsResponse>(message.Text, SurrealDbSerializerOptions.Default);
+							response = JsonSerializer.Deserialize<ISurrealDbWsResponse>(message.Text!, SurrealDbSerializerOptions.Default);
 							break;
 						case WebSocketMessageType.Binary:
 							{
