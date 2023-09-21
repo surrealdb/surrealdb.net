@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using SurrealDB.NET.Json;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -9,30 +8,29 @@ namespace SurrealDB.NET.Http;
 
 internal sealed class SurrealJsonHttpClient : ISurrealHttpClient, IDisposable
 {
-	private readonly HttpClient _client;
+	private readonly HttpClient _client = new();
 	private SurrealOptions _options;
-	private readonly IDisposable? _changeToken;
 
-	public SurrealJsonHttpClient(HttpClient client, IOptionsMonitor<SurrealOptions> options)
+	public SurrealJsonHttpClient(SurrealOptions options)
 	{
-		_client = client;
-		_options = options.CurrentValue;
-		_client.BaseAddress = new Uri($"{(_options.Secure ? "https" : "http")}://{_options.Endpoint.Host}:{_options.Endpoint.Port}");
+		_client.BaseAddress = options.Endpoint;
+		_options = options;
 		_client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 		_client.DefaultRequestHeaders.Add("NS", _options.DefaultNamespace);
 		_client.DefaultRequestHeaders.Add("DB", _options.DefaultDatabase);
-		_changeToken = options.OnChange(o =>
-		{
-			_options = o;
-			_client.BaseAddress = new Uri($"{(_options.Secure ? "https" : "http")}://{_options.Endpoint.Host}:{_options.Endpoint.Port}");
-			_client.DefaultRequestHeaders.Add("NS", _options.DefaultNamespace);
-			_client.DefaultRequestHeaders.Add("DB", _options.DefaultDatabase);
-		});
 	}
+
+	public SurrealJsonHttpClient(string endpoint, string @namespace, string database) : this(new SurrealOptions
+	{
+		Endpoint = new Uri(endpoint),
+		DefaultNamespace = @namespace,
+		DefaultDatabase = database,
+	})
+	{ } 
 
 	public void Dispose()
 	{
-		_changeToken?.Dispose();
+		_client.Dispose();
 	}
 
 	public void AttachToken(string token)

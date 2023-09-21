@@ -22,6 +22,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDB.NET", "src\Surrea
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDB.NET.Tests", "tests\SurrealDB.NET.Tests\SurrealDB.NET.Tests.csproj", "{11240F88-21F7-44C2-81F0-3F2FD5902C0E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDB.NET.Benchmarks", "bench\SurrealDB.NET.Benchmarks\SurrealDB.NET.Benchmarks.csproj", "{31610DA3-7E9D-4EA7-8315-6EFD512CC739}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +38,10 @@ Global
 		{11240F88-21F7-44C2-81F0-3F2FD5902C0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11240F88-21F7-44C2-81F0-3F2FD5902C0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11240F88-21F7-44C2-81F0-3F2FD5902C0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31610DA3-7E9D-4EA7-8315-6EFD512CC739}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31610DA3-7E9D-4EA7-8315-6EFD512CC739}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31610DA3-7E9D-4EA7-8315-6EFD512CC739}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31610DA3-7E9D-4EA7-8315-6EFD512CC739}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

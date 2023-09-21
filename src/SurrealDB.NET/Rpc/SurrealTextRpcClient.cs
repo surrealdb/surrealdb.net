@@ -45,25 +45,22 @@ internal readonly struct SurrealTextRpcResponse()
     }
 }
 
-internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposable
+public sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposable
 {
     private ClientWebSocket _ws = new();
     private readonly CancellationTokenSource _cts = new();
     private SurrealOptions _options;
-    private readonly IDisposable? _optionsChangeToken;
     private readonly ConcurrentDictionary<Guid, TaskCompletionSource<SurrealTextRpcResponse>> _responseHandlers = new();
-    private readonly ILogger<SurrealTextRpcClient> _logger;
     private Task? _listener;
 
-    public SurrealTextRpcClient(
-        [NotNull] IOptionsMonitor<SurrealOptions> options,
-        [NotNull] ILogger<SurrealTextRpcClient> logger)
+    public SurrealTextRpcClient(SurrealOptions options)
     {
-        _logger = logger;
         _ws = new ClientWebSocket();
-        _options = options.CurrentValue;
-        _optionsChangeToken = options.OnChange(o => _options = o);
+        _options = options;
     }
+
+	public SurrealTextRpcClient(string endpoint, string @namespace, string database)
+		: this(new SurrealOptions { Endpoint = new Uri(endpoint), DefaultNamespace = @namespace, DefaultDatabase = database }) { }
 
     /// <summary>
     /// This method specifies the namespace and database for the current connection.
@@ -713,19 +710,12 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
         if (_ws.State is WebSocketState.Open)
             return;
 
-		var endpoint = new Uri($"{(_options.Secure ? "wss" : "ws")}://{_options.Endpoint.Host}:{_options.Endpoint.Port}/rpc");
+		var endpoint = new Uri($"{_options.Endpoint.Scheme}://{_options.Endpoint.Host}:{_options.Endpoint.Port}/rpc");
 
-        OnAttemptingToConnect(_logger, endpoint);
         await _ws.ConnectAsync(endpoint, ct).ConfigureAwait(false);
-        OnConnected(_logger, endpoint);
-        _listener = Task.Run(StartListening, _cts.Token);
+
+		_listener = Task.Run(StartListening, _cts.Token);
     }
-
-    [LoggerMessage(EventId = 1, EventName = nameof(OnRequestSent), Level = LogLevel.Debug, Message = "Sent request: {Request}")]
-    static partial void OnRequestSent(ILogger logger, SurrealTextRpcRequest request);
-
-    [LoggerMessage(EventId = 2, EventName = nameof(OnResponseReceived), Level = LogLevel.Debug, Message = "Received response: {Response}")]
-    static partial void OnResponseReceived(ILogger logger, SurrealTextRpcResponse response);
 
     private async Task<SurrealTextRpcResponse> SendAsync(SurrealTextRpcRequest request, CancellationToken ct)
     {
@@ -738,9 +728,7 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
         var tcs = new TaskCompletionSource<SurrealTextRpcResponse>();
         _responseHandlers[request.Id] = tcs;
         await _ws.SendAsync(request.Buffer.DangerousGetArray(), WebSocketMessageType.Text, true, ct).ConfigureAwait(false);
-        OnRequestSent(_logger, request);
         var response = await tcs.Task.ConfigureAwait(false);
-        OnResponseReceived(_logger, response);
         SurrealJson.ThrowOnError(SurrealJson.BytesToJsonElement(response.Buffer.Span));
         return response;
     }
@@ -790,7 +778,7 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
             catch (Exception ex)
 #pragma warning restore CA1031
             {
-                OnIgnoredException(_logger, ex, ex.ToString());
+				// TODO: Do something with this exception
             }
         }
     }
@@ -823,8 +811,6 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
         else
         {
             var liveQueryNotification = JsonSerializer.Deserialize<SurrealNotification<SurrealLiveNotification>>(response.Buffer.Span);
-
-            OnNotificationReceived(_logger, liveQueryNotification);
 
             await _liveQueryHandlers[liveQueryNotification.Result.Id].Invoke(liveQueryNotification.Result.Result, liveQueryNotification.Result.Action.ToUpperInvariant() switch
             {
@@ -869,7 +855,6 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
             return;
 
         _disposed = true;
-        _optionsChangeToken?.Dispose();
         _cts.Dispose();
         _ws.Dispose();
         GC.SuppressFinalize(this);
@@ -924,7 +909,7 @@ internal sealed partial class SurrealTextRpcClient : ISurrealRpcClient, IDisposa
     {
         var request = new SurrealTextRpcRequest
         {
-            Buffer = new ArrayPoolBufferWriter<byte>(1024), // TODO: Make send buffer size configurable
+            Buffer = new ArrayPoolBufferWriter<byte>(_options.BufferSize), // TODO: Make send buffer size configurable
             Options = _options,
         };
 

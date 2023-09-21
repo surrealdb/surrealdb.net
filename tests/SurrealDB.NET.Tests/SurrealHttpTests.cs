@@ -1,26 +1,20 @@
 using SurrealDB.NET.Errors;
+using SurrealDB.NET.Http;
 using SurrealDB.NET.Tests.Fixtures;
 using SurrealDB.NET.Tests.Schema;
-using Xunit.Abstractions;
 
 namespace SurrealDB.NET.Tests;
 
 [Trait("Category", "HTTP")]
 [Collection(SurrealDbCollectionFixture.Name)]
-public sealed class SurrealHttpTests : IDisposable
+public sealed class SurrealHttpTests
 {
-	private readonly SurrealDbFixture _fixture;
-	private readonly ServiceFixture _di;
+	private readonly SurrealDbCliFixture _fixture;
+	private ISurrealHttpClient _client => _fixture.Http;
 
-	public SurrealHttpTests(SurrealDbFixture fixture, ITestOutputHelper xunit)
+	public SurrealHttpTests(SurrealDbCliFixture fixture)
 	{
 		_fixture = fixture;
-		_di = new ServiceFixture( xunit, _fixture.Port);
-	}
-
-	public void Dispose()
-	{
-		_di.Dispose();
 	}
 
 	[Fact(DisplayName = "GET /export", Timeout = 15000)]
@@ -32,10 +26,9 @@ public sealed class SurrealHttpTests : IDisposable
 			File.Delete(filename);
 
 		{
-			var root = _di.Http;
-			root.AttachToken(await root.SigninRootAsync("root", "root"));
+			_client.AttachToken(await _client.SigninRootAsync("root", "root"));
 			using var fileStream = File.OpenWrite(filename);
-			await root.ExportAsync(fileStream);
+			await _client.ExportAsync(fileStream);
 		}
 		
 		using var assertStream = File.OpenRead(filename);
@@ -45,7 +38,7 @@ public sealed class SurrealHttpTests : IDisposable
 	[Fact(DisplayName = "GET /health on healthy service", Timeout = 5000)]
 	public async Task Health()
 	{
-		var health = await _di.Http.HealthAsync();
+		var health = await _client.HealthAsync();
 
 		Assert.True(health);
 	}
@@ -55,7 +48,7 @@ public sealed class SurrealHttpTests : IDisposable
 	{
 		var filename = @"C:\dev\s-e-f\surrealdb.net\tests\SurrealDB.NET.Tests\Data\surreal_deal_v1.surql";
 		using var s = File.OpenRead(filename);
-		var root = _di.Http;
+		var root = _client;
 		var token = await root.SigninRootAsync("root", "root");
 		root.AttachToken(token);
 		await root.ImportAsync(s);
@@ -64,21 +57,18 @@ public sealed class SurrealHttpTests : IDisposable
 	[Fact(DisplayName = "GET /key/:table on multiple records", Timeout = 5000)]
 	public async Task Get()
 	{
-		var create = await _di.TextRpc.InsertAsync("post", new Post[]
-		{
-			new(nameof(Get) + "1"),
-			new(nameof(Get) + "2"),
-			new(nameof(Get) + "3")
-		});
+		await _client.CreateAsync("post", new Post(nameof(Get) + "1"));
+		await _client.CreateAsync("post", new Post(nameof(Get) + "2"));
+		await _client.CreateAsync("post", new Post(nameof(Get) + "3"));
 
-		var records = await _di.Http.GetAllAsync<Post>("post");
+		var records = await _client.GetAllAsync<Post>("post");
 		Assert.True(records.Count() >= 3);
 	}
 
 	[Fact(DisplayName = "POST /key/:table", Timeout = 5000)]
 	public async Task Post()
 	{
-		var created = await _di.Http.InsertAsync("post", new Post(nameof(Post)));
+		var created = await _client.InsertAsync("post", new Post(nameof(Post)));
 		Assert.NotNull(created);
 	}
 
@@ -92,28 +82,28 @@ public sealed class SurrealHttpTests : IDisposable
 	[Fact(DisplayName = "GET /key/:table/:id", Timeout = 5000)]
 	public async Task GetById()
 	{
-		var created = await _di.Http.InsertAsync("post", new Post(nameof(GetById)));
+		var created = await _client.InsertAsync("post", new Post(nameof(GetById)));
 		Assert.NotNull(created);
 
-		var get = await _di.Http.GetAsync<Post>(created.Id);
+		var get = await _client.GetAsync<Post>(created.Id);
 		Assert.Equal(created.Content, get?.Content);
 	}
 
 	[Fact(DisplayName = "POST /key/:table/:id", Timeout = 5000)]
 	public async Task PostById()
 	{
-		var created = await _di.Http.CreateAsync($"post:{nameof(PostById)}", new Post(nameof(PostById)));
+		var created = await _client.CreateAsync($"post:{nameof(PostById)}", new Post(nameof(PostById)));
 		Assert.NotNull(created);
 	}
 
 	[Fact(DisplayName = "PUT /key/:table/:id", Timeout = 5000)]
 	public async Task PutById()
 	{
-		var created = await _di.Http.InsertAsync("post", new Post(nameof(PutById)));
+		var created = await _client.InsertAsync("post", new Post(nameof(PutById)));
 		Assert.NotNull(created);
 
 		const string updatedContent = "Updated content";
-		var updated = await _di.Http.UpdateAsync(created.Id, new Post(updatedContent));
+		var updated = await _client.UpdateAsync(created.Id, new Post(updatedContent));
 		Assert.NotNull(updated);
 		Assert.Equal(updatedContent, updated.Content);
 	}
@@ -121,11 +111,11 @@ public sealed class SurrealHttpTests : IDisposable
 	[Fact(DisplayName = "PATCH /key/:table/:id", Timeout = 5000)]
 	public async Task PatchById()
 	{
-		var created = await _di.Http.InsertAsync("post", new Post(nameof(PatchById)));
+		var created = await _client.InsertAsync("post", new Post(nameof(PatchById)));
 		Assert.NotNull(created);
 
 		const string tags = "tags here";
-		var updated = await _di.Http.MergeAsync<Post>(created.Id, new
+		var updated = await _client.MergeAsync<Post>(created.Id, new
 		{
 			tags
 		});
@@ -136,19 +126,19 @@ public sealed class SurrealHttpTests : IDisposable
 	[Fact(DisplayName = "DELETE /key/:table/:id", Timeout = 5000)]
 	public async Task DeleteById()
 	{
-		await _di.Http.SigninRootAsync("root", "root");
+		await _client.SigninRootAsync("root", "root");
 
-		var created = await _di.Http.InsertAsync("post", new Post(nameof(DeleteById)));
+		var created = await _client.InsertAsync("post", new Post(nameof(DeleteById)));
 		Assert.NotNull(created);
 
-		var deleted = await _di.Http.DeleteAsync<Post>(created.Id);
+		var deleted = await _client.DeleteAsync<Post>(created.Id);
 		Assert.Equal(created.Content, deleted?.Content);
 	}
 
 	[Fact(DisplayName = "POST /signup", Timeout = 5000)]
 	public async Task Signup()
 	{
-		var token = await _di.Http.SignupAsync("test", "test", "account", new User("test@test.com", "httppassword"));
+		var token = await _client.SignupAsync("test", "test", "account", new User("test@test.com", "httppassword"));
 		Assert.False(string.IsNullOrWhiteSpace(token));
 	}
 
@@ -156,22 +146,22 @@ public sealed class SurrealHttpTests : IDisposable
 	public async Task SigninScope()
 	{
 		var user = new User($"{nameof(SigninScope)}@test.com", "httppassword");
-		var signupToken = await _di.Http.SignupAsync("test", "test", "account", user);
-		var signinToken = await _di.Http.SigninScopeAsync("test", "test", "account", user);
+		var signupToken = await _client.SignupAsync("test", "test", "account", user);
+		var signinToken = await _client.SigninScopeAsync("test", "test", "account", user);
 		Assert.False(string.IsNullOrWhiteSpace(signinToken));
 	}
 
 	[Fact(DisplayName = "POST /signin as namespace", Timeout = 5000)]
 	public async Task SigninNamespace()
 	{
-		var token = await _di.Http.SigninNamespaceAsync("test", "test_root", "test_root");
+		var token = await _client.SigninNamespaceAsync("test", "test_root", "test_root");
 		Assert.False(string.IsNullOrWhiteSpace(token));
 	}
 
 	[Fact(DisplayName = "POST /signin as root", Timeout = 5000)]
 	public async Task SigninRoot()
 	{
-		var token = await _di.Http.SigninRootAsync("root", "root");
+		var token = await _client.SigninRootAsync("root", "root");
 		Assert.False(string.IsNullOrWhiteSpace(token));
 	}
 
@@ -185,10 +175,10 @@ public sealed class SurrealHttpTests : IDisposable
 			Table = "post",
 			Id = nameof(SqlSingleOnlyExists),
 		};
-		var created = await _di.Http.CreateAsync(id, new Post(content));
+		var created = await _client.CreateAsync(id, new Post(content));
 		Assert.NotNull(created);
 		Assert.Equal(id, created.Id);
-		var result = await _di.Http.QueryAsync("SELECT * FROM ONLY type::thing($id)", new { id = created.Id });
+		var result = await _client.QueryAsync("SELECT * FROM ONLY type::thing($id)", new { id = created.Id });
 		var post = result.Get<Post>();
 		Assert.NotNull(post);
 		Assert.Equal(created.Id, post.Id);
@@ -200,7 +190,7 @@ public sealed class SurrealHttpTests : IDisposable
 	{
 		var ex = await Assert.ThrowsAnyAsync<Exception>(async () =>
 		{
-			_ = await _di.Http.QueryAsync("SELECT * FROM ONLY type::thing($id)", new
+			_ = await _client.QueryAsync("SELECT * FROM ONLY type::thing($id)", new
 			{
 				id = new Thing
 				{
@@ -217,7 +207,7 @@ public sealed class SurrealHttpTests : IDisposable
 	[Fact(DisplayName = "POST /sql on no results should yield an empty collection", Timeout = 5000)]
 	public async Task SqlOnNone()
 	{
-		var result = await _di.Http.QueryAsync("SELECT * FROM type::thing($id)", new
+		var result = await _client.QueryAsync("SELECT * FROM type::thing($id)", new
 		{
 			id = new Thing
 			{
@@ -234,13 +224,9 @@ public sealed class SurrealHttpTests : IDisposable
 	[Fact(DisplayName = "POST /sql on many records should return them", Timeout = 5000)]
 	public async Task SqlMultipleWithManyResults()
 	{
-		var inserted = await _di.TextRpc.InsertAsync("post", new Post[]
-		{
-			new(nameof(SqlMultipleWithManyResults) + "1"),
-			new(nameof(SqlMultipleWithManyResults) + "2"),
-
-		});
-		var result = await _di.Http.QueryAsync("SELECT * FROM post");
+		await _client.InsertAsync("post", new Post(nameof(SqlMultipleWithManyResults) + "1"));
+		await _client.InsertAsync("post", new Post(nameof(SqlMultipleWithManyResults) + "2"));
+		var result = await _client.QueryAsync("SELECT * FROM post");
 		var posts = result.Get<IEnumerable<Post>>();
 		Assert.NotNull(posts);
 		Assert.True(posts.Count() > 1);
@@ -249,7 +235,7 @@ public sealed class SurrealHttpTests : IDisposable
 	[Fact(DisplayName = "POST /sql multiple on empty should return empty collection", Timeout = 5000)]
 	public async Task SqlMultipleOnEmpty()
 	{
-		var result = await _di.Http.QueryAsync("SELECT * FROM post WHERE content == $p", new
+		var result = await _client.QueryAsync("SELECT * FROM post WHERE content == $p", new
 		{
 			p = "NotFound"
 
@@ -262,14 +248,14 @@ public sealed class SurrealHttpTests : IDisposable
 	[Fact(DisplayName = "GET /status", Timeout = 5000)]
 	public async Task Status()
 	{
-		var status = await _di.Http.StatusAsync();
+		var status = await _client.StatusAsync();
 		Assert.True(status);
 	}
 
 	[Fact(DisplayName = "GET /version", Timeout = 5000)]
 	public async Task Version()
 	{
-		var version = await _di.Http.VersionAsync();
+		var version = await _client.VersionAsync();
 		Assert.False(string.IsNullOrWhiteSpace(version));
 	}
 }

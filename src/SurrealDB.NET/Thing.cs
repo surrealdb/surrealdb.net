@@ -10,6 +10,11 @@ public readonly record struct Thing
 
 	public bool IsSpecific => !string.IsNullOrWhiteSpace(Id);
 
+	public static Thing Parse(string thing) => Parse(thing.AsSpan());
+
+	public static Thing Parse(ReadOnlySpan<char> thing)
+		=> FromReadOnlySpan(thing);
+
 	public static Thing FromReadOnlySpan(ReadOnlySpan<char> span) => span.IndexOf(':') switch
 	{
 		-1 => new Thing

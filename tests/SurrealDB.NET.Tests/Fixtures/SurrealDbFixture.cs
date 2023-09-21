@@ -1,73 +1,58 @@
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
-
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using SurrealDB.NET.Rpc;
+using System.Net.Sockets;
+using System.Net;
+using System.Diagnostics;
+using SurrealDB.NET.Http;
+
+[assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly, DisableTestParallelization = false, MaxParallelThreads = -1)]
 
 namespace SurrealDB.NET.Tests.Fixtures;
 
-[CollectionDefinition(Name)]
-public sealed class SurrealDbCollectionFixture
-	: ICollectionFixture<SurrealDbFixture>
+public sealed class SurrealDbCliFixture : IAsyncLifetime, IDisposable
 {
-	// This class has no code, and is never created. Its purpose is simply
-	// to be the place to apply [CollectionDefinition] and all the
-	// ICollectionFixture<> interfaces.
+	public int Port { get; } = AllocatePort();
 
-	public const string Name = "SurrealDB";
-}
+	public ISurrealHttpClient Http { get; private set; }
+	public ISurrealRpcClient Rpc { get; private set; }
 
-public sealed class SurrealDbFixture : IAsyncLifetime
-{
-    private readonly IContainer _container;
+	private readonly Process _process = new()
+	{
+		StartInfo = new ProcessStartInfo
+		{
+			FileName = "surreal",
+			RedirectStandardOutput = false,
+			RedirectStandardError = false,
+			UseShellExecute = false,
+			CreateNoWindow = true,
+		},
+		EnableRaisingEvents = true,
+	};
 
-    public ushort Port => _container.GetMappedPublicPort(8000);
+	public Task DisposeAsync()
+	{
+		_process.Kill();
+		Dispose();
+		return Task.CompletedTask;
+	}
 
-    public SurrealDbFixture()
-    {
-        _container = new ContainerBuilder()
-            .WithPortBinding(8000, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(http => http
-                .WithMethod(HttpMethod.Get)
-                .ForStatusCode(System.Net.HttpStatusCode.OK)
-                .ForPath("/health")
-                .ForPort(8000)))
-            .WithImage("surrealdb/surrealdb:1.0.0")
-            .WithCommand("start", "--auth", "-u", "root", "-p", "root", "-A")
-            .Build();
-    }
+	public async Task InitializeAsync()
+	{
+		_process.StartInfo.Arguments = $"start --auth -u root -p root -A --bind 0.0.0.0:{Port}";
+		_process.Start();
+		using var http = new HttpClient();
+		http.BaseAddress = new Uri($"http://localhost:{Port}");
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+		var ok = false;
+		while (ok is false)
+		{
+			using var response = await http.GetAsync("/health", cts.Token).ConfigureAwait(false);
+			ok = response.IsSuccessStatusCode;
+		}
 
-    public async Task DisposeAsync()
-    {
-        await _container.StopAsync().ConfigureAwait(false);
-        await _container.DisposeAsync().ConfigureAwait(false);
-    }
+		using var root = new SurrealTextRpcClient($"ws://localhost:{Port}", "test", "test");
+		await root.SigninRootAsync("root", "root").ConfigureAwait(false);
 
-    public async Task InitializeAsync()
-    {
-        await _container.StartAsync().ConfigureAwait(false);
-
-        using var di = new ServiceCollection()
-            .AddSingleton<IConfiguration>(new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    [$"{SurrealOptions.Section}:Endpoint"] = $"ws://localhost:{Port}/rpc",
-                    [$"{SurrealOptions.Section}:DefaultNamespace"] = "test",
-                    [$"{SurrealOptions.Section}:DefaultDatabase"] = "test",
-                }).Build())
-            .AddSurrealDB()
-            .BuildServiceProvider(new ServiceProviderOptions
-            {
-                ValidateOnBuild = true,
-                ValidateScopes = true,
-            });
-
-		using var rootScope = di.CreateScope();
-        var root = rootScope.ServiceProvider.GetRequiredKeyedService<ISurrealRpcClient>("text");
-        await root.SigninRootAsync("root", "root").ConfigureAwait(false);
-
-        _ = await root.QueryAsync("""
+		_ = await root.QueryAsync("""
             DEFINE TABLE user SCHEMAFULL;
             DEFINE FIELD email ON user TYPE string;
             DEFINE FIELD password ON user TYPE string;
@@ -77,7 +62,7 @@ public sealed class SurrealDbFixture : IAsyncLifetime
             DEFINE FIELD tags ON post TYPE option<string> DEFAULT NONE;
             """).ConfigureAwait(false);
 
-        _ = await root.QueryAsync("""
+		_ = await root.QueryAsync("""
             DEFINE SCOPE account SESSION 24h
                 SIGNUP (CREATE user SET email = $email, password = crypto::argon2::generate($password))
                 SIGNIN (SELECT * FROM user WHERE email = $email AND crypto::argon2::compare(password, $password))
@@ -87,5 +72,37 @@ public sealed class SurrealDbFixture : IAsyncLifetime
 			USE NS test DB test;
 			DEFINE USER test_root ON NAMESPACE PASSWORD "test_root";
 			""");
-    }
+
+		Http = new SurrealJsonHttpClient($"http://localhost:{Port}", "test", "test");
+		Rpc = new SurrealTextRpcClient($"ws://localhost:{Port}", "test", "test");
+	}
+
+	private static int AllocatePort()
+	{
+		int freePort;
+		using (TcpListener tcpListener = new TcpListener(IPAddress.Loopback, 0))
+		{
+			tcpListener.Start();
+			freePort = ((IPEndPoint)tcpListener.LocalEndpoint).Port;
+			tcpListener.Stop();
+		}
+		return freePort;
+	}
+
+	public void Dispose()
+	{
+		_process.Dispose();
+		Rpc?.Dispose();
+	}
+}
+
+[CollectionDefinition(Name, DisableParallelization = false)]
+public sealed class SurrealDbCollectionFixture
+	: ICollectionFixture<SurrealDbCliFixture>
+{
+	// This class has no code, and is never created. Its purpose is simply
+	// to be the place to apply [CollectionDefinition] and all the
+	// ICollectionFixture<> interfaces.
+
+	public const string Name = "SurrealDB";
 }

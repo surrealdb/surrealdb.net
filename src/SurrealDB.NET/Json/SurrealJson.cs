@@ -24,7 +24,7 @@ public static class SurrealJson
 
 	internal static void WritePathFromExpression<T, TProperty>(this Utf8JsonWriter writer, ReadOnlySpan<byte> utf8key, Expression<Func<T, TProperty>> expression, JsonSerializerOptions options)
 	{
-		Span<byte> buffer = stackalloc byte[512];  // A stack-allocated buffer; adjust size as needed
+		Span<byte> buffer = stackalloc byte[512];
 		int offset = buffer.Length;
 
 		Expression? body = expression.Body;

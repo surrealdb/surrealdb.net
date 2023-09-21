@@ -16,13 +16,25 @@ public readonly record struct SurrealQueryResult
     public T? Get<T>(int page = 0)
     {
         var result = _root.ValueKind is JsonValueKind.Array
-			? _root.EnumerateArray().ElementAt(page)
-			: _root.GetProperty("result").EnumerateArray().ElementAt(page);
+			? _root[page]
+			: _root.GetProperty("result")[page];
 
         var set = result.Deserialize<SurrealQueryResultPage>();
         
         if (set.Status is "OK")
-            return set.Result.Deserialize<T>();
+		{
+			if (set.Result.ValueKind is JsonValueKind.Array && !typeof(System.Collections.IEnumerable).IsAssignableFrom(typeof(T)))
+			{
+				var length = set.Result.GetArrayLength();
+
+				if (length is 0)
+					return default;
+
+				return set.Result[0].Deserialize<T>();
+			}
+
+			return set.Result.Deserialize<T>();
+		}
 
         throw new SurrealException($"Surreal query result was an error: {set.Result.Deserialize<string>()}");
     }

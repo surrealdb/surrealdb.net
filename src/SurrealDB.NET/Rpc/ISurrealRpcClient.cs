@@ -2,7 +2,7 @@ using SurrealDB.NET.Json;
 
 namespace SurrealDB.NET.Rpc;
 
-public interface ISurrealRpcClient
+public interface ISurrealRpcClient : IDisposable
 {
 	Task UseAsync(string @namespace, string database, CancellationToken ct = default);
 

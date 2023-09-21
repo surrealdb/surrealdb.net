@@ -1,6 +1,6 @@
 namespace SurrealDB.NET.Http;
 
-public interface ISurrealHttpClient
+public interface ISurrealHttpClient : IDisposable
 {
 	void AttachToken(string token);
 
