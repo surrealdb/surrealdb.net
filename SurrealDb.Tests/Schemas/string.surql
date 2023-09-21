@@ -1,7 +1,7 @@
 DEFINE TABLE string SCHEMAFULL;
 
 DEFINE FIELD name ON string TYPE string;
-DEFINE FIELD value ON string TYPE string;
+DEFINE FIELD value ON string TYPE option<string>;
 
 CREATE string SET name = 'none', value = NONE;
 CREATE string SET name = 'single-quote', value = 'Lorem ipsum dolor sit amet';

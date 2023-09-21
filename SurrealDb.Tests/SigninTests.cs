@@ -43,7 +43,7 @@ public class SignInTests
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-			string query = "DEFINE LOGIN johndoe ON NAMESPACE PASSWORD 'password123'";
+			string query = "DEFINE USER johndoe ON NAMESPACE PASSWORD 'password123'";
 			await client.Query(query);
 
 			jwt = await client.SignIn(
@@ -73,7 +73,7 @@ public class SignInTests
 			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-			string query = "DEFINE LOGIN johndoe ON DATABASE PASSWORD 'password123'";
+			string query = "DEFINE USER johndoe ON DATABASE PASSWORD 'password123'";
 			await client.Query(query);
 
 			jwt = await client.SignIn(

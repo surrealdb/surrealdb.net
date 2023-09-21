@@ -81,11 +81,16 @@ public class UpsertTests
 			await client.Use(dbInfo.Namespace, dbInfo.Database);
 			await client.Query(query);
 
+			var existingCreatedAt = DateTime.UtcNow;
+			string existingStatus = "DRAFT";
+
 			var post = new Post
 			{
 				Id = new Thing("post", "first"),
 				Title = "[Updated] First article",
-				Content = "[Edit] This is my first article"
+				Content = "[Edit] This is my first article",
+				CreatedAt = existingCreatedAt,
+				Status = existingStatus
 			};
 
 			result = await client.Upsert(post);

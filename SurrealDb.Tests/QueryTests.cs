@@ -1,7 +1,7 @@
 using SurrealDb.Exceptions;
-using SurrealDb.Internals.Models;
 using SurrealDb.Models.Response;
 using System.Net;
+using System.Reflection;
 using System.Text;
 
 namespace SurrealDb.Tests;
@@ -79,9 +79,9 @@ public class QueryTests
 
 				await client.Query(query);
 			}
-
+			
 			{
-				string query = "SELECT;";
+				string query = "abc def;";
 
 				response = await client.Query(query);
 			}
@@ -89,7 +89,11 @@ public class QueryTests
 
 		if (isWebsocket)
 		{
-			await func.Should().ThrowAsync<SurrealDbException>().WithMessage("There was a problem with the database: Parse error on line 1 at character 0 when parsing 'SELECT;'");
+			await func.Should().ThrowAsync<SurrealDbException>().WithMessage(@"There was a problem with the database: Parse error: Failed to parse query at line 1 column 5 expected query to end
+  |
+1 | abc def;
+  |    ^ perhaps missing a semicolon on the previous statement?
+");
 		}
 		else
 		{
@@ -105,7 +109,11 @@ public class QueryTests
 			errorResult!.Code.Should().Be(HttpStatusCode.BadRequest);
 			errorResult!.Details.Should().Be("Request problems detected");
 			errorResult!.Description.Should().Be("There is a problem with your request. Refer to the documentation for further information.");
-			errorResult!.Information.Should().Be("There was a problem with the database: Parse error on line 1 at character 0 when parsing 'SELECT;'");
+			errorResult!.Information.Should().Be(@"There was a problem with the database: Parse error: Failed to parse query at line 1 column 5 expected query to end
+  |
+1 | abc def;
+  |    ^ perhaps missing a semicolon on the previous statement?
+");
 		}
 	}
 

@@ -1,7 +1,7 @@
 DEFINE TABLE duration SCHEMAFULL;
 
 DEFINE FIELD name ON duration TYPE string;
-DEFINE FIELD value ON duration TYPE duration;
+DEFINE FIELD value ON duration TYPE option<duration>;
 
 CREATE duration SET name = 'none', value = NONE;
 CREATE duration SET name = 'nanosecond', value = 2ns;
@@ -15,4 +15,3 @@ CREATE duration SET name = 'day', value = 6d;
 CREATE duration SET name = 'week', value = 28w;
 CREATE duration SET name = 'year', value = 12y;
 CREATE duration SET name = 'complex', value = 1h30m20s1350ms;
-CREATE duration SET name = 'decimal', value = '0.5h';

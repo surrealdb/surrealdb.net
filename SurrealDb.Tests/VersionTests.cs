@@ -12,6 +12,6 @@ public class VersionTests
 		using var client = surrealDbClientGenerator.Create(url);
         string result = await client.Version();
 
-        result.Should().Be("surrealdb-1.0.0-beta.9+20230402.5eafebd");
+        result.Should().Be("surrealdb-1.0.0+20230913.54aedcd");
     }
 }

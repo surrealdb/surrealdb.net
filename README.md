@@ -259,7 +259,7 @@ Unit/Integration tests are written using [xUnit](https://xunit.net/) and [Fluent
 You will need a local SurrealDB instance alongside the tests. Start one using the following command:
 
 ```
-surreal start --log debug --user root --pass root memory
+surreal start --log debug --user root --pass root memory --auth --allow-guests
 ```
 
 Once ready, go to the root directory of the project and run the following command:
@@ -275,7 +275,7 @@ This project also contains [benchmarks](https://benchmarkdotnet.org/) in order t
 You will need a local SurrealDB instance alongside the tests. Start one using the following command:
 
 ```
-surreal start --log debug --user root --pass root memory
+surreal start --log debug --user root --pass root memory --auth --allow-guests
 ```
 
 Once ready, go to the root directory of the project and run the following command:

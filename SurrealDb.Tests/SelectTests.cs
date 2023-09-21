@@ -7,15 +7,21 @@ public class Empty : SurrealDbRecord { }
 public class Post : SurrealDbRecord
 {
     public string Title { get; set; } = string.Empty;
+
 	public string Content { get; set; } = string.Empty;
+
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public DateTime? CreatedAt { get; set; }
-    public string Status { get; set; } = string.Empty;
+
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Status { get; set; }
 }
 
 public class ObjectTableId
 {
     [JsonPropertyName("location")]
     public string Location { get; set; } = string.Empty;
+
 	[JsonPropertyName("year")]
     public int Year { get; set; }
 }

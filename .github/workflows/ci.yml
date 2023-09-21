@@ -18,7 +18,7 @@ jobs:
         run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh
 
       - name: Run SurrealDB root
-        run: surreal start --user root --pass root memory &
+        run: surreal start --user root --pass root memory --auth --allow-guests &
 
       - name: Setup dotnet 6.0
         uses: actions/setup-dotnet@v3

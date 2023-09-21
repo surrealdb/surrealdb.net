@@ -88,7 +88,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken)
 	{
 		using var wrapper = CreateHttpClientWrapper();
-		using var body = CreateBodyContent(data);
+		using var body = data is null ? new StringContent("{}") : CreateBodyContent(data);
 
 		using var response = await wrapper.Instance.PostAsync($"/key/{table}", body, cancellationToken);
 

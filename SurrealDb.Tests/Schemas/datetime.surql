@@ -1,7 +1,7 @@
 DEFINE TABLE datetime SCHEMAFULL;
 
 DEFINE FIELD name ON datetime TYPE string;
-DEFINE FIELD value ON datetime TYPE datetime;
+DEFINE FIELD value ON datetime TYPE option<datetime>;
 
 CREATE datetime SET name = 'none', value = NONE;
 CREATE datetime SET name = "time", value = "2022-07-03T07:18:52Z";

@@ -304,7 +304,7 @@ public class ParserTests
         {
             var floatRecord = records.Find(r => r.Name == "float");
             floatRecord.Should().NotBeNull();
-            floatRecord!.Value.Should().Be(13.571938471938473m);
+            floatRecord!.Value.Should().Be(13.571938471938472m);
         }
     }
 
@@ -432,7 +432,7 @@ public class ParserTests
         {
             var floatRecord = records.Find(r => r.Name == "float");
             floatRecord.Should().NotBeNull();
-            floatRecord!.Value.Should().Be(13.571938471938473d);
+            floatRecord!.Value.Should().Be(13.571938471938472d);
         }
     }
 
@@ -481,13 +481,13 @@ public class ParserTests
 		{
 			var microsecondRecord = records.Find(r => r.Name == "microsecond");
 			microsecondRecord.Should().NotBeNull();
-			microsecondRecord!.Value.NanoSeconds.Should().Be(3000); // TODO : Fix this in SurrealDB
+			microsecondRecord!.Value.MicroSeconds.Should().Be(3);
 		}
 
 		{
 			var microsecondAliasRecord = records.Find(r => r.Name == "microsecond-alias");
 			microsecondAliasRecord.Should().NotBeNull();
-			microsecondAliasRecord!.Value.NanoSeconds.Should().Be(4000); // TODO : Fix this in SurrealDB
+			microsecondAliasRecord!.Value.MicroSeconds.Should().Be(4);
 		}
 
 		{
@@ -539,12 +539,6 @@ public class ParserTests
 			complexRecord!.Value.Seconds.Should().Be(21);
 			complexRecord!.Value.Minutes.Should().Be(30);
 			complexRecord!.Value.Hours.Should().Be(1);
-		}
-
-		{
-			var halfHourRecord = records.Find(r => r.Name == "decimal");
-			halfHourRecord.Should().NotBeNull();
-			halfHourRecord!.Value.Seconds.Should().Be(0);
 		}
 	}
 
@@ -640,12 +634,6 @@ public class ParserTests
 			complexRecord.Should().NotBeNull();
 			complexRecord!.Value.TotalSeconds.Should().Be(5421.35);
 		}
-
-		{
-			var halfHourRecord = records.Find(r => r.Name == "decimal");
-			halfHourRecord.Should().NotBeNull();
-			halfHourRecord!.Value.TotalSeconds.Should().Be(0);
-		}
 	}
 
 	[Theory]
@@ -684,13 +672,13 @@ public class ParserTests
 		{
 			var microsecondRecord = records.Find(r => r.Name == "microsecond");
 			microsecondRecord.Should().NotBeNull();
-			microsecondRecord!.Value.Should().Be("3000ns");
+			microsecondRecord!.Value.Should().Be("3µs");
 		}
 
 		{
 			var microsecondAliasRecord = records.Find(r => r.Name == "microsecond-alias");
 			microsecondAliasRecord.Should().NotBeNull();
-			microsecondAliasRecord!.Value.Should().Be("4000ns");
+			microsecondAliasRecord!.Value.Should().Be("4µs");
 		}
 
 		{
@@ -739,12 +727,6 @@ public class ParserTests
 			var complexRecord = records.Find(r => r.Name == "complex");
 			complexRecord.Should().NotBeNull();
 			complexRecord!.Value.Should().Be("1h30m21s350ms");
-		}
-
-		{
-			var halfHourRecord = records.Find(r => r.Name == "decimal");
-			halfHourRecord.Should().NotBeNull();
-			halfHourRecord!.Value.Should().Be("0ns");
 		}
 	}
 
@@ -839,12 +821,6 @@ public class ParserTests
             var complexRecord = records.Find(r => r.Name == "complex");
             complexRecord.Should().NotBeNull();
             complexRecord!.Value.Should().Be(new TimeOnly(01, 30, 21, 350));
-        }
-
-        {
-            var halfHourRecord = records.Find(r => r.Name == "decimal");
-            halfHourRecord.Should().NotBeNull();
-            halfHourRecord!.Value.Should().Be(new TimeOnly());
         }
     }
 
