@@ -234,6 +234,24 @@ This project was written following testing best practices:
 -   a vast majority of tests are integration tests, ensuring compatibility with a concrete SurrealDB version
 -   each integration test is using a separate SurrealDB instance
 
+### .NET release versions
+
+The .NET release versions must follow these rules:
+
+-   Should target at least the last 2 LTS versions
+-   Should target the last 3 LTS version for a maximum of 12 months after the latest LTS release
+
+So, for example,
+
+-   Given the following release of .NET 8:
+    -   The last 3 LTS: .NET standard 2.1, .NET 6, .NET 8
+-   Given the following release of .NET 9:
+    -   The last 2 LTS: .NET 6, .NET 8
+
+Note: The support of .NET standard 2.1 can be expanded if necessary.
+
+This will ensure a minimum of a 5 years compatibility which is close to the average time frame of any .NET application.
+
 ### Testing
 
 Unit/Integration tests are written using [xUnit](https://xunit.net/) and [FluentAssertions](https://fluentassertions.com/).
@@ -241,7 +259,7 @@ Unit/Integration tests are written using [xUnit](https://xunit.net/) and [Fluent
 You will need a local SurrealDB instance alongside the tests. Start one using the following command:
 
 ```bash
-surreal start --log debug --user root --pass root memory
+surreal start --log debug --user root --pass root memory --auth --allow-guests
 ```
 
 Once ready, go to the root directory of the project and run the following command:
@@ -257,7 +275,7 @@ This project also contains [benchmarks](https://benchmarkdotnet.org/) in order t
 You will need a local SurrealDB instance alongside the tests. Start one using the following command:
 
 ```bash
-surreal start --log debug --user root --pass root memory
+surreal start --log debug --user root --pass root memory --auth --allow-guests
 ```
 
 Once ready, go to the root directory of the project and run the following command:
