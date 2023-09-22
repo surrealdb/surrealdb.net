@@ -25,7 +25,7 @@ public partial class Thing
 		if (_separatorIndex <= 0)
 			throw new ArgumentException("Cannot detect separator on Thing", nameof(thing));
 
-		_isEscaped = IsIdEspaced(thing.AsSpan(_separatorIndex + 1));
+		_isEscaped = IsIdEscaped(thing.AsSpan(_separatorIndex + 1));
 	}
 
 	/// <summary>
@@ -44,7 +44,7 @@ public partial class Thing
 
 		_raw = stringBuilder.ToString().AsMemory();
 		_separatorIndex = table.Length;
-		_isEscaped = IsIdEspaced(id);
+		_isEscaped = IsIdEscaped(id);
 	}
 
 	internal Thing(ReadOnlySpan<char> table, ReadOnlySpan<char> id, SpecialRecordIdType specialRecordIdType) : this(table, id)
@@ -52,7 +52,7 @@ public partial class Thing
 		_specialRecordIdType = specialRecordIdType;
 	}
 
-	private static bool IsIdEspaced(ReadOnlySpan<char> idSpan)
+	private static bool IsIdEscaped(ReadOnlySpan<char> idSpan)
 	{
 		bool isDefaultEscaped = idSpan[0] == ThingConstants.PREFIX && idSpan[^1] == ThingConstants.SUFFIX;
 		bool isAlternativeEscaped = idSpan[0] == ThingConstants.ALTERNATE_ESCAPE && idSpan[^1] == ThingConstants.ALTERNATE_ESCAPE;
