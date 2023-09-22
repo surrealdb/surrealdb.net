@@ -1,0 +1,40 @@
+name: Benchmark Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  action:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download SurrealDB
+        run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh
+
+      - name: Run SurrealDB root
+        run: surreal start --user root --pass root memory --auth --allow-guests &
+
+      - name: Setup dotnet 6.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "6.0.x"
+
+      - name: Execute benchmarks
+        run: dotnet run -c Release --project SurrealDb.Benchmarks --filter '*'
+
+      - name: Download previous benchmark data
+        uses: actions/cache@v1
+        with:
+          path: ./cache
+          key: ${{ runner.os }}-benchmark
+
+      - name: Store benchmark result
+        uses: rhysd/github-action-benchmark@v1
+        with:
+          tool: "benchmarkdotnet"
+          output-file-path: BenchmarkDotNet.Artifacts/results/Combined.Benchmarks.json
+          external-data-json-path: ./cache/benchmark-data.json
