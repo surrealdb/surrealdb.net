@@ -73,7 +73,7 @@ public class DeleteBench : BaseBenchmark
 		return Run(_surrealdbWsTextClient!);
 	}
 
-	[Benchmark]
+	// 💡 Currently ignored benchmark: GitHub workflow need values to store benchmark results
 	public Task WsBinary()
 	{
 		throw new NotImplementedException();

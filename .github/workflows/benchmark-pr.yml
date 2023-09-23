@@ -24,7 +24,7 @@ jobs:
           dotnet-version: "6.0.x"
 
       - name: Execute benchmarks
-        run: dotnet run -c Release --project SurrealDb.Net.Benchmarks --filter '*'
+        run: sudo dotnet run -c Release --project SurrealDb.Net.Benchmarks --filter '*'
 
       - name: Download previous benchmark data
         uses: actions/cache@v1
