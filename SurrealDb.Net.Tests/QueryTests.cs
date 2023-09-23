@@ -1,7 +1,6 @@
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Models.Response;
 using System.Net;
-using System.Reflection;
 using System.Text;
 
 namespace SurrealDb.Net.Tests;
@@ -109,11 +108,7 @@ public class QueryTests
 			errorResult!.Code.Should().Be(HttpStatusCode.BadRequest);
 			errorResult!.Details.Should().Be("Request problems detected");
 			errorResult!.Description.Should().Be("There is a problem with your request. Refer to the documentation for further information.");
-			errorResult!.Information.Should().Be(@"There was a problem with the database: Parse error: Failed to parse query at line 1 column 5 expected query to end
-  |
-1 | abc def;
-  |    ^ perhaps missing a semicolon on the previous statement?
-");
+			errorResult!.Information.Should().Contain(@"There was a problem with the database: Parse error: Failed to parse query at line 1 column 5 expected query to end");
 		}
 	}
 

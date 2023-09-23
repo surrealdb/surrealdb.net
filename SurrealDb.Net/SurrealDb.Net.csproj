@@ -33,6 +33,7 @@
 		<PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.3.2" />
 		<PackageReference Include="Microsoft.Spatial" Version="7.18.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Semver" Version="2.3.0" />
 		<PackageReference Include="Superpower" Version="3.0.0" />
 		<PackageReference Include="System.Text.Json" Version="7.0.3" />
 		<PackageReference Include="Websocket.Client" Version="5.0.0" />
