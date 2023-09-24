@@ -5,9 +5,9 @@
 		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		
+
 		<PackageId>SurrealDb</PackageId>
-		<Version>1.0.0-preview001</Version>
+		<Version>1.0.0-beta.1</Version>
 		<Owners>Tobie Morgan Hitchcock</Owners>
 		<Description>The official SurrealDB library for .NET</Description>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -37,7 +37,7 @@
 		<PackageReference Include="System.Text.Json" Version="7.0.3" />
 		<PackageReference Include="Websocket.Client" Version="5.0.0" />
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<None Include="..\readme.md" Pack="true" PackagePath="\" />
 		<None Include="..\LICENSE" Pack="true" PackagePath="\" Visible="false" />
