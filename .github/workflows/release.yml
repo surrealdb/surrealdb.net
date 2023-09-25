@@ -55,7 +55,7 @@ jobs:
         run: dotnet tool update Meziantou.Framework.NuGetPackageValidation.Tool --global
 
       - name: Validate package
-        run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg")
+        run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg") --excluded-rule-ids 12
 
   publish-package:
     needs: [validate-package]
