@@ -6,7 +6,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
-		<PackageId>SurrealDb</PackageId>
+		<PackageId>surrealdb</PackageId>
 		<Version>0.1.2</Version>
 		<Authors>SurrealDB</Authors>
 		<Description>The official SurrealDB library for .NET</Description>
