@@ -7,7 +7,7 @@
 		<Nullable>enable</Nullable>
 
 		<PackageId>SurrealDb</PackageId>
-		<Version>0.1.0</Version>
+		<Version>0.1.1</Version>
 		<Authors>SurrealDB</Authors>
 		<Description>The official SurrealDB library for .NET</Description>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
