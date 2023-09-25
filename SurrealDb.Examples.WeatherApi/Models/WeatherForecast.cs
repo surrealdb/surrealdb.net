@@ -1,4 +1,4 @@
-using SurrealDb.Models;
+using SurrealDb.Net.Models;
 
 namespace SurrealDb.Examples.WeatherApi.Models;
 

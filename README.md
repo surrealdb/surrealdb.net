@@ -11,7 +11,7 @@ The official SurrealDB library for .NET
 ### Installation
 
 ```
-dotnet add package SurrealDb
+dotnet add package SurrealDb.Net
 ```
 
 ### How to use?
@@ -267,7 +267,7 @@ surreal start --log debug --user root --pass root memory --auth --allow-guests
 Once ready, go to the root directory of the project and run the following command:
 
 ```
-dotnet watch test --project SurrealDb.Tests
+dotnet watch test --project SurrealDb.Net.Tests
 ```
 
 ### Benchmarking
@@ -283,5 +283,5 @@ surreal start --log debug --user root --pass root memory --auth --allow-guests
 Once ready, go to the root directory of the project and run the following command:
 
 ```
-dotnet run -c Release --project SurrealDb.Benchmarks --filter '*'
+dotnet run -c Release --project SurrealDb.Net.Benchmarks --filter '*'
 ```
