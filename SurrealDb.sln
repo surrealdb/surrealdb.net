@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb", "SurrealDb\SurrealDb.csproj", "{F7F225BB-16F8-457D-AD6C-1A0DA5260147}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Net", "SurrealDb.Net\SurrealDb.Net.csproj", "{F7F225BB-16F8-457D-AD6C-1A0DA5260147}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Tests", "SurrealDb.Tests\SurrealDb.Tests.csproj", "{2600803C-957E-4C73-BAF1-767D589B1E80}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Net.Tests", "SurrealDb.Net.Tests\SurrealDb.Net.Tests.csproj", "{2600803C-957E-4C73-BAF1-767D589B1E80}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Benchmarks", "SurrealDb.Benchmarks\SurrealDb.Benchmarks.csproj", "{35E27857-58E5-4500-8E0C-91B66EE746F2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Net.Benchmarks", "SurrealDb.Net.Benchmarks\SurrealDb.Net.Benchmarks.csproj", "{35E27857-58E5-4500-8E0C-91B66EE746F2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Tests.Fixtures", "SurrealDb.Tests.Fixtures\SurrealDb.Tests.Fixtures.csproj", "{3ADDE8E8-A1BF-44C9-816D-1B2D5B86928C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Net.Tests.Fixtures", "SurrealDb.Net.Tests.Fixtures\SurrealDb.Net.Tests.Fixtures.csproj", "{3ADDE8E8-A1BF-44C9-816D-1B2D5B86928C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{C96942BD-CC4A-48C1-BC4D-54FB6EC5C168}"
 EndProject

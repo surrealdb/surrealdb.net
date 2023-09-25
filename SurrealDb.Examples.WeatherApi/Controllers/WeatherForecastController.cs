@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SurrealDb.Examples.WeatherApi.Models;
-using SurrealDb.Models;
+using SurrealDb.Net;
+using SurrealDb.Net.Models;
 
 namespace SurrealDb.Examples.WeatherApi.Controllers;
 
