@@ -8,7 +8,7 @@
 
 		<PackageId>SurrealDb</PackageId>
 		<Version>0.1.0</Version>
-		<Owners>Tobie Morgan Hitchcock</Owners>
+		<Authors>SurrealDB</Authors>
 		<Description>The official SurrealDB library for .NET</Description>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
