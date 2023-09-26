@@ -77,7 +77,7 @@ public class UpsertBench : BaseBenchmark
 		return Run(_surrealdbWsTextClient!, _postFaker, _posts[2]);
 	}
 
-	[Benchmark]
+	// 💡 Currently ignored benchmark: GitHub workflow need values to store benchmark results
 	public Task<Post> WsBinary()
 	{
 		throw new NotImplementedException();

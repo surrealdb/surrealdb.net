@@ -83,7 +83,7 @@ CANCEL TRANSACTION;";
 		return Run(_surrealdbWsTextClient!);
 	}
 
-	[Benchmark]
+	// 💡 Currently ignored benchmark: GitHub workflow need values to store benchmark results
 	public Task<List<Post>> WsBinary()
 	{
 		throw new NotImplementedException();

@@ -74,7 +74,7 @@ public class ScenarioBench : BaseBenchmark
 		return Run(_surrealdbWsTextClient!);
 	}
 
-	[Benchmark]
+	// 💡 Currently ignored benchmark: GitHub workflow need values to store benchmark results
 	public Task<List<ProductAlsoPurchased>> WsBinary()
 	{
 		throw new NotImplementedException();
