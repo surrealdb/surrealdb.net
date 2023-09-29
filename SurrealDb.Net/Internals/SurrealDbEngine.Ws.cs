@@ -338,6 +338,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		_wsClient.Send(payload);
 
 		var response = await taskCompletionSource.Task;
+
+		_responseTasks.TryRemove(id, out _);
+
 		cancellationToken.ThrowIfCancellationRequested();
 
 		return response;
