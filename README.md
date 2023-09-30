@@ -7,7 +7,6 @@ The official SurrealDB library for .NET.
 [![](https://img.shields.io/badge/license-Apache_License_2.0-00bfff.svg?style=flat-square)](https://github.com/surrealdb/surrealdb.net)
 [![](https://img.shields.io/nuget/v/surrealdb.net?style=flat-square)](https://www.nuget.org/packages/SurrealDb.Net)
 
-
 ⚠️ This driver is currently community maintained.
 
 ## Getting started
@@ -281,7 +280,7 @@ This project also contains [benchmarks](https://benchmarkdotnet.org/) in order t
 You will need a local SurrealDB instance alongside the tests. Start one using the following command:
 
 ```
-surreal start --log debug --user root --pass root memory --auth --allow-guests
+surreal start --user root --pass root memory --auth --allow-guests
 ```
 
 Once ready, go to the root directory of the project and run the following command:
