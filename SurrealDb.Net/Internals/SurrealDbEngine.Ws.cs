@@ -65,7 +65,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 									stream,
 									SurrealDbSerializerOptions.Default,
 									cancellationToken
-								);
+								).ConfigureAwait(false);
 								break;
 							}
 					}
@@ -93,7 +93,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task Authenticate(Jwt jwt, CancellationToken cancellationToken)
 	{
-		await SendRequest("authenticate", new() { jwt.Token }, cancellationToken);
+		await SendRequest("authenticate", new() { jwt.Token }, cancellationToken).ConfigureAwait(false);
 	}
 
 	public void Configure(string? ns, string? db, string? username, string? password)
@@ -120,16 +120,16 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		if (_wsClient.IsStarted)
 			throw new SurrealDbException("Client already started");
 
-		await _wsClient.StartOrFail();
+		await _wsClient.StartOrFail().ConfigureAwait(false);
 
 		if (_config.Ns is not null)
-			await Use(_config.Ns, _config.Db!, cancellationToken);
+			await Use(_config.Ns, _config.Db!, cancellationToken).ConfigureAwait(false);
 
 		if (_config.Auth is BasicAuth basicAuth)
-			await SignIn(new RootAuth { Username = basicAuth.Username, Password = basicAuth.Password! }, cancellationToken);
+			await SignIn(new RootAuth { Username = basicAuth.Username, Password = basicAuth.Password! }, cancellationToken).ConfigureAwait(false);
 
 		if (_config.Auth is BearerAuth bearerAuth)
-			await Authenticate(new Jwt { Token = bearerAuth.Token }, cancellationToken);
+			await Authenticate(new Jwt { Token = bearerAuth.Token }, cancellationToken).ConfigureAwait(false);
 
 		_config.Reset();
 	}
@@ -139,12 +139,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		if (data.Id is null)
 			throw new SurrealDbException("Cannot create a record without an Id");
 
-		var dbResponse = await SendRequest("create", new() { data.Id.ToString(), data }, cancellationToken);
+		var dbResponse = await SendRequest("create", new() { data.Id.ToString(), data }, cancellationToken).ConfigureAwait(false);
 		return dbResponse.GetValue<T>()!;
 	}
 	public async Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken)
 	{
-		var dbResponse = await SendRequest("create", new() { table, data }, cancellationToken);
+		var dbResponse = await SendRequest("create", new() { table, data }, cancellationToken).ConfigureAwait(false);
 
 		var list = dbResponse.GetValue<List<T>>() ?? new();
 		return list.First();
@@ -152,11 +152,11 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task Delete(string table, CancellationToken cancellationToken)
     {
-		await SendRequest("delete", new() { table }, cancellationToken);
+		await SendRequest("delete", new() { table }, cancellationToken).ConfigureAwait(false);
 	}
     public async Task<bool> Delete(Thing thing, CancellationToken cancellationToken)
 	{
-		var dbResponse = await SendRequest("delete", new() { thing.ToString() }, cancellationToken);
+		var dbResponse = await SendRequest("delete", new() { thing.ToString() }, cancellationToken).ConfigureAwait(false);
 
 		var valueKind = dbResponse.Result.ValueKind;
 		return valueKind != JsonValueKind.Null && valueKind != JsonValueKind.Undefined;
@@ -187,7 +187,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
 		try
 		{
-			await _wsClient.StartOrFail();
+			await _wsClient.StartOrFail().ConfigureAwait(false);
 			return true;
 		}
 		catch (Exception)
@@ -198,7 +198,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
 	public async Task Invalidate(CancellationToken cancellationToken)
 	{
-		await SendRequest("invalidate", null, cancellationToken);
+		await SendRequest("invalidate", null, cancellationToken).ConfigureAwait(false);
 	}
 
 	public async Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken) where TMerge : Record
@@ -206,12 +206,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		if (data.Id is null)
 			throw new SurrealDbException("Cannot create a record without an Id");
 
-		var dbResponse = await SendRequest("merge", new() { data.Id.ToWsString(), data }, cancellationToken);
+		var dbResponse = await SendRequest("merge", new() { data.Id.ToWsString(), data }, cancellationToken).ConfigureAwait(false);
 		return dbResponse.GetValue<TOutput>()!;
 	}
 	public async Task<T> Merge<T>(Thing thing, Dictionary<string, object> data, CancellationToken cancellationToken)
 	{
-		var dbResponse = await SendRequest("merge", new() { thing.ToWsString(), data }, cancellationToken);
+		var dbResponse = await SendRequest("merge", new() { thing.ToWsString(), data }, cancellationToken).ConfigureAwait(false);
 		return dbResponse.GetValue<T>()!;
 	}
 
@@ -221,7 +221,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		CancellationToken cancellationToken
 	)
 	{
-		var dbResponse = await SendRequest("query", new() { query, parameters }, cancellationToken);
+		var dbResponse = await SendRequest("query", new() { query, parameters }, cancellationToken).ConfigureAwait(false);
 
 		var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? new();
 		return new SurrealDbResponse(list);
@@ -229,41 +229,41 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task<List<T>> Select<T>(string table, CancellationToken cancellationToken)
 	{
-		var dbResponse = await SendRequest("select", new() { table }, cancellationToken);
+		var dbResponse = await SendRequest("select", new() { table }, cancellationToken).ConfigureAwait(false);
 		return dbResponse.GetValue<List<T>>()!;
 	}
     public async Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken)
 	{
-		var dbResponse = await SendRequest("select", new() { thing.ToWsString() }, cancellationToken);
+		var dbResponse = await SendRequest("select", new() { thing.ToWsString() }, cancellationToken).ConfigureAwait(false);
 		return dbResponse.GetValue<T?>();
 	}
 
     public async Task Set(string key, object value, CancellationToken cancellationToken)
 	{
-		await SendRequest("let", new() { key, value }, cancellationToken);
+		await SendRequest("let", new() { key, value }, cancellationToken).ConfigureAwait(false);
 	}
 
     public async Task SignIn(RootAuth rootAuth, CancellationToken cancellationToken)
 	{
-		await SendRequest("signin", new() { rootAuth }, cancellationToken);
+		await SendRequest("signin", new() { rootAuth }, cancellationToken).ConfigureAwait(false);
 	}
 	public async Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken)
 	{
-		var dbResponse = await SendRequest("signin", new() { nsAuth }, cancellationToken);
+		var dbResponse = await SendRequest("signin", new() { nsAuth }, cancellationToken).ConfigureAwait(false);
 		var token = dbResponse.GetValue<string>()!;
 
 		return new Jwt { Token = token! };
 	}
 	public async Task<Jwt> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken)
 	{
-		var dbResponse = await SendRequest("signin", new() { dbAuth }, cancellationToken);
+		var dbResponse = await SendRequest("signin", new() { dbAuth }, cancellationToken).ConfigureAwait(false);
 		var token = dbResponse.GetValue<string>()!;
 
 		return new Jwt { Token = token! };
 	}
 	public async Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth
 	{
-		var dbResponse = await SendRequest("signin", new() { scopeAuth }, cancellationToken);
+		var dbResponse = await SendRequest("signin", new() { scopeAuth }, cancellationToken).ConfigureAwait(false);
 		var token = dbResponse.GetValue<string>()!;
 
 		return new Jwt { Token = token! };
@@ -271,15 +271,15 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
 	public async Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken) where T : ScopeAuth
 	{
-		var dbResponse = await SendRequest("signup", new() { scopeAuth }, cancellationToken);
+		var dbResponse = await SendRequest("signup", new() { scopeAuth }, cancellationToken).ConfigureAwait(false);
 		var token = dbResponse.GetValue<string>()!;
 
 		return new Jwt { Token = token! };
 	}
 
-	public Task Unset(string key, CancellationToken cancellationToken)
+	public async Task Unset(string key, CancellationToken cancellationToken)
 	{
-		return SendRequest("unset", new() { key }, cancellationToken);
+		await SendRequest("unset", new() { key }, cancellationToken).ConfigureAwait(false);
 	}
 
 	public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken) where T : Record
@@ -287,18 +287,18 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		if (data.Id is null)
 			throw new SurrealDbException("Cannot create a record without an Id");
 
-		var dbResponse = await SendRequest("update", new() { data.Id.ToWsString(), data }, cancellationToken);
+		var dbResponse = await SendRequest("update", new() { data.Id.ToWsString(), data }, cancellationToken).ConfigureAwait(false);
 		return dbResponse.GetValue<T>()!;
 	}
 
 	public async Task Use(string ns, string db, CancellationToken cancellationToken)
     {
-		await SendRequest("use", new() { ns, db }, cancellationToken);
+		await SendRequest("use", new() { ns, db }, cancellationToken).ConfigureAwait(false);
 	}
 
 	public async Task<string> Version(CancellationToken cancellationToken)
 	{
-		var dbResponse = await SendRequest("version", null, cancellationToken);
+		var dbResponse = await SendRequest("version", null, cancellationToken).ConfigureAwait(false);
 		return dbResponse.GetValue<string>()!;
 	}
 
@@ -306,7 +306,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 	{
 		if (!_wsClient.IsStarted)
 		{
-			await Connect(cancellationToken);
+			await Connect(cancellationToken).ConfigureAwait(false);
 			cancellationToken.ThrowIfCancellationRequested();
 		}
 
@@ -330,14 +330,16 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		};
 
 		using var stream = _memoryStreamManager.GetStream();
-		await JsonSerializer.SerializeAsync(stream, request, SurrealDbSerializerOptions.Default, cancellationToken);
+		await JsonSerializer
+			.SerializeAsync(stream, request, SurrealDbSerializerOptions.Default, cancellationToken)
+			.ConfigureAwait(false);
 		stream.Seek(0, SeekOrigin.Begin);
 		using var reader = new StreamReader(stream);
-		string payload = await reader.ReadToEndAsync();
+		string payload = await reader.ReadToEndAsync().ConfigureAwait(false);
 
 		_wsClient.Send(payload);
 
-		var response = await taskCompletionSource.Task;
+		var response = await taskCompletionSource.Task.ConfigureAwait(false);
 		cancellationToken.ThrowIfCancellationRequested();
 
 		return response;
