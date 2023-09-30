@@ -1,0 +1,203 @@
+:root {
+	--system-font-app: ui-sans-serif, system-ui, -apple-system, "Inter",
+		"Helvetica Neue", "Helvetica", "Arial", sans-serif, "Apple Color Emoji",
+		"Segoe UI Emoji", "Segoe UI Symbol";
+	--system-font-mono: ui-monospace, "SF Mono", "SFMono-Regular",
+		"DejaVu Sans Mono", "Menlo", "Consolas", monospace;
+	--system-font-serif: ui-serif, "New York", "NewYork-Regular", "Noto Serif",
+		"Droid Serif", "Times New Roman", "Times", serif;
+	--system-font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+		"Segoe UI", "Roboto", "Ubuntu", "Helvetica", "Arial", sans-serif,
+		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+:root {
+	--text-color: #ffffff;
+	--back-color: #000000;
+	--dark-color: #151517;
+	--faint-color: #989cad;
+	--hover-color: #ff009e;
+	--popup-color: #151517;
+	--coder-color: #151517;
+	--boxes-color: #151517;
+	--input-color: #151517;
+	--split-color: #141416;
+	--darker-color: #1b202c;
+	--border-color: #363c4e;
+	--sidebar-color: #151517;
+
+	--scrollbar-thumb-bg-color: var(--faint-color);
+}
+
+body {
+	font-family: var(--system-font-app);
+}
+
+h4 {
+	border-bottom: none;
+}
+
+li,
+n,
+p {
+	font-family: var(--system-font-app);
+	color: var(--faint-color);
+	font-weight: 400;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+}
+
+a,
+a:focus,
+a:hover,
+nav a:focus,
+nav a.sidebar-item:hover,
+nav a.sidebar-item:focus {
+	text-decoration: none;
+	transition: color 0.3s;
+}
+
+nav a.active,
+nav a.active:hover,
+nav a.active:focus {
+	color: var(--hover-color) !important;
+}
+
+a {
+	color: var(--text-color);
+}
+#breadcrumb a {
+	color: var(--faint-color);
+}
+
+a:hover,
+#breadcrumb a:hover,
+nav a:hover {
+	color: var(--hover-color) !important;
+}
+
+#toc ul.level1 > li > a,
+#toc ul.level1 > li > a:hover,
+#toc ul.level1 > li > a:focus,
+#toc ul.level1 > li > a.active,
+#toc ul.level1 > li > a.active:hover,
+#toc ul.level1 > li > a.active:focus {
+	background-color: transparent !important;
+}
+
+#sidebar {
+	background-color: var(--sidebar-color);
+}
+#breadcrumb,
+.main-panel {
+	background-color: var(--back-color);
+}
+
+.brand {
+	justify-content: center;
+	gap: 10px;
+	font-weight: bold;
+}
+.brand-title {
+	margin-top: 0;
+	display: flex;
+	align-items: center;
+	gap: 7px;
+}
+.brand-title-img {
+	height: 18px;
+	margin-bottom: -2px;
+}
+a.brand .brand-title {
+	color: inherit;
+}
+
+.sidesearch .search-icon,
+.toc-filter > .filter-icon {
+	font-size: 14px;
+	top: 7px;
+}
+
+.footer {
+	display: none;
+}
+
+pre,
+pre[class*="language-"] {
+	padding: 20px;
+	overflow: auto;
+	border-radius: 0;
+
+	margin: 0;
+	color: var(--text-color);
+	text-align: left;
+	white-space: pre;
+	line-height: 1.75;
+	word-break: normal;
+	word-spacing: normal;
+	background-color: var(--dark-color);
+	font-family: var(--system-font-mono);
+	text-shadow: none;
+	font-size: 15px;
+
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+
+	-webkit-hyphens: none;
+	-moz-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+/* theme override of highlight.js (from okaida theme: https://github.com/PrismJS/prism/blob/master/themes/prism-okaidia.css) */
+.hljs-keyword,
+.hljs-built_in,
+.hljs-type {
+	color: #66d9ef;
+}
+
+.hljs-property,
+.hljs-attr,
+.hljs-symbol,
+.hljs-variable.constant,
+.hljs-deletion {
+	color: #f92672;
+}
+
+.hljs-comment,
+.hljs-doctag {
+	color: #8292a2;
+}
+
+.hljs-literal,
+.hljs-number {
+	color: #ae81ff;
+}
+
+.hljs-title,
+.hljs-params,
+.hljs-meta {
+	color: #e6db74;
+}
+
+.hljs-string,
+.hljs-addition {
+	color: #a6e22e;
+}
+
+.hljs-operator,
+.hljs-variable.language {
+	color: #f8f8f2;
+}
+
+.hljs-regex {
+	color: #fd971f;
+}
+
+.hljs-punctuation {
+	color: #f8f8f2;
+}
