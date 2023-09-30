@@ -3,7 +3,7 @@
     {
       "src": [
         {
-          "files": ["**/SurrealDB.csproj"],
+          "files": ["**/SurrealDb.Net.csproj"],
           "src": "../"
         }
       ],

@@ -2,6 +2,6 @@
   href: index.html
 - name: Documentation
   href: api/
-  homepage: api/SurrealDb.html
+  homepage: api/SurrealDb.Net.html
 - name: GitHub
   href: https://github.com/surrealdb/surrealdb.net
