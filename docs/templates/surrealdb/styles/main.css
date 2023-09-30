@@ -13,18 +13,20 @@
 
 :root {
 	--text-color: #ffffff;
-	--back-color: #1a202d;
-	--dark-color: #363c4e;
+	--back-color: #000000;
+	--dark-color: #151517;
 	--faint-color: #989cad;
 	--hover-color: #ff009e;
-	--popup-color: #272e3c;
-	--coder-color: #272e3c;
-	--boxes-color: #272e3c;
-	--input-color: #272e3c;
+	--popup-color: #151517;
+	--coder-color: #151517;
+	--boxes-color: #151517;
+	--input-color: #151517;
 	--split-color: #141416;
 	--darker-color: #1b202c;
 	--border-color: #363c4e;
-	--sidebar-color: #272e3c;
+	--sidebar-color: #151517;
+
+	--scrollbar-thumb-bg-color: var(--faint-color);
 }
 
 body {
@@ -124,19 +126,17 @@ pre,
 pre[class*="language-"] {
 	padding: 20px;
 	overflow: auto;
-	box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3),
-		inset 0 1px 1px rgba(255, 255, 255, 0.1);
+	border-radius: 0;
 
 	margin: 0;
-	color: #fff;
+	color: var(--text-color);
 	text-align: left;
 	white-space: pre;
 	line-height: 1.75;
 	word-break: normal;
 	word-spacing: normal;
-	background-color: var(--coder-color);
+	background-color: var(--dark-color);
 	font-family: var(--system-font-mono);
-	border-radius: 16px;
 	text-shadow: none;
 	font-size: 15px;
 
