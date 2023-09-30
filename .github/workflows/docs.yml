@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feat/generated-docs
+      - feat/auto-generated-docs
 
 jobs:
   publish-docs:
