@@ -18,7 +18,7 @@ services.AddSwaggerGen(c =>
 	var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 	c.IncludeXmlComments(xmlPath);
 });
-services.AddSurreal(configuration.GetConnectionString("SurrealDB"));
+services.AddSurreal(configuration.GetConnectionString("SurrealDB")!);
 
 var app = builder.Build();
 
