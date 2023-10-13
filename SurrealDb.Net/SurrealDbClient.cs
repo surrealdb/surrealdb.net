@@ -4,6 +4,7 @@ using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.Response;
+using System.Text.Json;
 
 namespace SurrealDb.Net;
 
@@ -23,34 +24,46 @@ public class SurrealDbClient : ISurrealDbClient
 	/// </summary>
 	/// <param name="endpoint">The endpoint to access a SurrealDB instance.</param>
 	/// <param name="httpClientFactory">An IHttpClientFactory instance, or none.</param>
+	/// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
 	/// <exception cref="ArgumentException"></exception>
-	public SurrealDbClient(string endpoint, IHttpClientFactory? httpClientFactory = null)
-		: this(new(endpoint, httpClientFactory)) { }
+	public SurrealDbClient(
+		string endpoint,
+		IHttpClientFactory? httpClientFactory = null,
+		Action<JsonSerializerOptions>? configureJsonSerializerOptions = null
+	) : this(new SurrealDbClientParams(endpoint), httpClientFactory, configureJsonSerializerOptions) { }
 
 	/// <summary>
 	/// Creates a new SurrealDbClient using a specific configuration.
 	/// </summary>
 	/// <param name="configuration">The configuration options for the SurrealDbClient.</param>
 	/// <param name="httpClientFactory">An IHttpClientFactory instance, or none.</param>
+	/// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
 	/// <exception cref="ArgumentException"></exception>
 	/// <exception cref="ArgumentNullException"></exception>
-	public SurrealDbClient(SurrealDbOptions configuration, IHttpClientFactory? httpClientFactory = null)
-		: this(new(configuration, httpClientFactory)) { }
+	public SurrealDbClient(
+		SurrealDbOptions configuration,
+		IHttpClientFactory? httpClientFactory = null,
+		Action<JsonSerializerOptions>? configureJsonSerializerOptions = null
+	) : this(new SurrealDbClientParams(configuration), httpClientFactory, configureJsonSerializerOptions) { }
 
-	internal SurrealDbClient(SurrealDbClientParams parameters)
+	internal SurrealDbClient(
+		SurrealDbClientParams parameters,
+		IHttpClientFactory? httpClientFactory = null,
+		Action<JsonSerializerOptions>? configureJsonSerializerOptions = null
+	)
     {
 		if (parameters.Endpoint is null)
 			throw new ArgumentNullException(nameof(parameters), "The endpoint is required.");
 
         Uri = new Uri(parameters.Endpoint);
-        _httpClientFactory = parameters.HttpClientFactory;
+        _httpClientFactory = httpClientFactory;
 
         var protocol = Uri.Scheme;
 
         _engine = protocol switch
         {
-            "http" or "https" => new SurrealDbHttpEngine(Uri, _httpClientFactory),
-            "ws" or "wss" => new SurrealDbWsEngine(Uri),
+            "http" or "https" => new SurrealDbHttpEngine(Uri, _httpClientFactory, configureJsonSerializerOptions),
+            "ws" or "wss" => new SurrealDbWsEngine(Uri, configureJsonSerializerOptions),
             _ => throw new ArgumentException("This protocol is not supported."),
         };
 
