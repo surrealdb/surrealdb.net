@@ -7,7 +7,6 @@ The official SurrealDB library for .NET.
 [![](https://img.shields.io/badge/license-Apache_License_2.0-00bfff.svg?style=flat-square)](https://github.com/surrealdb/surrealdb.net)
 [![](https://img.shields.io/nuget/v/surrealdb.net?style=flat-square)](https://www.nuget.org/packages/SurrealDb.Net)
 
-
 ⚠️ This driver is currently community maintained.
 
 ## Getting started
@@ -244,19 +243,18 @@ This project was written following testing best practices:
 
 The .NET release versions must follow these rules:
 
--   Should target at least the last 2 LTS versions
--   Should target the last 3 LTS version for a maximum of 12 months after the latest LTS release
+-   Should target at least the latest LTS (Long-Term Support) version
+-   Should target at least the latest STS (Standard-Term Support) version
 
-So, for example,
+SurrealDb.Net targets .NET versions following the [.NET Support Policy by Microsoft](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core). Additionally, SurrealDb.Net targets .NET Standard 2.1 explicitly to continue support of the Mono runtime (Unity, Xamarin, etc...).
 
--   Given the following release of .NET 8:
-    -   The last 3 LTS: .NET standard 2.1, .NET 6, .NET 8
--   Given the following release of .NET 9:
-    -   The last 2 LTS: .NET 6, .NET 8
+Note that the support for .NET standard 2.1 will be maintained until further notice.
 
-Note: The support of .NET standard 2.1 can be expanded if necessary.
-
-This will ensure a minimum of a 5 years compatibility which is close to the average time frame of any .NET application.
+| Version           | Description | Release Date     | End of Support    |
+| ----------------- | ----------- | ---------------- | ----------------- |
+| .NET Standard 2.1 |             | June 27, 2016    | N/A               |
+| .NET 6            | Current LTS | November 8, 2021 | November 12, 2024 |
+| .NET 7            | STS         | November 8, 2022 | May 14, 2024      |
 
 ### Testing
 
