@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.1;net6.0</TargetFrameworks>
+		<TargetFrameworks>netstandard2.1;net6.0;net7.0</TargetFrameworks>
 		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -33,6 +33,7 @@
 		<PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.3.2" />
 		<PackageReference Include="Microsoft.Spatial" Version="7.18.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Semver" Version="2.3.0" />
 		<PackageReference Include="Superpower" Version="3.0.0" />
 		<PackageReference Include="System.Text.Json" Version="7.0.3" />
 		<PackageReference Include="Websocket.Client" Version="5.0.0" />
