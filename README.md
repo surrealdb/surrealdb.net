@@ -164,7 +164,7 @@ public class WeatherForecastController : ControllerBase
 	}
 
 	[HttpGet]
-	[Route("/:id")]
+	[Route("/{id}")]
 	public async Task<IActionResult> Get(string id, CancellationToken cancellationToken)
 	{
 		var weatherForecast = await _surrealDbClient.Select<WeatherForecast>(Table, id, cancellationToken);
@@ -198,7 +198,7 @@ public class WeatherForecastController : ControllerBase
 	}
 
 	[HttpPatch]
-	[Route("/:id")]
+	[Route("/{id}")]
 	public Task<WeatherForecast> Patch(string id, Dictionary<string, object> data, CancellationToken cancellationToken)
 	{
 		var thing = new Thing(Table, id);
@@ -214,7 +214,7 @@ public class WeatherForecastController : ControllerBase
 	}
 
 	[HttpDelete]
-	[Route("/:id")]
+	[Route("/{id}")]
 	public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
 	{
 		bool success = await _surrealDbClient.Delete(Table, id, cancellationToken);
