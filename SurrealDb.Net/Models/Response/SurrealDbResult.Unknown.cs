@@ -5,5 +5,5 @@ namespace SurrealDb.Net.Models.Response;
 /// </summary>
 public sealed class SurrealDbUnknownResult : ISurrealDbErrorResult
 {
-	public bool IsOk => false;
+    public bool IsOk => false;
 }

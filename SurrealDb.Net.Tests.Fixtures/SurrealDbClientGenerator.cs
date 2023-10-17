@@ -7,7 +7,7 @@ namespace SurrealDb.Net.Tests.Fixtures;
 public class DatabaseInfo
 {
     public string Namespace { get; set; } = string.Empty;
-	public string Database { get; set; } = string.Empty;
+    public string Database { get; set; } = string.Empty;
 }
 
 public class DatabaseInfoFaker : Faker<DatabaseInfo>
@@ -30,14 +30,11 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
     {
         var services = new ServiceCollection();
 
-		var options = SurrealDbOptions
-			.Create()
-			.WithEndpoint(endpoint)
-			.Build();
+        var options = SurrealDbOptions.Create().WithEndpoint(endpoint).Build();
 
-		services.AddSurreal(options);
+        services.AddSurreal(options);
 
-		_serviceProvider = services.BuildServiceProvider(validateScopes: true);
+        _serviceProvider = services.BuildServiceProvider(validateScopes: true);
 
         return _serviceProvider.GetRequiredService<SurrealDbClient>();
     }
@@ -53,18 +50,21 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
         _serviceProvider?.Dispose();
     }
 
-	public async ValueTask DisposeAsync()
-	{
-		if (_databaseInfo is not null)
-		{
-			using var client = new SurrealDbClient("http://localhost:8000", _serviceProvider!.GetRequiredService<IHttpClientFactory>());
-			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-			await client.Use(_databaseInfo.Namespace, _databaseInfo.Database);
+    public async ValueTask DisposeAsync()
+    {
+        if (_databaseInfo is not null)
+        {
+            using var client = new SurrealDbClient(
+                "http://localhost:8000",
+                _serviceProvider!.GetRequiredService<IHttpClientFactory>()
+            );
+            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+            await client.Use(_databaseInfo.Namespace, _databaseInfo.Database);
 
-			string query = $"REMOVE DATABASE {_databaseInfo.Database};";
-			await client.Query(query);
-		}
+            string query = $"REMOVE DATABASE {_databaseInfo.Database};";
+            await client.Query(query);
+        }
 
-		Dispose();
-	}
+        Dispose();
+    }
 }

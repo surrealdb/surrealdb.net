@@ -3,10 +3,10 @@ namespace SurrealDb.Net.Internals.Parsers;
 
 internal class TimeOnlyParser
 {
-	public static TimeOnly Parse(string input)
-	{
-		var timeSpan = TimeSpanParser.Parse(input);
-		return new TimeOnly(timeSpan.Ticks % TimeSpan.TicksPerDay);
-	}
+    public static TimeOnly Parse(string input)
+    {
+        var timeSpan = TimeSpanParser.Parse(input);
+        return new TimeOnly(timeSpan.Ticks % TimeSpan.TicksPerDay);
+    }
 }
 #endif

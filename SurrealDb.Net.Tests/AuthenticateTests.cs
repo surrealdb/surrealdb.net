@@ -4,113 +4,125 @@ namespace SurrealDb.Net.Tests;
 
 public class AuthenticateTests
 {
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldAuthenticate(string url)
-	{
-		Jwt? jwt = null;
-		List<Post>? list = null;
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldAuthenticate(string url)
+    {
+        Jwt? jwt = null;
+        List<Post>? list = null;
 
-		Func<Task> func = async () =>
-		{
-			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			using var client = surrealDbClientGenerator.Create(url);
-			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-			await client.Use(dbInfo.Namespace, dbInfo.Database);
+            using var client = surrealDbClientGenerator.Create(url);
+            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-			{
-				string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/user.surql");
-				string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+            {
+                string filePath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "Schemas/user.surql"
+                );
+                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-				string query = fileContent;
-				await client.Query(query);
-			}
+                string query = fileContent;
+                await client.Query(query);
+            }
 
-			{
-				string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/post.surql");
-				string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+            {
+                string filePath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "Schemas/post.surql"
+                );
+                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-				string query = fileContent;
-				await client.Query(query);
-			}
+                string query = fileContent;
+                await client.Query(query);
+            }
 
-			var authParams = new AuthParams
-			{
-				Namespace = dbInfo.Namespace,
-				Database = dbInfo.Database,
-				Scope = "user_scope",
-				Username = "johndoe",
-				Email = "john.doe@example.com",
-				Password = "password123"
-			};
+            var authParams = new AuthParams
+            {
+                Namespace = dbInfo.Namespace,
+                Database = dbInfo.Database,
+                Scope = "user_scope",
+                Username = "johndoe",
+                Email = "john.doe@example.com",
+                Password = "password123"
+            };
 
-			jwt = await client.SignUp(authParams);
+            jwt = await client.SignUp(authParams);
 
-			await client.Authenticate(jwt);
+            await client.Authenticate(jwt);
 
-			list = await client.Select<Post>("post");
-		};
+            list = await client.Select<Post>("post");
+        };
 
-		await func.Should().NotThrowAsync();
+        await func.Should().NotThrowAsync();
 
-		list.Should().NotBeNull().And.HaveCount(2);
-	}
+        list.Should().NotBeNull().And.HaveCount(2);
+    }
 
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldFailWhenInvalidate(string url)
-	{
-		Jwt? jwt = null;
-		List<Post>? list = null;
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldFailWhenInvalidate(string url)
+    {
+        Jwt? jwt = null;
+        List<Post>? list = null;
 
-		Func<Task> func = async () =>
-		{
-			await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-			var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			using var client = surrealDbClientGenerator.Create(url);
-			await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-			await client.Use(dbInfo.Namespace, dbInfo.Database);
+            using var client = surrealDbClientGenerator.Create(url);
+            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-			{
-				string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/user.surql");
-				string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+            {
+                string filePath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "Schemas/user.surql"
+                );
+                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-				string query = fileContent;
-				await client.Query(query);
-			}
+                string query = fileContent;
+                await client.Query(query);
+            }
 
-			{
-				string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/post.surql");
-				string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+            {
+                string filePath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "Schemas/post.surql"
+                );
+                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-				string query = fileContent;
-				await client.Query(query);
-			}
+                string query = fileContent;
+                await client.Query(query);
+            }
 
-			var authParams = new AuthParams
-			{
-				Namespace = dbInfo.Namespace,
-				Database = dbInfo.Database,
-				Scope = "user_scope",
-				Username = "johndoe",
-				Email = "john.doe@example.com",
-				Password = "password123"
-			};
+            var authParams = new AuthParams
+            {
+                Namespace = dbInfo.Namespace,
+                Database = dbInfo.Database,
+                Scope = "user_scope",
+                Username = "johndoe",
+                Email = "john.doe@example.com",
+                Password = "password123"
+            };
 
-			jwt = await client.SignUp(authParams);
+            jwt = await client.SignUp(authParams);
 
-			await client.Invalidate();
+            await client.Invalidate();
 
-			list = await client.Select<Post>("post");
-		};
+            list = await client.Select<Post>("post");
+        };
 
-		await func.Should().NotThrowAsync();
+        await func.Should().NotThrowAsync();
 
-		list.Should().NotBeNull().And.HaveCount(0);
-	}
+        list.Should().NotBeNull().And.HaveCount(0);
+    }
 }

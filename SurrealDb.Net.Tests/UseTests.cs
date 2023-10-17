@@ -12,7 +12,7 @@ public class UseTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(url);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
         };
 

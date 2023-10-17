@@ -6,89 +6,93 @@ namespace SurrealDb.Net.Internals.Json.Converters.Spatial;
 
 internal static class MultiPointConverter
 {
-	public const string TypeValue = "MultiPoint";
+    public const string TypeValue = "MultiPoint";
 
-	public static void ConstructGeometryMultiPoint<T>(
-		ref JsonElement coordinatesProperty,
-		GeometryFactory<T> geometryBuilder
-	) where T : Geometry
-	{
-		foreach (var point in coordinatesProperty.EnumerateArray())
-		{
-			var x = point[0].GetDouble();
-			var y = point[1].GetDouble();
+    public static void ConstructGeometryMultiPoint<T>(
+        ref JsonElement coordinatesProperty,
+        GeometryFactory<T> geometryBuilder
+    )
+        where T : Geometry
+    {
+        foreach (var point in coordinatesProperty.EnumerateArray())
+        {
+            var x = point[0].GetDouble();
+            var y = point[1].GetDouble();
 
-			geometryBuilder.Point(x, y);
-		}
-	}
-	public static void ConstructGeographyMultiPoint<T>(
-		ref JsonElement coordinatesProperty,
-		GeographyFactory<T> geographyBuilder
-	) where T : Geography
-	{
-		foreach (var point in coordinatesProperty.EnumerateArray())
-		{
-			var longitude = point[0].GetDouble();
-			var latitude = point[1].GetDouble();
+            geometryBuilder.Point(x, y);
+        }
+    }
 
-			geographyBuilder.Point(latitude, longitude);
-		}
-	}
+    public static void ConstructGeographyMultiPoint<T>(
+        ref JsonElement coordinatesProperty,
+        GeographyFactory<T> geographyBuilder
+    )
+        where T : Geography
+    {
+        foreach (var point in coordinatesProperty.EnumerateArray())
+        {
+            var longitude = point[0].GetDouble();
+            var latitude = point[1].GetDouble();
 
-	public static void WriteGeometryMultiPoint(Utf8JsonWriter writer, GeometryMultiPoint value)
-	{
-		if (value is null)
-		{
-			writer.WriteNullValue();
-			return;
-		}
+            geographyBuilder.Point(latitude, longitude);
+        }
+    }
 
-		writer.WriteStartObject();
+    public static void WriteGeometryMultiPoint(Utf8JsonWriter writer, GeometryMultiPoint value)
+    {
+        if (value is null)
+        {
+            writer.WriteNullValue();
+            return;
+        }
 
-		writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
-		writer.WriteStringValue(TypeValue);
+        writer.WriteStartObject();
 
-		writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
-		writer.WriteStartArray();
+        writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
+        writer.WriteStringValue(TypeValue);
 
-		foreach (var point in value.Points)
-		{
-			writer.WriteStartArray();
-			writer.WriteNumberValue(point.X);
-			writer.WriteNumberValue(point.Y);
-			writer.WriteEndArray();
-		}
+        writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
+        writer.WriteStartArray();
 
-		writer.WriteEndArray();
+        foreach (var point in value.Points)
+        {
+            writer.WriteStartArray();
+            writer.WriteNumberValue(point.X);
+            writer.WriteNumberValue(point.Y);
+            writer.WriteEndArray();
+        }
 
-		writer.WriteEndObject();
-	}
-	public static void WriteGeographyMultiPoint(Utf8JsonWriter writer, GeographyMultiPoint value)
-	{
-		if (value is null)
-		{
-			writer.WriteNullValue();
-			return;
-		}
+        writer.WriteEndArray();
 
-		writer.WriteStartObject();
+        writer.WriteEndObject();
+    }
 
-		writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
-		writer.WriteStringValue(TypeValue);
+    public static void WriteGeographyMultiPoint(Utf8JsonWriter writer, GeographyMultiPoint value)
+    {
+        if (value is null)
+        {
+            writer.WriteNullValue();
+            return;
+        }
 
-		writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
-		writer.WriteStartArray();
+        writer.WriteStartObject();
 
-		foreach (var point in value.Points)
-		{
-			writer.WriteStartArray();
-			writer.WriteNumberValue(point.Longitude);
-			writer.WriteNumberValue(point.Latitude);
-			writer.WriteEndArray();
-		}
+        writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
+        writer.WriteStringValue(TypeValue);
 
-		writer.WriteEndArray();
+        writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
+        writer.WriteStartArray();
 
-		writer.WriteEndObject();
-	}
+        foreach (var point in value.Points)
+        {
+            writer.WriteStartArray();
+            writer.WriteNumberValue(point.Longitude);
+            writer.WriteNumberValue(point.Latitude);
+            writer.WriteEndArray();
+        }
+
+        writer.WriteEndArray();
+
+        writer.WriteEndObject();
+    }
 }

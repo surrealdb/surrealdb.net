@@ -8,30 +8,31 @@ namespace SurrealDb.Net.Models.Response;
 /// </summary>
 public sealed class SurrealDbOkResult : ISurrealDbResult
 {
-	private JsonElement _value;
+    private JsonElement _value;
 
-	/// <summary>
-	/// Time taken to execute the query.
-	/// </summary>
-	public TimeSpan Time { get; set; }
+    /// <summary>
+    /// Time taken to execute the query.
+    /// </summary>
+    public TimeSpan Time { get; set; }
 
-	/// <summary>
-	/// Status of the query ("OK").
-	/// </summary>
-	public string Status { get; set; }
+    /// <summary>
+    /// Status of the query ("OK").
+    /// </summary>
+    public string Status { get; set; }
 
-	/// <summary>
-	/// Gets the result value of the query.
-	/// </summary>
-	/// <typeparam name="T">The type of the query result value.</typeparam>
-	public T? GetValue<T>() => JsonSerializer.Deserialize<T>(_value, SurrealDbSerializerOptions.Default);
+    /// <summary>
+    /// Gets the result value of the query.
+    /// </summary>
+    /// <typeparam name="T">The type of the query result value.</typeparam>
+    public T? GetValue<T>() =>
+        JsonSerializer.Deserialize<T>(_value, SurrealDbSerializerOptions.Default);
 
-	public bool IsOk => true;
+    public bool IsOk => true;
 
-	internal SurrealDbOkResult(TimeSpan time, string status, JsonElement value)
-	{
-		Time = time;
-		Status = status;
-		_value = value;
-	}
+    internal SurrealDbOkResult(TimeSpan time, string status, JsonElement value)
+    {
+        Time = time;
+        Status = status;
+        _value = value;
+    }
 }

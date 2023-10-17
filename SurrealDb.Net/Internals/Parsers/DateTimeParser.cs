@@ -18,7 +18,9 @@ internal static class DateTimeParser
     public static TextParser<DateTime> DatetimeWithoutDelimiters =>
         DatetimeSingle.Or(DatetimeDouble);
 
-    public static TextParser<char> SingleOrDoubleQuote = Character.EqualTo('\'').Or(Character.EqualTo('\"'));
+    public static TextParser<char> SingleOrDoubleQuote = Character
+        .EqualTo('\'')
+        .Or(Character.EqualTo('\"'));
 
     public static TextParser<DateTime> DatetimeSingle =>
         from datetime in DatetimeRaw
@@ -28,8 +30,7 @@ internal static class DateTimeParser
         from datetime in DatetimeRaw
         select datetime;
 
-    public static TextParser<DateTime> DatetimeRaw =>
-        Nano.Try().Or(Time).Try().Or(Date);
+    public static TextParser<DateTime> DatetimeRaw => Nano.Try().Or(Time).Try().Or(Date);
 
     public static TextParser<DateTime> Date =>
         from year in Year
@@ -71,7 +72,9 @@ internal static class DateTimeParser
         from _______ in Zone
         let nanoVal = nano.PadRight(9, '0')[..9]
         let ticks = Math.Round(int.Parse(nanoVal) * TimeConstants.TicksPerNanosecond)
-        select new DateTime(year, month, day, hour, minute, second, DateTimeKind.Utc).AddTicks((long)ticks);
+        select new DateTime(year, month, day, hour, minute, second, DateTimeKind.Utc).AddTicks(
+            (long)ticks
+        );
 
     public static TextParser<int> Year =>
         from s in Sign
@@ -105,16 +108,13 @@ internal static class DateTimeParser
 
     public static TextParser<TimeZoneInfo> Zone => ZoneUtc;
 
-    public static TextParser<TimeZoneInfo> ZoneUtc =>
-        Span.EqualTo("Z").Value(TimeZoneInfo.Utc);
+    public static TextParser<TimeZoneInfo> ZoneUtc => Span.EqualTo("Z").Value(TimeZoneInfo.Utc);
 
     public static TextParser<int> Sign =>
         Character.EqualTo('-').Value(-1).Or(Character.EqualTo('+').Value(1)).OptionalOrDefault(1);
 
     public static TextParser<string> TakeUntilDigit =>
-        Character.Digit
-            .AtLeastOnce()
-            .Select(chars => new string(chars));
+        Character.Digit.AtLeastOnce().Select(chars => new string(chars));
 
     public static DateTime Parse(string input)
     {

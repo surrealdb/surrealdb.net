@@ -4,448 +4,484 @@ using System.Text;
 namespace SurrealDb.Net.Tests.Spatial.Geography;
 
 public class GeographyPointRecord : Record<GeographyPoint> { }
+
 public class GeographyLineStringRecord : Record<GeographyLineString> { }
+
 public class GeographyPolygonRecord : Record<GeographyPolygon> { }
+
 public class GeographyMultiPointRecord : Record<GeographyMultiPoint> { }
+
 public class GeographyMultiLineStringRecord : Record<GeographyMultiLineString> { }
+
 public class GeographyMultiPolygonRecord : Record<GeographyMultiPolygon> { }
+
 public class GeographyCollectionRecord : Record<GeographyCollection> { }
 
 public class ParserTests
 {
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseGeographyPointFromTuple(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseGeographyPointFromTuple(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/geometry.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+        string query = fileContent;
+
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        await client.Query(query);
+
+        var record = await client.Select<GeographyPointRecord>("geometry", "PointFromTuple");
+
+        record.Should().NotBeNull();
+        record!.Value.Should().NotBeNull();
+        record.Value!.Longitude.Should().Be(-0.118092);
+        record.Value!.Latitude.Should().Be(51.509865);
+    }
+
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseGeographyPoint(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/geometry.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+        string query = fileContent;
+
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        await client.Query(query);
+
+        var record = await client.Select<GeographyPointRecord>("geometry", "Point");
+
+        record.Should().NotBeNull();
+        record!.Value.Should().NotBeNull();
+        record.Value!.Longitude.Should().Be(-0.118092);
+        record.Value!.Latitude.Should().Be(51.509865);
+    }
+
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseGeographyLineString(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/geometry.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+        string query = fileContent;
+
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        await client.Query(query);
+
+        var record = await client.Select<GeographyLineStringRecord>("geometry", "LineString");
+
+        record.Should().NotBeNull();
+        record!.Value.Should().NotBeNull();
+        record.Value!.Points.Should().HaveCount(2);
+
+        var firstPoint = record.Value.Points.First();
+        firstPoint.Longitude.Should().Be(10);
+        firstPoint.Latitude.Should().Be(11.2);
+
+        var lastPoint = record.Value.Points.Last();
+        lastPoint.Longitude.Should().Be(10.5);
+        lastPoint.Latitude.Should().Be(11.9);
+    }
+
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseGeographyPolygon(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/geometry.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/geometry.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-		string query = fileContent;
+        string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-		await client.Query(query);
+        await client.Query(query);
 
-		var record = await client.Select<GeographyPointRecord>("geometry", "PointFromTuple");
+        var record = await client.Select<GeographyPolygonRecord>("geometry", "Polygon");
 
-		record.Should().NotBeNull();
-		record!.Value.Should().NotBeNull();
-		record.Value!.Longitude.Should().Be(-0.118092);
-		record.Value!.Latitude.Should().Be(51.509865);
-	}
+        record.Should().NotBeNull();
+        record!.Value.Should().NotBeNull();
+        record.Value!.Rings.Should().HaveCount(1);
 
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseGeographyPoint(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+        var ring = record.Value.Rings.First();
+        var points = ring.Points;
 
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/geometry.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+        points.Should().HaveCount(5);
 
-		string query = fileContent;
+        var firstPoint = points.First();
+        firstPoint.Longitude.Should().Be(-0.38314819);
+        firstPoint.Latitude.Should().Be(51.37692386);
 
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
+        var secondPoint = points.Skip(1).First();
+        secondPoint.Longitude.Should().Be(0.1785278);
+        secondPoint.Latitude.Should().Be(51.37692386);
 
-		await client.Query(query);
+        var thirdPoint = points.Skip(2).First();
+        thirdPoint.Longitude.Should().Be(0.1785278);
+        thirdPoint.Latitude.Should().Be(51.61460570);
 
-		var record = await client.Select<GeographyPointRecord>("geometry", "Point");
+        var fourthPoint = points.Skip(3).First();
+        fourthPoint.Longitude.Should().Be(-0.38314819);
+        fourthPoint.Latitude.Should().Be(51.61460570);
 
-		record.Should().NotBeNull();
-		record!.Value.Should().NotBeNull();
-		record.Value!.Longitude.Should().Be(-0.118092);
-		record.Value!.Latitude.Should().Be(51.509865);
-	}
+        var lastPoint = points.Last();
+        lastPoint.Longitude.Should().Be(-0.38314819);
+        lastPoint.Latitude.Should().Be(51.37692386);
+    }
 
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseGeographyLineString(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseGeographyMultiPoint(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/geometry.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+        string query = fileContent;
+
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        await client.Query(query);
+
+        var record = await client.Select<GeographyMultiPointRecord>("geometry", "MultiPoint");
+
+        record.Should().NotBeNull();
+        record!.Value.Should().NotBeNull();
+
+        var points = record.Value!.Points;
+        points.Should().HaveCount(2);
 
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/geometry.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+        var firstPoint = points.First();
+        firstPoint.Longitude.Should().Be(10);
+        firstPoint.Latitude.Should().Be(11.2);
 
-		string query = fileContent;
+        var lastPoint = points.Last();
+        lastPoint.Longitude.Should().Be(10.5);
+        lastPoint.Latitude.Should().Be(11.9);
+    }
 
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseGeographyMultiLineString(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-		await client.Query(query);
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/geometry.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-		var record = await client.Select<GeographyLineStringRecord>("geometry", "LineString");
+        string query = fileContent;
 
-		record.Should().NotBeNull();
-		record!.Value.Should().NotBeNull();
-		record.Value!.Points.Should().HaveCount(2);
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-		var firstPoint = record.Value.Points.First();
-		firstPoint.Longitude.Should().Be(10);
-		firstPoint.Latitude.Should().Be(11.2);
+        await client.Query(query);
 
-		var lastPoint = record.Value.Points.Last();
-		lastPoint.Longitude.Should().Be(10.5);
-		lastPoint.Latitude.Should().Be(11.9);
-	}
+        var record = await client.Select<GeographyMultiLineStringRecord>(
+            "geometry",
+            "MultiLineString"
+        );
 
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseGeographyPolygon(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+        record.Should().NotBeNull();
+        record!.Value.Should().NotBeNull();
 
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/geometry.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+        var lineStrings = record.Value!.LineStrings;
+        lineStrings.Should().HaveCount(2);
 
-		string query = fileContent;
+        var firstLineString = lineStrings.First();
+        firstLineString.Points.Should().HaveCount(2);
 
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
+        {
+            var firstPoint = firstLineString.Points.First();
+            firstPoint.Longitude.Should().Be(10);
+            firstPoint.Latitude.Should().Be(11.2);
 
-		await client.Query(query);
+            var secondPoint = firstLineString.Points.Last();
+            secondPoint.Longitude.Should().Be(10.5);
+            secondPoint.Latitude.Should().Be(11.9);
+        }
 
-		var record = await client.Select<GeographyPolygonRecord>("geometry", "Polygon");
+        var secondLineString = lineStrings.Last();
+        secondLineString.Points.Should().HaveCount(3);
+
+        {
+            var firstPoint = secondLineString.Points.First();
+            firstPoint.Longitude.Should().Be(11);
+            firstPoint.Latitude.Should().Be(12.2);
+
+            var secondPoint = secondLineString.Points[1];
+            secondPoint.Longitude.Should().Be(11.5);
+            secondPoint.Latitude.Should().Be(12.9);
+
+            var thirdPoint = secondLineString.Points.Last();
+            thirdPoint.Longitude.Should().Be(12);
+            thirdPoint.Latitude.Should().Be(13);
+        }
+    }
+
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseGeographyMultiPolygon(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/geometry.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-		record.Should().NotBeNull();
-		record!.Value.Should().NotBeNull();
-		record.Value!.Rings.Should().HaveCount(1);
+        string query = fileContent;
 
-		var ring = record.Value.Rings.First();
-		var points = ring.Points;
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-		points.Should().HaveCount(5);
+        await client.Query(query);
 
-		var firstPoint = points.First();
-		firstPoint.Longitude.Should().Be(-0.38314819);
-		firstPoint.Latitude.Should().Be(51.37692386);
+        var record = await client.Select<GeographyMultiPolygonRecord>("geometry", "MultiPolygon");
 
-		var secondPoint = points.Skip(1).First();
-		secondPoint.Longitude.Should().Be(0.1785278);
-		secondPoint.Latitude.Should().Be(51.37692386);
+        record.Should().NotBeNull();
+        record!.Value.Should().NotBeNull();
 
-		var thirdPoint = points.Skip(2).First();
-		thirdPoint.Longitude.Should().Be(0.1785278);
-		thirdPoint.Latitude.Should().Be(51.61460570);
+        var polygons = record.Value!.Polygons;
+        polygons.Should().HaveCount(2);
 
-		var fourthPoint = points.Skip(3).First();
-		fourthPoint.Longitude.Should().Be(-0.38314819);
-		fourthPoint.Latitude.Should().Be(51.61460570);
+        var firstPolygon = polygons.First();
+        firstPolygon.Rings.Should().HaveCount(1);
 
-		var lastPoint = points.Last();
-		lastPoint.Longitude.Should().Be(-0.38314819);
-		lastPoint.Latitude.Should().Be(51.37692386);
-	}
+        {
+            var firstRing = firstPolygon.Rings.First();
+            firstRing.Points.Should().HaveCount(4);
 
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseGeographyMultiPoint(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+            var firstPoint = firstRing.Points.First();
+            firstPoint.Longitude.Should().Be(10);
+            firstPoint.Latitude.Should().Be(11.2);
 
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/geometry.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+            var secondPoint = firstRing.Points[1];
+            secondPoint.Longitude.Should().Be(10.5);
+            secondPoint.Latitude.Should().Be(11.9);
 
-		string query = fileContent;
+            var thirdPoint = firstRing.Points[2];
+            thirdPoint.Longitude.Should().Be(10.8);
+            thirdPoint.Latitude.Should().Be(12);
 
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
+            var lastPoint = firstRing.Points.Last();
+            lastPoint.Longitude.Should().Be(10);
+            lastPoint.Latitude.Should().Be(11.2);
+        }
 
-		await client.Query(query);
+        var secondPolygon = polygons.Last();
+        secondPolygon.Rings.Should().HaveCount(1);
 
-		var record = await client.Select<GeographyMultiPointRecord>("geometry", "MultiPoint");
+        {
+            var firstRing = secondPolygon.Rings.First();
+            firstRing.Points.Should().HaveCount(4);
 
-		record.Should().NotBeNull();
-		record!.Value.Should().NotBeNull();
+            var firstPoint = firstRing.Points.First();
+            firstPoint.Longitude.Should().Be(9);
+            firstPoint.Latitude.Should().Be(11.2);
 
-		var points = record.Value!.Points;
-		points.Should().HaveCount(2);
+            var secondPoint = firstRing.Points[1];
+            secondPoint.Longitude.Should().Be(10.5);
+            secondPoint.Latitude.Should().Be(11.9);
 
-		var firstPoint = points.First();
-		firstPoint.Longitude.Should().Be(10);
-		firstPoint.Latitude.Should().Be(11.2);
+            var thirdPoint = firstRing.Points[2];
+            thirdPoint.Longitude.Should().Be(10.3);
+            thirdPoint.Latitude.Should().Be(13);
 
-		var lastPoint = points.Last();
-		lastPoint.Longitude.Should().Be(10.5);
-		lastPoint.Latitude.Should().Be(11.9);
-	}
+            var lastPoint = firstRing.Points.Last();
+            lastPoint.Longitude.Should().Be(9);
+            lastPoint.Latitude.Should().Be(11.2);
+        }
+    }
 
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseGeographyMultiLineString(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseGeographyCollection(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/geometry.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/geometry.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-		string query = fileContent;
+        string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-		await client.Query(query);
+        await client.Query(query);
 
-		var record = await client.Select<GeographyMultiLineStringRecord>("geometry", "MultiLineString");
+        var record = await client.Select<GeographyCollectionRecord>(
+            "geometry",
+            "GeometryCollection"
+        );
 
-		record.Should().NotBeNull();
-		record!.Value.Should().NotBeNull();
+        record.Should().NotBeNull();
+        record!.Value.Should().NotBeNull();
 
-		var lineStrings = record.Value!.LineStrings;
-		lineStrings.Should().HaveCount(2);
+        record.Value!.Geographies.Should().HaveCount(3);
 
-		var firstLineString = lineStrings.First();
-		firstLineString.Points.Should().HaveCount(2);
+        var firstGeography = record.Value!.Geographies.First();
 
-		{
-			var firstPoint = firstLineString.Points.First();
-			firstPoint.Longitude.Should().Be(10);
-			firstPoint.Latitude.Should().Be(11.2);
+        {
+            var multiPoint = firstGeography as GeographyMultiPoint;
+            multiPoint!.Points.Should().HaveCount(2);
 
-			var secondPoint = firstLineString.Points.Last();
-			secondPoint.Longitude.Should().Be(10.5);
-			secondPoint.Latitude.Should().Be(11.9);
-		}
+            var firstPoint = multiPoint.Points.First();
+            firstPoint.Longitude.Should().Be(10);
+            firstPoint.Latitude.Should().Be(11.2);
 
-		var secondLineString = lineStrings.Last();
-		secondLineString.Points.Should().HaveCount(3);
+            var secondPoint = multiPoint.Points.Last();
+            secondPoint.Longitude.Should().Be(10.5);
+            secondPoint.Latitude.Should().Be(11.9);
+        }
 
-		{
-			var firstPoint = secondLineString.Points.First();
-			firstPoint.Longitude.Should().Be(11);
-			firstPoint.Latitude.Should().Be(12.2);
+        var secondGeography = record.Value!.Geographies[1];
 
-			var secondPoint = secondLineString.Points[1];
-			secondPoint.Longitude.Should().Be(11.5);
-			secondPoint.Latitude.Should().Be(12.9);
+        {
+            var polygon = secondGeography as GeographyPolygon;
+            polygon!.Rings.Should().HaveCount(1);
 
-			var thirdPoint = secondLineString.Points.Last();
-			thirdPoint.Longitude.Should().Be(12);
-			thirdPoint.Latitude.Should().Be(13);
-		}
-	}
+            var ring = polygon.Rings.First();
+            ring.Points.Should().HaveCount(5);
 
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseGeographyMultiPolygon(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+            var firstPoint = ring.Points.First();
+            firstPoint.Longitude.Should().Be(-0.38314819);
+            firstPoint.Latitude.Should().Be(51.37692386);
 
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/geometry.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+            var secondPoint = ring.Points[1];
+            secondPoint.Longitude.Should().Be(0.1785278);
+            secondPoint.Latitude.Should().Be(51.37692386);
 
-		string query = fileContent;
+            var thirdPoint = ring.Points[2];
+            thirdPoint.Longitude.Should().Be(0.1785278);
+            thirdPoint.Latitude.Should().Be(51.61460570);
 
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
+            var fourthPoint = ring.Points[3];
+            fourthPoint.Longitude.Should().Be(-0.38314819);
+            fourthPoint.Latitude.Should().Be(51.61460570);
 
-		await client.Query(query);
+            var lastPoint = ring.Points.Last();
+            lastPoint.Longitude.Should().Be(-0.38314819);
+            lastPoint.Latitude.Should().Be(51.37692386);
+        }
 
-		var record = await client.Select<GeographyMultiPolygonRecord>("geometry", "MultiPolygon");
+        var thirdGeography = record.Value!.Geographies[2];
 
-		record.Should().NotBeNull();
-		record!.Value.Should().NotBeNull();
+        {
+            var multiPolygon = thirdGeography as GeographyMultiPolygon;
+            multiPolygon!.Polygons.Should().HaveCount(2);
 
-		var polygons = record.Value!.Polygons;
-		polygons.Should().HaveCount(2);
+            var firstPolygon = multiPolygon.Polygons.First();
+            firstPolygon.Rings.Should().HaveCount(1);
 
-		var firstPolygon = polygons.First();
-		firstPolygon.Rings.Should().HaveCount(1);
+            {
+                var ring = firstPolygon.Rings.First();
+                ring.Points.Should().HaveCount(4);
 
-		{
-			var firstRing = firstPolygon.Rings.First();
-			firstRing.Points.Should().HaveCount(4);
+                var firstPoint = ring.Points.First();
+                firstPoint.Longitude.Should().Be(10);
+                firstPoint.Latitude.Should().Be(11.2);
 
-			var firstPoint = firstRing.Points.First();
-			firstPoint.Longitude.Should().Be(10);
-			firstPoint.Latitude.Should().Be(11.2);
+                var secondPoint = ring.Points[1];
+                secondPoint.Longitude.Should().Be(10.5);
+                secondPoint.Latitude.Should().Be(11.9);
 
-			var secondPoint = firstRing.Points[1];
-			secondPoint.Longitude.Should().Be(10.5);
-			secondPoint.Latitude.Should().Be(11.9);
+                var thirdPoint = ring.Points[2];
+                thirdPoint.Longitude.Should().Be(10.8);
+                thirdPoint.Latitude.Should().Be(12);
 
-			var thirdPoint = firstRing.Points[2];
-			thirdPoint.Longitude.Should().Be(10.8);
-			thirdPoint.Latitude.Should().Be(12);
+                var lastPoint = ring.Points.Last();
+                lastPoint.Longitude.Should().Be(10);
+                lastPoint.Latitude.Should().Be(11.2);
+            }
 
-			var lastPoint = firstRing.Points.Last();
-			lastPoint.Longitude.Should().Be(10);
-			lastPoint.Latitude.Should().Be(11.2);
-		}
+            var lastPolygon = multiPolygon.Polygons.Last();
+            lastPolygon.Rings.Should().HaveCount(1);
 
-		var secondPolygon = polygons.Last();
-		secondPolygon.Rings.Should().HaveCount(1);
+            {
+                var ring = lastPolygon.Rings.First();
+                ring.Points.Should().HaveCount(4);
 
-		{
-			var firstRing = secondPolygon.Rings.First();
-			firstRing.Points.Should().HaveCount(4);
+                var firstPoint = ring.Points.First();
+                firstPoint.Longitude.Should().Be(9);
+                firstPoint.Latitude.Should().Be(11.2);
 
-			var firstPoint = firstRing.Points.First();
-			firstPoint.Longitude.Should().Be(9);
-			firstPoint.Latitude.Should().Be(11.2);
+                var secondPoint = ring.Points[1];
+                secondPoint.Longitude.Should().Be(10.5);
+                secondPoint.Latitude.Should().Be(11.9);
 
-			var secondPoint = firstRing.Points[1];
-			secondPoint.Longitude.Should().Be(10.5);
-			secondPoint.Latitude.Should().Be(11.9);
+                var thirdPoint = ring.Points[2];
+                thirdPoint.Longitude.Should().Be(10.3);
+                thirdPoint.Latitude.Should().Be(13);
 
-			var thirdPoint = firstRing.Points[2];
-			thirdPoint.Longitude.Should().Be(10.3);
-			thirdPoint.Latitude.Should().Be(13);
-
-			var lastPoint = firstRing.Points.Last();
-			lastPoint.Longitude.Should().Be(9);
-			lastPoint.Latitude.Should().Be(11.2);
-		}
-	}
-
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseGeographyCollection(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/geometry.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-		string query = fileContent;
-
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
-
-		await client.Query(query);
-
-		var record = await client.Select<GeographyCollectionRecord>("geometry", "GeometryCollection");
-
-		record.Should().NotBeNull();
-		record!.Value.Should().NotBeNull();
-
-		record.Value!.Geographies.Should().HaveCount(3);
-
-		var firstGeography = record.Value!.Geographies.First();
-
-		{
-			var multiPoint = firstGeography as GeographyMultiPoint;
-			multiPoint!.Points.Should().HaveCount(2);
-
-			var firstPoint = multiPoint.Points.First();
-			firstPoint.Longitude.Should().Be(10);
-			firstPoint.Latitude.Should().Be(11.2);
-
-			var secondPoint = multiPoint.Points.Last();
-			secondPoint.Longitude.Should().Be(10.5);
-			secondPoint.Latitude.Should().Be(11.9);
-		}
-
-		var secondGeography = record.Value!.Geographies[1];
-
-		{
-			var polygon = secondGeography as GeographyPolygon;
-			polygon!.Rings.Should().HaveCount(1);
-
-			var ring = polygon.Rings.First();
-			ring.Points.Should().HaveCount(5);
-
-			var firstPoint = ring.Points.First();
-			firstPoint.Longitude.Should().Be(-0.38314819);
-			firstPoint.Latitude.Should().Be(51.37692386);
-
-			var secondPoint = ring.Points[1];
-			secondPoint.Longitude.Should().Be(0.1785278);
-			secondPoint.Latitude.Should().Be(51.37692386);
-
-			var thirdPoint = ring.Points[2];
-			thirdPoint.Longitude.Should().Be(0.1785278);
-			thirdPoint.Latitude.Should().Be(51.61460570);
-
-			var fourthPoint = ring.Points[3];
-			fourthPoint.Longitude.Should().Be(-0.38314819);
-			fourthPoint.Latitude.Should().Be(51.61460570);
-
-			var lastPoint = ring.Points.Last();
-			lastPoint.Longitude.Should().Be(-0.38314819);
-			lastPoint.Latitude.Should().Be(51.37692386);
-		}
-
-		var thirdGeography = record.Value!.Geographies[2];
-
-		{
-			var multiPolygon = thirdGeography as GeographyMultiPolygon;
-			multiPolygon!.Polygons.Should().HaveCount(2);
-
-			var firstPolygon = multiPolygon.Polygons.First();
-			firstPolygon.Rings.Should().HaveCount(1);
-
-			{
-				var ring = firstPolygon.Rings.First();
-				ring.Points.Should().HaveCount(4);
-
-				var firstPoint = ring.Points.First();
-				firstPoint.Longitude.Should().Be(10);
-				firstPoint.Latitude.Should().Be(11.2);
-
-				var secondPoint = ring.Points[1];
-				secondPoint.Longitude.Should().Be(10.5);
-				secondPoint.Latitude.Should().Be(11.9);
-
-				var thirdPoint = ring.Points[2];
-				thirdPoint.Longitude.Should().Be(10.8);
-				thirdPoint.Latitude.Should().Be(12);
-
-				var lastPoint = ring.Points.Last();
-				lastPoint.Longitude.Should().Be(10);
-				lastPoint.Latitude.Should().Be(11.2);
-			}
-
-			var lastPolygon = multiPolygon.Polygons.Last();
-			lastPolygon.Rings.Should().HaveCount(1);
-
-			{
-				var ring = lastPolygon.Rings.First();
-				ring.Points.Should().HaveCount(4);
-
-				var firstPoint = ring.Points.First();
-				firstPoint.Longitude.Should().Be(9);
-				firstPoint.Latitude.Should().Be(11.2);
-
-				var secondPoint = ring.Points[1];
-				secondPoint.Longitude.Should().Be(10.5);
-				secondPoint.Latitude.Should().Be(11.9);
-
-				var thirdPoint = ring.Points[2];
-				thirdPoint.Longitude.Should().Be(10.3);
-				thirdPoint.Latitude.Should().Be(13);
-
-				var lastPoint = ring.Points.Last();
-				lastPoint.Longitude.Should().Be(9);
-				lastPoint.Latitude.Should().Be(11.2);
-			}
-		}
-	}
+                var lastPoint = ring.Points.Last();
+                lastPoint.Longitude.Should().Be(9);
+                lastPoint.Latitude.Should().Be(11.2);
+            }
+        }
+    }
 }

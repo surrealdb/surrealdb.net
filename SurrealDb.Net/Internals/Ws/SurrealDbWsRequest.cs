@@ -4,13 +4,13 @@ namespace SurrealDb.Net.Internals.Ws;
 
 internal class SurrealDbWsRequest
 {
-	[JsonPropertyName("id")]
-	public string Id { get; set; } = string.Empty;
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
 
-	[JsonPropertyName("method")]
-	public string Method { get; set; } = string.Empty;
+    [JsonPropertyName("method")]
+    public string Method { get; set; } = string.Empty;
 
-	[JsonPropertyName("params")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public List<object?>? Parameters { get; set; }
+    [JsonPropertyName("params")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<object?>? Parameters { get; set; }
 }

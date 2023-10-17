@@ -5,7 +5,6 @@ namespace SurrealDb.Net.Exceptions;
 /// </summary>
 public class EmptySurrealDbResponseException : Exception
 {
-	internal EmptySurrealDbResponseException() : base("The response from the SurrealDb query was empty.")
-	{
-	}
+    internal EmptySurrealDbResponseException()
+        : base("The response from the SurrealDb query was empty.") { }
 }

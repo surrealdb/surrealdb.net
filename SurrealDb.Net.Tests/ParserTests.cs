@@ -19,18 +19,31 @@ public class RecordIdRecord : BaseRecord
 {
     public Thing? Id { get; set; }
 }
+
 public class StringRecord : Record<string> { }
+
 public class LongRecord : Record<long?> { }
+
 public class DecimalRecord : Record<decimal?> { }
+
 public class FloatRecord : Record<float?> { }
+
 public class DoubleRecord : Record<double?> { }
+
 public class DurationRecord : Record<Duration> { }
+
 public class TimeSpanRecord : Record<TimeSpan> { }
+
 public class TimeOnlyRecord : Record<TimeOnly> { }
+
 public class DateTimeRecord : Record<DateTime?> { }
+
 public class DateOnlyRecord : Record<DateOnly?> { }
+
 public class Vector2Record : Record<Vector2?> { }
+
 public class Vector3Record : Record<Vector3?> { }
+
 public class Vector4Record : Record<Vector4?> { }
 
 public class ParserTests
@@ -43,12 +56,15 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/thing.surql");
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/thing.surql"
+        );
         string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
         string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -145,19 +161,22 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/string.surql");
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/string.surql"
+        );
         string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
         string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.Query(query);
 
         var records = await client.Select<StringRecord>("string");
-        
+
         {
             var noneRecord = records.Find(r => r.Name == "none");
             noneRecord.Should().NotBeNull();
@@ -183,16 +202,16 @@ public class ParserTests
         }
 
         {
-			var expectedStringBuilder = new StringBuilder();
-			expectedStringBuilder.AppendLine("This");
-			expectedStringBuilder.AppendLine("is");
-			expectedStringBuilder.AppendLine("over");
-			expectedStringBuilder.AppendLine("multiple");
-			expectedStringBuilder.Append("lines");
+            var expectedStringBuilder = new StringBuilder();
+            expectedStringBuilder.AppendLine("This");
+            expectedStringBuilder.AppendLine("is");
+            expectedStringBuilder.AppendLine("over");
+            expectedStringBuilder.AppendLine("multiple");
+            expectedStringBuilder.Append("lines");
 
-			string expected = expectedStringBuilder.ToString();
+            string expected = expectedStringBuilder.ToString();
 
-			var multilineRecord = records.Find(r => r.Name == "multiline");
+            var multilineRecord = records.Find(r => r.Name == "multiline");
             multilineRecord.Should().NotBeNull();
             multilineRecord!.Value.Should().Be(expected);
         }
@@ -206,12 +225,15 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/number.surql");
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/number.surql"
+        );
         string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
         string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -252,12 +274,15 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/decimal.surql");
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/decimal.surql"
+        );
         string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
         string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -298,7 +323,9 @@ public class ParserTests
         {
             var decimalPrecisionRecord = records.Find(r => r.Name == "decimal-precision");
             decimalPrecisionRecord.Should().NotBeNull();
-            decimalPrecisionRecord!.Value.Should().Be(13.5719384719384719385639856394139476937756394756m);
+            decimalPrecisionRecord!.Value
+                .Should()
+                .Be(13.5719384719384719385639856394139476937756394756m);
         }
 
         {
@@ -316,12 +343,15 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/decimal.surql");
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/decimal.surql"
+        );
         string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
         string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -362,7 +392,9 @@ public class ParserTests
         {
             var decimalPrecisionRecord = records.Find(r => r.Name == "decimal-precision");
             decimalPrecisionRecord.Should().NotBeNull();
-            decimalPrecisionRecord!.Value.Should().Be(13.5719384719384719385639856394139476937756394756f);
+            decimalPrecisionRecord!.Value
+                .Should()
+                .Be(13.5719384719384719385639856394139476937756394756f);
         }
 
         {
@@ -380,12 +412,15 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/decimal.surql");
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/decimal.surql"
+        );
         string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
         string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -426,7 +461,9 @@ public class ParserTests
         {
             var decimalPrecisionRecord = records.Find(r => r.Name == "decimal-precision");
             decimalPrecisionRecord.Should().NotBeNull();
-            decimalPrecisionRecord!.Value.Should().Be(13.5719384719384719385639856394139476937756394756d);
+            decimalPrecisionRecord!.Value
+                .Should()
+                .Be(13.5719384719384719385639856394139476937756394756d);
         }
 
         {
@@ -436,301 +473,310 @@ public class ParserTests
         }
     }
 
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseDuration(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseDuration(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/duration.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/duration.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-		string query = fileContent;
+        string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-		await client.Query(query);
+        await client.Query(query);
 
-		var records = await client.Select<DurationRecord>("duration");
+        var records = await client.Select<DurationRecord>("duration");
 
-		{
-			var noneRecord = records.Find(r => r.Name == "none");
-			noneRecord.Should().NotBeNull();
+        {
+            var noneRecord = records.Find(r => r.Name == "none");
+            noneRecord.Should().NotBeNull();
 
-			noneRecord!.Value.NanoSeconds.Should().Be(0);
-			noneRecord!.Value.MilliSeconds.Should().Be(0);
-			noneRecord!.Value.MicroSeconds.Should().Be(0);
-			noneRecord!.Value.Seconds.Should().Be(0);
-			noneRecord!.Value.Minutes.Should().Be(0);
-			noneRecord!.Value.Hours.Should().Be(0);
-			noneRecord!.Value.Days.Should().Be(0);
-			noneRecord!.Value.Weeks.Should().Be(0);
-			noneRecord!.Value.Years.Should().Be(0);
-		}
+            noneRecord!.Value.NanoSeconds.Should().Be(0);
+            noneRecord!.Value.MilliSeconds.Should().Be(0);
+            noneRecord!.Value.MicroSeconds.Should().Be(0);
+            noneRecord!.Value.Seconds.Should().Be(0);
+            noneRecord!.Value.Minutes.Should().Be(0);
+            noneRecord!.Value.Hours.Should().Be(0);
+            noneRecord!.Value.Days.Should().Be(0);
+            noneRecord!.Value.Weeks.Should().Be(0);
+            noneRecord!.Value.Years.Should().Be(0);
+        }
 
-		{
-			var nanosecondRecord = records.Find(r => r.Name == "nanosecond");
-			nanosecondRecord.Should().NotBeNull();
-			nanosecondRecord!.Value.NanoSeconds.Should().Be(2);
-		}
+        {
+            var nanosecondRecord = records.Find(r => r.Name == "nanosecond");
+            nanosecondRecord.Should().NotBeNull();
+            nanosecondRecord!.Value.NanoSeconds.Should().Be(2);
+        }
 
-		{
-			var microsecondRecord = records.Find(r => r.Name == "microsecond");
-			microsecondRecord.Should().NotBeNull();
-			microsecondRecord!.Value.MicroSeconds.Should().Be(3);
-		}
+        {
+            var microsecondRecord = records.Find(r => r.Name == "microsecond");
+            microsecondRecord.Should().NotBeNull();
+            microsecondRecord!.Value.MicroSeconds.Should().Be(3);
+        }
 
-		{
-			var microsecondAliasRecord = records.Find(r => r.Name == "microsecond-alias");
-			microsecondAliasRecord.Should().NotBeNull();
-			microsecondAliasRecord!.Value.MicroSeconds.Should().Be(4);
-		}
+        {
+            var microsecondAliasRecord = records.Find(r => r.Name == "microsecond-alias");
+            microsecondAliasRecord.Should().NotBeNull();
+            microsecondAliasRecord!.Value.MicroSeconds.Should().Be(4);
+        }
 
-		{
-			var millisecondRecord = records.Find(r => r.Name == "millisecond");
-			millisecondRecord.Should().NotBeNull();
-			millisecondRecord!.Value.MilliSeconds.Should().Be(50);
-		}
+        {
+            var millisecondRecord = records.Find(r => r.Name == "millisecond");
+            millisecondRecord.Should().NotBeNull();
+            millisecondRecord!.Value.MilliSeconds.Should().Be(50);
+        }
 
-		{
-			var secondRecord = records.Find(r => r.Name == "second");
-			secondRecord.Should().NotBeNull();
-			secondRecord!.Value.Seconds.Should().Be(7);
-		}
+        {
+            var secondRecord = records.Find(r => r.Name == "second");
+            secondRecord.Should().NotBeNull();
+            secondRecord!.Value.Seconds.Should().Be(7);
+        }
 
-		{
-			var minuteRecord = records.Find(r => r.Name == "minute");
-			minuteRecord.Should().NotBeNull();
-			minuteRecord!.Value.Minutes.Should().Be(5);
-		}
+        {
+            var minuteRecord = records.Find(r => r.Name == "minute");
+            minuteRecord.Should().NotBeNull();
+            minuteRecord!.Value.Minutes.Should().Be(5);
+        }
 
-		{
-			var hourRecord = records.Find(r => r.Name == "hour");
-			hourRecord.Should().NotBeNull();
-			hourRecord!.Value.Hours.Should().Be(1);
-		}
+        {
+            var hourRecord = records.Find(r => r.Name == "hour");
+            hourRecord.Should().NotBeNull();
+            hourRecord!.Value.Hours.Should().Be(1);
+        }
 
-		{
-			var dayRecord = records.Find(r => r.Name == "day");
-			dayRecord.Should().NotBeNull();
-			dayRecord!.Value.Days.Should().Be(6);
-		}
+        {
+            var dayRecord = records.Find(r => r.Name == "day");
+            dayRecord.Should().NotBeNull();
+            dayRecord!.Value.Days.Should().Be(6);
+        }
 
-		{
-			var weekRecord = records.Find(r => r.Name == "week");
-			weekRecord.Should().NotBeNull();
-			weekRecord!.Value.Weeks.Should().Be(28);
-		}
+        {
+            var weekRecord = records.Find(r => r.Name == "week");
+            weekRecord.Should().NotBeNull();
+            weekRecord!.Value.Weeks.Should().Be(28);
+        }
 
-		{
-			var yearRecord = records.Find(r => r.Name == "year");
-			yearRecord.Should().NotBeNull();
-			yearRecord!.Value.Years.Should().Be(12);
-		}
+        {
+            var yearRecord = records.Find(r => r.Name == "year");
+            yearRecord.Should().NotBeNull();
+            yearRecord!.Value.Years.Should().Be(12);
+        }
 
-		{
-			var complexRecord = records.Find(r => r.Name == "complex");
-			complexRecord.Should().NotBeNull();
-			complexRecord!.Value.MilliSeconds.Should().Be(350);
-			complexRecord!.Value.Seconds.Should().Be(21);
-			complexRecord!.Value.Minutes.Should().Be(30);
-			complexRecord!.Value.Hours.Should().Be(1);
-		}
-	}
+        {
+            var complexRecord = records.Find(r => r.Name == "complex");
+            complexRecord.Should().NotBeNull();
+            complexRecord!.Value.MilliSeconds.Should().Be(350);
+            complexRecord!.Value.Seconds.Should().Be(21);
+            complexRecord!.Value.Minutes.Should().Be(30);
+            complexRecord!.Value.Hours.Should().Be(1);
+        }
+    }
 
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseDurationAsTimeSpan(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseDurationAsTimeSpan(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/duration.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/duration.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-		string query = fileContent;
+        string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-		await client.Query(query);
+        await client.Query(query);
 
-		var records = await client.Select<TimeSpanRecord>("duration");
+        var records = await client.Select<TimeSpanRecord>("duration");
 
-		{
-			var noneRecord = records.Find(r => r.Name == "none");
-			noneRecord.Should().NotBeNull();
-			noneRecord!.Value.TotalSeconds.Should().Be(0);
-		}
+        {
+            var noneRecord = records.Find(r => r.Name == "none");
+            noneRecord.Should().NotBeNull();
+            noneRecord!.Value.TotalSeconds.Should().Be(0);
+        }
 
-		{
-			var nanosecondRecord = records.Find(r => r.Name == "nanosecond");
-			nanosecondRecord.Should().NotBeNull();
-			nanosecondRecord!.Value.TotalNanoseconds().Should(); // TODO : Value = 2
-		}
+        {
+            var nanosecondRecord = records.Find(r => r.Name == "nanosecond");
+            nanosecondRecord.Should().NotBeNull();
+            nanosecondRecord!.Value.TotalNanoseconds().Should(); // TODO : Value = 2
+        }
 
-		{
-			var microsecondRecord = records.Find(r => r.Name == "microsecond");
-			microsecondRecord.Should().NotBeNull();
-			microsecondRecord!.Value.TotalMicroseconds().Should().Be(3);
-		}
+        {
+            var microsecondRecord = records.Find(r => r.Name == "microsecond");
+            microsecondRecord.Should().NotBeNull();
+            microsecondRecord!.Value.TotalMicroseconds().Should().Be(3);
+        }
 
-		{
-			var microsecondAliasRecord = records.Find(r => r.Name == "microsecond-alias");
-			microsecondAliasRecord.Should().NotBeNull();
-			microsecondAliasRecord!.Value.TotalMicroseconds().Should().Be(4);
-		}
+        {
+            var microsecondAliasRecord = records.Find(r => r.Name == "microsecond-alias");
+            microsecondAliasRecord.Should().NotBeNull();
+            microsecondAliasRecord!.Value.TotalMicroseconds().Should().Be(4);
+        }
 
-		{
-			var millisecondRecord = records.Find(r => r.Name == "millisecond");
-			millisecondRecord.Should().NotBeNull();
-			millisecondRecord!.Value.TotalMilliseconds.Should().Be(50);
-		}
+        {
+            var millisecondRecord = records.Find(r => r.Name == "millisecond");
+            millisecondRecord.Should().NotBeNull();
+            millisecondRecord!.Value.TotalMilliseconds.Should().Be(50);
+        }
 
-		{
-			var secondRecord = records.Find(r => r.Name == "second");
-			secondRecord.Should().NotBeNull();
-			secondRecord!.Value.TotalSeconds.Should().Be(7);
-		}
+        {
+            var secondRecord = records.Find(r => r.Name == "second");
+            secondRecord.Should().NotBeNull();
+            secondRecord!.Value.TotalSeconds.Should().Be(7);
+        }
 
-		{
-			var minuteRecord = records.Find(r => r.Name == "minute");
-			minuteRecord.Should().NotBeNull();
-			minuteRecord!.Value.TotalMinutes.Should().Be(5);
-		}
+        {
+            var minuteRecord = records.Find(r => r.Name == "minute");
+            minuteRecord.Should().NotBeNull();
+            minuteRecord!.Value.TotalMinutes.Should().Be(5);
+        }
 
-		{
-			var hourRecord = records.Find(r => r.Name == "hour");
-			hourRecord.Should().NotBeNull();
-			hourRecord!.Value.TotalHours.Should().Be(1);
-		}
+        {
+            var hourRecord = records.Find(r => r.Name == "hour");
+            hourRecord.Should().NotBeNull();
+            hourRecord!.Value.TotalHours.Should().Be(1);
+        }
 
-		{
-			var dayRecord = records.Find(r => r.Name == "day");
-			dayRecord.Should().NotBeNull();
-			dayRecord!.Value.TotalDays.Should().Be(6);
-		}
+        {
+            var dayRecord = records.Find(r => r.Name == "day");
+            dayRecord.Should().NotBeNull();
+            dayRecord!.Value.TotalDays.Should().Be(6);
+        }
 
-		{
-			var weekRecord = records.Find(r => r.Name == "week");
-			weekRecord.Should().NotBeNull();
-			weekRecord!.Value.TotalDays.Should().Be(196);
-		}
+        {
+            var weekRecord = records.Find(r => r.Name == "week");
+            weekRecord.Should().NotBeNull();
+            weekRecord!.Value.TotalDays.Should().Be(196);
+        }
 
-		{
-			var yearRecord = records.Find(r => r.Name == "year");
-			yearRecord.Should().NotBeNull();
-			yearRecord!.Value.TotalDays.Should().Be(4380);
-		}
+        {
+            var yearRecord = records.Find(r => r.Name == "year");
+            yearRecord.Should().NotBeNull();
+            yearRecord!.Value.TotalDays.Should().Be(4380);
+        }
 
-		{
-			var complexRecord = records.Find(r => r.Name == "complex");
-			complexRecord.Should().NotBeNull();
-			complexRecord!.Value.TotalSeconds.Should().Be(5421.35);
-		}
-	}
+        {
+            var complexRecord = records.Find(r => r.Name == "complex");
+            complexRecord.Should().NotBeNull();
+            complexRecord!.Value.TotalSeconds.Should().Be(5421.35);
+        }
+    }
 
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseDurationAsString(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseDurationAsString(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/duration.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/duration.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-		string query = fileContent;
+        string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-		await client.Query(query);
+        await client.Query(query);
 
-		var records = await client.Select<StringRecord>("duration");
+        var records = await client.Select<StringRecord>("duration");
 
-		{
-			var noneRecord = records.Find(r => r.Name == "none");
-			noneRecord.Should().NotBeNull();
-			noneRecord!.Value.Should().BeNull();
-		}
+        {
+            var noneRecord = records.Find(r => r.Name == "none");
+            noneRecord.Should().NotBeNull();
+            noneRecord!.Value.Should().BeNull();
+        }
 
-		{
-			var nanosecondRecord = records.Find(r => r.Name == "nanosecond");
-			nanosecondRecord.Should().NotBeNull();
-			nanosecondRecord!.Value.Should().Be("2ns");
-		}
+        {
+            var nanosecondRecord = records.Find(r => r.Name == "nanosecond");
+            nanosecondRecord.Should().NotBeNull();
+            nanosecondRecord!.Value.Should().Be("2ns");
+        }
 
-		{
-			var microsecondRecord = records.Find(r => r.Name == "microsecond");
-			microsecondRecord.Should().NotBeNull();
-			microsecondRecord!.Value.Should().Be("3µs");
-		}
+        {
+            var microsecondRecord = records.Find(r => r.Name == "microsecond");
+            microsecondRecord.Should().NotBeNull();
+            microsecondRecord!.Value.Should().Be("3µs");
+        }
 
-		{
-			var microsecondAliasRecord = records.Find(r => r.Name == "microsecond-alias");
-			microsecondAliasRecord.Should().NotBeNull();
-			microsecondAliasRecord!.Value.Should().Be("4µs");
-		}
+        {
+            var microsecondAliasRecord = records.Find(r => r.Name == "microsecond-alias");
+            microsecondAliasRecord.Should().NotBeNull();
+            microsecondAliasRecord!.Value.Should().Be("4µs");
+        }
 
-		{
-			var millisecondRecord = records.Find(r => r.Name == "millisecond");
-			millisecondRecord.Should().NotBeNull();
-			millisecondRecord!.Value.Should().Be("50ms");
-		}
+        {
+            var millisecondRecord = records.Find(r => r.Name == "millisecond");
+            millisecondRecord.Should().NotBeNull();
+            millisecondRecord!.Value.Should().Be("50ms");
+        }
 
-		{
-			var secondRecord = records.Find(r => r.Name == "second");
-			secondRecord.Should().NotBeNull();
-			secondRecord!.Value.Should().Be("7s");
-		}
+        {
+            var secondRecord = records.Find(r => r.Name == "second");
+            secondRecord.Should().NotBeNull();
+            secondRecord!.Value.Should().Be("7s");
+        }
 
-		{
-			var minuteRecord = records.Find(r => r.Name == "minute");
-			minuteRecord.Should().NotBeNull();
-			minuteRecord!.Value.Should().Be("5m");
-		}
+        {
+            var minuteRecord = records.Find(r => r.Name == "minute");
+            minuteRecord.Should().NotBeNull();
+            minuteRecord!.Value.Should().Be("5m");
+        }
 
-		{
-			var hourRecord = records.Find(r => r.Name == "hour");
-			hourRecord.Should().NotBeNull();
-			hourRecord!.Value.Should().Be("1h");
-		}
+        {
+            var hourRecord = records.Find(r => r.Name == "hour");
+            hourRecord.Should().NotBeNull();
+            hourRecord!.Value.Should().Be("1h");
+        }
 
-		{
-			var dayRecord = records.Find(r => r.Name == "day");
-			dayRecord.Should().NotBeNull();
-			dayRecord!.Value.Should().Be("6d");
-		}
+        {
+            var dayRecord = records.Find(r => r.Name == "day");
+            dayRecord.Should().NotBeNull();
+            dayRecord!.Value.Should().Be("6d");
+        }
 
-		{
-			var weekRecord = records.Find(r => r.Name == "week");
-			weekRecord.Should().NotBeNull();
-			weekRecord!.Value.Should().Be("28w");
-		}
+        {
+            var weekRecord = records.Find(r => r.Name == "week");
+            weekRecord.Should().NotBeNull();
+            weekRecord!.Value.Should().Be("28w");
+        }
 
-		{
-			var yearRecord = records.Find(r => r.Name == "year");
-			yearRecord.Should().NotBeNull();
-			yearRecord!.Value.Should().Be("12y");
-		}
+        {
+            var yearRecord = records.Find(r => r.Name == "year");
+            yearRecord.Should().NotBeNull();
+            yearRecord!.Value.Should().Be("12y");
+        }
 
-		{
-			var complexRecord = records.Find(r => r.Name == "complex");
-			complexRecord.Should().NotBeNull();
-			complexRecord!.Value.Should().Be("1h30m21s350ms");
-		}
-	}
+        {
+            var complexRecord = records.Find(r => r.Name == "complex");
+            complexRecord.Should().NotBeNull();
+            complexRecord!.Value.Should().Be("1h30m21s350ms");
+        }
+    }
 
-	[Theory]
+    [Theory]
     [InlineData("http://localhost:8000")]
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldParseTimeOnly(string url)
@@ -738,7 +784,10 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/duration.surql");
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/duration.surql"
+        );
         string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
         string query = fileContent;
@@ -824,7 +873,7 @@ public class ParserTests
         }
     }
 
-	[Theory]
+    [Theory]
     [InlineData("http://localhost:8000")]
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldParseDateAsDateTime(string url)
@@ -832,12 +881,15 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/datetime.surql");
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/datetime.surql"
+        );
         string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
         string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -860,17 +912,22 @@ public class ParserTests
         {
             var nanoRecord = records.Find(r => r.Name == "nano");
             nanoRecord.Should().NotBeNull();
-            nanoRecord!.Value.Should().Be(
-                new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(841_147_000)
-            );
+            nanoRecord!.Value
+                .Should()
+                .Be(new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(841_147_000));
         }
 
         {
             var timezoneRecord = records.Find(r => r.Name == "timezone");
             timezoneRecord.Should().NotBeNull();
-            timezoneRecord!.Value.Should().Be(
-                new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(841_147_000).WithOffset(TimeSpan.FromHours(2)).UtcDateTime
-            );
+            timezoneRecord!.Value
+                .Should()
+                .Be(
+                    new DateTime(2022, 7, 3, 7, 18, 52)
+                        .AddNanoseconds(841_147_000)
+                        .WithOffset(TimeSpan.FromHours(2))
+                        .UtcDateTime
+                );
         }
 
         {
@@ -882,225 +939,249 @@ public class ParserTests
         {
             var nanoPlusDurationRecord = records.Find(r => r.Name == "nano+duration");
             nanoPlusDurationRecord.Should().NotBeNull();
-            nanoPlusDurationRecord!.Value.Should().Be(
-                new DateTime(2022, 7, 3, 8, 49, 14).AddNanoseconds(191_147_000)
-            );
+            nanoPlusDurationRecord!.Value
+                .Should()
+                .Be(new DateTime(2022, 7, 3, 8, 49, 14).AddNanoseconds(191_147_000));
         }
 
         {
             var fullNanoRecord = records.Find(r => r.Name == "full-nano");
             fullNanoRecord.Should().NotBeNull();
-            fullNanoRecord!.Value.Should().Be(
-                new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(123_456_789)
-            );
+            fullNanoRecord!.Value
+                .Should()
+                .Be(new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(123_456_789));
         }
     }
 
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseDateOnly(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseDateOnly(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/datetime.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/datetime.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-		string query = fileContent;
+        string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-		await client.Query(query);
+        await client.Query(query);
 
-		var records = await client.Select<DateOnlyRecord>("datetime");
+        var records = await client.Select<DateOnlyRecord>("datetime");
 
-		{
-			var noneRecord = records.Find(r => r.Name == "none");
-			noneRecord.Should().NotBeNull();
-			noneRecord!.Value.Should().BeNull();
-		}
+        {
+            var noneRecord = records.Find(r => r.Name == "none");
+            noneRecord.Should().NotBeNull();
+            noneRecord!.Value.Should().BeNull();
+        }
 
-		{
-			var timeRecord = records.Find(r => r.Name == "time");
-			timeRecord.Should().NotBeNull();
-			timeRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
-		}
+        {
+            var timeRecord = records.Find(r => r.Name == "time");
+            timeRecord.Should().NotBeNull();
+            timeRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
+        }
 
-		{
-			var nanoRecord = records.Find(r => r.Name == "nano");
-			nanoRecord.Should().NotBeNull();
-			nanoRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
-		}
+        {
+            var nanoRecord = records.Find(r => r.Name == "nano");
+            nanoRecord.Should().NotBeNull();
+            nanoRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
+        }
 
-		{
-			var timezoneRecord = records.Find(r => r.Name == "timezone");
-			timezoneRecord.Should().NotBeNull();
-			timezoneRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
-		}
+        {
+            var timezoneRecord = records.Find(r => r.Name == "timezone");
+            timezoneRecord.Should().NotBeNull();
+            timezoneRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
+        }
 
-		{
-			var timePlusDurationRecord = records.Find(r => r.Name == "time+duration");
-			timePlusDurationRecord.Should().NotBeNull();
-			timePlusDurationRecord!.Value.Should().Be(new DateOnly(2022, 7, 17));
-		}
+        {
+            var timePlusDurationRecord = records.Find(r => r.Name == "time+duration");
+            timePlusDurationRecord.Should().NotBeNull();
+            timePlusDurationRecord!.Value.Should().Be(new DateOnly(2022, 7, 17));
+        }
 
-		{
-			var nanoPlusDurationRecord = records.Find(r => r.Name == "nano+duration");
-			nanoPlusDurationRecord.Should().NotBeNull();
-			nanoPlusDurationRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
-		}
+        {
+            var nanoPlusDurationRecord = records.Find(r => r.Name == "nano+duration");
+            nanoPlusDurationRecord.Should().NotBeNull();
+            nanoPlusDurationRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
+        }
 
-		{
-			var fullNanoRecord = records.Find(r => r.Name == "full-nano");
-			fullNanoRecord.Should().NotBeNull();
-			fullNanoRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
-		}
-	}
+        {
+            var fullNanoRecord = records.Find(r => r.Name == "full-nano");
+            fullNanoRecord.Should().NotBeNull();
+            fullNanoRecord!.Value.Should().Be(new DateOnly(2022, 7, 3));
+        }
+    }
 
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseVector2(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseVector2(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/vector.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/vector.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-		string query = fileContent;
+        string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-		await client.Query(query);
+        await client.Query(query);
 
-		{
-			var noneRecord = await client.Select<Vector2Record>("vector", "none");
-			noneRecord.Should().NotBeNull();
-			noneRecord!.Value.Should().BeNull();
-		}
+        {
+            var noneRecord = await client.Select<Vector2Record>("vector", "none");
+            noneRecord.Should().NotBeNull();
+            noneRecord!.Value.Should().BeNull();
+        }
 
-		{
-			Func<Task> act = async () => await client.Select<Vector2Record>("vector", "empty");
-			await act.Should().ThrowAsync<JsonException>().WithMessage("Cannot deserialize Vector2");
-		}
+        {
+            Func<Task> act = async () => await client.Select<Vector2Record>("vector", "empty");
+            await act.Should()
+                .ThrowAsync<JsonException>()
+                .WithMessage("Cannot deserialize Vector2");
+        }
 
-		{
-			var vector2Record = await client.Select<Vector2Record>("vector", "vector2");
-			vector2Record.Should().NotBeNull();
-			vector2Record!.Value.Should().Be(new Vector2(2.5f, 0.5f));
-		}
+        {
+            var vector2Record = await client.Select<Vector2Record>("vector", "vector2");
+            vector2Record.Should().NotBeNull();
+            vector2Record!.Value.Should().Be(new Vector2(2.5f, 0.5f));
+        }
 
-		{
-			var vector3Record = await client.Select<Vector2Record>("vector", "vector3");
-			vector3Record.Should().NotBeNull();
-			vector3Record!.Value.Should().Be(new Vector2(4, 9));
-		}
+        {
+            var vector3Record = await client.Select<Vector2Record>("vector", "vector3");
+            vector3Record.Should().NotBeNull();
+            vector3Record!.Value.Should().Be(new Vector2(4, 9));
+        }
 
-		{
-			var vector4Record = await client.Select<Vector2Record>("vector", "vector4");
-			vector4Record.Should().NotBeNull();
-			vector4Record!.Value.Should().Be(new Vector2(2, 3));
-		}
-	}
+        {
+            var vector4Record = await client.Select<Vector2Record>("vector", "vector4");
+            vector4Record.Should().NotBeNull();
+            vector4Record!.Value.Should().Be(new Vector2(2, 3));
+        }
+    }
 
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseVector3(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseVector3(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/vector.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/vector.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-		string query = fileContent;
+        string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-		await client.Query(query);
+        await client.Query(query);
 
-		{
-			var noneRecord = await client.Select<Vector3Record>("vector", "none");
-			noneRecord.Should().NotBeNull();
-			noneRecord!.Value.Should().BeNull();
-		}
+        {
+            var noneRecord = await client.Select<Vector3Record>("vector", "none");
+            noneRecord.Should().NotBeNull();
+            noneRecord!.Value.Should().BeNull();
+        }
 
-		{
-			Func<Task> act = async () => await client.Select<Vector3Record>("vector", "empty");
-			await act.Should().ThrowAsync<JsonException>().WithMessage("Cannot deserialize Vector3");
-		}
+        {
+            Func<Task> act = async () => await client.Select<Vector3Record>("vector", "empty");
+            await act.Should()
+                .ThrowAsync<JsonException>()
+                .WithMessage("Cannot deserialize Vector3");
+        }
 
-		{
-			Func<Task> act = async () => await client.Select<Vector3Record>("vector", "vector2");
-			await act.Should().ThrowAsync<JsonException>().WithMessage("Cannot deserialize Vector3");
-		}
+        {
+            Func<Task> act = async () => await client.Select<Vector3Record>("vector", "vector2");
+            await act.Should()
+                .ThrowAsync<JsonException>()
+                .WithMessage("Cannot deserialize Vector3");
+        }
 
-		{
-			var vector3Record = await client.Select<Vector3Record>("vector", "vector3");
-			vector3Record.Should().NotBeNull();
-			vector3Record!.Value.Should().Be(new Vector3(4, 9, 16));
-		}
+        {
+            var vector3Record = await client.Select<Vector3Record>("vector", "vector3");
+            vector3Record.Should().NotBeNull();
+            vector3Record!.Value.Should().Be(new Vector3(4, 9, 16));
+        }
 
-		{
-			var vector4Record = await client.Select<Vector3Record>("vector", "vector4");
-			vector4Record.Should().NotBeNull();
-			vector4Record!.Value.Should().Be(new Vector3(2, 3, 4));
-		}
-	}
+        {
+            var vector4Record = await client.Select<Vector3Record>("vector", "vector4");
+            vector4Record.Should().NotBeNull();
+            vector4Record!.Value.Should().Be(new Vector3(2, 3, 4));
+        }
+    }
 
-	[Theory]
-	[InlineData("http://localhost:8000")]
-	[InlineData("ws://localhost:8000/rpc")]
-	public async Task ShouldParseVector4(string url)
-	{
-		await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-		var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+    [Theory]
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldParseVector4(string url)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-		string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/vector.surql");
-		string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/vector.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
-		string query = fileContent;
+        string query = fileContent;
 
-		using var client = surrealDbClientGenerator.Create(url);
-		await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-		await client.Use(dbInfo.Namespace, dbInfo.Database);
+        using var client = surrealDbClientGenerator.Create(url);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-		await client.Query(query);
+        await client.Query(query);
 
-		{
-			var noneRecord = await client.Select<Vector4Record>("vector", "none");
-			noneRecord.Should().NotBeNull();
-			noneRecord!.Value.Should().BeNull();
-		}
+        {
+            var noneRecord = await client.Select<Vector4Record>("vector", "none");
+            noneRecord.Should().NotBeNull();
+            noneRecord!.Value.Should().BeNull();
+        }
 
-		{
-			Func<Task> act = async () => await client.Select<Vector4Record>("vector", "empty");
-			await act.Should().ThrowAsync<JsonException>().WithMessage("Cannot deserialize Vector4");
-		}
+        {
+            Func<Task> act = async () => await client.Select<Vector4Record>("vector", "empty");
+            await act.Should()
+                .ThrowAsync<JsonException>()
+                .WithMessage("Cannot deserialize Vector4");
+        }
 
-		{
-			Func<Task> act = async () => await client.Select<Vector4Record>("vector", "vector2");
-			await act.Should().ThrowAsync<JsonException>().WithMessage("Cannot deserialize Vector4");
-		}
+        {
+            Func<Task> act = async () => await client.Select<Vector4Record>("vector", "vector2");
+            await act.Should()
+                .ThrowAsync<JsonException>()
+                .WithMessage("Cannot deserialize Vector4");
+        }
 
-		{
-			Func<Task> act = async () => await client.Select<Vector4Record>("vector", "vector3");
-			await act.Should().ThrowAsync<JsonException>().WithMessage("Cannot deserialize Vector4");
-		}
+        {
+            Func<Task> act = async () => await client.Select<Vector4Record>("vector", "vector3");
+            await act.Should()
+                .ThrowAsync<JsonException>()
+                .WithMessage("Cannot deserialize Vector4");
+        }
 
-		{
-			var vector4Record = await client.Select<Vector4Record>("vector", "vector4");
-			vector4Record.Should().NotBeNull();
-			vector4Record!.Value.Should().Be(new Vector4(2, 3, 4, 5));
-		}
-	}
+        {
+            var vector4Record = await client.Select<Vector4Record>("vector", "vector4");
+            vector4Record.Should().NotBeNull();
+            vector4Record!.Value.Should().Be(new Vector4(2, 3, 4, 5));
+        }
+    }
 }

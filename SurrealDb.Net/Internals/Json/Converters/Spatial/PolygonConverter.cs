@@ -6,107 +6,111 @@ namespace SurrealDb.Net.Internals.Json.Converters.Spatial;
 
 internal static class PolygonConverter
 {
-	public const string TypeValue = "Polygon";
+    public const string TypeValue = "Polygon";
 
-	public static void ConstructGeometryPolygon<T>(
-		ref JsonElement coordinatesProperty,
-		GeometryFactory<T> geometryBuilder
-	) where T : Geometry
-	{
-		var pointsProperty = coordinatesProperty[0];
+    public static void ConstructGeometryPolygon<T>(
+        ref JsonElement coordinatesProperty,
+        GeometryFactory<T> geometryBuilder
+    )
+        where T : Geometry
+    {
+        var pointsProperty = coordinatesProperty[0];
 
-		foreach (var coordinate in pointsProperty.EnumerateArray())
-		{
-			var x = coordinate[0].GetDouble();
-			var y = coordinate[1].GetDouble();
+        foreach (var coordinate in pointsProperty.EnumerateArray())
+        {
+            var x = coordinate[0].GetDouble();
+            var y = coordinate[1].GetDouble();
 
-			geometryBuilder.LineTo(x, y);
-		}
-	}
-	public static void ConstructGeographyPolygon<T>(
-		ref JsonElement coordinatesProperty,
-		GeographyFactory<T> geographyBuilder
-	) where T : Geography
-	{
-		var pointsProperty = coordinatesProperty[0];
+            geometryBuilder.LineTo(x, y);
+        }
+    }
 
-		foreach (var coordinate in pointsProperty.EnumerateArray())
-		{
-			var longitude = coordinate[0].GetDouble();
-			var latitude = coordinate[1].GetDouble();
+    public static void ConstructGeographyPolygon<T>(
+        ref JsonElement coordinatesProperty,
+        GeographyFactory<T> geographyBuilder
+    )
+        where T : Geography
+    {
+        var pointsProperty = coordinatesProperty[0];
 
-			geographyBuilder.LineTo(latitude, longitude);
-		}
-	}
+        foreach (var coordinate in pointsProperty.EnumerateArray())
+        {
+            var longitude = coordinate[0].GetDouble();
+            var latitude = coordinate[1].GetDouble();
 
-	public static void WriteGeometryPolygon(Utf8JsonWriter writer, GeometryPolygon value)
-	{
-		if (value is null)
-		{
-			writer.WriteNullValue();
-			return;
-		}
+            geographyBuilder.LineTo(latitude, longitude);
+        }
+    }
 
-		writer.WriteStartObject();
+    public static void WriteGeometryPolygon(Utf8JsonWriter writer, GeometryPolygon value)
+    {
+        if (value is null)
+        {
+            writer.WriteNullValue();
+            return;
+        }
 
-		writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
-		writer.WriteStringValue(TypeValue);
+        writer.WriteStartObject();
 
-		writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
-		writer.WriteStartArray();
+        writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
+        writer.WriteStringValue(TypeValue);
 
-		foreach (var ring in value.Rings)
-		{
-			writer.WriteStartArray();
+        writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
+        writer.WriteStartArray();
 
-			foreach (var point in ring.Points)
-			{
-				writer.WriteStartArray();
-				writer.WriteNumberValue(point.X);
-				writer.WriteNumberValue(point.Y);
-				writer.WriteEndArray();
-			}
+        foreach (var ring in value.Rings)
+        {
+            writer.WriteStartArray();
 
-			writer.WriteEndArray();
-		}
+            foreach (var point in ring.Points)
+            {
+                writer.WriteStartArray();
+                writer.WriteNumberValue(point.X);
+                writer.WriteNumberValue(point.Y);
+                writer.WriteEndArray();
+            }
 
-		writer.WriteEndArray();
+            writer.WriteEndArray();
+        }
 
-		writer.WriteEndObject();
-	}
-	public static void WriteGeographyPolygon(Utf8JsonWriter writer, GeographyPolygon value)
-	{
-		if (value is null)
-		{
-			writer.WriteNullValue();
-			return;
-		}
+        writer.WriteEndArray();
 
-		writer.WriteStartObject();
+        writer.WriteEndObject();
+    }
 
-		writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
-		writer.WriteStringValue(TypeValue);
+    public static void WriteGeographyPolygon(Utf8JsonWriter writer, GeographyPolygon value)
+    {
+        if (value is null)
+        {
+            writer.WriteNullValue();
+            return;
+        }
 
-		writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
-		writer.WriteStartArray();
+        writer.WriteStartObject();
 
-		foreach (var ring in value.Rings)
-		{
-			writer.WriteStartArray();
+        writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
+        writer.WriteStringValue(TypeValue);
 
-			foreach (var point in ring.Points)
-			{
-				writer.WriteStartArray();
-				writer.WriteNumberValue(point.Longitude);
-				writer.WriteNumberValue(point.Latitude);
-				writer.WriteEndArray();
-			}
+        writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
+        writer.WriteStartArray();
 
-			writer.WriteEndArray();
-		}
+        foreach (var ring in value.Rings)
+        {
+            writer.WriteStartArray();
 
-		writer.WriteEndArray();
+            foreach (var point in ring.Points)
+            {
+                writer.WriteStartArray();
+                writer.WriteNumberValue(point.Longitude);
+                writer.WriteNumberValue(point.Latitude);
+                writer.WriteEndArray();
+            }
 
-		writer.WriteEndObject();
-	}
+            writer.WriteEndArray();
+        }
+
+        writer.WriteEndArray();
+
+        writer.WriteEndObject();
+    }
 }

@@ -5,8 +5,8 @@ namespace SurrealDb.Net.Models.Response;
 /// </summary>
 public interface ISurrealDbResult
 {
-	public bool IsOk { get; }
-	public bool IsError => !IsOk;
+    public bool IsOk { get; }
+    public bool IsError => !IsOk;
 }
 
 /// <summary>

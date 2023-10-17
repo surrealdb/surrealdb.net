@@ -8,29 +8,29 @@ namespace SurrealDb.Net.Models.Response;
 /// </summary>
 public sealed class SurrealDbProtocolErrorResult : ISurrealDbErrorResult
 {
-	/// <summary>
-	/// The HTTP status code of the error.
-	/// </summary>
-	[JsonPropertyName("code")]
-	public HttpStatusCode Code { get; set; }
+    /// <summary>
+    /// The HTTP status code of the error.
+    /// </summary>
+    [JsonPropertyName("code")]
+    public HttpStatusCode Code { get; set; }
 
-	/// <summary>
-	/// Details about the error.
-	/// </summary>
-	[JsonPropertyName("details")]
-	public string Details { get; set; } = string.Empty;
+    /// <summary>
+    /// Details about the error.
+    /// </summary>
+    [JsonPropertyName("details")]
+    public string Details { get; set; } = string.Empty;
 
-	/// <summary>
-	/// Description of the error.
-	/// </summary>
-	[JsonPropertyName("description")]
-	public string Description { get; set; } = string.Empty;
+    /// <summary>
+    /// Description of the error.
+    /// </summary>
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
 
-	/// <summary>
-	/// Some information about the error.
-	/// </summary>
-	[JsonPropertyName("information")]
-	public string Information { get; set; } = string.Empty;
+    /// <summary>
+    /// Some information about the error.
+    /// </summary>
+    [JsonPropertyName("information")]
+    public string Information { get; set; } = string.Empty;
 
-	public bool IsOk => false;
+    public bool IsOk => false;
 }

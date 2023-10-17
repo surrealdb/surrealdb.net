@@ -6,11 +6,11 @@ namespace SurrealDb.Net.Internals.Ws;
 
 internal class SurrealDbWsOkResponse : ISurrealDbWsResponse
 {
-	[JsonPropertyName("id")]
-	public string Id { get; set; } = string.Empty;
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
 
-	[JsonPropertyName("result")]
-	public JsonElement Result { get; set; }
+    [JsonPropertyName("result")]
+    public JsonElement Result { get; set; }
 
-	public T? GetValue<T>() => Result.Deserialize<T>(SurrealDbSerializerOptions.Default);
+    public T? GetValue<T>() => Result.Deserialize<T>(SurrealDbSerializerOptions.Default);
 }

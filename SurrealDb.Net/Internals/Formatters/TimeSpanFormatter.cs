@@ -16,7 +16,8 @@ internal class TimeSpanFormatter
     public static string Format(TimeSpan value)
     {
         long seconds = (long)value.TotalSeconds;
-		long nanoSeconds = (value.Ticks % TimeSpan.TicksPerSecond) * TimeConstants.NanosecondsPerTick;
+        long nanoSeconds =
+            (value.Ticks % TimeSpan.TicksPerSecond) * TimeConstants.NanosecondsPerTick;
 
         if (seconds == 0 && nanoSeconds == 0)
         {
