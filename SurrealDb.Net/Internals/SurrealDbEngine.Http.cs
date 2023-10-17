@@ -19,15 +19,21 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 {
     private readonly Uri _uri;
     private readonly IHttpClientFactory? _httpClientFactory;
+	private readonly Action<JsonSerializerOptions>? _configureJsonSerializerOptions;
 	private readonly Lazy<HttpClient> _singleHttpClient = new(() => new HttpClient(), true);
 	private HttpClientConfiguration? _singleHttpClientConfiguration;
 	private readonly SurrealDbHttpEngineConfig _config = new();
 
-	public SurrealDbHttpEngine(Uri uri, IHttpClientFactory? httpClientFactory)
+	public SurrealDbHttpEngine(
+		Uri uri,
+		IHttpClientFactory? httpClientFactory,
+		Action<JsonSerializerOptions>? configureJsonSerializerOptions
+	)
     {
         _uri = uri;
         _httpClientFactory = httpClientFactory;
-    }
+		_configureJsonSerializerOptions = configureJsonSerializerOptions;
+	}
 
     public async Task Authenticate(Jwt jwt, CancellationToken cancellationToken)
     {
@@ -204,13 +210,15 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
 		var queryString = HttpUtility.ParseQueryString(string.Empty);
 
+		var jsonSerializerOptions = GetJsonSerializerOptions();
+
 		foreach (var (key, value) in _config.Parameters)
 		{
-			queryString[key] = JsonSerializer.Serialize(value, SurrealDbSerializerOptions.Default);
+			queryString[key] = JsonSerializer.Serialize(value, jsonSerializerOptions);
 		}
 		foreach (var (key, value) in parameters)
 		{
-			queryString[key] = JsonSerializer.Serialize(value, SurrealDbSerializerOptions.Default);
+			queryString[key] = JsonSerializer.Serialize(value, jsonSerializerOptions);
 		}
 
 		var uriBuilder = new UriBuilder
@@ -388,6 +396,19 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		return await wrapper.Instance.GetStringAsync("/version").ConfigureAwait(false);
 	}
 
+	private JsonSerializerOptions GetJsonSerializerOptions()
+	{
+		if (_configureJsonSerializerOptions is not null)
+		{
+			var jsonSerializerOptions = SurrealDbSerializerOptions.CreateJsonSerializerOptions();
+			_configureJsonSerializerOptions(jsonSerializerOptions);
+
+			return jsonSerializerOptions;
+		}
+
+		return SurrealDbSerializerOptions.Default;
+	}
+
 	private HttpClientWrapper CreateHttpClientWrapper(IAuth? overridedAuth = null, UseConfiguration? useConfiguration = null)
 	{
 		var client = CreateHttpClient(overridedAuth, useConfiguration);
@@ -496,16 +517,16 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 		return _singleHttpClient.IsValueCreated && client == _singleHttpClient.Value;
 	}
 
-	private static StringContent CreateBodyContent<T>(T data)
+	private StringContent CreateBodyContent<T>(T data)
 	{
 		string bodyContent = data is string str
 			? str
-			: JsonSerializer.Serialize(data, SurrealDbSerializerOptions.Default);
+			: JsonSerializer.Serialize(data, GetJsonSerializerOptions());
 
 		return new StringContent(bodyContent, Encoding.UTF8, "application/json");
 	}
 
-	private static async Task<SurrealDbResponse> DeserializeDbResponseAsync(
+	private async Task<SurrealDbResponse> DeserializeDbResponseAsync(
 		HttpResponseMessage response,
 		CancellationToken cancellationToken
 	)
@@ -516,18 +537,21 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 #endif
 
+		var jsonSerializerOptions = GetJsonSerializerOptions();
+
 		if (!response.IsSuccessStatusCode)
 		{
 			var result = await JsonSerializer
-				.DeserializeAsync<ISurrealDbResult>(stream, SurrealDbSerializerOptions.Default, cancellationToken)
+				.DeserializeAsync<ISurrealDbResult>(stream, jsonSerializerOptions, cancellationToken)
 				.ConfigureAwait(false);
+
 			return new SurrealDbResponse(result!);
 		}
 
 		var list = new List<ISurrealDbResult>();
 
 		await foreach (var result in JsonSerializer
-			.DeserializeAsyncEnumerable<ISurrealDbResult>(stream, SurrealDbSerializerOptions.Default, cancellationToken)
+			.DeserializeAsyncEnumerable<ISurrealDbResult>(stream, jsonSerializerOptions, cancellationToken)
 			.ConfigureAwait(false)
 		)
 		{
@@ -551,7 +575,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
 		var authResponse = await JsonSerializer.DeserializeAsync<AuthResponse>(
 			stream,
-			SurrealDbSerializerOptions.Default,
+			GetJsonSerializerOptions(),
 			cancellationToken
 		).ConfigureAwait(false);
 

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals.Helpers;
+using System.Text.Json;
 
 namespace SurrealDb.Net;
 
@@ -14,9 +15,18 @@ public static class SurrealDbWsClient
 	/// <param name="username">The username to connect to (with root access).</param>
 	/// <param name="password">The password to connect to (with root access).</param>
 	/// <param name="token">The token to connect to (with user access).</param>
+	/// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
 	/// <exception cref="ArgumentException">Thrown when host is not valid.</exception>
 	/// <exception cref="ArgumentOutOfRangeException">Thrown when port in host is provided but is value is out of range.</exception>
-	public static ISurrealDbClient New(string host, string? ns = null, string? db = null, string? username = null, string? password = null, string? token = null)
+	public static ISurrealDbClient New(
+		string host,
+		string? ns = null,
+		string? db = null,
+		string? username = null,
+		string? password = null,
+		string? token = null,
+		Action<JsonSerializerOptions>? configureJsonSerializerOptions = null
+	)
 	{
 #if NET6_0_OR_GREATER
 		string endpoint = UriBuilderHelper.CreateEndpointFromProtocolAndHost(host, Uri.UriSchemeWs, "/rpc");
@@ -34,6 +44,6 @@ public static class SurrealDbWsClient
 			Password = password,
 			Token = token
 		};
-		return new SurrealDbClient(options, null);
+		return new SurrealDbClient(options, configureJsonSerializerOptions: configureJsonSerializerOptions);
 	}
 }

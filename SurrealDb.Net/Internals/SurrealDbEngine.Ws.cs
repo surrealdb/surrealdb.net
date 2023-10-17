@@ -23,12 +23,13 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 	private static readonly RecyclableMemoryStreamManager _memoryStreamManager = new();
 
 	private readonly string _id;
-    private readonly Uri _uri;
+	private readonly Uri _uri;
+	private readonly Action<JsonSerializerOptions>? _configureJsonSerializerOptions;
 	private readonly SurrealDbWsEngineConfig _config = new();
 	private readonly WebsocketClient _wsClient;
 	private readonly IDisposable _receiverSubscription;
 
-	public SurrealDbWsEngine(Uri uri)
+	public SurrealDbWsEngine(Uri uri, Action<JsonSerializerOptions>? configureJsonSerializerOptions)
     {
 		string id;
 
@@ -40,6 +41,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
 		_id = id;
 		_uri = uri;
+		_configureJsonSerializerOptions = configureJsonSerializerOptions;
 		_wsClient = new WebsocketClient(_uri)
 		{
 			IsTextMessageConversionEnabled = false
@@ -55,7 +57,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 					switch (message.MessageType)
 					{
 						case WebSocketMessageType.Text:
-							response = JsonSerializer.Deserialize<ISurrealDbWsResponse>(message.Text!, SurrealDbSerializerOptions.Default);
+							response = JsonSerializer.Deserialize<ISurrealDbWsResponse>(message.Text!, GetJsonSerializerOptions());
 							break;
 						case WebSocketMessageType.Binary:
 							{
@@ -63,7 +65,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
 								response = await JsonSerializer.DeserializeAsync<ISurrealDbWsResponse>(
 									stream,
-									SurrealDbSerializerOptions.Default,
+									GetJsonSerializerOptions(),
 									cancellationToken
 								).ConfigureAwait(false);
 								break;
@@ -302,6 +304,19 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		return dbResponse.GetValue<string>()!;
 	}
 
+	private JsonSerializerOptions GetJsonSerializerOptions()
+	{
+		if (_configureJsonSerializerOptions is not null)
+		{
+			var jsonSerializerOptions = SurrealDbSerializerOptions.CreateJsonSerializerOptions();
+			_configureJsonSerializerOptions(jsonSerializerOptions);
+
+			return jsonSerializerOptions;
+		}
+
+		return SurrealDbSerializerOptions.Default;
+	}
+
 	private async Task<SurrealDbWsOkResponse> SendRequest(string method, List<object?>? parameters, CancellationToken cancellationToken)
 	{
 		if (!_wsClient.IsStarted)
@@ -330,9 +345,11 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 		};
 
 		using var stream = _memoryStreamManager.GetStream();
+
 		await JsonSerializer
-			.SerializeAsync(stream, request, SurrealDbSerializerOptions.Default, cancellationToken)
+			.SerializeAsync(stream, request, GetJsonSerializerOptions(), cancellationToken)
 			.ConfigureAwait(false);
+    
 		stream.Seek(0, SeekOrigin.Begin);
 		using var reader = new StreamReader(stream);
 		string payload = await reader.ReadToEndAsync().ConfigureAwait(false);

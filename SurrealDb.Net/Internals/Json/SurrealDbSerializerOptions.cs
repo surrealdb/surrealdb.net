@@ -65,7 +65,7 @@ internal static class SurrealDbSerializerOptions
 			.Concat(dbResponseConverters)
 			.ToList();
 
-		var options = new JsonSerializerOptions()
+		var options = new JsonSerializerOptions
         {
             AllowTrailingCommas = true,
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,

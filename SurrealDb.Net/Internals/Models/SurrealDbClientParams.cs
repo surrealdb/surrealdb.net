@@ -4,7 +4,6 @@ namespace SurrealDb.Net.Internals.Models;
 
 internal class SurrealDbClientParams
 {
-	public IHttpClientFactory? HttpClientFactory { get; }
 	public string? Endpoint { get; }
 	public string? Ns { get; }
 	public string? Db { get; }
@@ -12,14 +11,12 @@ internal class SurrealDbClientParams
 	public string? Password { get; }
 	public string? Token { get; }
 
-	public SurrealDbClientParams(string endpoint, IHttpClientFactory? httpClientFactory = null)
+	public SurrealDbClientParams(string endpoint)
 	{
-		HttpClientFactory = httpClientFactory;
 		Endpoint = endpoint;
 	}
-	public SurrealDbClientParams(SurrealDbOptions configuration, IHttpClientFactory? httpClientFactory = null)
+	public SurrealDbClientParams(SurrealDbOptions configuration)
 	{
-		HttpClientFactory = httpClientFactory;
 		Endpoint = configuration.Endpoint;
 		Ns = configuration.Namespace;
 		Db = configuration.Database;
