@@ -7,23 +7,22 @@ namespace SurrealDb.Net.Exceptions;
 /// </summary>
 public class SurrealDbErrorResultException : Exception
 {
-	internal SurrealDbErrorResultException() : base(GetErrorMessage())
-	{
-	}
-	internal SurrealDbErrorResultException(ISurrealDbErrorResult errorResult) : base(GetErrorMessage(errorResult))
-	{
-	}
+    internal SurrealDbErrorResultException()
+        : base(GetErrorMessage()) { }
 
-	private static string GetErrorMessage(ISurrealDbErrorResult? errorResult = null)
-	{
-		switch (errorResult)
-		{
-			case SurrealDbErrorResult defaultErrorResult:
-				return defaultErrorResult.Details;
-			case SurrealDbProtocolErrorResult protocolErrorResult:
-				return $"{protocolErrorResult.Details}\n{protocolErrorResult.Information}";
-			default:
-				return "The response from the SurrealDb query was an unexpected error.";
-		}
-	}
+    internal SurrealDbErrorResultException(ISurrealDbErrorResult errorResult)
+        : base(GetErrorMessage(errorResult)) { }
+
+    private static string GetErrorMessage(ISurrealDbErrorResult? errorResult = null)
+    {
+        switch (errorResult)
+        {
+            case SurrealDbErrorResult defaultErrorResult:
+                return defaultErrorResult.Details;
+            case SurrealDbProtocolErrorResult protocolErrorResult:
+                return $"{protocolErrorResult.Details}\n{protocolErrorResult.Information}";
+            default:
+                return "The response from the SurrealDb query was an unexpected error.";
+        }
+    }
 }

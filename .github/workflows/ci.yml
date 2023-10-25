@@ -25,6 +25,12 @@ jobs:
         with:
           dotnet-version: "6.0.x"
 
+      - name: Install .NET tools
+        run: dotnet tool restore
+
+      - name: Check Formatting
+        run: dotnet csharpier --check .
+
       - name: Install dependencies
         run: dotnet restore
 

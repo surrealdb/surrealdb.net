@@ -15,71 +15,72 @@ internal static class SurrealDbSerializerOptions
 
     public static JsonSerializerOptions CreateJsonSerializerOptions()
     {
-		var defaultConverters = new List<JsonConverter>
-		{
-			new ThingConverter(),
-			new DurationConverter(),
-			new TimeSpanValueConverter(),
-			new DateTimeValueConverter(),
+        var defaultConverters = new List<JsonConverter>
+        {
+            new ThingConverter(),
+            new DurationConverter(),
+            new TimeSpanValueConverter(),
+            new DateTimeValueConverter(),
 #if NET6_0_OR_GREATER
-			new DateOnlyValueConverter(),
-			new TimeOnlyValueConverter(),
+            new DateOnlyValueConverter(),
+            new TimeOnlyValueConverter(),
 #endif
-		};
+        };
 
-		var vectorsConverters = new List<JsonConverter>
-		{
-			new Vector2ValueConverter(),
-			new Vector3ValueConverter(),
-			new Vector4ValueConverter(),
-		};
+        var vectorsConverters = new List<JsonConverter>
+        {
+            new Vector2ValueConverter(),
+            new Vector3ValueConverter(),
+            new Vector4ValueConverter(),
+        };
 
-		var spatialConverters = new List<JsonConverter>
-		{
-			new GeometryPointValueConverter(),
-			new GeometryLineStringValueConverter(),
-			new GeometryPolygonValueConverter(),
-			new GeometryMultiPointValueConverter(),
-			new GeometryMultiLineStringValueConverter(),
-			new GeometryMultiPolygonValueConverter(),
-			new GeometryCollectionValueConverter(),
+        var spatialConverters = new List<JsonConverter>
+        {
+            new GeometryPointValueConverter(),
+            new GeometryLineStringValueConverter(),
+            new GeometryPolygonValueConverter(),
+            new GeometryMultiPointValueConverter(),
+            new GeometryMultiLineStringValueConverter(),
+            new GeometryMultiPolygonValueConverter(),
+            new GeometryCollectionValueConverter(),
+            new GeographyPointValueConverter(),
+            new GeographyLineStringValueConverter(),
+            new GeographyPolygonValueConverter(),
+            new GeographyMultiPointValueConverter(),
+            new GeographyMultiLineStringValueConverter(),
+            new GeographyMultiPolygonValueConverter(),
+            new GeographyCollectionValueConverter(),
+        };
 
-			new GeographyPointValueConverter(),
-			new GeographyLineStringValueConverter(),
-			new GeographyPolygonValueConverter(),
-			new GeographyMultiPointValueConverter(),
-			new GeographyMultiLineStringValueConverter(),
-			new GeographyMultiPolygonValueConverter(),
-			new GeographyCollectionValueConverter(),
-		};
+        var dbResponseConverters = new List<JsonConverter>
+        {
+            new SurrealDbResultConverter(),
+            new SurrealDbWsResponseConverter(),
+        };
 
-		var dbResponseConverters = new List<JsonConverter>
-		{
-			new SurrealDbResultConverter(),
-			new SurrealDbWsResponseConverter(),
-		};
+        var allConverters = defaultConverters
+            .Concat(vectorsConverters)
+            .Concat(spatialConverters)
+            .Concat(dbResponseConverters)
+            .ToList();
 
-		var allConverters = defaultConverters
-			.Concat(vectorsConverters)
-			.Concat(spatialConverters)
-			.Concat(dbResponseConverters)
-			.ToList();
-
-		var options = new JsonSerializerOptions
+        var options = new JsonSerializerOptions
         {
             AllowTrailingCommas = true,
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-            NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
+            NumberHandling =
+                JsonNumberHandling.AllowReadingFromString
+                | JsonNumberHandling.AllowNamedFloatingPointLiterals,
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = SnakeCaseNamingPolicy.Instance,
             ReadCommentHandling = JsonCommentHandling.Skip,
         };
 
-		foreach (var converter in allConverters)
-		{
-			options.Converters.Add(converter);
-		}
+        foreach (var converter in allConverters)
+        {
+            options.Converters.Add(converter);
+        }
 
-		return options;
-	}
+        return options;
+    }
 }

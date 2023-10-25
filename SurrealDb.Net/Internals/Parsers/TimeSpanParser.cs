@@ -10,8 +10,12 @@ internal static class TimeSpanParser
     {
         return unit switch
         {
-            DurationUnit.NanoSecond => TimeSpan.FromTicks((long)Math.Round((double)value * TimeConstants.TicksPerNanosecond)),
-            DurationUnit.MicroSecond => TimeSpan.FromTicks((long)(value * TimeConstants.TicksPerMicrosecond)),
+            DurationUnit.NanoSecond
+                => TimeSpan.FromTicks(
+                    (long)Math.Round((double)value * TimeConstants.TicksPerNanosecond)
+                ),
+            DurationUnit.MicroSecond
+                => TimeSpan.FromTicks((long)(value * TimeConstants.TicksPerMicrosecond)),
             DurationUnit.MilliSecond => TimeSpan.FromMilliseconds((double)value),
             DurationUnit.Second => TimeSpan.FromSeconds((double)value),
             DurationUnit.Minute => TimeSpan.FromMinutes((double)value),
@@ -23,16 +27,16 @@ internal static class TimeSpanParser
         };
     }
 
-	public static readonly TextParser<TimeSpan> DurationAsTimeSpanRaw =
-		from pair in DurationParser.DurationRaw
-		select ToTimeSpan(pair.value, pair.unit);
+    public static readonly TextParser<TimeSpan> DurationAsTimeSpanRaw =
+        from pair in DurationParser.DurationRaw
+        select ToTimeSpan(pair.value, pair.unit);
 
-	private static readonly TextParser<TimeSpan[]> DurationAsTimeSpanParser =
-		DurationAsTimeSpanRaw.AtLeastOnce();
+    private static readonly TextParser<TimeSpan[]> DurationAsTimeSpanParser =
+        DurationAsTimeSpanRaw.AtLeastOnce();
 
     public static TimeSpan Parse(string input)
     {
         var result = DurationAsTimeSpanParser.Parse(input);
-		return result.Aggregate(TimeSpan.Zero, (acc, span) => acc + span);
+        return result.Aggregate(TimeSpan.Zero, (acc, span) => acc + span);
     }
 }

@@ -6,89 +6,93 @@ namespace SurrealDb.Net.Internals.Json.Converters.Spatial;
 
 internal class LineStringConverter
 {
-	public const string TypeValue = "LineString";
+    public const string TypeValue = "LineString";
 
-	public static void ConstructGeometryLineString<T>(
-		ref JsonElement coordinatesProperty,
-		GeometryFactory<T> geometryBuilder
-	) where T : Geometry
-	{
-		foreach (var coordinate in coordinatesProperty.EnumerateArray())
-		{
-			var x = coordinate[0].GetDouble();
-			var y = coordinate[1].GetDouble();
+    public static void ConstructGeometryLineString<T>(
+        ref JsonElement coordinatesProperty,
+        GeometryFactory<T> geometryBuilder
+    )
+        where T : Geometry
+    {
+        foreach (var coordinate in coordinatesProperty.EnumerateArray())
+        {
+            var x = coordinate[0].GetDouble();
+            var y = coordinate[1].GetDouble();
 
-			geometryBuilder.LineTo(x, y);
-		}
-	}
-	public static void ConstructGeographyLineString<T>(
-		ref JsonElement coordinatesProperty,
-		GeographyFactory<T> geographyBuilder
-	) where T : Geography
-	{
-		foreach (var coordinate in coordinatesProperty.EnumerateArray())
-		{
-			var longitude = coordinate[0].GetDouble();
-			var latitude = coordinate[1].GetDouble();
+            geometryBuilder.LineTo(x, y);
+        }
+    }
 
-			geographyBuilder.LineTo(latitude, longitude);
-		}
-	}
+    public static void ConstructGeographyLineString<T>(
+        ref JsonElement coordinatesProperty,
+        GeographyFactory<T> geographyBuilder
+    )
+        where T : Geography
+    {
+        foreach (var coordinate in coordinatesProperty.EnumerateArray())
+        {
+            var longitude = coordinate[0].GetDouble();
+            var latitude = coordinate[1].GetDouble();
 
-	public static void WriteGeometryLineString(Utf8JsonWriter writer, GeometryLineString value)
-	{
-		if (value is null)
-		{
-			writer.WriteNullValue();
-			return;
-		}
+            geographyBuilder.LineTo(latitude, longitude);
+        }
+    }
 
-		writer.WriteStartObject();
+    public static void WriteGeometryLineString(Utf8JsonWriter writer, GeometryLineString value)
+    {
+        if (value is null)
+        {
+            writer.WriteNullValue();
+            return;
+        }
 
-		writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
-		writer.WriteStringValue(TypeValue);
+        writer.WriteStartObject();
 
-		writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
-		writer.WriteStartArray();
+        writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
+        writer.WriteStringValue(TypeValue);
 
-		foreach (var point in value.Points)
-		{
-			writer.WriteStartArray();
-			writer.WriteNumberValue(point.X);
-			writer.WriteNumberValue(point.Y);
-			writer.WriteEndArray();
-		}
+        writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
+        writer.WriteStartArray();
 
-		writer.WriteEndArray();
+        foreach (var point in value.Points)
+        {
+            writer.WriteStartArray();
+            writer.WriteNumberValue(point.X);
+            writer.WriteNumberValue(point.Y);
+            writer.WriteEndArray();
+        }
 
-		writer.WriteEndObject();
-	}
-	public static void WriteGeographyLineString(Utf8JsonWriter writer, GeographyLineString value)
-	{
-		if (value is null)
-		{
-			writer.WriteNullValue();
-			return;
-		}
+        writer.WriteEndArray();
 
-		writer.WriteStartObject();
+        writer.WriteEndObject();
+    }
 
-		writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
-		writer.WriteStringValue(TypeValue);
+    public static void WriteGeographyLineString(Utf8JsonWriter writer, GeographyLineString value)
+    {
+        if (value is null)
+        {
+            writer.WriteNullValue();
+            return;
+        }
 
-		writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
-		writer.WriteStartArray();
+        writer.WriteStartObject();
 
-		foreach (var point in value.Points)
-		{
-			writer.WriteStartArray();
-			writer.WriteNumberValue(point.Longitude);
-			writer.WriteNumberValue(point.Latitude);
-			writer.WriteEndArray();
-		}
+        writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
+        writer.WriteStringValue(TypeValue);
 
-		writer.WriteEndArray();
+        writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
+        writer.WriteStartArray();
 
-		writer.WriteEndObject();
-	}
+        foreach (var point in value.Points)
+        {
+            writer.WriteStartArray();
+            writer.WriteNumberValue(point.Longitude);
+            writer.WriteNumberValue(point.Latitude);
+            writer.WriteEndArray();
+        }
+
+        writer.WriteEndArray();
+
+        writer.WriteEndObject();
+    }
 }

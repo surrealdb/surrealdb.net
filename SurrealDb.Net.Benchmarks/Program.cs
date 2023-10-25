@@ -5,8 +5,8 @@ using BenchmarkDotNet.Running;
 using SurrealDb.Net.Benchmarks.Helpers;
 
 var config = DefaultConfig.Instance
-	.AddDiagnoser(MemoryDiagnoser.Default)
-	.AddExporter(JsonExporter.Full);
+    .AddDiagnoser(MemoryDiagnoser.Default)
+    .AddExporter(JsonExporter.Full);
 
 BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, config);
 

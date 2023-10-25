@@ -13,8 +13,8 @@ namespace SurrealDb.Net.Models.Auth;
 /// </summary>
 public sealed class Jwt
 {
-	/// <summary>
-	/// The underlying token string
-	/// </summary>
-	public string Token { get; set; } = string.Empty;
+    /// <summary>
+    /// The underlying token string
+    /// </summary>
+    public string Token { get; set; } = string.Empty;
 }

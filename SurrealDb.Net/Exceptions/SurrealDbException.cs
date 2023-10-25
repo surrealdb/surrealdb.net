@@ -5,7 +5,6 @@ namespace SurrealDb.Net.Exceptions;
 /// </summary>
 public class SurrealDbException : Exception
 {
-	internal SurrealDbException(string message) : base(message)
-	{
-	}
+    internal SurrealDbException(string message)
+        : base(message) { }
 }

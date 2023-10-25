@@ -12,11 +12,11 @@ services.AddControllers();
 services.AddEndpointsApiExplorer();
 services.AddSwaggerGen(c =>
 {
-	c.SwaggerDoc("v1", new OpenApiInfo { Title = "WeatherForecast API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "WeatherForecast API", Version = "v1" });
 
-	var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-	var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-	c.IncludeXmlComments(xmlPath);
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
 });
 services.AddSurreal(configuration.GetConnectionString("SurrealDB")!);
 
@@ -24,8 +24,8 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-	app.UseSwagger();
-	app.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
@@ -35,14 +35,14 @@ app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
-	int initialCount = 5;
-	var weatherForecasts = new WeatherForecastFaker().Generate(initialCount);
-	var surrealDbClient = scope.ServiceProvider.GetRequiredService<ISurrealDbClient>();
+    int initialCount = 5;
+    var weatherForecasts = new WeatherForecastFaker().Generate(initialCount);
+    var surrealDbClient = scope.ServiceProvider.GetRequiredService<ISurrealDbClient>();
 
-	foreach (var weatherForecast in weatherForecasts)
-	{
-		await surrealDbClient.Create("weatherForecast", weatherForecast);
-	}
+    foreach (var weatherForecast in weatherForecasts)
+    {
+        await surrealDbClient.Create("weatherForecast", weatherForecast);
+    }
 }
 
 app.Run();

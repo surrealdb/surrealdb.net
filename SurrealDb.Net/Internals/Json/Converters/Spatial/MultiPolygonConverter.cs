@@ -6,131 +6,138 @@ namespace SurrealDb.Net.Internals.Json.Converters.Spatial;
 
 internal static class MultiPolygonConverter
 {
-	public const string TypeValue = "MultiPolygon";
+    public const string TypeValue = "MultiPolygon";
 
-	public static void ConstructGeometryMultiPolygon<T>(
-		ref JsonElement coordinatesProperty,
-		GeometryFactory<T> geometryBuilder
-	) where T : Geometry
-	{
-		foreach (var polygonProperty in coordinatesProperty.EnumerateArray())
-		{
-			geometryBuilder.Polygon();
+    public static void ConstructGeometryMultiPolygon<T>(
+        ref JsonElement coordinatesProperty,
+        GeometryFactory<T> geometryBuilder
+    )
+        where T : Geometry
+    {
+        foreach (var polygonProperty in coordinatesProperty.EnumerateArray())
+        {
+            geometryBuilder.Polygon();
 
-			var pointsProperty = polygonProperty[0];
+            var pointsProperty = polygonProperty[0];
 
-			foreach (var point in pointsProperty.EnumerateArray())
-			{
-				var x = point[0].GetDouble();
-				var y = point[1].GetDouble();
+            foreach (var point in pointsProperty.EnumerateArray())
+            {
+                var x = point[0].GetDouble();
+                var y = point[1].GetDouble();
 
-				geometryBuilder.LineTo(x, y);
-			}
-		}
-	}
-	public static void ConstructGeographyMultiPolygon<T>(
-		ref JsonElement coordinatesProperty,
-		GeographyFactory<T> geographyBuilder
-	) where T : Geography
-	{
-		foreach (var polygonProperty in coordinatesProperty.EnumerateArray())
-		{
-			geographyBuilder.Polygon();
+                geometryBuilder.LineTo(x, y);
+            }
+        }
+    }
 
-			var pointsProperty = polygonProperty[0];
+    public static void ConstructGeographyMultiPolygon<T>(
+        ref JsonElement coordinatesProperty,
+        GeographyFactory<T> geographyBuilder
+    )
+        where T : Geography
+    {
+        foreach (var polygonProperty in coordinatesProperty.EnumerateArray())
+        {
+            geographyBuilder.Polygon();
 
-			foreach (var point in pointsProperty.EnumerateArray())
-			{
-				var longitude = point[0].GetDouble();
-				var latitude = point[1].GetDouble();
+            var pointsProperty = polygonProperty[0];
 
-				geographyBuilder.LineTo(latitude, longitude);
-			}
-		}
-	}
+            foreach (var point in pointsProperty.EnumerateArray())
+            {
+                var longitude = point[0].GetDouble();
+                var latitude = point[1].GetDouble();
 
-	public static void WriteGeometryMultiPolygon(Utf8JsonWriter writer, GeometryMultiPolygon value)
-	{
-		if (value is null)
-		{
-			writer.WriteNullValue();
-			return;
-		}
+                geographyBuilder.LineTo(latitude, longitude);
+            }
+        }
+    }
 
-		writer.WriteStartObject();
+    public static void WriteGeometryMultiPolygon(Utf8JsonWriter writer, GeometryMultiPolygon value)
+    {
+        if (value is null)
+        {
+            writer.WriteNullValue();
+            return;
+        }
 
-		writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
-		writer.WriteStringValue(TypeValue);
+        writer.WriteStartObject();
 
-		writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
-		writer.WriteStartArray();
+        writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
+        writer.WriteStringValue(TypeValue);
 
-		foreach (var polygon in value.Polygons)
-		{
-			writer.WriteStartArray();
+        writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
+        writer.WriteStartArray();
 
-			foreach (var ring in polygon.Rings)
-			{
-				writer.WriteStartArray();
+        foreach (var polygon in value.Polygons)
+        {
+            writer.WriteStartArray();
 
-				foreach (var point in ring.Points)
-				{
-					writer.WriteStartArray();
-					writer.WriteNumberValue(point.X);
-					writer.WriteNumberValue(point.Y);
-					writer.WriteEndArray();
-				}
+            foreach (var ring in polygon.Rings)
+            {
+                writer.WriteStartArray();
 
-				writer.WriteEndArray();
-			}
+                foreach (var point in ring.Points)
+                {
+                    writer.WriteStartArray();
+                    writer.WriteNumberValue(point.X);
+                    writer.WriteNumberValue(point.Y);
+                    writer.WriteEndArray();
+                }
 
-			writer.WriteEndArray();
-		}
+                writer.WriteEndArray();
+            }
 
-		writer.WriteEndArray();
+            writer.WriteEndArray();
+        }
 
-		writer.WriteEndObject();
-	}
-	public static void WriteGeographyMultiPolygon(Utf8JsonWriter writer, GeographyMultiPolygon value)
-	{
-		if (value is null)
-		{
-			writer.WriteNullValue();
-			return;
-		}
+        writer.WriteEndArray();
 
-		writer.WriteStartObject();
+        writer.WriteEndObject();
+    }
 
-		writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
-		writer.WriteStringValue(TypeValue);
+    public static void WriteGeographyMultiPolygon(
+        Utf8JsonWriter writer,
+        GeographyMultiPolygon value
+    )
+    {
+        if (value is null)
+        {
+            writer.WriteNullValue();
+            return;
+        }
 
-		writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
-		writer.WriteStartArray();
+        writer.WriteStartObject();
 
-		foreach (var polygon in value.Polygons)
-		{
-			writer.WriteStartArray();
+        writer.WritePropertyName(SpatialConverterConstants.TypePropertyName);
+        writer.WriteStringValue(TypeValue);
 
-			foreach (var ring in polygon.Rings)
-			{
-				writer.WriteStartArray();
+        writer.WritePropertyName(SpatialConverterConstants.CoordinatesPropertyName);
+        writer.WriteStartArray();
 
-				foreach (var point in ring.Points)
-				{
-					writer.WriteStartArray();
-					writer.WriteNumberValue(point.Longitude);
-					writer.WriteNumberValue(point.Latitude);
-					writer.WriteEndArray();
-				}
+        foreach (var polygon in value.Polygons)
+        {
+            writer.WriteStartArray();
 
-				writer.WriteEndArray();
-			}
+            foreach (var ring in polygon.Rings)
+            {
+                writer.WriteStartArray();
 
-			writer.WriteEndArray();
-		}
+                foreach (var point in ring.Points)
+                {
+                    writer.WriteStartArray();
+                    writer.WriteNumberValue(point.Longitude);
+                    writer.WriteNumberValue(point.Latitude);
+                    writer.WriteEndArray();
+                }
 
-		writer.WriteEndArray();
+                writer.WriteEndArray();
+            }
 
-		writer.WriteEndObject();
-	}
+            writer.WriteEndArray();
+        }
+
+        writer.WriteEndArray();
+
+        writer.WriteEndObject();
+    }
 }

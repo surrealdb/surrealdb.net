@@ -1,4 +1,4 @@
-﻿using SurrealDb.Net.Internals.Extensions;
+using SurrealDb.Net.Internals.Extensions;
 using System.Text.Json;
 
 namespace SurrealDb.Net.Internals.Json.Policies;

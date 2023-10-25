@@ -4,11 +4,11 @@ namespace SurrealDb.Net.Tests;
 
 public class SessionInfo
 {
-	[JsonPropertyName("ns")]
-	public string Namespace { get; set; } = string.Empty;
+    [JsonPropertyName("ns")]
+    public string Namespace { get; set; } = string.Empty;
 
-	[JsonPropertyName("db")]
-	public string Database { get; set; } = string.Empty;
+    [JsonPropertyName("db")]
+    public string Database { get; set; } = string.Empty;
 }
 
 public class ConnectTests
@@ -30,32 +30,36 @@ public class ConnectTests
         await func.Should().NotThrowAsync();
     }
 
-	[Fact]
-	public async Task ShouldConnectAndApplyConfiguration()
-	{
-		DatabaseInfo? dbInfo = null;
-		SessionInfo? result = null;
+    [Fact]
+    public async Task ShouldConnectAndApplyConfiguration()
+    {
+        DatabaseInfo? dbInfo = null;
+        SessionInfo? result = null;
 
-		Func<Task> func = async () =>
-		{
-			using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-			dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+        Func<Task> func = async () =>
+        {
+            using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-			using var client = SurrealDbWsClient.New("localhost:8000", dbInfo.Namespace, dbInfo.Database);
+            using var client = SurrealDbWsClient.New(
+                "localhost:8000",
+                dbInfo.Namespace,
+                dbInfo.Database
+            );
 
-			await client.Connect();
+            await client.Connect();
 
-			var response = await client.Query("SELECT * FROM $session;");
+            var response = await client.Query("SELECT * FROM $session;");
 
-			var list = response.GetValue<List<SessionInfo>>(0)!;
-			result = list[0];
-		};
+            var list = response.GetValue<List<SessionInfo>>(0)!;
+            result = list[0];
+        };
 
-		await func.Should().NotThrowAsync();
+        await func.Should().NotThrowAsync();
 
-		result.Should().NotBeNull();
+        result.Should().NotBeNull();
 
-		result!.Namespace.Should().Be(dbInfo!.Namespace);
-		result!.Database.Should().Be(dbInfo!.Database);
-	}
+        result!.Namespace.Should().Be(dbInfo!.Namespace);
+        result!.Database.Should().Be(dbInfo!.Database);
+    }
 }
