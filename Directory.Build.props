@@ -1,9 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <Version>0.1.4</Version>
+    <Authors>surrealdb</Authors>
+    <Company>SurrealDB</Company>
+    <Copyright>Copyright © SurrealDB Ltd</Copyright>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="CSharpier.MsBuild" Version="0.25.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup> 
+  </ItemGroup>
+
 </Project>

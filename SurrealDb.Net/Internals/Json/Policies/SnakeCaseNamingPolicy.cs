@@ -1,3 +1,4 @@
+﻿#if !NET8_0_OR_GREATER
 using SurrealDb.Net.Internals.Extensions;
 using System.Text.Json;
 
@@ -12,3 +13,4 @@ internal class SnakeCaseNamingPolicy : JsonNamingPolicy
         return name.ToSnakeCase();
     }
 }
+#endif
