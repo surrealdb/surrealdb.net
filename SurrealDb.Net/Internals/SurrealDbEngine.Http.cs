@@ -1,4 +1,4 @@
-using SurrealDb.Net.Exceptions;
+﻿using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Helpers;
@@ -175,6 +175,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         _config.ResetAuth();
         return Task.CompletedTask;
+    }
+
+    public Task Kill(Guid queryUuid, CancellationToken cancellationToken)
+    {
+        throw new NotSupportedException();
     }
 
     public async Task<TOutput> Merge<TMerge, TOutput>(

@@ -1,4 +1,4 @@
-using Microsoft.IO;
+﻿using Microsoft.IO;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Internals.Helpers;
@@ -241,6 +241,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     public async Task Invalidate(CancellationToken cancellationToken)
     {
         await SendRequest("invalidate", null, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task Kill(Guid queryUuid, CancellationToken cancellationToken)
+    {
+        await SendRequest("kill", new() { queryUuid.ToString() }, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public async Task<TOutput> Merge<TMerge, TOutput>(

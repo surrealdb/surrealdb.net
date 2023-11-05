@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Models;
@@ -148,6 +148,11 @@ public class SurrealDbClient : ISurrealDbClient
     public Task Invalidate(CancellationToken cancellationToken = default)
     {
         return _engine.Invalidate(cancellationToken);
+    }
+
+    public Task Kill(Guid queryUuid, CancellationToken cancellationToken = default)
+    {
+        return _engine.Kill(queryUuid, cancellationToken);
     }
 
     public Task<TOutput> Merge<TMerge, TOutput>(

@@ -17,6 +17,7 @@ internal interface ISurrealDbEngine : IDisposable
     Task<bool> Delete(Thing thing, CancellationToken cancellationToken);
     Task<bool> Health(CancellationToken cancellationToken);
     Task Invalidate(CancellationToken cancellationToken);
+    Task Kill(Guid queryUuid, CancellationToken cancellationToken);
     Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken)
         where TMerge : Record;
     Task<T> Merge<T>(

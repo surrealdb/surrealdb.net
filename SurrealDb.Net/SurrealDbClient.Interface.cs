@@ -1,4 +1,4 @@
-using SurrealDb.Net.Exceptions;
+﻿using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.Response;
@@ -144,6 +144,16 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task Invalidate(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Kills an active live query.<br /><br />
+    ///
+    /// Not supported on HTTP(S) protocol.
+    /// </summary>
+    /// <param name="queryUuid">The UUID of the live query to kill</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="NotImplementedException"></exception>
+    Task Kill(Guid queryUuid, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Modifies the specified record in the database.
