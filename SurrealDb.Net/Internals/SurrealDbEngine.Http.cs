@@ -5,8 +5,10 @@ using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Http;
 using SurrealDb.Net.Internals.Json;
 using SurrealDb.Net.Internals.Models;
+using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
+using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 using System.Net.Http.Headers;
 using System.Text;
@@ -153,6 +155,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             _singleHttpClient.Value.Dispose();
     }
 
+    public SurrealDbLiveQueryChannel GetLiveQueryChannel(Guid id)
+    {
+        throw new NotSupportedException();
+    }
+
     public async Task<bool> Health(CancellationToken cancellationToken)
     {
         using var wrapper = CreateHttpClientWrapper();
@@ -177,7 +184,16 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return Task.CompletedTask;
     }
 
-    public Task Kill(Guid queryUuid, CancellationToken cancellationToken)
+    public Task Kill(
+        Guid queryUuid,
+        SurrealDbLiveQueryClosureReason reason,
+        CancellationToken cancellationToken
+    )
+    {
+        throw new NotSupportedException();
+    }
+
+    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid, CancellationToken cancellationToken)
     {
         throw new NotSupportedException();
     }

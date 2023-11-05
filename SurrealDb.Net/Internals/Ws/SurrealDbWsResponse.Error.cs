@@ -1,8 +1,8 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace SurrealDb.Net.Internals.Ws;
 
-internal class SurrealDbWsErrorResponse : ISurrealDbWsResponse
+internal class SurrealDbWsErrorResponse : ISurrealDbWsStandardResponse
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;

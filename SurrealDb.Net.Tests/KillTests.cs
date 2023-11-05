@@ -19,9 +19,9 @@ public class KillTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            var liveQueryGuid = Guid.NewGuid();
+            var liveQueryUuid = Guid.NewGuid();
 
-            await client.Kill(liveQueryGuid);
+            await client.Kill(liveQueryUuid);
         };
 
         await func.Should().ThrowAsync<NotSupportedException>();
@@ -46,9 +46,9 @@ public class KillTests
             if (response.FirstResult is not SurrealDbOkResult okResult)
                 throw new Exception("Expected a SurrealDbOkResult");
 
-            var liveQueryGuid = okResult.GetValue<Guid>();
+            var liveQueryUuid = okResult.GetValue<Guid>();
 
-            await client.Kill(liveQueryGuid);
+            await client.Kill(liveQueryUuid);
         };
 
         await func.Should().NotThrowAsync();
@@ -68,9 +68,9 @@ public class KillTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            var liveQueryGuid = Guid.NewGuid();
+            var liveQueryUuid = Guid.NewGuid();
 
-            await client.Kill(liveQueryGuid);
+            await client.Kill(liveQueryUuid);
         };
 
         await func.Should()

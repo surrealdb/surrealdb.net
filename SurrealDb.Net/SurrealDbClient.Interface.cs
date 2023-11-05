@@ -1,6 +1,7 @@
 ﻿using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
+using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net;
@@ -150,10 +151,29 @@ public interface ISurrealDbClient : IDisposable
     ///
     /// Not supported on HTTP(S) protocol.
     /// </summary>
-    /// <param name="queryUuid">The UUID of the live query to kill</param>
+    /// <param name="queryUuid">The UUID of the live query to kill.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-    /// <exception cref="NotImplementedException"></exception>
+    /// <exception cref="NotSupportedException"></exception>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
     Task Kill(Guid queryUuid, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Listen for live query responses, using live query UUID.<br /><br />
+    ///
+    /// Not supported on HTTP(S) protocol.
+    /// </summary>
+    /// <typeparam name="T">The type of the data returned by the live query.</typeparam>
+    /// <param name="queryUuid">The UUID of the live query to consume.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>A Live Query instance used to consume data in realtime.</returns>
+    /// <exception cref="NotSupportedException"></exception>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    SurrealDbLiveQuery<T> ListenLive<T>(
+        Guid queryUuid,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Modifies the specified record in the database.

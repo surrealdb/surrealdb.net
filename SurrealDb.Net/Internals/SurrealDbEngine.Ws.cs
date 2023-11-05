@@ -3,9 +3,11 @@ using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Json;
+using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Internals.Ws;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
+using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
@@ -23,6 +25,10 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         string,
         SurrealWsTaskCompletionSource
     > _responseTasks = new();
+    private static readonly ConcurrentDictionary<
+        Guid,
+        SurrealDbLiveQueryChannel
+    > _liveQueryChannels = new();
     private static readonly RecyclableMemoryStreamManager _memoryStreamManager = new();
 
     private readonly string _id;
@@ -81,10 +87,29 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                                 }
                             }
 
+                            if (response is SurrealDbWsLiveResponse surrealDbWsLiveResponse)
+                            {
+                                var liveQueryUuid = surrealDbWsLiveResponse.Result.Id;
+
+                                if (
+                                    _liveQueryChannels.TryGetValue(
+                                        liveQueryUuid,
+                                        out var liveQueryChannel
+                                    )
+                                )
+                                {
+                                    await liveQueryChannel
+                                        .WriteAsync(surrealDbWsLiveResponse)
+                                        .ConfigureAwait(false);
+                                }
+
+                                return;
+                            }
+
                             if (
-                                response is not null
+                                response is ISurrealDbWsStandardResponse surrealDbWsStandardResponse
                                 && _responseTasks.TryRemove(
-                                    response.Id,
+                                    surrealDbWsStandardResponse.Id,
                                     out var responseTaskCompletionSource
                                 )
                             )
@@ -203,6 +228,38 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public void Dispose()
     {
+        var killTasks = new List<Task>();
+
+        foreach (var (key, value) in _liveQueryChannels)
+        {
+            if (
+                value.WsEngineId == _id
+                && _liveQueryChannels.TryRemove(key, out var liveQueryChannel)
+            )
+            {
+                var sendTask = liveQueryChannel.WriteAsync(
+                    new SurrealDbWsClosedLiveResponse
+                    {
+                        Reason = SurrealDbLiveQueryClosureReason.SocketClosed
+                    }
+                );
+                killTasks.Add(sendTask);
+
+                var killTask = Kill(key, SurrealDbLiveQueryClosureReason.SocketClosed, default);
+                killTasks.Add(killTask);
+            }
+        }
+
+        if (killTasks.Any())
+        {
+            try
+            {
+                Task.WhenAll(killTasks).GetAwaiter().GetResult();
+            }
+            catch (SurrealDbException) { }
+            catch (OperationCanceledException) { }
+        }
+
         _wsClient.Stop(WebSocketCloseStatus.NormalClosure, "Client disposed");
         _receiverSubscription.Dispose();
 
@@ -220,6 +277,13 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         _wsEngines.TryRemove(_id, out _);
 
         _wsClient.Dispose();
+    }
+
+    public SurrealDbLiveQueryChannel GetLiveQueryChannel(Guid id)
+    {
+        return _liveQueryChannels.TryGetValue(id, out var liveQueryChannel)
+            ? liveQueryChannel
+            : throw new SurrealDbException("Live Query not found");
     }
 
     public async Task<bool> Health(CancellationToken cancellationToken)
@@ -243,10 +307,27 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         await SendRequest("invalidate", null, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task Kill(Guid queryUuid, CancellationToken cancellationToken)
+    public async Task Kill(
+        Guid queryUuid,
+        SurrealDbLiveQueryClosureReason reason,
+        CancellationToken cancellationToken
+    )
     {
+        if (_liveQueryChannels.TryRemove(queryUuid, out var liveQueryChannel))
+        {
+            await liveQueryChannel.WriteAsync(
+                new SurrealDbWsClosedLiveResponse { Reason = reason }
+            );
+        }
+
         await SendRequest("kill", new() { queryUuid.ToString() }, cancellationToken)
             .ConfigureAwait(false);
+    }
+
+    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid, CancellationToken cancellationToken)
+    {
+        _liveQueryChannels.TryAdd(queryUuid, new(_id));
+        return new SurrealDbLiveQuery<T>(queryUuid, this);
     }
 
     public async Task<TOutput> Merge<TMerge, TOutput>(
