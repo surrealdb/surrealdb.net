@@ -17,7 +17,6 @@ internal interface ISurrealDbEngine : IDisposable
     Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken);
     Task Delete(string table, CancellationToken cancellationToken);
     Task<bool> Delete(Thing thing, CancellationToken cancellationToken);
-    SurrealDbLiveQueryChannel GetLiveQueryChannel(Guid id);
     Task<bool> Health(CancellationToken cancellationToken);
     Task Invalidate(CancellationToken cancellationToken);
     Task Kill(
@@ -48,6 +47,7 @@ internal interface ISurrealDbEngine : IDisposable
         where T : ScopeAuth;
     Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken)
         where T : ScopeAuth;
+    SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id);
     Task Unset(string key, CancellationToken cancellationToken);
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record;

@@ -155,11 +155,6 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             _singleHttpClient.Value.Dispose();
     }
 
-    public SurrealDbLiveQueryChannel GetLiveQueryChannel(Guid id)
-    {
-        throw new NotSupportedException();
-    }
-
     public async Task<bool> Health(CancellationToken cancellationToken)
     {
         using var wrapper = CreateHttpClientWrapper();
@@ -404,6 +399,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 
         return new Jwt { Token = result.Token! };
+    }
+
+    public SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id)
+    {
+        throw new NotSupportedException();
     }
 
     public Task Unset(string key, CancellationToken _)

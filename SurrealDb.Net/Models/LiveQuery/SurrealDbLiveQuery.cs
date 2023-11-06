@@ -1,5 +1,8 @@
-﻿using SurrealDb.Net.Exceptions;
+﻿using System.Runtime.CompilerServices;
+using System.Threading;
+using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Internals;
+using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Ws;
 
 namespace SurrealDb.Net.Models.LiveQuery;
@@ -29,12 +32,142 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
         {
             await foreach (
                 var response in surrealDbEngine
-                    .GetLiveQueryChannel(Id)
+                    .SubscribeToLiveQuery(Id)
                     .ReadAllAsync(cancellationToken)
                     .ConfigureAwait(false)
             )
             {
                 yield return ToSurrealDbLiveQueryResponse(response);
+            }
+
+            yield break;
+        }
+
+        throw new Exception("SurrealDB instance has been disposed.");
+    }
+
+    /// <summary>
+    /// Returns an enumerator that iterates asynchronously through the collection of results
+    /// (all actions CREATE, UPDATE and DELETE, except CLOSE).
+    /// </summary>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="Exception">When the SurrealDB client has been disposed.</exception>
+    public async IAsyncEnumerable<SurrealDbLiveQueryResponse> GetResults(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
+    )
+    {
+        if (_surrealDbEngine.TryGetTarget(out var surrealDbEngine))
+        {
+            await foreach (
+                var response in surrealDbEngine
+                    .SubscribeToLiveQuery(Id)
+                    .ReadAllAsync(cancellationToken)
+                    .ConfigureAwait(false)
+            )
+            {
+                if (response is SurrealDbWsClosedLiveResponse)
+                    continue;
+
+                yield return ToSurrealDbLiveQueryResponse(response);
+            }
+
+            yield break;
+        }
+
+        throw new Exception("SurrealDB instance has been disposed.");
+    }
+
+    /// <summary>
+    /// Returns an enumerator that iterates asynchronously through the collection of created records.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="Exception">When the SurrealDB client has been disposed.</exception>
+    public async IAsyncEnumerable<T> GetCreatedRecords(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
+    )
+    {
+        if (_surrealDbEngine.TryGetTarget(out var surrealDbEngine))
+        {
+            await foreach (
+                var response in surrealDbEngine
+                    .SubscribeToLiveQuery(Id)
+                    .ReadAllAsync(cancellationToken)
+                    .ConfigureAwait(false)
+            )
+            {
+                if (
+                    response is SurrealDbWsLiveResponse surrealDbWsLiveResponse
+                    && surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.CREATE
+                )
+                {
+                    yield return surrealDbWsLiveResponse.Result.GetValue<T>()!;
+                }
+            }
+
+            yield break;
+        }
+
+        throw new Exception("SurrealDB instance has been disposed.");
+    }
+
+    /// <summary>
+    /// Returns an enumerator that iterates asynchronously through the collection of updated records.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="Exception">When the SurrealDB client has been disposed.</exception>
+    public async IAsyncEnumerable<T> GetUpdatedRecords(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
+    )
+    {
+        if (_surrealDbEngine.TryGetTarget(out var surrealDbEngine))
+        {
+            await foreach (
+                var response in surrealDbEngine
+                    .SubscribeToLiveQuery(Id)
+                    .ReadAllAsync(cancellationToken)
+                    .ConfigureAwait(false)
+            )
+            {
+                if (
+                    response is SurrealDbWsLiveResponse surrealDbWsLiveResponse
+                    && surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.UPDATE
+                )
+                {
+                    yield return surrealDbWsLiveResponse.Result.GetValue<T>()!;
+                }
+            }
+
+            yield break;
+        }
+
+        throw new Exception("SurrealDB instance has been disposed.");
+    }
+
+    /// <summary>
+    /// Returns an enumerator that iterates asynchronously through the collection of deleted record ids.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="Exception">When the SurrealDB client has been disposed.</exception>
+    public async IAsyncEnumerable<Thing> GetDeletedIds(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
+    )
+    {
+        if (_surrealDbEngine.TryGetTarget(out var surrealDbEngine))
+        {
+            await foreach (
+                var response in surrealDbEngine
+                    .SubscribeToLiveQuery(Id)
+                    .ReadAllAsync(cancellationToken)
+                    .ConfigureAwait(false)
+            )
+            {
+                if (
+                    response is SurrealDbWsLiveResponse surrealDbWsLiveResponse
+                    && surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.DELETE
+                )
+                {
+                    yield return surrealDbWsLiveResponse.Result.GetValue<Thing>()!;
+                }
             }
 
             yield break;
@@ -70,21 +203,21 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
     {
         if (response is SurrealDbWsLiveResponse surrealDbWsLiveResponse)
         {
-            if (surrealDbWsLiveResponse.Result.Action == "CREATE")
+            if (surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.CREATE)
             {
                 return new SurrealDbLiveQueryCreateResponse<T>(
                     surrealDbWsLiveResponse.Result.GetValue<T>()!
                 );
             }
 
-            if (surrealDbWsLiveResponse.Result.Action == "UPDATE")
+            if (surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.UPDATE)
             {
                 return new SurrealDbLiveQueryUpdateResponse<T>(
                     surrealDbWsLiveResponse.Result.GetValue<T>()!
                 );
             }
 
-            if (surrealDbWsLiveResponse.Result.Action == "DELETE")
+            if (surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.DELETE)
             {
                 return new SurrealDbLiveQueryDeleteResponse(
                     surrealDbWsLiveResponse.Result.GetValue<Thing>()!

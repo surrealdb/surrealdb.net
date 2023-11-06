@@ -7,12 +7,8 @@ internal class SurrealDbLiveQueryChannel
 {
     private readonly Channel<ISurrealDbWsLiveResponse> _channel;
 
-    public string WsEngineId { get; }
-
-    public SurrealDbLiveQueryChannel(string wsEngineId)
+    public SurrealDbLiveQueryChannel()
     {
-        WsEngineId = wsEngineId;
-
         _channel = Channel.CreateUnbounded<ISurrealDbWsLiveResponse>();
     }
 
@@ -26,5 +22,10 @@ internal class SurrealDbLiveQueryChannel
     )
     {
         return _channel.Reader.ReadAllAsync(cancellationToken);
+    }
+
+    public void Complete()
+    {
+        _channel.Writer.Complete();
     }
 }
