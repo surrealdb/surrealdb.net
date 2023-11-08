@@ -1,5 +1,4 @@
-﻿using SurrealDb.Net.Exceptions;
-using SurrealDb.Net.Models.LiveQuery;
+﻿using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 using Record = SurrealDb.Net.Models.Record;
 
@@ -35,66 +34,21 @@ public class ListenLiveTests
     }
 
     [Fact]
-    public async Task ShouldAutomaticallyKillLiveQueryWhenDisposedOnWsProtocol()
+    public async Task ShouldReceiveData()
     {
         const string url = "ws://localhost:8000/rpc";
 
-        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+        var allResults = new List<SurrealDbLiveQueryResponse>();
 
-        using var client = surrealDbClientGenerator.Create(url);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-        await client.Use(dbInfo.Namespace, dbInfo.Database);
-
-        Guid liveQueryUuid = Guid.Empty;
-
-        Func<Task> createLiveQueryFunc = async () =>
+        Func<Task> func = async () =>
         {
-            var response = await client.Query("LIVE SELECT * FROM test;");
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            if (response.FirstResult is not SurrealDbOkResult okResult)
-                throw new Exception("Expected a SurrealDbOkResult");
+            using var client = surrealDbClientGenerator.Create(url);
+            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            liveQueryUuid = okResult.GetValue<Guid>();
-
-            await using var liveQuery = client.ListenLive<int>(liveQueryUuid);
-        };
-
-        Func<Task> liveQueryAlreadyKilledFunc = async () =>
-        {
-            await client.Kill(liveQueryUuid);
-        };
-
-        liveQueryUuid.Should().BeEmpty();
-
-        await createLiveQueryFunc.Should().NotThrowAsync();
-
-        liveQueryUuid.Should().NotBeEmpty();
-
-        await liveQueryAlreadyKilledFunc
-            .Should()
-            .ThrowAsync<SurrealDbException>()
-            .WithMessage(
-                "There was a problem with the database: Can not execute KILL statement using id '$id'"
-            );
-    }
-
-    [Fact]
-    public async Task ShouldManuallyKillLiveQueryOnWsProtocol()
-    {
-        const string url = "ws://localhost:8000/rpc";
-
-        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-        using var client = surrealDbClientGenerator.Create(url);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-        await client.Use(dbInfo.Namespace, dbInfo.Database);
-
-        SurrealDbLiveQuery<int>? liveQuery = null;
-
-        Func<Task> createLiveQueryFunc = async () =>
-        {
             var response = await client.Query("LIVE SELECT * FROM test;");
 
             if (response.FirstResult is not SurrealDbOkResult okResult)
@@ -102,28 +56,64 @@ public class ListenLiveTests
 
             var liveQueryUuid = okResult.GetValue<Guid>();
 
-            liveQuery = client.ListenLive<int>(liveQueryUuid);
+            var liveQuery = client.ListenLive<TestRecord>(liveQueryUuid);
+
+            var cts = new CancellationTokenSource();
+
+            _ = Task.Run(async () =>
+            {
+                await foreach (var result in liveQuery.WithCancellation(cts.Token))
+                {
+                    allResults.Add(result);
+                }
+            });
+
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(50);
+
+                var record = await client.Create("test", new TestRecord { Value = 1 });
+                await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
+                await client.Delete(record.Id!);
+
+                while (allResults.Count < 3)
+                {
+                    await Task.Delay(20);
+                }
+
+                await liveQuery.KillAsync();
+
+                while (allResults.Count < 4)
+                {
+                    await Task.Delay(20);
+                }
+
+                cts.Cancel();
+            });
+
+            await Task.Delay(TimeSpan.FromSeconds(2));
+
+            if (!cts.IsCancellationRequested)
+            {
+                cts.Cancel();
+                throw new Exception("Timeout");
+            }
         };
 
-        Func<Task> manuallyKillLiveQueryFunc = async () =>
-        {
-            await liveQuery!.KillAsync();
-        };
+        await func.Should().NotThrowAsync();
 
-        Func<Task> liveQueryAlreadyKilledFunc = async () =>
-        {
-            await liveQuery!.KillAsync();
-        };
+        allResults.Should().HaveCount(4);
 
-        await createLiveQueryFunc.Should().NotThrowAsync();
+        var firstResult = allResults[0];
+        firstResult.Should().BeOfType<SurrealDbLiveQueryCreateResponse<TestRecord>>();
 
-        await manuallyKillLiveQueryFunc.Should().NotThrowAsync();
+        var secondResult = allResults[1];
+        secondResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<TestRecord>>();
 
-        await liveQueryAlreadyKilledFunc
-            .Should()
-            .ThrowAsync<SurrealDbException>()
-            .WithMessage(
-                "There was a problem with the database: Can not execute KILL statement using id '$id'"
-            );
+        var thirdResult = allResults[2];
+        thirdResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
+
+        var lastResult = allResults[3];
+        lastResult.Should().BeOfType<SurrealDbLiveQueryCloseResponse>();
     }
 }

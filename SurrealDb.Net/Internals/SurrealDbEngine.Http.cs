@@ -188,7 +188,16 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         throw new NotSupportedException();
     }
 
-    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid, CancellationToken cancellationToken)
+    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid)
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task<SurrealDbLiveQuery<T>> Live<T>(
+        string table,
+        bool diff,
+        CancellationToken cancellationToken
+    )
     {
         throw new NotSupportedException();
     }
@@ -451,10 +460,17 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         _config.Use(ns, db);
     }
 
-    public async Task<string> Version(CancellationToken _)
+    public async Task<string> Version(CancellationToken cancellationToken)
     {
         using var wrapper = CreateHttpClientWrapper();
+
+#if NET6_0_OR_GREATER
+        return await wrapper.Instance
+            .GetStringAsync("/version", cancellationToken)
+            .ConfigureAwait(false);
+#else
         return await wrapper.Instance.GetStringAsync("/version").ConfigureAwait(false);
+#endif
     }
 
     private JsonSerializerOptions GetJsonSerializerOptions()
@@ -674,10 +690,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .DeserializeAsync<AuthResponse>(stream, GetJsonSerializerOptions(), cancellationToken)
             .ConfigureAwait(false);
 
-        if (authResponse is null)
-            throw new SurrealDbException("Cannot deserialize auth response");
-
-        return authResponse;
+        return authResponse is not null
+            ? authResponse
+            : throw new SurrealDbException("Cannot deserialize auth response");
     }
 
     private static SurrealDbOkResult EnsuresFirstResultOk(SurrealDbResponse dbResponse)

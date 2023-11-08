@@ -160,12 +160,18 @@ public class SurrealDbClient : ISurrealDbClient
         );
     }
 
-    public SurrealDbLiveQuery<T> ListenLive<T>(
-        Guid queryUuid,
+    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid)
+    {
+        return _engine.ListenLive<T>(queryUuid);
+    }
+
+    public Task<SurrealDbLiveQuery<T>> Live<T>(
+        string table,
+        bool diff = false,
         CancellationToken cancellationToken = default
     )
     {
-        return _engine.ListenLive<T>(queryUuid, cancellationToken);
+        return _engine.Live<T>(table, diff, cancellationToken);
     }
 
     public Task<TOutput> Merge<TMerge, TOutput>(

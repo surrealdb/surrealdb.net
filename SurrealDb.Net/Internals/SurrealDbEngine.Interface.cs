@@ -24,7 +24,12 @@ internal interface ISurrealDbEngine : IDisposable
         SurrealDbLiveQueryClosureReason reason,
         CancellationToken cancellationToken
     );
-    SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid, CancellationToken cancellationToken);
+    SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid);
+    Task<SurrealDbLiveQuery<T>> Live<T>(
+        string table,
+        bool diff,
+        CancellationToken cancellationToken
+    );
     Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken)
         where TMerge : Record;
     Task<T> Merge<T>(

@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using System.Threading;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Constants;

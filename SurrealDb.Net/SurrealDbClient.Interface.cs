@@ -165,13 +165,31 @@ public interface ISurrealDbClient : IDisposable
     /// </summary>
     /// <typeparam name="T">The type of the data returned by the live query.</typeparam>
     /// <param name="queryUuid">The UUID of the live query to consume.</param>
+    /// <returns>A Live Query instance used to consume data in realtime.</returns>
+    /// <exception cref="NotSupportedException"></exception>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid);
+
+    /// <summary>
+    /// Initiates a live query.<br /><br />
+    ///
+    /// Not supported on HTTP(S) protocol.
+    /// </summary>
+    /// <typeparam name="T">The type of the data returned by the live query.</typeparam>
+    /// <param name="table">The name of the database table to watch.</param>
+    /// <param name="diff">
+    /// If set to true, live notifications will include an array of JSON Patch objects,
+    /// rather than the entire record for each notification.
+    /// </param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>A Live Query instance used to consume data in realtime.</returns>
     /// <exception cref="NotSupportedException"></exception>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    SurrealDbLiveQuery<T> ListenLive<T>(
-        Guid queryUuid,
+    Task<SurrealDbLiveQuery<T>> Live<T>(
+        string table,
+        bool diff = false,
         CancellationToken cancellationToken = default
     );
 

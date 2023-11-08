@@ -324,10 +324,23 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             .ConfigureAwait(false);
     }
 
-    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid, CancellationToken cancellationToken)
+    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid)
     {
         _liveQueryChannelHolders.TryAdd(queryUuid, new(_id));
         return new SurrealDbLiveQuery<T>(queryUuid, this);
+    }
+
+    public async Task<SurrealDbLiveQuery<T>> Live<T>(
+        string table,
+        bool diff,
+        CancellationToken cancellationToken
+    )
+    {
+        var dbResponse = await SendRequest("live", new() { table, diff }, cancellationToken)
+            .ConfigureAwait(false);
+        var queryUuid = dbResponse.GetValue<Guid>()!;
+
+        return ListenLive<T>(queryUuid);
     }
 
     public async Task<TOutput> Merge<TMerge, TOutput>(
@@ -539,7 +552,11 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         stream.Seek(0, SeekOrigin.Begin);
         using var reader = new StreamReader(stream);
+#if NET7_0_OR_GREATER
+        string payload = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+#else
         string payload = await reader.ReadToEndAsync().ConfigureAwait(false);
+#endif
 
         _wsClient.Send(payload);
 

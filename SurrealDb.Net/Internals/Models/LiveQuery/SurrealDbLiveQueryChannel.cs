@@ -14,7 +14,7 @@ internal class SurrealDbLiveQueryChannel
 
     public async Task WriteAsync(ISurrealDbWsLiveResponse item)
     {
-        await _channel.Writer.WriteAsync(item);
+        await _channel.Writer.WriteAsync(item).ConfigureAwait(false);
     }
 
     public IAsyncEnumerable<ISurrealDbWsLiveResponse> ReadAllAsync(
