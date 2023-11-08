@@ -59,14 +59,14 @@ public partial class LiveQueryTests
 
                 while (allResults.Count < 3)
                 {
-                    await Task.Delay(20);
+                    await Task.Delay(20, cts.Token);
                 }
 
                 await liveQuery.KillAsync();
 
                 while (allResults.Count < 4)
                 {
-                    await Task.Delay(20);
+                    await Task.Delay(20, cts.Token);
                 }
 
                 cts.Cancel();
@@ -141,14 +141,14 @@ public partial class LiveQueryTests
 
                 while (allResults.Count < 3)
                 {
-                    await Task.Delay(20);
+                    await Task.Delay(20, cts.Token);
                 }
 
                 await liveQuery.KillAsync();
 
                 while (allResults.Count < 4)
                 {
-                    await Task.Delay(20);
+                    await Task.Delay(20, cts.Token);
                 }
 
                 cts.Cancel();
@@ -227,14 +227,14 @@ public partial class LiveQueryTests
 
                 while (allResults.Count < 3)
                 {
-                    await Task.Delay(20);
+                    await Task.Delay(20, cts.Token);
                 }
 
                 await liveQuery.KillAsync();
 
                 while (allResults.Count < 4)
                 {
-                    await Task.Delay(20);
+                    await Task.Delay(20, cts.Token);
                 }
 
                 cts.Cancel();
@@ -315,14 +315,14 @@ public partial class LiveQueryTests
 
                 while (allResults.Count < 3)
                 {
-                    await Task.Delay(20);
+                    await Task.Delay(20, cts.Token);
                 }
 
                 await liveQuery.KillAsync();
 
                 while (allResults.Count < 4)
                 {
-                    await Task.Delay(20);
+                    await Task.Delay(20, cts.Token);
                 }
 
                 cts.Cancel();

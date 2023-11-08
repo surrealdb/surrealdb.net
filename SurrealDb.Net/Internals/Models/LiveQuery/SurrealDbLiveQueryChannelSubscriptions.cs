@@ -2,11 +2,11 @@
 
 namespace SurrealDb.Net.Internals.Models.LiveQuery;
 
-internal class SurrealDbLiveQueryChannelHolder : ConcurrentBag<SurrealDbLiveQueryChannel>
+internal class SurrealDbLiveQueryChannelSubscriptions : ConcurrentBag<SurrealDbLiveQueryChannel>
 {
     public string WsEngineId { get; }
 
-    public SurrealDbLiveQueryChannelHolder(string wsEngineId)
+    public SurrealDbLiveQueryChannelSubscriptions(string wsEngineId)
     {
         WsEngineId = wsEngineId;
     }
