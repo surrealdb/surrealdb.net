@@ -172,6 +172,25 @@ public interface ISurrealDbClient : IDisposable
     SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid);
 
     /// <summary>
+    /// Initiates a live query from a SurrealQL query.<br /><br />
+    ///
+    /// Not supported on HTTP(S) protocol.
+    /// </summary>
+    /// <typeparam name="T">The type of the data returned by the live query.</typeparam>
+    /// <param name="query">The SurrealQL query.</param>
+    /// <param name="parameters">A list of parameters to be used inside the SurrealQL query.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>A Live Query instance used to consume data in realtime.</returns>
+    /// <exception cref="NotSupportedException"></exception>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+        string query,
+        IReadOnlyDictionary<string, object>? parameters = null,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
     /// Initiates a live query on a table.<br /><br />
     ///
     /// Not supported on HTTP(S) protocol.

@@ -25,6 +25,11 @@ internal interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     );
     SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid);
+    Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+        string query,
+        IReadOnlyDictionary<string, object> parameters,
+        CancellationToken cancellationToken
+    );
     Task<SurrealDbLiveQuery<T>> LiveTable<T>(
         string table,
         bool diff,

@@ -341,6 +341,29 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return new SurrealDbLiveQuery<T>(queryUuid, this);
     }
 
+    public async Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+        string query,
+        IReadOnlyDictionary<string, object> parameters,
+        CancellationToken cancellationToken
+    )
+    {
+        var dbResponse = await Query(query, parameters, cancellationToken).ConfigureAwait(false);
+
+        if (dbResponse.HasErrors)
+        {
+            throw new SurrealDbErrorResultException(dbResponse.FirstError!);
+        }
+
+        if (dbResponse.FirstOk is null)
+        {
+            throw new SurrealDbErrorResultException();
+        }
+
+        var queryUuid = dbResponse.FirstOk.GetValue<Guid>()!;
+
+        return ListenLive<T>(queryUuid);
+    }
+
     public async Task<SurrealDbLiveQuery<T>> LiveTable<T>(
         string table,
         bool diff,

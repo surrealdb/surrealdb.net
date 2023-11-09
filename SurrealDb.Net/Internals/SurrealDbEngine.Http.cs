@@ -193,6 +193,15 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         throw new NotSupportedException();
     }
 
+    public Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+        string query,
+        IReadOnlyDictionary<string, object> parameters,
+        CancellationToken cancellationToken
+    )
+    {
+        throw new NotSupportedException();
+    }
+
     public Task<SurrealDbLiveQuery<T>> LiveTable<T>(
         string table,
         bool diff,
