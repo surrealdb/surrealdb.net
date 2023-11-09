@@ -2,9 +2,9 @@
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 
-namespace SurrealDb.Net.Tests;
+namespace SurrealDb.Net.LiveQuery.Tests;
 
-public partial class LiveQueryTests
+public class KillLiveQueryTests
 {
     [Fact]
     public async Task ShouldAutomaticallyKillLiveQueryWhenDisposed()

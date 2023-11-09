@@ -1,15 +1,11 @@
-﻿using SurrealDb.Net.Models.LiveQuery;
+﻿using SurrealDb.Net.LiveQuery.Tests.Abstract;
+using SurrealDb.Net.LiveQuery.Tests.Models;
+using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
-using Record = SurrealDb.Net.Models.Record;
 
-namespace SurrealDb.Net.Tests;
+namespace SurrealDb.Net.LiveQuery.Tests;
 
-public class TestRecord : Record
-{
-    public int Value { get; set; }
-}
-
-public class ListenLiveTests
+public class ListenLiveTests : BaseLiveQueryTests
 {
     [Fact]
     public async Task ShouldNotBeSupportedOnHttpProtocol()
@@ -70,28 +66,24 @@ public class ListenLiveTests
 
             _ = Task.Run(async () =>
             {
-                await Task.Delay(50);
+                await WaitLiveQueryCreationAsync();
 
                 var record = await client.Create("test", new TestRecord { Value = 1 });
-                await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
-                await client.Delete(record.Id!);
+                await WaitLiveQueryNotificationAsync();
 
-                while (allResults.Count < 3)
-                {
-                    await Task.Delay(20);
-                }
+                await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
+                await WaitLiveQueryNotificationAsync();
+
+                await client.Delete(record.Id!);
+                await WaitLiveQueryNotificationAsync();
 
                 await liveQuery.KillAsync();
-
-                while (allResults.Count < 4)
-                {
-                    await Task.Delay(20);
-                }
+                await WaitLiveQueryNotificationAsync();
 
                 cts.Cancel();
             });
 
-            await Task.Delay(TimeSpan.FromSeconds(2));
+            await Task.Delay(Timeout);
 
             if (!cts.IsCancellationRequested)
             {

@@ -1,9 +1,11 @@
-﻿using SurrealDb.Net.Models.LiveQuery;
+﻿using SurrealDb.Net.LiveQuery.Tests.Abstract;
+using SurrealDb.Net.LiveQuery.Tests.Models;
+using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 
-namespace SurrealDb.Net.Tests;
+namespace SurrealDb.Net.LiveQuery.Tests;
 
-public partial class LiveQueryTests
+public class ReceiveLiveQueryTests : BaseLiveQueryTests
 {
     [Fact]
     public async Task ShouldLiveQueryReceiveCreatedRecord()
@@ -34,14 +36,10 @@ public partial class LiveQueryTests
 
             _ = Task.Run(async () =>
             {
-                await Task.Delay(50);
+                await WaitLiveQueryCreationAsync();
 
                 await client.Create("test", new TestRecord { Value = 1 });
-
-                while (results.Count < 1)
-                {
-                    await Task.Delay(20, cts.Token);
-                }
+                await WaitLiveQueryNotificationAsync();
 
                 cts.Cancel();
             });
@@ -54,7 +52,7 @@ public partial class LiveQueryTests
                 }
             });
 
-            await Task.Delay(_timeout);
+            await Task.Delay(Timeout);
 
             if (!cts.IsCancellationRequested)
             {
@@ -108,14 +106,10 @@ public partial class LiveQueryTests
 
             _ = Task.Run(async () =>
             {
-                await Task.Delay(50);
+                await WaitLiveQueryCreationAsync();
 
                 await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
-
-                while (results.Count < 1)
-                {
-                    await Task.Delay(20, cts.Token);
-                }
+                await WaitLiveQueryNotificationAsync();
 
                 cts.Cancel();
             });
@@ -128,7 +122,7 @@ public partial class LiveQueryTests
                 }
             });
 
-            await Task.Delay(_timeout);
+            await Task.Delay(Timeout);
 
             if (!cts.IsCancellationRequested)
             {
@@ -184,14 +178,10 @@ public partial class LiveQueryTests
 
             _ = Task.Run(async () =>
             {
-                await Task.Delay(50);
+                await WaitLiveQueryCreationAsync();
 
                 await client.Delete(record.Id!);
-
-                while (results.Count < 1)
-                {
-                    await Task.Delay(20, cts.Token);
-                }
+                await WaitLiveQueryNotificationAsync();
 
                 cts.Cancel();
             });
@@ -204,7 +194,7 @@ public partial class LiveQueryTests
                 }
             });
 
-            await Task.Delay(_timeout);
+            await Task.Delay(Timeout);
 
             if (!cts.IsCancellationRequested)
             {
@@ -260,14 +250,10 @@ public partial class LiveQueryTests
 
             _ = Task.Run(async () =>
             {
-                await Task.Delay(50);
+                await WaitLiveQueryCreationAsync();
 
                 client.Dispose();
-
-                while (results.Count < 1)
-                {
-                    await Task.Delay(20, cts.Token);
-                }
+                await WaitLiveQueryNotificationAsync();
 
                 cts.Cancel();
             });
@@ -280,7 +266,7 @@ public partial class LiveQueryTests
                 }
             });
 
-            await Task.Delay(_timeout);
+            await Task.Delay(Timeout);
 
             if (!cts.IsCancellationRequested)
             {
@@ -338,14 +324,10 @@ public partial class LiveQueryTests
 
             _ = Task.Run(async () =>
             {
-                await Task.Delay(50);
+                await WaitLiveQueryCreationAsync();
 
                 await liveQuery.KillAsync();
-
-                while (results.Count < 1)
-                {
-                    await Task.Delay(20, cts.Token);
-                }
+                await WaitLiveQueryNotificationAsync();
 
                 cts.Cancel();
             });
@@ -358,7 +340,7 @@ public partial class LiveQueryTests
                 }
             });
 
-            await Task.Delay(_timeout);
+            await Task.Delay(Timeout);
 
             if (!cts.IsCancellationRequested)
             {

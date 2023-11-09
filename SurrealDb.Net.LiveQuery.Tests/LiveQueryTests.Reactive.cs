@@ -1,11 +1,13 @@
 ﻿using Microsoft.Reactive.Testing;
+using SurrealDb.Net.LiveQuery.Tests.Abstract;
+using SurrealDb.Net.LiveQuery.Tests.Models;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 using System.Reactive.Linq;
 
-namespace SurrealDb.Net.Tests;
+namespace SurrealDb.Net.LiveQuery.Tests;
 
-public partial class LiveQueryTests
+public class ReactiveLiveQueryTests : BaseLiveQueryTests
 {
     [Fact]
     public async Task ShouldConsumeObservable()
@@ -42,12 +44,17 @@ public partial class LiveQueryTests
                 .SubscribeOn(testScheduler)
                 .Subscribe(allResults.Add);
 
+            await WaitLiveQueryCreationAsync();
+
             testScheduler.Start();
 
             var record = await client.Create("test", new TestRecord { Value = 1 });
-            await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
-            await client.Delete(record.Id!);
+            await WaitLiveQueryNotificationAsync();
 
+            await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
+            await WaitLiveQueryNotificationAsync();
+
+            await client.Delete(record.Id!);
             await WaitLiveQueryNotificationAsync();
         };
 
@@ -100,14 +107,20 @@ public partial class LiveQueryTests
                 .SubscribeOn(testScheduler)
                 .Subscribe(allResults.Add);
 
+            await WaitLiveQueryCreationAsync();
+
             testScheduler.Start();
 
             var record = await client.Create("test", new TestRecord { Value = 1 });
+            await WaitLiveQueryNotificationAsync();
+
             await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
+            await WaitLiveQueryNotificationAsync();
+
             await client.Delete(record.Id!);
+            await WaitLiveQueryNotificationAsync();
 
             await liveQuery.KillAsync();
-
             await WaitLiveQueryNotificationAsync();
         };
 
@@ -157,8 +170,9 @@ public partial class LiveQueryTests
             cts.CancelAfter(TimeSpan.FromSeconds(2));
 
             var record = await client.Create("test", new TestRecord { Value = 1 });
-            await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
+            await WaitLiveQueryNotificationAsync();
 
+            await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
             await WaitLiveQueryNotificationAsync();
 
             var testScheduler = new TestScheduler();
@@ -171,7 +185,6 @@ public partial class LiveQueryTests
             testScheduler.Start();
 
             await client.Delete(record.Id!);
-
             await WaitLiveQueryNotificationAsync();
         };
 
@@ -216,9 +229,8 @@ public partial class LiveQueryTests
             using var _ = liveQuery
                 .GetResults()
                 .ToObservable()
-                .SubscribeOn(testScheduler)
                 .Aggregate(
-                    new Dictionary<string, TestRecord>(), // Start from an empty list or from the current list records
+                    new Dictionary<string, TestRecord>(), // Start from an empty list or from the current list of records
                     (acc, response) =>
                     {
                         if (
@@ -247,10 +259,13 @@ public partial class LiveQueryTests
                     }
                 )
                 .Select(x => x.Values.ToList())
+                .SubscribeOn(testScheduler)
                 .Subscribe(results =>
                 {
                     records = results;
                 });
+
+            await WaitLiveQueryCreationAsync();
 
             testScheduler.Start();
 

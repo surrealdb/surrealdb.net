@@ -1,7 +1,7 @@
 ﻿using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Models.Response;
 
-namespace SurrealDb.Net.Tests;
+namespace SurrealDb.Net.LiveQuery.Tests;
 
 public class KillTests
 {
