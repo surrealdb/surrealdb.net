@@ -29,6 +29,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configurat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.Net.LiveQuery.Tests", "SurrealDb.Net.LiveQuery.Tests\SurrealDb.Net.LiveQuery.Tests.csproj", "{8A61723E-3341-4F38-9D93-13777E8D5566}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.Reactive", "SurrealDb.Reactive\SurrealDb.Reactive.csproj", "{A91F00A2-2843-4036-BAFE-169954B57593}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +65,10 @@ Global
 		{8A61723E-3341-4F38-9D93-13777E8D5566}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A61723E-3341-4F38-9D93-13777E8D5566}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8A61723E-3341-4F38-9D93-13777E8D5566}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A91F00A2-2843-4036-BAFE-169954B57593}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A91F00A2-2843-4036-BAFE-169954B57593}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A91F00A2-2843-4036-BAFE-169954B57593}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A91F00A2-2843-4036-BAFE-169954B57593}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -75,6 +81,7 @@ Global
 		{3F00652A-B25B-4F22-9554-AF2F5002BED1} = {A83E82FA-2AD7-45FA-A949-9EFA5865D7AE}
 		{94F5204B-B4DD-4B81-AA62-5D09C30BE864} = {A83E82FA-2AD7-45FA-A949-9EFA5865D7AE}
 		{8A61723E-3341-4F38-9D93-13777E8D5566} = {0137C76C-4DE9-4846-B62A-02F40E3479B5}
+		{A91F00A2-2843-4036-BAFE-169954B57593} = {C96942BD-CC4A-48C1-BC4D-54FB6EC5C168}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {70C100EF-E131-45C0-9515-02FC4823BA20}
