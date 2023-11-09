@@ -341,7 +341,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return new SurrealDbLiveQuery<T>(queryUuid, this);
     }
 
-    public async Task<SurrealDbLiveQuery<T>> Live<T>(
+    public async Task<SurrealDbLiveQuery<T>> LiveTable<T>(
         string table,
         bool diff,
         CancellationToken cancellationToken

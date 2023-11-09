@@ -172,7 +172,7 @@ public interface ISurrealDbClient : IDisposable
     SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid);
 
     /// <summary>
-    /// Initiates a live query.<br /><br />
+    /// Initiates a live query on a table.<br /><br />
     ///
     /// Not supported on HTTP(S) protocol.
     /// </summary>
@@ -187,7 +187,7 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="NotSupportedException"></exception>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<SurrealDbLiveQuery<T>> Live<T>(
+    Task<SurrealDbLiveQuery<T>> LiveTable<T>(
         string table,
         bool diff = false,
         CancellationToken cancellationToken = default

@@ -3,7 +3,7 @@ using SurrealDb.Net.Models.LiveQuery;
 
 namespace System.Reactive.Linq;
 
-public static class ReactiveLinqExtensions
+public static partial class ReactiveLinqExtensions
 {
     /// <summary>
     /// Applies an accumulator function over an observable sequence, returning the result of the aggregation as a single element in the result sequence.

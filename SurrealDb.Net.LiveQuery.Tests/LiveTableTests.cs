@@ -5,7 +5,7 @@ using JsonPatchOperations = System.Collections.Immutable.IImmutableList<Microsof
 
 namespace SurrealDb.Net.LiveQuery.Tests;
 
-public class LiveTests : BaseLiveQueryTests
+public class LiveTableTests : BaseLiveQueryTests
 {
     [Fact]
     public async Task ShouldNotBeSupportedOnHttpProtocol()
@@ -21,7 +21,7 @@ public class LiveTests : BaseLiveQueryTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            await using var liveQuery = await client.Live<int>("test");
+            await using var liveQuery = await client.LiveTable<int>("test");
         };
 
         await func.Should().ThrowAsync<NotSupportedException>();
@@ -43,7 +43,7 @@ public class LiveTests : BaseLiveQueryTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            var liveQuery = await client.Live<TestRecord>("test");
+            var liveQuery = await client.LiveTable<TestRecord>("test");
 
             var cts = new CancellationTokenSource();
 
@@ -116,7 +116,7 @@ public class LiveTests : BaseLiveQueryTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            var liveQuery = await client.Live<JsonPatchOperations>("test", true);
+            var liveQuery = await client.LiveTable<JsonPatchOperations>("test", true);
 
             var cts = new CancellationTokenSource();
 
