@@ -38,9 +38,29 @@ jobs:
         run: dotnet build --no-restore --warnaserror
 
       - name: Test library
-        working-directory: ./SurrealDb.Net.Tests
-        run: dotnet test --no-build
+        run: |
+          dotnet test 
+          ./SurrealDb.Net.Tests/SurrealDb.Net.Tests.csproj
+          --no-restore
+          --no-build
+          --collect "XPlat Code Coverage"
+          --results-directory .coverage
+          --
+          DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
       - name: Test Live Query feature
-        working-directory: ./SurrealDb.Net.LiveQuery.Tests
-        run: dotnet test --no-build
+        run: |
+          dotnet test 
+          ./SurrealDb.Net.LiveQuery.Tests/SurrealDb.Net.LiveQuery.Tests.csproj
+          --no-restore
+          --no-build
+          --collect "XPlat Code Coverage"
+          --results-directory .coverage
+          --
+          DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          flags: UI
+          directory: .coverage
