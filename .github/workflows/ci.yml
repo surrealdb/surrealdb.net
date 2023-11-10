@@ -38,7 +38,7 @@ jobs:
         run: dotnet build --no-restore --warnaserror
 
       - name: Test library
-        run: |
+        run: >
           dotnet test 
           ./SurrealDb.Net.Tests/SurrealDb.Net.Tests.csproj
           --no-restore
@@ -49,7 +49,7 @@ jobs:
           DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
       - name: Test Live Query feature
-        run: |
+        run: >
           dotnet test 
           ./SurrealDb.Net.LiveQuery.Tests/SurrealDb.Net.LiveQuery.Tests.csproj
           --no-restore
@@ -62,5 +62,4 @@ jobs:
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
         with:
-          flags: UI
           directory: .coverage
