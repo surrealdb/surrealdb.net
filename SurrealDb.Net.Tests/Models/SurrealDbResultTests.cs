@@ -1,7 +1,7 @@
-using SurrealDb.Net.Models.Response;
+﻿using SurrealDb.Net.Models.Response;
 using System.Text.Json;
 
-namespace SurrealDb.Tests.Models;
+namespace SurrealDb.Net.Tests.Models;
 
 public class SurrealDbResultTests
 {

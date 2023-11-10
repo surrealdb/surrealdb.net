@@ -1,5 +1,7 @@
+﻿using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
+using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Internals;
@@ -17,6 +19,22 @@ internal interface ISurrealDbEngine : IDisposable
     Task<bool> Delete(Thing thing, CancellationToken cancellationToken);
     Task<bool> Health(CancellationToken cancellationToken);
     Task Invalidate(CancellationToken cancellationToken);
+    Task Kill(
+        Guid queryUuid,
+        SurrealDbLiveQueryClosureReason reason,
+        CancellationToken cancellationToken
+    );
+    SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid);
+    Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+        string query,
+        IReadOnlyDictionary<string, object> parameters,
+        CancellationToken cancellationToken
+    );
+    Task<SurrealDbLiveQuery<T>> LiveTable<T>(
+        string table,
+        bool diff,
+        CancellationToken cancellationToken
+    );
     Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken)
         where TMerge : Record;
     Task<T> Merge<T>(
@@ -39,6 +57,7 @@ internal interface ISurrealDbEngine : IDisposable
         where T : ScopeAuth;
     Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken)
         where T : ScopeAuth;
+    SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id);
     Task Unset(string key, CancellationToken cancellationToken);
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record;

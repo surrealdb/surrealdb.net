@@ -1,12 +1,14 @@
-using SurrealDb.Net.Exceptions;
+﻿using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Http;
 using SurrealDb.Net.Internals.Json;
 using SurrealDb.Net.Internals.Models;
+using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
+using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 using System.Net.Http.Headers;
 using System.Text;
@@ -175,6 +177,38 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         _config.ResetAuth();
         return Task.CompletedTask;
+    }
+
+    public Task Kill(
+        Guid queryUuid,
+        SurrealDbLiveQueryClosureReason reason,
+        CancellationToken cancellationToken
+    )
+    {
+        throw new NotSupportedException();
+    }
+
+    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid)
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+        string query,
+        IReadOnlyDictionary<string, object> parameters,
+        CancellationToken cancellationToken
+    )
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task<SurrealDbLiveQuery<T>> LiveTable<T>(
+        string table,
+        bool diff,
+        CancellationToken cancellationToken
+    )
+    {
+        throw new NotSupportedException();
     }
 
     public async Task<TOutput> Merge<TMerge, TOutput>(
@@ -385,6 +419,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return new Jwt { Token = result.Token! };
     }
 
+    public SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id)
+    {
+        throw new NotSupportedException();
+    }
+
     public Task Unset(string key, CancellationToken _)
     {
         _config.RemoveParam(key);
@@ -430,10 +469,17 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         _config.Use(ns, db);
     }
 
-    public async Task<string> Version(CancellationToken _)
+    public async Task<string> Version(CancellationToken cancellationToken)
     {
         using var wrapper = CreateHttpClientWrapper();
+
+#if NET6_0_OR_GREATER
+        return await wrapper.Instance
+            .GetStringAsync("/version", cancellationToken)
+            .ConfigureAwait(false);
+#else
         return await wrapper.Instance.GetStringAsync("/version").ConfigureAwait(false);
+#endif
     }
 
     private JsonSerializerOptions GetJsonSerializerOptions()
@@ -653,10 +699,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .DeserializeAsync<AuthResponse>(stream, GetJsonSerializerOptions(), cancellationToken)
             .ConfigureAwait(false);
 
-        if (authResponse is null)
-            throw new SurrealDbException("Cannot deserialize auth response");
-
-        return authResponse;
+        return authResponse is not null
+            ? authResponse
+            : throw new SurrealDbException("Cannot deserialize auth response");
     }
 
     private static SurrealDbOkResult EnsuresFirstResultOk(SurrealDbResponse dbResponse)

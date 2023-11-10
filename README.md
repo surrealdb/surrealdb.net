@@ -21,9 +21,9 @@ dotnet add package SurrealDb.Net
 
 Supported protocols:
 
--   ✅ HTTP(S)
--   ✅ WS(S)
--   🚧 and more to come...
+- ✅ HTTP(S)
+- ✅ WS(S)
+- 🚧 and more to come...
 
 #### Construct a new SurrealDB client
 
@@ -100,16 +100,16 @@ Consider the following `appsettings.json` file:
 
 ```json
 {
-	"AllowedHosts": "*",
-	"Logging": {
-		"LogLevel": {
-			"Default": "Information",
-			"Microsoft.AspNetCore": "Warning"
-		}
-	},
-	"ConnectionStrings": {
-		"SurrealDB": "Server=http://localhost:8000;Namespace=test;Database=test;Username=root;Password=root"
-	}
+  "AllowedHosts": "*",
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "ConnectionStrings": {
+    "SurrealDB": "Server=http://localhost:8000;Namespace=test;Database=test;Username=root;Password=root"
+  }
 }
 ```
 
@@ -136,9 +136,9 @@ services.AddSurreal<IMonitoringSurrealDbClient>(configuration.GetConnectionStrin
 
 Here you will have 3 instances:
 
--   the default one, you can keep using `ISurrealDbClient` interface or `SurrealDbClient` class anywhere
--   a client for backup purpose, using the `IBackupSurrealDbClient` interface
--   a client for monitoring purpose, using the `IMonitoringSurrealDbClient` interface
+- the default one, you can keep using `ISurrealDbClient` interface or `SurrealDbClient` class anywhere
+- a client for backup purpose, using the `IBackupSurrealDbClient` interface
+- a client for monitoring purpose, using the `IMonitoringSurrealDbClient` interface
 
 #### Use the client
 
@@ -231,20 +231,20 @@ public class WeatherForecastController : ControllerBase
 
 This project was written following testing best practices:
 
--   TDD, leveraging:
-    -   clean code/architecture
-    -   regression testing
-    -   adding new features and tests easily
--   xUnit and FluentAssertions libraries
--   a vast majority of tests are integration tests, ensuring compatibility with a concrete SurrealDB version
--   each integration test is using a separate SurrealDB instance
+- TDD, leveraging:
+  - clean code/architecture
+  - regression testing
+  - adding new features and tests easily
+- xUnit and FluentAssertions libraries
+- a vast majority of tests are integration tests, ensuring compatibility with a concrete SurrealDB version
+- each integration test is using a separate SurrealDB instance
 
 ### .NET release versions
 
 The .NET release versions must follow these rules:
 
--   Should target at least the latest LTS (Long-Term Support) version
--   Should target at least the latest STS (Standard-Term Support) version
+- Should target at least the latest LTS (Long-Term Support) version
+- Should target at least the latest STS (Standard-Term Support) version
 
 SurrealDb.Net targets .NET versions following the [.NET Support Policy by Microsoft](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core). Additionally, SurrealDb.Net targets .NET Standard 2.1 explicitly to continue support of the Mono runtime (Unity, Xamarin, etc...).
 
@@ -271,6 +271,16 @@ Once ready, go to the root directory of the project and run the following comman
 ```
 dotnet watch test --project SurrealDb.Net.Tests
 ```
+
+Due to the asynchronous nature of Live Queries, they are tested against a separate project named `SurrealDb.Net.LiveQuery.Tests`. Where the default test project allow full parallelization, this project completely disable test parallelization. To execute tests on Live Queries, run the following command:
+
+```
+dotnet watch test --project SurrealDb.Net.LiveQuery.Tests
+```
+
+Note 1: Because Live Query tests are not run in parallel, it can take quite some time to run all tests.
+
+Note 2: You can run the two test projects in parallel.
 
 ### Benchmarking
 

@@ -1,8 +1,9 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
+using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 using System.Text.Json;
 
@@ -148,6 +149,42 @@ public class SurrealDbClient : ISurrealDbClient
     public Task Invalidate(CancellationToken cancellationToken = default)
     {
         return _engine.Invalidate(cancellationToken);
+    }
+
+    public Task Kill(Guid queryUuid, CancellationToken cancellationToken = default)
+    {
+        return _engine.Kill(
+            queryUuid,
+            SurrealDbLiveQueryClosureReason.QueryKilled,
+            cancellationToken
+        );
+    }
+
+    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid)
+    {
+        return _engine.ListenLive<T>(queryUuid);
+    }
+
+    public Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+        string query,
+        IReadOnlyDictionary<string, object>? parameters = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.LiveQuery<T>(
+            query,
+            parameters ?? new Dictionary<string, object>(),
+            cancellationToken
+        );
+    }
+
+    public Task<SurrealDbLiveQuery<T>> LiveTable<T>(
+        string table,
+        bool diff = false,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.LiveTable<T>(table, diff, cancellationToken);
     }
 
     public Task<TOutput> Merge<TMerge, TOutput>(
