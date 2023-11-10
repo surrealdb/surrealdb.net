@@ -6,6 +6,7 @@ using System.Reactive.Linq;
 
 namespace SurrealDb.Net.LiveQuery.Tests;
 
+[CollectionDefinition("Reactive")]
 public class ReactiveOperatorsLiveQueryTests : BaseLiveQueryTests
 {
     [Fact]

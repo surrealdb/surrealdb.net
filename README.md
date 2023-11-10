@@ -278,7 +278,7 @@ Due to the asynchronous nature of Live Queries, they are tested against a separa
 dotnet watch test --project SurrealDb.Net.LiveQuery.Tests
 ```
 
-Note 1: Because Live Query tests are not run in parallel, it can take quite some time to run all tests (at least 30s).
+Note 1: Because Live Query tests are not run in parallel, it can take quite some time to run all tests.
 
 Note 2: You can run the two test projects in parallel.
 

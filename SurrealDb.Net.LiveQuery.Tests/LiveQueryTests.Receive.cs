@@ -5,6 +5,7 @@ using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.LiveQuery.Tests;
 
+[CollectionDefinition("LiveQuery")]
 public class ReceiveLiveQueryTests : BaseLiveQueryTests
 {
     [Fact]

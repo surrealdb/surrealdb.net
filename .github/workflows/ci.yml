@@ -37,5 +37,10 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --warnaserror
 
-      - name: Test
+      - name: Test library
+        working-directory: ./SurrealDb.Net.Tests
+        run: dotnet test --no-build
+
+      - name: Test Live Query feature
+        working-directory: ./SurrealDb.Net.LiveQuery.Tests
         run: dotnet test --no-build

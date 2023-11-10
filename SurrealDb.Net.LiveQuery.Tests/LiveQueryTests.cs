@@ -1,10 +1,10 @@
 ﻿using SurrealDb.Net.LiveQuery.Tests.Abstract;
 using SurrealDb.Net.LiveQuery.Tests.Models;
 using SurrealDb.Net.Models.LiveQuery;
-using JsonPatchOperations = System.Collections.Immutable.IImmutableList<Microsoft.AspNetCore.JsonPatch.Operations.Operation>;
 
 namespace SurrealDb.Net.LiveQuery.Tests;
 
+[CollectionDefinition("LiveQuery")]
 public class LiveQueryTests : BaseLiveQueryTests
 {
     [Fact]

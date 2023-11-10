@@ -6,6 +6,7 @@ using System.Reactive.Linq;
 
 namespace SurrealDb.Net.LiveQuery.Tests;
 
+[CollectionDefinition("Reactive")]
 public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
 {
     [Fact]
@@ -34,7 +35,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                 .SubscribeOn(testScheduler)
                 .Subscribe(allResults.Add);
 
-            await WaitLiveQueryCreationAsync(3);
+            await WaitLiveQueryCreationAsync(5);
 
             testScheduler.Start();
 
@@ -88,7 +89,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                 .SubscribeOn(testScheduler)
                 .Subscribe(allResults.Add);
 
-            await WaitLiveQueryCreationAsync(3);
+            await WaitLiveQueryCreationAsync(5);
 
             testScheduler.Start();
 
