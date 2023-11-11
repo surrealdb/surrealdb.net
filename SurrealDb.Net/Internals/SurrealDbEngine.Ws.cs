@@ -305,6 +305,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         }
     }
 
+    public async Task<T> Info<T>(CancellationToken cancellationToken)
+    {
+        var dbResponse = await SendRequest("info", null, cancellationToken).ConfigureAwait(false);
+        return dbResponse.GetValue<T>()!;
+    }
+
     public async Task Invalidate(CancellationToken cancellationToken)
     {
         await SendRequest("invalidate", null, cancellationToken).ConfigureAwait(false);

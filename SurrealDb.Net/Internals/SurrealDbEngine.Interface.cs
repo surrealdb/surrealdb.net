@@ -18,6 +18,7 @@ internal interface ISurrealDbEngine : IDisposable
     Task Delete(string table, CancellationToken cancellationToken);
     Task<bool> Delete(Thing thing, CancellationToken cancellationToken);
     Task<bool> Health(CancellationToken cancellationToken);
+    Task<T> Info<T>(CancellationToken cancellationToken);
     Task Invalidate(CancellationToken cancellationToken);
     Task Kill(
         Guid queryUuid,

@@ -173,6 +173,19 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         }
     }
 
+    public async Task<T> Info<T>(CancellationToken cancellationToken)
+    {
+        const string query = "SELECT * FROM $auth;";
+
+        var dbResponse = await Query(query, new Dictionary<string, object>(), cancellationToken)
+            .ConfigureAwait(false);
+
+        EnsuresFirstResultOk(dbResponse);
+
+        var results = dbResponse.GetValue<List<T>>(0)!;
+        return results.First();
+    }
+
     public Task Invalidate(CancellationToken _)
     {
         _config.ResetAuth();
