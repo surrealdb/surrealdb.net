@@ -61,16 +61,19 @@ public class ReactiveLiveQueryTests : BaseLiveQueryTests
 
         await func.Should().NotThrowAsync();
 
-        allResults.Should().HaveCount(3);
+        allResults.Should().HaveCount(4);
 
         var firstResult = allResults[0];
-        firstResult.Should().BeOfType<SurrealDbLiveQueryCreateResponse<TestRecord>>();
+        firstResult.Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
 
         var secondResult = allResults[1];
-        secondResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<TestRecord>>();
+        secondResult.Should().BeOfType<SurrealDbLiveQueryCreateResponse<TestRecord>>();
 
         var thirdResult = allResults[2];
-        thirdResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
+        thirdResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<TestRecord>>();
+
+        var lastResult = allResults[3];
+        lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
     }
 
     [Fact]
@@ -127,18 +130,21 @@ public class ReactiveLiveQueryTests : BaseLiveQueryTests
 
         await func.Should().NotThrowAsync();
 
-        allResults.Should().HaveCount(4);
+        allResults.Should().HaveCount(5);
 
         var firstResult = allResults[0];
-        firstResult.Should().BeOfType<SurrealDbLiveQueryCreateResponse<TestRecord>>();
+        firstResult.Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
 
         var secondResult = allResults[1];
-        secondResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<TestRecord>>();
+        secondResult.Should().BeOfType<SurrealDbLiveQueryCreateResponse<TestRecord>>();
 
         var thirdResult = allResults[2];
-        thirdResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
+        thirdResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<TestRecord>>();
 
-        var lastResult = allResults[3];
+        var fourthResult = allResults[3];
+        fourthResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
+
+        var lastResult = allResults[4];
         lastResult.Should().BeOfType<SurrealDbLiveQueryCloseResponse>();
     }
 
@@ -191,9 +197,12 @@ public class ReactiveLiveQueryTests : BaseLiveQueryTests
 
         await func.Should().NotThrowAsync();
 
-        allResults.Should().HaveCount(1);
+        allResults.Should().HaveCount(2);
 
         var firstResult = allResults[0];
-        firstResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
+        firstResult.Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
+
+        var lastResult = allResults[1];
+        lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
     }
 }

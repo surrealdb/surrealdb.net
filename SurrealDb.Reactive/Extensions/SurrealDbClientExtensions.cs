@@ -23,56 +23,62 @@ public static class SurrealDbClientExtensions
         IReadOnlyDictionary<string, object>? parameters = null
     )
     {
-        return Observable.Create<SurrealDbLiveQueryResponse>(
-            async (observer, cancellationToken) =>
-            {
-                SurrealDbResponse response = null!;
+        return Observable.Defer(
+            () =>
+                Observable.Create<SurrealDbLiveQueryResponse>(
+                    async (observer, cancellationToken) =>
+                    {
+                        SurrealDbResponse response = null!;
 
-                try
-                {
-                    response = await client.Query(query, parameters, cancellationToken);
-                }
-                catch (Exception e)
-                {
-                    observer.OnError(e);
-                }
+                        try
+                        {
+                            response = await client.Query(query, parameters, cancellationToken);
+                        }
+                        catch (Exception e)
+                        {
+                            observer.OnError(e);
+                            return () => { };
+                        }
 
-                if (response.HasErrors)
-                {
-                    observer.OnError(new SurrealDbErrorResultException(response.FirstError!));
-                    return () => { };
-                }
+                        if (response.HasErrors)
+                        {
+                            observer.OnError(
+                                new SurrealDbErrorResultException(response.FirstError!)
+                            );
+                            return () => { };
+                        }
 
-                if (response.FirstOk is null)
-                {
-                    observer.OnError(new SurrealDbErrorResultException());
-                    return () => { };
-                }
+                        if (response.FirstOk is null)
+                        {
+                            observer.OnError(new SurrealDbErrorResultException());
+                            return () => { };
+                        }
 
-                // TODO : handle multi-queries
+                        // TODO : handle multi-queries
 
-                SurrealDbLiveQuery<T> liveQuery = null!;
+                        SurrealDbLiveQuery<T> liveQuery = null!;
 
-                var queryUuid = response.FirstOk!.GetValue<Guid>();
+                        var queryUuid = response.FirstOk!.GetValue<Guid>();
 
-                try
-                {
-                    liveQuery = client.ListenLive<T>(queryUuid);
-                }
-                catch (Exception e)
-                {
-                    observer.OnError(e);
-                    return () => { };
-                }
+                        try
+                        {
+                            liveQuery = client.ListenLive<T>(queryUuid);
+                        }
+                        catch (Exception e)
+                        {
+                            observer.OnError(e);
+                            return () => { };
+                        }
 
-                var subscription = liveQuery.ToObservable().Subscribe(observer);
+                        var subscription = liveQuery.ToObservable().Subscribe(observer);
 
-                return () =>
-                {
-                    subscription.Dispose();
-                    liveQuery.DisposeAsync().GetAwaiter().GetResult();
-                };
-            }
+                        return () =>
+                        {
+                            subscription.Dispose();
+                            liveQuery.DisposeAsync().GetAwaiter().GetResult();
+                        };
+                    }
+                )
         );
     }
 
@@ -95,29 +101,32 @@ public static class SurrealDbClientExtensions
         bool diff = false
     )
     {
-        return Observable.Create<SurrealDbLiveQueryResponse>(
-            async (observer, cancellationToken) =>
-            {
-                SurrealDbLiveQuery<T> liveQuery = null!;
+        return Observable.Defer(
+            () =>
+                Observable.Create<SurrealDbLiveQueryResponse>(
+                    async (observer, cancellationToken) =>
+                    {
+                        SurrealDbLiveQuery<T> liveQuery = null!;
 
-                try
-                {
-                    liveQuery = await client.LiveTable<T>(table, diff, cancellationToken);
-                }
-                catch (Exception e)
-                {
-                    observer.OnError(e);
-                    return () => { };
-                }
+                        try
+                        {
+                            liveQuery = await client.LiveTable<T>(table, diff, cancellationToken);
+                        }
+                        catch (Exception e)
+                        {
+                            observer.OnError(e);
+                            return () => { };
+                        }
 
-                var subscription = liveQuery.ToObservable().Subscribe(observer);
+                        var subscription = liveQuery.ToObservable().Subscribe(observer);
 
-                return () =>
-                {
-                    subscription.Dispose();
-                    liveQuery.DisposeAsync().GetAwaiter().GetResult();
-                };
-            }
+                        return () =>
+                        {
+                            subscription.Dispose();
+                            liveQuery.DisposeAsync().GetAwaiter().GetResult();
+                        };
+                    }
+                )
         );
     }
 }

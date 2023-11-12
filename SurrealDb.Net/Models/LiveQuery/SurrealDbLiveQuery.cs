@@ -29,11 +29,12 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
     {
         if (_surrealDbEngine.TryGetTarget(out var surrealDbEngine))
         {
+            var channel = surrealDbEngine.SubscribeToLiveQuery(Id);
+
+            yield return new SurrealDbLiveQueryOpenResponse();
+
             await foreach (
-                var response in surrealDbEngine
-                    .SubscribeToLiveQuery(Id)
-                    .ReadAllAsync(cancellationToken)
-                    .ConfigureAwait(false)
+                var response in channel.ReadAllAsync(cancellationToken).ConfigureAwait(false)
             )
             {
                 yield return ToSurrealDbLiveQueryResponse(response);
@@ -47,7 +48,7 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
 
     /// <summary>
     /// Returns an enumerator that iterates asynchronously through the collection of results
-    /// (all actions CREATE, UPDATE and DELETE, except CLOSE).
+    /// (all actions CREATE, UPDATE and DELETE, except OPEN and CLOSE).
     /// </summary>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <exception cref="Exception">When the SurrealDB client has been disposed.</exception>

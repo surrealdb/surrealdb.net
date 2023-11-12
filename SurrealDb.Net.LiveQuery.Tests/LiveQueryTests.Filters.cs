@@ -82,7 +82,7 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
 
         await func.Should().NotThrowAsync();
 
-        allResults.Should().HaveCount(4);
+        allResults.Should().HaveCount(5);
         filteredResults.Should().HaveCount(3);
     }
 
@@ -160,7 +160,7 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
 
         await func.Should().NotThrowAsync();
 
-        allResults.Should().HaveCount(4);
+        allResults.Should().HaveCount(5);
         filteredResults.Should().HaveCount(1);
 
         var result = filteredResults.First();
@@ -242,7 +242,7 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
 
         await func.Should().NotThrowAsync();
 
-        allResults.Should().HaveCount(4);
+        allResults.Should().HaveCount(5);
         filteredResults.Should().HaveCount(1);
 
         var result = filteredResults.First();
@@ -326,7 +326,7 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
 
         await func.Should().NotThrowAsync();
 
-        allResults.Should().HaveCount(4);
+        allResults.Should().HaveCount(5);
         filteredResults.Should().HaveCount(1);
 
         var result = filteredResults.First();
