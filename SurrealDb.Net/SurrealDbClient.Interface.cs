@@ -273,7 +273,7 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<List<T>> Select<T>(string table, CancellationToken cancellationToken = default);
+    Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Selects a single record.

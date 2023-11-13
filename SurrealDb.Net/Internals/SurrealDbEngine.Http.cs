@@ -101,8 +101,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
             .ConfigureAwait(false);
 
-        var list = ExtractFirstResultValue<List<T>>(dbResponse)!;
-        return list.First();
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<T>().First();
     }
 
     public async Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken)
@@ -117,8 +117,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
             .ConfigureAwait(false);
 
-        var list = ExtractFirstResultValue<List<T>>(dbResponse)!;
-        return list.First();
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<T>().First();
     }
 
     public async Task Delete(string table, CancellationToken cancellationToken)
@@ -145,8 +145,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
             .ConfigureAwait(false);
 
-        var list = ExtractFirstResultValue<List<object>>(dbResponse)!;
-        return list.Any(r => r is not null);
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<object>().Any(r => r is not null);
     }
 
     public void Dispose()
@@ -230,8 +230,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
             .ConfigureAwait(false);
 
-        var list = ExtractFirstResultValue<List<TOutput>>(dbResponse)!;
-        return list.First();
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<TOutput>().First();
     }
 
     public async Task<T> Merge<T>(
@@ -250,8 +250,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
             .ConfigureAwait(false);
 
-        var list = ExtractFirstResultValue<List<T>>(dbResponse)!;
-        return list.First();
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<T>().First();
     }
 
     public async Task<SurrealDbResponse> Query(
@@ -292,7 +292,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return await DeserializeDbResponseAsync(response, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<List<T>> Select<T>(string table, CancellationToken cancellationToken)
+    public async Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken)
     {
         using var wrapper = CreateHttpClientWrapper();
 
@@ -302,7 +302,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
             .ConfigureAwait(false);
-        return ExtractFirstResultValue<List<T>>(dbResponse)!;
+
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<T>();
     }
 
     public async Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken)
@@ -316,8 +318,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
             .ConfigureAwait(false);
 
-        var list = ExtractFirstResultValue<List<T>>(dbResponse)!;
-        return list.FirstOrDefault();
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<T>().FirstOrDefault();
     }
 
     public async Task Set(string key, object value, CancellationToken cancellationToken)
@@ -446,8 +448,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
             .ConfigureAwait(false);
 
-        var list = ExtractFirstResultValue<List<T>>(dbResponse)!;
-        return list.First();
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<T>().First();
     }
 
     public async Task Use(string ns, string db, CancellationToken cancellationToken)
@@ -715,11 +717,5 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             throw new SurrealDbErrorResultException(errorResult);
 
         return (SurrealDbOkResult)firstResult;
-    }
-
-    private static T? ExtractFirstResultValue<T>(SurrealDbResponse dbResponse)
-    {
-        var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.GetValue<T>();
     }
 }

@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json.Serialization;
 
 namespace SurrealDb.Net.Tests;
@@ -34,7 +34,7 @@ public class SelectTests
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldSelectFromEmptyTable(string url)
     {
-        List<Empty>? result = null;
+        IEnumerable<Empty>? result = null;
 
         Func<Task> func = async () =>
         {
@@ -58,7 +58,7 @@ public class SelectTests
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldSelectFromPostTable(string url)
     {
-        List<Post>? result = null;
+        IEnumerable<Post>? result = null;
 
         Func<Task> func = async () =>
         {
@@ -85,7 +85,9 @@ public class SelectTests
 
         result.Should().NotBeNull().And.HaveCount(2);
 
-        var firstPost = result!.Find(p => p.Id!.Id == "first");
+        var list = result!.ToList();
+
+        var firstPost = list.First(p => p.Id!.Id == "first");
 
         firstPost.Should().NotBeNull();
         firstPost!.Title.Should().Be("First article");
@@ -93,7 +95,7 @@ public class SelectTests
         firstPost!.CreatedAt.Should().NotBeNull();
         firstPost!.Status.Should().Be("DRAFT");
 
-        var secondPost = result!.Find(p => p != firstPost);
+        var secondPost = list.First(p => p != firstPost);
 
         secondPost.Should().NotBeNull();
         secondPost!.Title.Should().Be("Second article");
