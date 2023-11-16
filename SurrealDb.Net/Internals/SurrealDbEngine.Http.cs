@@ -484,6 +484,26 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return Task.CompletedTask;
     }
 
+    public async Task<IEnumerable<T>> UpdateAll<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        using var wrapper = CreateHttpClientWrapper();
+        using var body = CreateBodyContent(data);
+
+        using var response = await wrapper.Instance
+            .PutAsync($"/key/{table}", body, cancellationToken)
+            .ConfigureAwait(false);
+
+        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
+            .ConfigureAwait(false);
+
+        return ExtractFirstResultValue<List<T>>(dbResponse)!; // TODO : .DeserializeEnumerable<T>
+    }
+
     public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record
     {

@@ -301,6 +301,16 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.Unset(key, cancellationToken);
     }
 
+    public Task<IEnumerable<T>> UpdateAll<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken = default
+    )
+        where T : class
+    {
+        return _engine.UpdateAll(table, data, cancellationToken);
+    }
+
     public Task<T> Upsert<T>(T data, CancellationToken cancellationToken = default)
         where T : Record
     {

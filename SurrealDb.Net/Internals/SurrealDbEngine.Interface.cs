@@ -71,6 +71,8 @@ internal interface ISurrealDbEngine : IDisposable
         where T : ScopeAuth;
     SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id);
     Task Unset(string key, CancellationToken cancellationToken);
+    Task<IEnumerable<T>> UpdateAll<T>(string table, T data, CancellationToken cancellationToken)
+        where T : class;
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record;
     Task Use(string ns, string db, CancellationToken cancellationToken);

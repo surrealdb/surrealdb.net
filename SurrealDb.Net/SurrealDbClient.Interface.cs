@@ -433,6 +433,25 @@ public interface ISurrealDbClient : IDisposable
     Task Unset(string key, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Updates all records in the database.
+    /// </summary>
+    /// <typeparam name="T">The type of the record to create.</typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="data">The record to create or update.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The list of updated records.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<IEnumerable<T>> UpdateAll<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken = default
+    )
+        where T : class;
+
+    /// <summary>
     /// Updates or creates the specified record in the database.
     /// </summary>
     /// <typeparam name="T">The type of the record to create.</typeparam>

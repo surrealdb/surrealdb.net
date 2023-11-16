@@ -546,6 +546,18 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         await SendRequest("unset", new() { key }, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<IEnumerable<T>> UpdateAll<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        var dbResponse = await SendRequest("update", new() { table, data }, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<List<T>>()!; // TODO : .DeserializeEnumerable<T>
+    }
+
     public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record
     {
