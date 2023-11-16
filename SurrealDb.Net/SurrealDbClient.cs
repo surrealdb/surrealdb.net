@@ -6,6 +6,7 @@ using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 using System.Text.Json;
+using SystemTextJsonPatch;
 
 namespace SurrealDb.Net;
 
@@ -227,6 +228,26 @@ public class SurrealDbClient : ISurrealDbClient
     )
     {
         return _engine.MergeAll<T>(table, data, cancellationToken);
+    }
+
+    public Task<T> Patch<T>(
+        Thing thing,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken = default
+    )
+        where T : class
+    {
+        return _engine.Patch(thing, patches, cancellationToken);
+    }
+
+    public Task<IEnumerable<T>> PatchAll<T>(
+        string table,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken = default
+    )
+        where T : class
+    {
+        return _engine.PatchAll(table, patches, cancellationToken);
     }
 
     public Task<SurrealDbResponse> Query(

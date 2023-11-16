@@ -3,6 +3,7 @@ using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
+using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.Internals;
 
@@ -54,6 +55,14 @@ internal interface ISurrealDbEngine : IDisposable
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     );
+    Task<T> Patch<T>(Thing thing, JsonPatchDocument<T> patches, CancellationToken cancellationToken)
+        where T : class;
+    Task<IEnumerable<T>> PatchAll<T>(
+        string table,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken
+    )
+        where T : class;
     Task<SurrealDbResponse> Query(
         string query,
         IReadOnlyDictionary<string, object> parameters,

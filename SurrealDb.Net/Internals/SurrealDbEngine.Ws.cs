@@ -14,6 +14,7 @@ using System.Net.WebSockets;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Text.Json;
+using SystemTextJsonPatch;
 using Websocket.Client;
 
 namespace SurrealDb.Net.Internals;
@@ -440,6 +441,34 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
     {
         var dbResponse = await SendRequest("merge", new() { table, data }, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.DeserializeEnumerable<T>();
+    }
+
+    public async Task<T> Patch<T>(
+        Thing thing,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        var dbResponse = await SendRequest(
+                "patch",
+                new() { thing.ToWsString(), patches },
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        return dbResponse.DeserializeEnumerable<T>().First();
+    }
+
+    public async Task<IEnumerable<T>> PatchAll<T>(
+        string table,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        var dbResponse = await SendRequest("patch", new() { table, patches }, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
     }

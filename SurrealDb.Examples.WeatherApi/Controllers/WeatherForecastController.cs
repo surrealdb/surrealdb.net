@@ -2,6 +2,7 @@
 using SurrealDb.Examples.WeatherApi.Models;
 using SurrealDb.Net;
 using SurrealDb.Net.Models;
+using SystemTextJsonPatch;
 
 namespace SurrealDb.Examples.WeatherApi.Controllers;
 
@@ -85,19 +86,31 @@ public class WeatherForecastController : ControllerBase
     }
 
     /// <summary>
+    /// Patches all weather forecasts.
+    /// </summary>
+    [HttpPatch]
+    [Route("/")]
+    public Task<IEnumerable<WeatherForecast>> PatchAll(
+        JsonPatchDocument<WeatherForecast> patches,
+        CancellationToken cancellationToken
+    )
+    {
+        return _surrealDbClient.PatchAll(Table, patches, cancellationToken);
+    }
+
+    /// <summary>
     /// Patches an existing weather forecast.
     /// </summary>
     [HttpPatch]
     [Route("/{id}")]
     public Task<WeatherForecast> Patch(
         string id,
-        Dictionary<string, object> data,
+        JsonPatchDocument<WeatherForecast> patches,
         CancellationToken cancellationToken
     )
     {
         var thing = new Thing(Table, id);
-
-        return _surrealDbClient.Merge<WeatherForecast>(thing, data, cancellationToken);
+        return _surrealDbClient.Patch(thing, patches, cancellationToken);
     }
 
     /// <summary>

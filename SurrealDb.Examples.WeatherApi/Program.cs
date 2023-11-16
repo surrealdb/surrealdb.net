@@ -1,4 +1,4 @@
-using Microsoft.OpenApi.Models;
+﻿using Microsoft.OpenApi.Models;
 using SurrealDb.Net;
 using SurrealDb.Examples.WeatherApi.Models;
 using System.Reflection;

@@ -17,6 +17,7 @@
 	  <PackageReference Include="Semver" Version="2.3.0" />
 	  <PackageReference Include="Superpower" Version="3.0.0" />
 	  <PackageReference Include="System.Text.Json" Version="8.0.0" />
+	  <PackageReference Include="SystemTextJsonPatch" Version="3.0.1" />
 	  <PackageReference Include="Websocket.Client" Version="5.0.0" />
   </ItemGroup>
 

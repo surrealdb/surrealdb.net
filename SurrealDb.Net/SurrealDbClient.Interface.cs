@@ -3,6 +3,7 @@ using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
+using SystemTextJsonPatch;
 
 namespace SurrealDb.Net;
 
@@ -290,6 +291,36 @@ public interface ISurrealDbClient : IDisposable
         Dictionary<string, object> data,
         CancellationToken cancellationToken = default
     );
+
+    /// <summary>
+    /// Modifies the specified record in the database, using JSON Patch specification (https://jsonpatch.com/).
+    /// </summary>
+    /// <typeparam name="T">The type of the record updated.</typeparam>
+    /// <param name="thing">The record id.</param>
+    /// <param name="patches">A list of JSON Patch operations.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record updated.</returns>
+    Task<T> Patch<T>(
+        Thing thing,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken = default
+    )
+        where T : class;
+
+    /// <summary>
+    /// Modifies all records in the database, using JSON Patch specification (https://jsonpatch.com/).
+    /// </summary>
+    /// <typeparam name="T">The type of the record updated.</typeparam>
+    /// <param name="table">The name of the database table</param>
+    /// <param name="patches">A list of JSON Patch operations.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The list of updated records.</returns>
+    Task<IEnumerable<T>> PatchAll<T>(
+        string table,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken = default
+    )
+        where T : class;
 
     /// <summary>
     /// Executes custom SurrealQL queries.

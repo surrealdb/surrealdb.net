@@ -10,10 +10,12 @@ using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
+using System.Dynamic;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Web;
+using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.Internals;
 
@@ -296,6 +298,52 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(data);
+
+        using var response = await wrapper.Instance
+            .PatchAsync($"/key/{table}", body, cancellationToken)
+            .ConfigureAwait(false);
+
+        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
+            .ConfigureAwait(false);
+
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<T>();
+    }
+
+    public async Task<T> Patch<T>(
+        Thing thing,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        var expandoObject = ConvertJsonPatchDocumentToObject(patches);
+
+        using var wrapper = CreateHttpClientWrapper();
+        using var body = CreateBodyContent(expandoObject);
+
+        using var response = await wrapper.Instance
+            .PatchAsync($"/key/{thing.Table}/{thing.UnescapedId}", body, cancellationToken)
+            .ConfigureAwait(false);
+
+        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
+            .ConfigureAwait(false);
+
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<T>().First();
+    }
+
+    public async Task<IEnumerable<T>> PatchAll<T>(
+        string table,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        var expandoObject = ConvertJsonPatchDocumentToObject(patches);
+
+        using var wrapper = CreateHttpClientWrapper();
+        using var body = CreateBodyContent(expandoObject);
 
         using var response = await wrapper.Instance
             .PatchAsync($"/key/{table}", body, cancellationToken)
@@ -779,6 +827,21 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return authResponse is not null
             ? authResponse
             : throw new SurrealDbException("Cannot deserialize auth response");
+    }
+
+    private ExpandoObject ConvertJsonPatchDocumentToObject<T>(JsonPatchDocument<T> patches)
+        where T : class
+    {
+        var innerJsonPatchDocument = new JsonPatchDocument()
+        {
+            Options = GetJsonSerializerOptions()
+        };
+        innerJsonPatchDocument.Operations.AddRange(patches.Operations);
+
+        var expandoObject = new ExpandoObject();
+        innerJsonPatchDocument.ApplyTo(expandoObject);
+
+        return expandoObject;
     }
 
     private static SurrealDbOkResult EnsuresFirstResultOk(SurrealDbResponse dbResponse)

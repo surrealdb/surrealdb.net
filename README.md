@@ -159,7 +159,7 @@ public class WeatherForecastController : ControllerBase
 
 	[HttpGet]
 	[Route("/")]
-	public Task<List<WeatherForecast>> GetAll(CancellationToken cancellationToken)
+	public Task<IEnumerable<WeatherForecast>> GetAll(CancellationToken cancellationToken)
 	{
 		return _surrealDbClient.Select<WeatherForecast>(Table, cancellationToken);
 	}
@@ -198,14 +198,28 @@ public class WeatherForecastController : ControllerBase
 		return _surrealDbClient.Upsert(data, cancellationToken);
 	}
 
-	[HttpPatch]
-	[Route("/{id}")]
-	public Task<WeatherForecast> Patch(string id, Dictionary<string, object> data, CancellationToken cancellationToken)
-	{
-		var thing = new Thing(Table, id);
+    [HttpPatch]
+    [Route("/")]
+    public Task<IEnumerable<WeatherForecast>> PatchAll(
+        JsonPatchDocument<WeatherForecast> patches,
+        CancellationToken cancellationToken
+    )
+    {
+        return _surrealDbClient.PatchAll(Table, patches, cancellationToken);
+    }
 
-		return _surrealDbClient.Patch<WeatherForecast>(thing, data, cancellationToken);
-	}
+    [HttpPatch]
+    [Route("/{id}")]
+    public Task<WeatherForecast> Patch(
+        string id,
+        JsonPatchDocument<WeatherForecast> patches,
+        CancellationToken cancellationToken
+    )
+    {
+        var thing = new Thing(Table, id);
+
+        return _surrealDbClient.Patch(thing, patches, cancellationToken);
+    }
 
 	[HttpDelete]
 	[Route("/")]
