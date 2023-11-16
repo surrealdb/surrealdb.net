@@ -254,6 +254,44 @@ public interface ISurrealDbClient : IDisposable
     );
 
     /// <summary>
+    /// Modifies all records in the database.
+    /// </summary>
+    /// <typeparam name="TMerge">The type of the merge update.</typeparam>
+    /// <typeparam name="TOutput">The type of the record updated.</typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="data">The data to merge with the current record.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The list of updated records.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+        string table,
+        TMerge data,
+        CancellationToken cancellationToken = default
+    )
+        where TMerge : class;
+
+    /// <summary>
+    /// Modifies all records in the database.
+    /// </summary>
+    /// <typeparam name="T">The type of the record updated.</typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="data">A list of key-value pairs that contains properties to change.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The list of updated records.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<IEnumerable<T>> MergeAll<T>(
+        string table,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
     /// Executes custom SurrealQL queries.
     /// </summary>
     /// <param name="query">The SurrealQL query.</param>

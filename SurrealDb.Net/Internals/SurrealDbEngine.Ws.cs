@@ -421,6 +421,29 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.GetValue<T>()!;
     }
 
+    public async Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+        string table,
+        TMerge data,
+        CancellationToken cancellationToken
+    )
+        where TMerge : class
+    {
+        var dbResponse = await SendRequest("merge", new() { table, data }, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<List<TOutput>>()!; // TODO : .DeserializeEnumerable<T>
+    }
+
+    public async Task<IEnumerable<T>> MergeAll<T>(
+        string table,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken
+    )
+    {
+        var dbResponse = await SendRequest("merge", new() { table, data }, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<List<T>>()!; // TODO : .DeserializeEnumerable<T>
+    }
+
     public async Task<SurrealDbResponse> Query(
         string query,
         IReadOnlyDictionary<string, object> parameters,

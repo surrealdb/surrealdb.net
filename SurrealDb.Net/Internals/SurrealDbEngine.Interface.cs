@@ -43,6 +43,17 @@ internal interface ISurrealDbEngine : IDisposable
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     );
+    Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+        string table,
+        TMerge data,
+        CancellationToken cancellationToken
+    )
+        where TMerge : class;
+    Task<IEnumerable<T>> MergeAll<T>(
+        string table,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken
+    );
     Task<SurrealDbResponse> Query(
         string query,
         IReadOnlyDictionary<string, object> parameters,

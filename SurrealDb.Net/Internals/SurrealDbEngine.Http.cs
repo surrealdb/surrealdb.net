@@ -267,6 +267,45 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return okResult.DeserializeEnumerable<T>().First();
     }
 
+    public async Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+        string table,
+        TMerge data,
+        CancellationToken cancellationToken
+    )
+        where TMerge : class
+    {
+        using var wrapper = CreateHttpClientWrapper();
+        using var body = CreateBodyContent(data);
+
+        using var response = await wrapper.Instance
+            .PatchAsync($"/key/{table}", body, cancellationToken)
+            .ConfigureAwait(false);
+
+        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
+            .ConfigureAwait(false);
+
+        return ExtractFirstResultValue<List<TOutput>>(dbResponse)!; // TODO : .DeserializeEnumerable<T>
+    }
+
+    public async Task<IEnumerable<T>> MergeAll<T>(
+        string table,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken
+    )
+    {
+        using var wrapper = CreateHttpClientWrapper();
+        using var body = CreateBodyContent(data);
+
+        using var response = await wrapper.Instance
+            .PatchAsync($"/key/{table}", body, cancellationToken)
+            .ConfigureAwait(false);
+
+        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
+            .ConfigureAwait(false);
+
+        return ExtractFirstResultValue<List<T>>(dbResponse)!; // TODO : .DeserializeEnumerable<T>
+    }
+
     public async Task<SurrealDbResponse> Query(
         string query,
         IReadOnlyDictionary<string, object> parameters,

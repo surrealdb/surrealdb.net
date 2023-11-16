@@ -210,6 +210,25 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.Merge<T>(thing, data, cancellationToken);
     }
 
+    public Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+        string table,
+        TMerge data,
+        CancellationToken cancellationToken = default
+    )
+        where TMerge : class
+    {
+        return _engine.MergeAll<TMerge, TOutput>(table, data, cancellationToken);
+    }
+
+    public Task<IEnumerable<T>> MergeAll<T>(
+        string table,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.MergeAll<T>(table, data, cancellationToken);
+    }
+
     public Task<SurrealDbResponse> Query(
         string query,
         IReadOnlyDictionary<string, object>? parameters = null,

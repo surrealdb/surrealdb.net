@@ -2,25 +2,15 @@
 
 namespace SurrealDb.Net.Tests;
 
-public class PostMergeData
-{
-    public string Content { get; set; } = string.Empty;
-}
-
-public class PostMergeRecord : SurrealDbRecord
-{
-    public string Content { get; set; } = string.Empty;
-}
-
-public class MergeTests
+public class MergeAllTests
 {
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldMergeExistingPost(string url)
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldMergeAllRecords(string url)
     {
-        IEnumerable<Post>? list = null;
-        Post? result = null;
+        List<Post>? list = null;
+        IEnumerable<Post>? results = null;
 
         Func<Task> func = async () =>
         {
@@ -40,35 +30,39 @@ public class MergeTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
 
-            var merge = new PostMergeRecord
-            {
-                Id = new Thing("post", "first"),
-                Content = "[Edit] This is my first article"
-            };
-
-            result = await client.Merge<PostMergeRecord, Post>(merge);
+            var merge = new PostMergeData { Content = "[Edit] Oops" };
 
             list = await client.Select<Post>("post");
+
+            results = await client.MergeAll<PostMergeData, Post>("post", merge);
         };
 
         await func.Should().NotThrowAsync();
 
         list.Should().NotBeNull().And.HaveCount(2);
 
-        result.Should().NotBeNull();
-        result!.Title.Should().Be("First article");
-        result!.Content.Should().Be("[Edit] This is my first article");
-        result!.CreatedAt.Should().NotBeNull();
-        result!.Status.Should().Be("DRAFT");
+        var expected = list!.Select(
+            item =>
+                new Post
+                {
+                    Id = item.Id,
+                    Title = item.Title,
+                    Content = "[Edit] Oops",
+                    CreatedAt = item.CreatedAt,
+                    Status = item.Status,
+                }
+        );
+
+        results.Should().BeEquivalentTo(expected);
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldMergeUsingDictionary(string url)
+    [InlineData("http://localhost:8000")]
+    [InlineData("ws://localhost:8000/rpc")]
+    public async Task ShouldMergeAllRecordsUsingDictionary(string url)
     {
-        IEnumerable<Post>? list = null;
-        Post? result = null;
+        List<Post>? list = null;
+        IEnumerable<Post>? results = null;
 
         Func<Task> func = async () =>
         {
@@ -89,24 +83,29 @@ public class MergeTests
             await client.Query(query);
 
             var thing = new Thing("post", "first");
-            var data = new Dictionary<string, object>
-            {
-                { "content", "[Edit] This is my first article" }
-            };
-
-            result = await client.Merge<Post>(thing, data);
+            var data = new Dictionary<string, object> { { "content", "[Edit] Oops" } };
 
             list = await client.Select<Post>("post");
+
+            results = await client.MergeAll<Post>("post", data);
         };
 
         await func.Should().NotThrowAsync();
 
         list.Should().NotBeNull().And.HaveCount(2);
 
-        result.Should().NotBeNull();
-        result!.Title.Should().Be("First article");
-        result!.Content.Should().Be("[Edit] This is my first article");
-        result!.CreatedAt.Should().NotBeNull();
-        result!.Status.Should().Be("DRAFT");
+        var expected = list!.Select(
+            item =>
+                new Post
+                {
+                    Id = item.Id,
+                    Title = item.Title,
+                    Content = "[Edit] Oops",
+                    CreatedAt = item.CreatedAt,
+                    Status = item.Status,
+                }
+        );
+
+        results.Should().BeEquivalentTo(expected);
     }
 }
