@@ -158,14 +158,12 @@ public class WeatherForecastController : ControllerBase
 	}
 
 	[HttpGet]
-	[Route("/")]
 	public Task<IEnumerable<WeatherForecast>> GetAll(CancellationToken cancellationToken)
 	{
 		return _surrealDbClient.Select<WeatherForecast>(Table, cancellationToken);
 	}
 
-	[HttpGet]
-	[Route("/{id}")]
+	[HttpGet("{id}")]
 	public async Task<IActionResult> Get(string id, CancellationToken cancellationToken)
 	{
 		var weatherForecast = await _surrealDbClient.Select<WeatherForecast>(Table, id, cancellationToken);
@@ -177,7 +175,6 @@ public class WeatherForecastController : ControllerBase
 	}
 
 	[HttpPost]
-	[Route("/")]
 	public Task<WeatherForecast> Create(CreateWeatherForecast data, CancellationToken cancellationToken)
 	{
 		var weatherForecast = new WeatherForecast
@@ -192,14 +189,12 @@ public class WeatherForecastController : ControllerBase
 	}
 
 	[HttpPut]
-	[Route("/")]
 	public Task<WeatherForecast> Update(WeatherForecast data, CancellationToken cancellationToken)
 	{
 		return _surrealDbClient.Upsert(data, cancellationToken);
 	}
 
     [HttpPatch]
-    [Route("/")]
     public Task<IEnumerable<WeatherForecast>> PatchAll(
         JsonPatchDocument<WeatherForecast> patches,
         CancellationToken cancellationToken
@@ -208,8 +203,7 @@ public class WeatherForecastController : ControllerBase
         return _surrealDbClient.PatchAll(Table, patches, cancellationToken);
     }
 
-    [HttpPatch]
-    [Route("/{id}")]
+    [HttpPatch("{id}")]
     public Task<WeatherForecast> Patch(
         string id,
         JsonPatchDocument<WeatherForecast> patches,
@@ -222,14 +216,12 @@ public class WeatherForecastController : ControllerBase
     }
 
 	[HttpDelete]
-	[Route("/")]
 	public Task DeleteAll(CancellationToken cancellationToken)
 	{
 		return _surrealDbClient.Delete(Table, cancellationToken);
 	}
 
-	[HttpDelete]
-	[Route("/{id}")]
+	[HttpDelete("{id}")]
 	public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
 	{
 		bool success = await _surrealDbClient.Delete(Table, id, cancellationToken);

@@ -13,7 +13,7 @@ namespace SurrealDb.Examples.WeatherApi.Controllers;
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
 {
-    private const string Table = "weatherForecast";
+    internal const string Table = "weatherForecast";
 
     private readonly ISurrealDbClient _surrealDbClient;
 
@@ -29,7 +29,6 @@ public class WeatherForecastController : ControllerBase
     /// Get all weather forecasts.
     /// </summary>
     [HttpGet]
-    [Route("/")]
     public Task<IEnumerable<WeatherForecast>> GetAll(CancellationToken cancellationToken)
     {
         return _surrealDbClient.Select<WeatherForecast>(Table, cancellationToken);
@@ -38,8 +37,7 @@ public class WeatherForecastController : ControllerBase
     /// <summary>
     /// Get a weather forecast by id.
     /// </summary>
-    [HttpGet]
-    [Route("/{id}")]
+    [HttpGet("{id}")]
     public async Task<IActionResult> Get(string id, CancellationToken cancellationToken)
     {
         var weatherForecast = await _surrealDbClient.Select<WeatherForecast>(
@@ -58,7 +56,6 @@ public class WeatherForecastController : ControllerBase
     /// Creates a new weather forecast.
     /// </summary>
     [HttpPost]
-    [Route("/")]
     public Task<WeatherForecast> Create(
         CreateWeatherForecast data,
         CancellationToken cancellationToken
@@ -79,7 +76,6 @@ public class WeatherForecastController : ControllerBase
     /// Updates an existing weather forecast.
     /// </summary>
     [HttpPut]
-    [Route("/")]
     public Task<WeatherForecast> Update(WeatherForecast data, CancellationToken cancellationToken)
     {
         return _surrealDbClient.Upsert(data, cancellationToken);
@@ -89,7 +85,6 @@ public class WeatherForecastController : ControllerBase
     /// Patches all weather forecasts.
     /// </summary>
     [HttpPatch]
-    [Route("/")]
     public Task<IEnumerable<WeatherForecast>> PatchAll(
         JsonPatchDocument<WeatherForecast> patches,
         CancellationToken cancellationToken
@@ -101,8 +96,7 @@ public class WeatherForecastController : ControllerBase
     /// <summary>
     /// Patches an existing weather forecast.
     /// </summary>
-    [HttpPatch]
-    [Route("/{id}")]
+    [HttpPatch("{id}")]
     public Task<WeatherForecast> Patch(
         string id,
         JsonPatchDocument<WeatherForecast> patches,
@@ -117,7 +111,6 @@ public class WeatherForecastController : ControllerBase
     /// Deletes all weather forecasts.
     /// </summary>
     [HttpDelete]
-    [Route("/")]
     public Task DeleteAll(CancellationToken cancellationToken)
     {
         return _surrealDbClient.Delete(Table, cancellationToken);
@@ -126,8 +119,7 @@ public class WeatherForecastController : ControllerBase
     /// <summary>
     /// Deletes a weather forecast by id.
     /// </summary>
-    [HttpDelete]
-    [Route("/{id}")]
+    [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
     {
         bool success = await _surrealDbClient.Delete(Table, id, cancellationToken);

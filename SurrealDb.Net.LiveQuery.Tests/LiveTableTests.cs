@@ -167,10 +167,14 @@ public class LiveTableTests : BaseLiveQueryTests
         firstResult.Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
 
         var secondResult = allResults[1];
-        secondResult.Should().BeOfType<SurrealDbLiveQueryCreateResponse<JsonPatchDocument<TestRecord>>>();
+        secondResult
+            .Should()
+            .BeOfType<SurrealDbLiveQueryCreateResponse<JsonPatchDocument<TestRecord>>>();
 
         var thirdResult = allResults[2];
-        thirdResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<JsonPatchDocument<TestRecord>>>();
+        thirdResult
+            .Should()
+            .BeOfType<SurrealDbLiveQueryUpdateResponse<JsonPatchDocument<TestRecord>>>();
 
         var fourthResult = allResults[3];
         fourthResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
