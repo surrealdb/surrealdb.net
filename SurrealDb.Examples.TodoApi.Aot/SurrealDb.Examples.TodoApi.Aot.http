@@ -1,0 +1,11 @@
+@SurrealDb.Examples.TodoApi.Aot_HostAddress = http://localhost:5293
+
+GET {{SurrealDb.Examples.TodoApi.Aot_HostAddress}}/todos/
+Accept: application/json
+
+###
+
+GET {{SurrealDb.Examples.TodoApi.Aot_HostAddress}}/todos/1
+Accept: application/json
+
+###

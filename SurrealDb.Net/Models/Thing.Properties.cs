@@ -42,12 +42,9 @@ public partial class Thing
     }
     internal string UnescapedId => UnescapedIdSpan.ToString();
 
-    [JsonIgnore]
-    public ReadOnlySpan<char> TableSpan => _raw.Span[.._separatorIndex];
+    internal ReadOnlySpan<char> TableSpan => _raw.Span[.._separatorIndex];
+    internal ReadOnlySpan<char> IdSpan => _raw.Span[_startIdIndex..];
 
-    [JsonIgnore]
-    public ReadOnlySpan<char> IdSpan => _raw.Span[_startIdIndex..];
-
-    public string Table => TableSpan.ToString();
-    public string Id => IdSpan.ToString();
+    public string Table => _raw.Span[.._separatorIndex].ToString();
+    public string Id => _raw.Span[_startIdIndex..].ToString();
 }

@@ -26,4 +26,11 @@ public sealed class SurrealDbErrorResult : ISurrealDbErrorResult
     public string Details { get; set; } = string.Empty;
 
     public bool IsOk => false;
+
+    internal SurrealDbErrorResult(TimeSpan time, string status, string details)
+    {
+        Time = time;
+        Status = status;
+        Details = details;
+    }
 }

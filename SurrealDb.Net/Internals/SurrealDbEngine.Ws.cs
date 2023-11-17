@@ -4,6 +4,7 @@ using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Json;
+using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Internals.Ws;
 using SurrealDb.Net.Models;
@@ -15,10 +16,32 @@ using System.Net.WebSockets;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using SystemTextJsonPatch;
 using Websocket.Client;
 
 namespace SurrealDb.Net.Internals;
+
+#if NET8_0_OR_GREATER
+[JsonSourceGenerationOptions(
+    AllowTrailingCommas = true,
+    NumberHandling = JsonNumberHandling.AllowReadingFromString
+        | JsonNumberHandling.AllowNamedFloatingPointLiterals,
+    PropertyNameCaseInsensitive = true,
+    PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower,
+    ReadCommentHandling = JsonCommentHandling.Skip
+)]
+[JsonSerializable(typeof(ISurrealDbWsResponse))]
+[JsonSerializable(typeof(SurrealDbWsRequest))]
+[JsonSerializable(typeof(IReadOnlyDictionary<string, object>))]
+[JsonSerializable(typeof(List<ISurrealDbResult>))]
+[JsonSerializable(typeof(RootAuth))]
+[JsonSerializable(typeof(NamespaceAuth))]
+[JsonSerializable(typeof(DatabaseAuth))]
+[JsonSerializable(typeof(ScopeAuth))]
+internal partial class SurrealDbWsJsonSerializerContext : JsonSerializerContext;
+#endif
 
 internal class SurrealDbWsEngine : ISurrealDbEngine
 {
@@ -30,8 +53,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     private static readonly RecyclableMemoryStreamManager _memoryStreamManager = new();
 
     private readonly string _id;
-    private readonly Uri _uri;
     private readonly Action<JsonSerializerOptions>? _configureJsonSerializerOptions;
+    private readonly Func<JsonSerializerContext[]>? _prependJsonSerializerContexts;
+    private readonly Func<JsonSerializerContext[]>? _appendJsonSerializerContexts;
     private readonly SurrealDbWsEngineConfig _config = new();
     private readonly WebsocketClient _wsClient;
     private readonly IDisposable _receiverSubscription;
@@ -41,7 +65,14 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     > _liveQueryChannelSubscriptionsPerQuery = new();
     private readonly Pinger _pinger;
 
-    public SurrealDbWsEngine(Uri uri, Action<JsonSerializerOptions>? configureJsonSerializerOptions)
+    private bool _isInitialized;
+
+    public SurrealDbWsEngine(
+        Uri uri,
+        Action<JsonSerializerOptions>? configureJsonSerializerOptions,
+        Func<JsonSerializerContext[]>? prependJsonSerializerContexts,
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts
+    )
     {
         string id;
 
@@ -52,9 +83,10 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         } while (!_wsEngines.TryAdd(id, this));
 
         _id = id;
-        _uri = uri;
         _configureJsonSerializerOptions = configureJsonSerializerOptions;
-        _wsClient = new WebsocketClient(_uri) { IsTextMessageConversionEnabled = false };
+        _prependJsonSerializerContexts = prependJsonSerializerContexts;
+        _appendJsonSerializerContexts = appendJsonSerializerContexts;
+        _wsClient = new WebsocketClient(uri) { IsTextMessageConversionEnabled = false };
         _pinger = new(Ping);
 
         _receiverSubscription = _wsClient.MessageReceived
@@ -69,10 +101,33 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                             switch (message.MessageType)
                             {
                                 case WebSocketMessageType.Text:
+#if NET8_0_OR_GREATER
+                                    if (JsonSerializer.IsReflectionEnabledByDefault)
+                                    {
+#pragma warning disable IL2026, IL3050
+                                        response = JsonSerializer.Deserialize<ISurrealDbWsResponse>(
+                                            message.Text!,
+                                            GetJsonSerializerOptions()
+                                        );
+#pragma warning restore IL2026, IL3050
+                                    }
+                                    else
+                                    {
+                                        response = JsonSerializer.Deserialize(
+                                            message.Text!,
+                                            (
+                                                GetJsonSerializerOptions()
+                                                    .GetTypeInfo(typeof(ISurrealDbWsResponse))
+                                                as JsonTypeInfo<ISurrealDbWsResponse>
+                                            )!
+                                        );
+                                    }
+#else
                                     response = JsonSerializer.Deserialize<ISurrealDbWsResponse>(
                                         message.Text!,
                                         GetJsonSerializerOptions()
                                     );
+#endif
                                     break;
                                 case WebSocketMessageType.Binary:
                                 {
@@ -80,6 +135,34 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                                         message.Binary
                                     );
 
+#if NET8_0_OR_GREATER
+                                    if (JsonSerializer.IsReflectionEnabledByDefault)
+                                    {
+#pragma warning disable IL2026, IL3050
+                                        response = await JsonSerializer
+                                            .DeserializeAsync<ISurrealDbWsResponse>(
+                                                stream,
+                                                GetJsonSerializerOptions(),
+                                                cancellationToken
+                                            )
+                                            .ConfigureAwait(false);
+#pragma warning restore IL2026, IL3050
+                                    }
+                                    else
+                                    {
+                                        response = await JsonSerializer
+                                            .DeserializeAsync(
+                                                stream,
+                                                (
+                                                    GetJsonSerializerOptions()
+                                                        .GetTypeInfo(typeof(ISurrealDbWsResponse))
+                                                    as JsonTypeInfo<ISurrealDbWsResponse>
+                                                )!,
+                                                cancellationToken
+                                            )
+                                            .ConfigureAwait(false);
+                                    }
+#else
                                     response = await JsonSerializer
                                         .DeserializeAsync<ISurrealDbWsResponse>(
                                             stream,
@@ -87,6 +170,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                                             cancellationToken
                                         )
                                         .ConfigureAwait(false);
+#endif
                                     break;
                                 }
                             }
@@ -150,7 +234,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task Authenticate(Jwt jwt, CancellationToken cancellationToken)
     {
-        await SendRequestAsync("authenticate", new() { jwt.Token }, cancellationToken)
+        await SendRequestAsync("authenticate", new() { jwt.Token }, false, cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -179,6 +263,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         if (_wsClient.IsStarted)
             throw new SurrealDbException("Client already started");
 
+        _isInitialized = false;
+
         await _wsClient.StartOrFail().ConfigureAwait(false);
 
         if (_config.Ns is not null)
@@ -202,6 +288,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         }
 
         _pinger.Start();
+        _isInitialized = true;
     }
 
     public async Task<T> Create<T>(T data, CancellationToken cancellationToken)
@@ -213,6 +300,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         var dbResponse = await SendRequestAsync(
                 "create",
                 new() { data.Id.ToString(), data },
+                true,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -221,7 +309,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken)
     {
-        var dbResponse = await SendRequestAsync("create", new() { table, data }, cancellationToken)
+        var dbResponse = await SendRequestAsync(
+                "create",
+                new() { table, data },
+                true,
+                cancellationToken
+            )
             .ConfigureAwait(false);
 
         return dbResponse.DeserializeEnumerable<T>().First();
@@ -229,7 +322,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task Delete(string table, CancellationToken cancellationToken)
     {
-        await SendRequestAsync("delete", new() { table }, cancellationToken).ConfigureAwait(false);
+        await SendRequestAsync("delete", new() { table }, true, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public async Task<bool> Delete(Thing thing, CancellationToken cancellationToken)
@@ -237,6 +331,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         var dbResponse = await SendRequestAsync(
                 "delete",
                 new() { thing.ToString() },
+                true,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -322,14 +417,14 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task<T> Info<T>(CancellationToken cancellationToken)
     {
-        var dbResponse = await SendRequestAsync("info", null, cancellationToken)
+        var dbResponse = await SendRequestAsync("info", null, true, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<T>()!;
     }
 
     public async Task Invalidate(CancellationToken cancellationToken)
     {
-        await SendRequestAsync("invalidate", null, cancellationToken).ConfigureAwait(false);
+        await SendRequestAsync("invalidate", null, false, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task Kill(
@@ -353,7 +448,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             await Task.WhenAll(tasks).ConfigureAwait(false);
         }
 
-        await SendRequestAsync("kill", new() { queryUuid.ToString() }, cancellationToken)
+        await SendRequestAsync("kill", new() { queryUuid.ToString() }, true, cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -392,7 +487,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        var dbResponse = await SendRequestAsync("live", new() { table, diff }, cancellationToken)
+        var dbResponse = await SendRequestAsync(
+                "live",
+                new() { table, diff },
+                true,
+                cancellationToken
+            )
             .ConfigureAwait(false);
         var queryUuid = dbResponse.GetValue<Guid>()!;
 
@@ -411,6 +511,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         var dbResponse = await SendRequestAsync(
                 "merge",
                 new() { data.Id.ToWsString(), data },
+                true,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -426,6 +527,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         var dbResponse = await SendRequestAsync(
                 "merge",
                 new() { thing.ToWsString(), data },
+                true,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -439,7 +541,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
         where TMerge : class
     {
-        var dbResponse = await SendRequestAsync("merge", new() { table, data }, cancellationToken)
+        var dbResponse = await SendRequestAsync(
+                "merge",
+                new() { table, data },
+                true,
+                cancellationToken
+            )
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<TOutput>();
     }
@@ -450,7 +557,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        var dbResponse = await SendRequestAsync("merge", new() { table, data }, cancellationToken)
+        var dbResponse = await SendRequestAsync(
+                "merge",
+                new() { table, data },
+                true,
+                cancellationToken
+            )
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
     }
@@ -465,6 +577,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         var dbResponse = await SendRequestAsync(
                 "patch",
                 new() { thing.ToWsString(), patches },
+                true,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -481,6 +594,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         var dbResponse = await SendRequestAsync(
                 "patch",
                 new() { table, patches },
+                true,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -496,6 +610,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         var dbResponse = await SendRequestAsync(
                 "query",
                 new() { query, parameters },
+                true,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -506,7 +621,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken)
     {
-        var dbResponse = await SendRequestAsync("select", new() { table }, cancellationToken)
+        var dbResponse = await SendRequestAsync("select", new() { table }, true, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>()!;
     }
@@ -516,6 +631,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         var dbResponse = await SendRequestAsync(
                 "select",
                 new() { thing.ToWsString() },
+                true,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -533,19 +649,24 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             throw new ArgumentException("Variable name is not valid.", nameof(key));
         }
 
-        await SendRequestAsync("let", new() { key, value }, cancellationToken)
+        await SendRequestAsync("let", new() { key, value }, false, cancellationToken)
             .ConfigureAwait(false);
     }
 
     public async Task SignIn(RootAuth rootAuth, CancellationToken cancellationToken)
     {
-        await SendRequestAsync("signin", new() { rootAuth }, cancellationToken)
+        await SendRequestAsync("signin", new() { rootAuth }, false, cancellationToken)
             .ConfigureAwait(false);
     }
 
     public async Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken)
     {
-        var dbResponse = await SendRequestAsync("signin", new() { nsAuth }, cancellationToken)
+        var dbResponse = await SendRequestAsync(
+                "signin",
+                new() { nsAuth },
+                false,
+                cancellationToken
+            )
             .ConfigureAwait(false);
         var token = dbResponse.GetValue<string>()!;
 
@@ -554,7 +675,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task<Jwt> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken)
     {
-        var dbResponse = await SendRequestAsync("signin", new() { dbAuth }, cancellationToken)
+        var dbResponse = await SendRequestAsync(
+                "signin",
+                new() { dbAuth },
+                false,
+                cancellationToken
+            )
             .ConfigureAwait(false);
         var token = dbResponse.GetValue<string>()!;
 
@@ -564,7 +690,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken)
         where T : ScopeAuth
     {
-        var dbResponse = await SendRequestAsync("signin", new() { scopeAuth }, cancellationToken)
+        var dbResponse = await SendRequestAsync(
+                "signin",
+                new() { scopeAuth },
+                false,
+                cancellationToken
+            )
             .ConfigureAwait(false);
         var token = dbResponse.GetValue<string>()!;
 
@@ -574,7 +705,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken)
         where T : ScopeAuth
     {
-        var dbResponse = await SendRequestAsync("signup", new() { scopeAuth }, cancellationToken)
+        var dbResponse = await SendRequestAsync(
+                "signup",
+                new() { scopeAuth },
+                false,
+                cancellationToken
+            )
             .ConfigureAwait(false);
         var token = dbResponse.GetValue<string>()!;
 
@@ -610,7 +746,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             throw new ArgumentException("Variable name is not valid.", nameof(key));
         }
 
-        await SendRequestAsync("unset", new() { key }, cancellationToken).ConfigureAwait(false);
+        await SendRequestAsync("unset", new() { key }, false, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public async Task<IEnumerable<T>> UpdateAll<T>(
@@ -620,7 +757,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
         where T : class
     {
-        var dbResponse = await SendRequestAsync("update", new() { table, data }, cancellationToken)
+        var dbResponse = await SendRequestAsync(
+                "update",
+                new() { table, data },
+                true,
+                cancellationToken
+            )
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
     }
@@ -634,6 +776,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         var dbResponse = await SendRequestAsync(
                 "update",
                 new() { data.Id.ToWsString(), data },
+                true,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -642,48 +785,77 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task Use(string ns, string db, CancellationToken cancellationToken)
     {
-        await SendRequestAsync("use", new() { ns, db }, cancellationToken).ConfigureAwait(false);
+        await SendRequestAsync("use", new() { ns, db }, false, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public async Task<string> Version(CancellationToken cancellationToken)
     {
-        var dbResponse = await SendRequestAsync("version", null, cancellationToken)
+        var dbResponse = await SendRequestAsync("version", null, false, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<string>()!;
     }
 
+    private CurrentJsonSerializerOptionsForAot? _currentJsonSerializerOptionsForAot;
+
     private JsonSerializerOptions GetJsonSerializerOptions()
     {
-        if (_configureJsonSerializerOptions is not null)
-        {
-            var jsonSerializerOptions = SurrealDbSerializerOptions.CreateJsonSerializerOptions();
-            _configureJsonSerializerOptions(jsonSerializerOptions);
+        var jsonSerializerOptions = SurrealDbSerializerOptions.GetJsonSerializerOptions(
+#if NET8_0_OR_GREATER
+            SurrealDbWsJsonSerializerContext.Default,
+#endif
+            _configureJsonSerializerOptions,
+            _prependJsonSerializerContexts,
+            _appendJsonSerializerContexts,
+            _currentJsonSerializerOptionsForAot,
+            out var updatedJsonSerializerOptionsForAot
+        );
 
-            return jsonSerializerOptions;
+        if (updatedJsonSerializerOptionsForAot is not null)
+        {
+            _currentJsonSerializerOptionsForAot = updatedJsonSerializerOptionsForAot;
         }
 
-        return SurrealDbSerializerOptions.Default;
+        return jsonSerializerOptions;
     }
 
     private async Task Ping(CancellationToken cancellationToken)
     {
         if (_wsClient.IsStarted)
         {
-            await SendRequestAsync("ping", null, cancellationToken).ConfigureAwait(false);
+            await SendRequestAsync("ping", null, false, cancellationToken).ConfigureAwait(false);
         }
     }
+
+    private readonly SemaphoreSlim _semaphoreConnect = new(1, 1);
 
     private async Task<SurrealDbWsOkResponse> SendRequestAsync(
         string method,
         List<object?>? parameters,
+        bool requireInitialized,
         CancellationToken cancellationToken
     )
     {
-        if (!_wsClient.IsStarted)
+        // 💡 Avoid multiple connections in a multi-threading context
+        // And prevent usage before initialized
+        if (!_wsClient.IsStarted || (requireInitialized && !_isInitialized))
         {
-            await Connect(cancellationToken).ConfigureAwait(false);
-            cancellationToken.ThrowIfCancellationRequested();
+            await _semaphoreConnect.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+            try
+            {
+                if (!_wsClient.IsStarted)
+                {
+                    await Connect(cancellationToken).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                _semaphoreConnect.Release();
+            }
         }
+
+        cancellationToken.ThrowIfCancellationRequested();
 
         var taskCompletionSource = new SurrealWsTaskCompletionSource(_id);
 
@@ -706,9 +878,31 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         using var stream = _memoryStreamManager.GetStream();
 
+#if NET8_0_OR_GREATER
+        if (JsonSerializer.IsReflectionEnabledByDefault)
+        {
+#pragma warning disable IL2026, IL3050
+            await JsonSerializer
+                .SerializeAsync(stream, request, GetJsonSerializerOptions(), cancellationToken)
+                .ConfigureAwait(false);
+#pragma warning restore IL2026, IL3050
+        }
+        else
+        {
+            await JsonSerializer
+                .SerializeAsync(
+                    stream,
+                    request,
+                    GetJsonSerializerOptions().GetTypeInfo(typeof(SurrealDbWsRequest)),
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+        }
+#else
         await JsonSerializer
             .SerializeAsync(stream, request, GetJsonSerializerOptions(), cancellationToken)
             .ConfigureAwait(false);
+#endif
 
         stream.Seek(0, SeekOrigin.Begin);
         using var reader = new StreamReader(stream);

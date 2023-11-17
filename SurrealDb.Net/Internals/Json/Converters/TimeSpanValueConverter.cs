@@ -13,7 +13,7 @@ internal class TimeSpanValueConverter : JsonConverter<TimeSpan>
         JsonSerializerOptions options
     )
     {
-        var value = reader.TokenType switch
+        return reader.TokenType switch
         {
             JsonTokenType.None or JsonTokenType.Null => default,
             JsonTokenType.String
@@ -22,16 +22,14 @@ internal class TimeSpanValueConverter : JsonConverter<TimeSpan>
             JsonTokenType.Number => GetValueFromNumber(reader.GetInt64()),
             _ => throw new JsonException($"Cannot deserialize Duration to {nameof(TimeSpan)}")
         };
-
-        return value;
     }
 
-    private static TimeSpan GetValueFromNumber(long seconds)
+    internal static TimeSpan GetValueFromNumber(long seconds)
     {
         return TimeSpan.FromSeconds(seconds);
     }
 
-    private static TimeSpan GetValueFromString(string? value)
+    internal static TimeSpan GetValueFromString(string? value)
     {
         if (value is null)
             return default;

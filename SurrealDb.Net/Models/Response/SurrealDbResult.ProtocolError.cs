@@ -33,4 +33,17 @@ public sealed class SurrealDbProtocolErrorResult : ISurrealDbErrorResult
     public string Information { get; set; } = string.Empty;
 
     public bool IsOk => false;
+
+    internal SurrealDbProtocolErrorResult(
+        HttpStatusCode code,
+        string details,
+        string description,
+        string information
+    )
+    {
+        Code = code;
+        Details = details;
+        Description = description;
+        Information = information;
+    }
 }

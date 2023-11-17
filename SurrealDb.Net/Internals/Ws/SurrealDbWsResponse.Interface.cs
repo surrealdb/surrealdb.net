@@ -4,7 +4,7 @@ internal interface ISurrealDbWsResponse { }
 
 internal interface ISurrealDbWsStandardResponse : ISurrealDbWsResponse
 {
-    public string Id { get; set; }
+    public string Id { get; }
 }
 
 internal interface ISurrealDbWsLiveResponse : ISurrealDbWsResponse { }

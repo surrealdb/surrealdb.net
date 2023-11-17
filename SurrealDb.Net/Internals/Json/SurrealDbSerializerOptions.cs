@@ -6,6 +6,7 @@ using SurrealDb.Net.Internals.Json.Policies;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SurrealDb.Net.Internals.Models;
 
 namespace SurrealDb.Net.Internals.Json;
 
@@ -15,7 +16,38 @@ internal static class SurrealDbSerializerOptions
 
     public static JsonSerializerOptions Default => _lazy.Value;
 
-    public static JsonSerializerOptions CreateJsonSerializerOptions()
+    private static JsonSerializerOptions CreateJsonSerializerOptions()
+    {
+        var options = new JsonSerializerOptions
+        {
+            AllowTrailingCommas = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            NumberHandling =
+                JsonNumberHandling.AllowReadingFromString
+                | JsonNumberHandling.AllowNamedFloatingPointLiterals,
+            PropertyNameCaseInsensitive = true,
+#if NET8_0_OR_GREATER
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+#else
+            PropertyNamingPolicy = SnakeCaseNamingPolicy.Instance,
+#endif
+            ReadCommentHandling = JsonCommentHandling.Skip,
+        };
+
+        AddAllJsonConverters(options);
+
+        return options;
+    }
+
+    private static void AddAllJsonConverters(JsonSerializerOptions options)
+    {
+        foreach (var converter in GetAllJsonConverters())
+        {
+            options.Converters.Add(converter);
+        }
+    }
+
+    private static IEnumerable<JsonConverter> GetAllJsonConverters()
     {
         var defaultConverters = new List<JsonConverter>
         {
@@ -60,33 +92,93 @@ internal static class SurrealDbSerializerOptions
             new SurrealDbWsResponseConverter(),
         };
 
-        var allConverters = defaultConverters
+        return defaultConverters
             .Concat(vectorsConverters)
             .Concat(spatialConverters)
-            .Concat(dbResponseConverters)
-            .ToList();
+            .Concat(dbResponseConverters);
+    }
 
-        var options = new JsonSerializerOptions
-        {
-            AllowTrailingCommas = true,
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-            NumberHandling =
-                JsonNumberHandling.AllowReadingFromString
-                | JsonNumberHandling.AllowNamedFloatingPointLiterals,
-            PropertyNameCaseInsensitive = true,
+    public static JsonSerializerOptions GetJsonSerializerOptions(
 #if NET8_0_OR_GREATER
-            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-#else
-            PropertyNamingPolicy = SnakeCaseNamingPolicy.Instance,
+        JsonSerializerContext mainContext,
 #endif
-            ReadCommentHandling = JsonCommentHandling.Skip,
-        };
+        Action<JsonSerializerOptions>? configureJsonSerializerOptions,
+        Func<JsonSerializerContext[]>? prependJsonSerializerContexts,
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts,
+        CurrentJsonSerializerOptionsForAot? currentJsonSerializerOptionsForAot,
+        out CurrentJsonSerializerOptionsForAot? updatedJsonSerializerOptionsForAot
+    )
+    {
+        updatedJsonSerializerOptionsForAot = null;
 
-        foreach (var converter in allConverters)
+#if NET8_0_OR_GREATER
+        if (prependJsonSerializerContexts is not null || appendJsonSerializerContexts is not null)
         {
-            options.Converters.Add(converter);
-        }
+            JsonSerializerOptions jsonSerializerOptions;
 
-        return options;
+            var jsonSerializerContextsToPrepend = prependJsonSerializerContexts?.Invoke();
+            var jsonSerializerContextsToAppend = appendJsonSerializerContexts?.Invoke();
+
+            if (configureJsonSerializerOptions is not null)
+            {
+                jsonSerializerOptions = CreateJsonSerializerOptions();
+                AddAllJsonConverters(jsonSerializerOptions);
+
+                configureJsonSerializerOptions(jsonSerializerOptions);
+            }
+            else
+            {
+                if (
+                    currentJsonSerializerOptionsForAot is not null
+                    && currentJsonSerializerOptionsForAot.Equals(
+                        jsonSerializerContextsToPrepend,
+                        jsonSerializerContextsToAppend
+                    )
+                )
+                {
+                    return currentJsonSerializerOptionsForAot.Options;
+                }
+
+                jsonSerializerOptions = CreateJsonSerializerOptions();
+                AddAllJsonConverters(jsonSerializerOptions);
+            }
+
+            if (jsonSerializerContextsToPrepend is not null)
+            {
+                foreach (var jsonSerializerContext in jsonSerializerContextsToPrepend)
+                {
+                    jsonSerializerOptions.TypeInfoResolverChain.Add(jsonSerializerContext);
+                }
+            }
+
+            jsonSerializerOptions.TypeInfoResolverChain.Add(mainContext);
+
+            if (jsonSerializerContextsToAppend is not null)
+            {
+                foreach (var jsonSerializerContext in jsonSerializerContextsToAppend)
+                {
+                    jsonSerializerOptions.TypeInfoResolverChain.Add(jsonSerializerContext);
+                }
+            }
+
+            updatedJsonSerializerOptionsForAot = new CurrentJsonSerializerOptionsForAot(
+                jsonSerializerContextsToPrepend,
+                jsonSerializerContextsToAppend,
+                jsonSerializerOptions
+            );
+
+            return jsonSerializerOptions;
+        }
+#else
+        if (configureJsonSerializerOptions is not null)
+        {
+            var jsonSerializerOptions = CreateJsonSerializerOptions();
+            configureJsonSerializerOptions(jsonSerializerOptions);
+
+            return jsonSerializerOptions;
+        }
+#endif
+
+        return Default;
     }
 }

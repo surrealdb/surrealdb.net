@@ -37,6 +37,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.Net.LocalBenchmar
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Examples.Blazor.Server", "SurrealDb.Examples.Blazor.Server\SurrealDb.Examples.Blazor.Server.csproj", "{8F9561AA-670D-47D4-BB60-EDD893D93950}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aot", "Aot", "{CF3D830A-ECA0-4E5E-94BF-921648C59A9D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Examples.TodoApi.Aot", "SurrealDb.Examples.TodoApi.Aot\SurrealDb.Examples.TodoApi.Aot.csproj", "{D922FBB6-5FB7-4A82-8657-28D93E665CFA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +87,10 @@ Global
 		{8F9561AA-670D-47D4-BB60-EDD893D93950}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8F9561AA-670D-47D4-BB60-EDD893D93950}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8F9561AA-670D-47D4-BB60-EDD893D93950}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D922FBB6-5FB7-4A82-8657-28D93E665CFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D922FBB6-5FB7-4A82-8657-28D93E665CFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D922FBB6-5FB7-4A82-8657-28D93E665CFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D922FBB6-5FB7-4A82-8657-28D93E665CFA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -98,6 +106,7 @@ Global
 		{A91F00A2-2843-4036-BAFE-169954B57593} = {C96942BD-CC4A-48C1-BC4D-54FB6EC5C168}
 		{493922BA-D744-432A-A4E0-35C4D8DB1D16} = {2AA621E5-D78A-4710-9C77-48B305A67928}
 		{8F9561AA-670D-47D4-BB60-EDD893D93950} = {A83E82FA-2AD7-45FA-A949-9EFA5865D7AE}
+		{D922FBB6-5FB7-4A82-8657-28D93E665CFA} = {CF3D830A-ECA0-4E5E-94BF-921648C59A9D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {70C100EF-E131-45C0-9515-02FC4823BA20}

@@ -22,17 +22,26 @@ public class QueryBench : BaseBenchmark
             switch (index)
             {
                 case 0:
-                    _surrealdbHttpClient = new SurrealDbClient(HttpUrl);
+                    _surrealdbHttpClient = new SurrealDbClient(
+                        HttpUrl,
+                        appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
+                    );
                     InitializeSurrealDbClient(_surrealdbHttpClient, dbInfo);
                     await _surrealdbHttpClient.Connect();
                     break;
                 case 1:
-                    _surrealdbHttpClientWithHttpClientFactory = clientGenerator.Create(HttpUrl);
+                    _surrealdbHttpClientWithHttpClientFactory = clientGenerator.Create(
+                        HttpUrl,
+                        GetFuncJsonSerializerContexts()
+                    );
                     InitializeSurrealDbClient(_surrealdbHttpClientWithHttpClientFactory, dbInfo);
                     await _surrealdbHttpClientWithHttpClientFactory.Connect();
                     break;
                 case 2:
-                    _surrealdbWsTextClient = new SurrealDbClient(WsUrl);
+                    _surrealdbWsTextClient = new SurrealDbClient(
+                        WsUrl,
+                        appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
+                    );
                     InitializeSurrealDbClient(_surrealdbWsTextClient, dbInfo);
                     await _surrealdbWsTextClient.Connect();
                     break;
@@ -94,6 +103,8 @@ CANCEL TRANSACTION;";
     private static async Task<List<Post>> Run(ISurrealDbClient surrealDbClient)
     {
         var response = await surrealDbClient.Query(Query);
-        return response.GetValue<List<Post>>(0)!;
+        var result = response.FirstOk;
+
+        return result!.GetValues<Post>().ToList();
     }
 }

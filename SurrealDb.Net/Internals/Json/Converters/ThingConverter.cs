@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace SurrealDb.Net.Internals.Json.Converters;
 
-internal class ThingConverter : JsonConverter<Thing>
+public sealed class ThingConverter : JsonConverter<Thing>
 {
     public override Thing? Read(
         ref Utf8JsonReader reader,

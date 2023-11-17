@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Internals.Json;
+﻿using System.Net;
+using SurrealDb.Net.Internals.Json;
 using SurrealDb.Net.Models.Response;
 using System.Text.Json;
 
@@ -11,15 +12,18 @@ public class SurrealDbResultTests
         {
             {
                 new SurrealDbOkResult(
-                    TimeSpan.FromSeconds(0),
+                    TimeSpan.Zero,
                     "OK",
                     new JsonElement(),
                     SurrealDbSerializerOptions.Default
                 ),
                 true
             },
-            { new SurrealDbErrorResult(), false },
-            { new SurrealDbProtocolErrorResult(), false },
+            { new SurrealDbErrorResult(TimeSpan.Zero, "KO", "Something went wrong..."), false },
+            {
+                new SurrealDbProtocolErrorResult(HttpStatusCode.UnprocessableContent, "", "", ""),
+                false
+            },
             { new SurrealDbUnknownResult(), false },
         };
 

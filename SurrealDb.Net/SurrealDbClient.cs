@@ -6,6 +6,7 @@ using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using SystemTextJsonPatch;
 
 namespace SurrealDb.Net;
@@ -16,7 +17,6 @@ namespace SurrealDb.Net;
 /// </summary>
 public class SurrealDbClient : ISurrealDbClient
 {
-    private readonly IHttpClientFactory? _httpClientFactory;
     private readonly ISurrealDbEngine _engine;
 
     public Uri Uri { get; }
@@ -27,16 +27,28 @@ public class SurrealDbClient : ISurrealDbClient
     /// <param name="endpoint">The endpoint to access a SurrealDB instance.</param>
     /// <param name="httpClientFactory">An IHttpClientFactory instance, or none.</param>
     /// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
+    /// <param name="prependJsonSerializerContexts">
+    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and prepend to the current list of contexts,
+    /// in AoT mode.
+    /// </param>
+    /// <param name="appendJsonSerializerContexts">
+    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
+    /// in AoT mode.
+    /// </param>
     /// <exception cref="ArgumentException"></exception>
     public SurrealDbClient(
         string endpoint,
         IHttpClientFactory? httpClientFactory = null,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null
+        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
+        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null
     )
         : this(
             new SurrealDbClientParams(endpoint),
             httpClientFactory,
-            configureJsonSerializerOptions
+            configureJsonSerializerOptions,
+            prependJsonSerializerContexts,
+            appendJsonSerializerContexts
         ) { }
 
     /// <summary>
@@ -45,30 +57,43 @@ public class SurrealDbClient : ISurrealDbClient
     /// <param name="configuration">The configuration options for the SurrealDbClient.</param>
     /// <param name="httpClientFactory">An IHttpClientFactory instance, or none.</param>
     /// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
+    /// <param name="prependJsonSerializerContexts">
+    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and prepend to the current list of contexts,
+    /// in AoT mode.
+    /// </param>
+    /// <param name="appendJsonSerializerContexts">
+    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
+    /// in AoT mode.
+    /// </param>
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
     public SurrealDbClient(
         SurrealDbOptions configuration,
         IHttpClientFactory? httpClientFactory = null,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null
+        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
+        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null
     )
         : this(
             new SurrealDbClientParams(configuration),
             httpClientFactory,
-            configureJsonSerializerOptions
+            configureJsonSerializerOptions,
+            prependJsonSerializerContexts,
+            appendJsonSerializerContexts
         ) { }
 
     internal SurrealDbClient(
         SurrealDbClientParams parameters,
         IHttpClientFactory? httpClientFactory = null,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null
+        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
+        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null
     )
     {
         if (parameters.Endpoint is null)
             throw new ArgumentNullException(nameof(parameters), "The endpoint is required.");
 
         Uri = new Uri(parameters.Endpoint);
-        _httpClientFactory = httpClientFactory;
 
         var protocol = Uri.Scheme;
 
@@ -76,8 +101,21 @@ public class SurrealDbClient : ISurrealDbClient
         {
             "http"
             or "https"
-                => new SurrealDbHttpEngine(Uri, _httpClientFactory, configureJsonSerializerOptions),
-            "ws" or "wss" => new SurrealDbWsEngine(Uri, configureJsonSerializerOptions),
+                => new SurrealDbHttpEngine(
+                    Uri,
+                    httpClientFactory,
+                    configureJsonSerializerOptions,
+                    prependJsonSerializerContexts,
+                    appendJsonSerializerContexts
+                ),
+            "ws"
+            or "wss"
+                => new SurrealDbWsEngine(
+                    Uri,
+                    configureJsonSerializerOptions,
+                    prependJsonSerializerContexts,
+                    appendJsonSerializerContexts
+                ),
             _ => throw new ArgumentException("This protocol is not supported."),
         };
 
