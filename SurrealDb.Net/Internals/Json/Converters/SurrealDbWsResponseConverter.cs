@@ -20,7 +20,7 @@ internal class SurrealDbWsResponseConverter : JsonConverter<ISurrealDbWsResponse
         using var doc = JsonDocument.ParseValue(ref reader);
         var root = doc.RootElement;
 
-        if (!root.TryGetProperty(IdPropertyName, out _))
+        if (!root.TryGetProperty(IdPropertyName, out var idProperty))
         {
             if (root.TryGetProperty(ResultPropertyName, out var liveResultElement))
             {
@@ -40,8 +40,12 @@ internal class SurrealDbWsResponseConverter : JsonConverter<ISurrealDbWsResponse
             return new SurrealDbWsUnknownResponse();
         }
 
-        if (root.TryGetProperty(ResultPropertyName, out _))
-            return JsonSerializer.Deserialize<SurrealDbWsOkResponse>(root.GetRawText(), options);
+        if (root.TryGetProperty(ResultPropertyName, out var resultProperty))
+        {
+            string id = idProperty.GetString() ?? string.Empty;
+
+            return new SurrealDbWsOkResponse(id, resultProperty.Clone(), options);
+        }
 
         if (root.TryGetProperty(ErrorPropertyName, out _))
             return JsonSerializer.Deserialize<SurrealDbWsErrorResponse>(root.GetRawText(), options);

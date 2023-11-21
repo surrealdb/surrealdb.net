@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace SurrealDb.Net.Tests;
 
@@ -9,7 +9,7 @@ public class DeleteTests
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldDeletePostTable(string url)
     {
-        List<Post>? list = null;
+        IEnumerable<Post>? list = null;
 
         Func<Task> func = async () =>
         {
@@ -44,7 +44,7 @@ public class DeleteTests
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldDeletePostRecord(string url)
     {
-        List<Post>? list = null;
+        IEnumerable<Post>? list = null;
         bool? result = null;
 
         Func<Task> func = async () =>
@@ -74,7 +74,7 @@ public class DeleteTests
 
         list.Should().NotBeNull().And.HaveCount(1);
 
-        var firstPost = list!.Find(p => p.Id!.Id == "first");
+        var firstPost = list!.FirstOrDefault(p => p.Id!.Id == "first");
 
         firstPost.Should().BeNull();
 
@@ -86,7 +86,7 @@ public class DeleteTests
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldDeletePostRecordUsingThing(string url)
     {
-        List<Post>? list = null;
+        IEnumerable<Post>? list = null;
         bool? result = null;
 
         Func<Task> func = async () =>
@@ -118,7 +118,7 @@ public class DeleteTests
 
         list.Should().NotBeNull().And.HaveCount(1);
 
-        var firstPost = list!.Find(p => p.Id!.Id == "first");
+        var firstPost = list!.FirstOrDefault(p => p.Id!.Id == "first");
 
         firstPost.Should().BeNull();
 
@@ -130,7 +130,7 @@ public class DeleteTests
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldTryToDeleteInexistentRecord(string url)
     {
-        List<Post>? list = null;
+        IEnumerable<Post>? list = null;
         bool? result = null;
 
         Func<Task> func = async () =>

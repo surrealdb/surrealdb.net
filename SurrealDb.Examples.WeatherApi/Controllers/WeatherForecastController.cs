@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using SurrealDb.Examples.WeatherApi.Models;
 using SurrealDb.Net;
 using SurrealDb.Net.Models;
@@ -29,7 +29,7 @@ public class WeatherForecastController : ControllerBase
     /// </summary>
     [HttpGet]
     [Route("/")]
-    public Task<List<WeatherForecast>> GetAll(CancellationToken cancellationToken)
+    public Task<IEnumerable<WeatherForecast>> GetAll(CancellationToken cancellationToken)
     {
         return _surrealDbClient.Select<WeatherForecast>(Table, cancellationToken);
     }

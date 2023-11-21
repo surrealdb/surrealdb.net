@@ -1,4 +1,4 @@
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 
 namespace SurrealDb.Net.Benchmarks;
 
@@ -57,19 +57,19 @@ public class SelectBench : BaseBenchmark
     }
 
     [Benchmark]
-    public Task<List<Post>> Http()
+    public Task<IEnumerable<Post>> Http()
     {
         return Run(_surrealdbHttpClient!);
     }
 
     [Benchmark]
-    public Task<List<Post>> HttpWithClientFactory()
+    public Task<IEnumerable<Post>> HttpWithClientFactory()
     {
         return Run(_surrealdbHttpClientWithHttpClientFactory!);
     }
 
     [Benchmark]
-    public Task<List<Post>> WsText()
+    public Task<IEnumerable<Post>> WsText()
     {
         return Run(_surrealdbWsTextClient!);
     }
@@ -80,7 +80,7 @@ public class SelectBench : BaseBenchmark
         throw new NotImplementedException();
     }
 
-    private static Task<List<Post>> Run(ISurrealDbClient surrealDbClient)
+    private static Task<IEnumerable<Post>> Run(ISurrealDbClient surrealDbClient)
     {
         return surrealDbClient.Select<Post>("post");
     }

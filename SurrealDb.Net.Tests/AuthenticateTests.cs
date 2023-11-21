@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace SurrealDb.Net.Tests;
 
@@ -10,7 +10,7 @@ public class AuthenticateTests
     public async Task ShouldAuthenticate(string url)
     {
         Jwt? jwt = null;
-        List<Post>? list = null;
+        IEnumerable<Post>? list = null;
 
         Func<Task> func = async () =>
         {
@@ -71,7 +71,7 @@ public class AuthenticateTests
     public async Task ShouldFailWhenInvalidate(string url)
     {
         Jwt? jwt = null;
-        List<Post>? list = null;
+        IEnumerable<Post>? list = null;
 
         Func<Task> func = async () =>
         {

@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace SurrealDb.Net.Tests;
 
@@ -14,7 +14,7 @@ public class MergeTests
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldMergeExistingPost(string url)
     {
-        List<Post>? list = null;
+        IEnumerable<Post>? list = null;
         Post? result = null;
 
         Func<Task> func = async () =>
@@ -62,7 +62,7 @@ public class MergeTests
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldMergeUsingDictionary(string url)
     {
-        List<Post>? list = null;
+        IEnumerable<Post>? list = null;
         Post? result = null;
 
         Func<Task> func = async () =>

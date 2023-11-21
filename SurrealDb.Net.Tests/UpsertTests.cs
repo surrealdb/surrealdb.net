@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace SurrealDb.Net.Tests;
 
@@ -9,7 +9,7 @@ public class UpsertTests
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldCreateNewPost(string url)
     {
-        List<Post>? list = null;
+        IEnumerable<Post>? list = null;
         Post? result = null;
 
         Func<Task> func = async () =>
@@ -52,7 +52,7 @@ public class UpsertTests
         result!.CreatedAt.Should().NotBeNull();
         result!.Status.Should().Be("DRAFT");
 
-        var anotherPost = list!.Find(r => r.Id!.Id == "another");
+        var anotherPost = list!.First(r => r.Id!.Id == "another");
 
         anotherPost.Should().NotBeNull();
         anotherPost!.Title.Should().Be("A new article");
@@ -66,7 +66,7 @@ public class UpsertTests
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldUpdateExistingPost(string url)
     {
-        List<Post>? list = null;
+        IEnumerable<Post>? list = null;
         Post? result = null;
 
         Func<Task> func = async () =>

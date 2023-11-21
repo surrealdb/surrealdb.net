@@ -178,18 +178,24 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         await _wsClient.StartOrFail().ConfigureAwait(false);
 
         if (_config.Ns is not null)
+        {
             await Use(_config.Ns, _config.Db!, cancellationToken).ConfigureAwait(false);
+        }
 
         if (_config.Auth is BasicAuth basicAuth)
+        {
             await SignIn(
                     new RootAuth { Username = basicAuth.Username, Password = basicAuth.Password! },
                     cancellationToken
                 )
                 .ConfigureAwait(false);
+        }
 
         if (_config.Auth is BearerAuth bearerAuth)
+        {
             await Authenticate(new Jwt { Token = bearerAuth.Token }, cancellationToken)
                 .ConfigureAwait(false);
+        }
 
         _config.Reset();
     }
@@ -214,8 +220,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         var dbResponse = await SendRequest("create", new() { table, data }, cancellationToken)
             .ConfigureAwait(false);
 
-        var list = dbResponse.GetValue<List<T>>() ?? new();
-        return list.First();
+        return dbResponse.DeserializeEnumerable<T>().First();
     }
 
     public async Task Delete(string table, CancellationToken cancellationToken)
@@ -423,11 +428,11 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return new SurrealDbResponse(list);
     }
 
-    public async Task<List<T>> Select<T>(string table, CancellationToken cancellationToken)
+    public async Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken)
     {
         var dbResponse = await SendRequest("select", new() { table }, cancellationToken)
             .ConfigureAwait(false);
-        return dbResponse.GetValue<List<T>>()!;
+        return dbResponse.DeserializeEnumerable<T>()!;
     }
 
     public async Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken)

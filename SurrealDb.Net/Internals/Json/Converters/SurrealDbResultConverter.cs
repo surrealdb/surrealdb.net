@@ -1,4 +1,4 @@
-using SurrealDb.Net.Models.Response;
+﻿using SurrealDb.Net.Models.Response;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -35,7 +35,7 @@ internal class SurrealDbResultConverter : JsonConverter<ISurrealDbResult>
 
                 var value = root.GetProperty(ResultPropertyName).Clone();
 
-                return new SurrealDbOkResult(time, status, value);
+                return new SurrealDbOkResult(time, status, value, options);
             }
 
             return JsonSerializer.Deserialize<SurrealDbErrorResult>(root.GetRawText(), options);
