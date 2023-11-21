@@ -20,10 +20,10 @@ jobs:
       - name: Run SurrealDB root
         run: surreal start --user root --pass root memory --auth --allow-guests &
 
-      - name: Setup dotnet 6.0
+      - name: Setup dotnet 8.0
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: "6.0.x"
+          dotnet-version: "8.0.x"
 
       - name: Install .NET tools
         run: dotnet tool restore

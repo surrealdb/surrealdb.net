@@ -1,6 +1,8 @@
-using SurrealDb.Net.Internals.Json.Converters;
+﻿using SurrealDb.Net.Internals.Json.Converters;
 using SurrealDb.Net.Internals.Json.Converters.Spatial;
+#if !NET8_0_OR_GREATER
 using SurrealDb.Net.Internals.Json.Policies;
+#endif
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -72,7 +74,11 @@ internal static class SurrealDbSerializerOptions
                 JsonNumberHandling.AllowReadingFromString
                 | JsonNumberHandling.AllowNamedFloatingPointLiterals,
             PropertyNameCaseInsensitive = true,
+#if NET8_0_OR_GREATER
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+#else
             PropertyNamingPolicy = SnakeCaseNamingPolicy.Instance,
+#endif
             ReadCommentHandling = JsonCommentHandling.Skip,
         };
 

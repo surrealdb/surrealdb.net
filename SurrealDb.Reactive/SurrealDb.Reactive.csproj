@@ -1,23 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;net6.0;net7.0</TargetFrameworks>
-    <LangVersion>latest</LangVersion>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+		<TargetFrameworks>netstandard2.1;net6.0;net7.0;net8.0</TargetFrameworks>
 
     <PackageId>SurrealDb.Reactive</PackageId>
-    <Version>0.1.4</Version>
-    <Authors>surrealdb</Authors>
     <Description>Reactive Extensions for the SurrealDB library for .NET</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/surrealdb/surrealdb.net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/surrealdb/surrealdb.net</RepositoryUrl>
-    <Company>SurrealDB</Company>
     <PackageIcon>icon.png</PackageIcon>
     <PackageTags>SurrealDB Surreal Database</PackageTags>
-    <Copyright>Copyright © SurrealDB Ltd</Copyright>
 
     <EnablePackageValidation>true</EnablePackageValidation>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -25,11 +18,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="System.Interactive.Async" Version="6.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SurrealDb.Net\SurrealDb.Net.csproj" />
   </ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\README.md" Pack="true" PackagePath="\" />
+		<None Include="..\LICENSE" Pack="true" PackagePath="\" Visible="false" />
+		<None Include="..\img\icon.png" Pack="true" PackagePath="\" Visible="false" />
+	</ItemGroup>
 
 </Project>
