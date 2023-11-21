@@ -6,6 +6,7 @@ The official SurrealDB library for .NET.
 [![](https://img.shields.io/badge/docs-view-44cc11.svg?style=flat-square)](https://surrealdb.com/docs/integration/libraries/dotnet)
 [![](https://img.shields.io/badge/license-Apache_License_2.0-00bfff.svg?style=flat-square)](https://github.com/surrealdb/surrealdb.net)
 [![](https://img.shields.io/nuget/v/surrealdb.net?style=flat-square)](https://www.nuget.org/packages/SurrealDb.Net)
+[![](https://codecov.io/github/surrealdb/surrealdb.net/coverage.svg?branch=main)](https://codecov.io/github/surrealdb/surrealdb.net?branch=main)
 
 ⚠️ This driver is currently community maintained.
 
