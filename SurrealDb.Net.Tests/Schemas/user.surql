@@ -6,7 +6,7 @@ DEFINE TABLE user SCHEMAFULL
 
 DEFINE FIELD username ON user TYPE string;
 DEFINE FIELD email ON user TYPE string ASSERT string::is::email($value);
-DEFINE FIELD password ON user TYPE string;
+DEFINE FIELD password ON user TYPE string PERMISSIONS FOR SELECT NONE;
 DEFINE FIELD registered_at ON user TYPE datetime DEFAULT time::now();
 DEFINE FIELD avatar ON user TYPE string;
 

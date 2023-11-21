@@ -137,6 +137,14 @@ public interface ISurrealDbClient : IDisposable
     Task<bool> Health(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves information about the authenticated scope user.
+    /// </summary>
+    /// <typeparam name="T">The scope user type.</typeparam>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>Returns the record of an authenticated scope user.</returns>
+    Task<T> Info<T>(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Invalidates the authentication for the current connection.
     /// </summary>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
