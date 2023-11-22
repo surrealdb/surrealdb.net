@@ -5,11 +5,25 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 
-    <Version>0.2.0</Version>
+    <IsPackable>false</IsPackable>
+    <VersionSuffix>0.2.0</VersionSuffix>
     <Authors>surrealdb</Authors>
     <Company>SurrealDB</Company>
     <Copyright>Copyright © SurrealDB Ltd</Copyright>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsPackable)' == 'true'">
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageProjectUrl>https://github.com/surrealdb/surrealdb.net</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/surrealdb/surrealdb.net</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageIcon>icon.png</PackageIcon>
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +31,19 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+	  <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+	  </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+	  <None Include="..\README.md" Pack="true" PackagePath="\" />
+	  <None Include="..\LICENSE" Pack="true" PackagePath="\" Visible="false" />
+	  <None Include="..\img\icon.png" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
 </Project>

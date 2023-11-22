@@ -35,7 +35,7 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --no-restore --warnaserror
+        run: dotnet build --no-restore
 
       - name: Test library
         run: >
