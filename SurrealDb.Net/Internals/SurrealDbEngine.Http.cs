@@ -284,7 +284,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
             .ConfigureAwait(false);
 
-        return ExtractFirstResultValue<List<TOutput>>(dbResponse)!; // TODO : .DeserializeEnumerable<T>
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<TOutput>();
     }
 
     public async Task<IEnumerable<T>> MergeAll<T>(
@@ -303,7 +304,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
             .ConfigureAwait(false);
 
-        return ExtractFirstResultValue<List<T>>(dbResponse)!; // TODO : .DeserializeEnumerable<T>
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<T>();
     }
 
     public async Task<SurrealDbResponse> Query(
@@ -501,7 +503,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
             .ConfigureAwait(false);
 
-        return ExtractFirstResultValue<List<T>>(dbResponse)!; // TODO : .DeserializeEnumerable<T>
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<T>();
     }
 
     public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)

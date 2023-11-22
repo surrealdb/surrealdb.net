@@ -9,7 +9,7 @@ public class MergeAllTests
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldMergeAllRecords(string url)
     {
-        List<Post>? list = null;
+        IEnumerable<Post>? list = null;
         IEnumerable<Post>? results = null;
 
         Func<Task> func = async () =>
@@ -61,7 +61,7 @@ public class MergeAllTests
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldMergeAllRecordsUsingDictionary(string url)
     {
-        List<Post>? list = null;
+        IEnumerable<Post>? list = null;
         IEnumerable<Post>? results = null;
 
         Func<Task> func = async () =>

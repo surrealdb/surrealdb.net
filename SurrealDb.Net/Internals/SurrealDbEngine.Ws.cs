@@ -430,7 +430,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         var dbResponse = await SendRequest("merge", new() { table, data }, cancellationToken)
             .ConfigureAwait(false);
-        return dbResponse.GetValue<List<TOutput>>()!; // TODO : .DeserializeEnumerable<T>
+        return dbResponse.DeserializeEnumerable<TOutput>();
     }
 
     public async Task<IEnumerable<T>> MergeAll<T>(
@@ -441,7 +441,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         var dbResponse = await SendRequest("merge", new() { table, data }, cancellationToken)
             .ConfigureAwait(false);
-        return dbResponse.GetValue<List<T>>()!; // TODO : .DeserializeEnumerable<T>
+        return dbResponse.DeserializeEnumerable<T>();
     }
 
     public async Task<SurrealDbResponse> Query(
@@ -555,7 +555,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         var dbResponse = await SendRequest("update", new() { table, data }, cancellationToken)
             .ConfigureAwait(false);
-        return dbResponse.GetValue<List<T>>()!; // TODO : .DeserializeEnumerable<T>
+        return dbResponse.DeserializeEnumerable<T>();
     }
 
     public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)

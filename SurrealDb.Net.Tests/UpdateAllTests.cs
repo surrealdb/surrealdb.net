@@ -9,7 +9,7 @@ public class UpdateAllTests
     [InlineData("ws://localhost:8000/rpc")]
     public async Task ShouldUpdateAllRecords(string url)
     {
-        List<Post>? list = null;
+        IEnumerable<Post>? list = null;
         IEnumerable<Post>? results = null;
 
         var now = DateTime.UtcNow;
