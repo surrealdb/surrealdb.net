@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Dahomey.Cbor;
 using FluentAssertions.Extensions;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,7 @@ public abstract class BaseRecord
 
 public class Record<T> : BaseRecord
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public T? Value { get; set; }
 }
 
@@ -22,6 +24,8 @@ public class RecordIdRecord : BaseRecord
 {
     public Thing? Id { get; set; }
 }
+
+public class ThingRecord : Record<Thing> { }
 
 public class StringRecord : Record<string> { }
 
