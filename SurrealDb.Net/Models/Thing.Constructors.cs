@@ -20,6 +20,33 @@ public partial class Thing
     public Thing(string thing)
     {
         _raw = thing.AsMemory();
+
+        char firstChar = _raw.Span[0];
+
+        char? expectedTableSuffix = firstChar switch
+        {
+            ThingConstants.PREFIX => ThingConstants.SUFFIX,
+            ThingConstants.ALTERNATE_ESCAPE => ThingConstants.ALTERNATE_ESCAPE,
+            _ => null
+        };
+
+        if (expectedTableSuffix.HasValue)
+        {
+            int suffixIndex = _raw.Span[1..].IndexOf(expectedTableSuffix.Value) + 1;
+            if (suffixIndex > 0)
+            {
+                _separatorIndex =
+                    _raw.Span[suffixIndex..].IndexOf(ThingConstants.SEPARATOR) + suffixIndex;
+
+                if (_separatorIndex <= suffixIndex)
+                    throw new ArgumentException("Cannot detect separator on Thing", nameof(thing));
+
+                _isTableEscaped = true;
+                _isIdEscaped = IsStringEscaped(thing.AsSpan(_separatorIndex + 1));
+                return;
+            }
+        }
+
         _separatorIndex = _raw.Span.IndexOf(ThingConstants.SEPARATOR);
 
         if (_separatorIndex <= 0)

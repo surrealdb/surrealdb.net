@@ -154,6 +154,54 @@ public class ConstructorsThingTests
             .WithMessage("Id should not be null (Parameter 'id')");
     }
 
+    [Fact]
+    public void ShouldCreateThingWithColonInEscapedTable()
+    {
+        var thing = new Thing("⟨https://surrealdb.com/⟩:id");
+
+        thing.Table.ToString().Should().Be("⟨https://surrealdb.com/⟩");
+        thing.UnescapedTable.ToString().Should().Be("https://surrealdb.com/");
+        thing.Id.ToString().Should().Be("id");
+        thing.UnescapedId.ToString().Should().Be("id");
+        thing.ToString().Should().Be("⟨https://surrealdb.com/⟩:id");
+    }
+
+    [Fact]
+    public void ShouldCreateThingWithColonInAlternativeEscapedTable()
+    {
+        var thing = new Thing("`https://surrealdb.com/`:id");
+
+        thing.Table.ToString().Should().Be("`https://surrealdb.com/`");
+        thing.UnescapedTable.ToString().Should().Be("https://surrealdb.com/");
+        thing.Id.ToString().Should().Be("id");
+        thing.UnescapedId.ToString().Should().Be("id");
+        thing.ToString().Should().Be("`https://surrealdb.com/`:id");
+    }
+
+    [Fact]
+    public void ShouldCreateThingWithColonInEscapedId()
+    {
+        var thing = new Thing("table:⟨https://surrealdb.com/⟩");
+
+        thing.Table.ToString().Should().Be("table");
+        thing.UnescapedTable.ToString().Should().Be("table");
+        thing.Id.ToString().Should().Be("⟨https://surrealdb.com/⟩");
+        thing.UnescapedId.ToString().Should().Be("https://surrealdb.com/");
+        thing.ToString().Should().Be("table:⟨https://surrealdb.com/⟩");
+    }
+
+    [Fact]
+    public void ShouldCreateThingWithColonInAlternativeEscapedId()
+    {
+        var thing = new Thing("table:`https://surrealdb.com/`");
+
+        thing.Table.ToString().Should().Be("table");
+        thing.UnescapedTable.ToString().Should().Be("table");
+        thing.Id.ToString().Should().Be("`https://surrealdb.com/`");
+        thing.UnescapedId.ToString().Should().Be("https://surrealdb.com/");
+        thing.ToString().Should().Be("table:`https://surrealdb.com/`");
+    }
+
     private static DateTime _januaryFirst2023 = new(2023, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
     public static TheoryData<object, string> CreateThingFromTableCases =>
