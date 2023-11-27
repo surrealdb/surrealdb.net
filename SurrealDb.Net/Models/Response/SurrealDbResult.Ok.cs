@@ -22,6 +22,11 @@ public sealed class SurrealDbOkResult : ISurrealDbResult
 
     public bool IsOk => true;
 
+    /// <summary>
+    /// Displays the raw JSON value of the query result.
+    /// </summary>
+    public string RawValue => _value.GetRawText();
+
     internal SurrealDbOkResult(
         TimeSpan time,
         string status,
