@@ -14,8 +14,8 @@ public class SessionInfo
 public class ConnectTests
 {
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldConnect(string url)
     {
         Func<Task> func = async () =>
@@ -42,7 +42,7 @@ public class ConnectTests
             dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
             using var client = SurrealDbWsClient.New(
-                "localhost:8000",
+                "127.0.0.1:8000",
                 dbInfo.Namespace,
                 dbInfo.Database
             );

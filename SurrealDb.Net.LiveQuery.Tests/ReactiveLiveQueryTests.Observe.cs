@@ -12,7 +12,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldObserveQuery()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var allResults = new List<SurrealDbLiveQueryResponse>();
 
@@ -66,7 +66,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldObserveTable()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var allResults = new List<SurrealDbLiveQueryResponse>();
 

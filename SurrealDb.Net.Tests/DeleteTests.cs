@@ -5,8 +5,8 @@ namespace SurrealDb.Net.Tests;
 public class DeleteTests
 {
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldDeletePostTable(string url)
     {
         IEnumerable<Post>? list = null;
@@ -40,8 +40,8 @@ public class DeleteTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldDeletePostRecord(string url)
     {
         IEnumerable<Post>? list = null;
@@ -82,8 +82,8 @@ public class DeleteTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldDeletePostRecordUsingThing(string url)
     {
         IEnumerable<Post>? list = null;
@@ -126,8 +126,8 @@ public class DeleteTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldTryToDeleteInexistentRecord(string url)
     {
         IEnumerable<Post>? list = null;

@@ -20,9 +20,9 @@ public class SurrealDbOptionsBuilderTests
     [Fact]
     public void ShouldCreateWithEndpoint()
     {
-        var options = new SurrealDbOptionsBuilder().WithEndpoint("http://localhost:8000").Build();
+        var options = new SurrealDbOptionsBuilder().WithEndpoint("http://127.0.0.1:8000").Build();
 
-        options.Endpoint.Should().Be("http://localhost:8000");
+        options.Endpoint.Should().Be("http://127.0.0.1:8000");
         options.Namespace.Should().BeNull();
         options.Database.Should().BeNull();
         options.Username.Should().BeNull();
@@ -107,11 +107,11 @@ public class SurrealDbOptionsBuilderTests
     public void ShouldCreateFromConnectionString()
     {
         string connectionString =
-            "Server=http://localhost:8000;Namespace=test;Database=test;Username=root;Password=root";
+            "Server=http://127.0.0.1:8000;Namespace=test;Database=test;Username=root;Password=root";
 
         var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
 
-        options.Endpoint.Should().Be("http://localhost:8000");
+        options.Endpoint.Should().Be("http://127.0.0.1:8000");
         options.Namespace.Should().Be("test");
         options.Database.Should().Be("test");
         options.Username.Should().Be("root");
@@ -123,11 +123,11 @@ public class SurrealDbOptionsBuilderTests
     public void ShouldCreateFromAlternativeConnectionString()
     {
         string connectionString =
-            "Endpoint=http://localhost:8000;NS=test;DB=test;User=root;Pass=root";
+            "Endpoint=http://127.0.0.1:8000;NS=test;DB=test;User=root;Pass=root";
 
         var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
 
-        options.Endpoint.Should().Be("http://localhost:8000");
+        options.Endpoint.Should().Be("http://127.0.0.1:8000");
         options.Namespace.Should().Be("test");
         options.Database.Should().Be("test");
         options.Username.Should().Be("root");
@@ -139,11 +139,11 @@ public class SurrealDbOptionsBuilderTests
     public void ShouldCreateFromConnectionStringWithAccessToken()
     {
         string connectionString =
-            "Endpoint=http://localhost:8000;NS=test;DB=test;Token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+            "Endpoint=http://127.0.0.1:8000;NS=test;DB=test;Token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 
         var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
 
-        options.Endpoint.Should().Be("http://localhost:8000");
+        options.Endpoint.Should().Be("http://127.0.0.1:8000");
         options.Namespace.Should().Be("test");
         options.Database.Should().Be("test");
         options.Username.Should().BeNull();

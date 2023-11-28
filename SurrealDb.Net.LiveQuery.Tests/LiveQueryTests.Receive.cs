@@ -11,7 +11,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldLiveQueryReceiveCreatedRecord()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var results = new List<SurrealDbLiveQueryResponse>();
 
@@ -79,7 +79,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldLiveQueryReceiveUpdatedRecord()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var results = new List<SurrealDbLiveQueryResponse>();
 
@@ -149,7 +149,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldLiveQueryReceiveDeletedRecord()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var results = new List<SurrealDbLiveQueryResponse>();
 
@@ -221,7 +221,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldLiveQueryReceiveSocketClosed()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var results = new List<SurrealDbLiveQueryResponse>();
 
@@ -295,7 +295,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldLiveQueryReceiveQueryKilled()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var results = new List<SurrealDbLiveQueryResponse>();
 

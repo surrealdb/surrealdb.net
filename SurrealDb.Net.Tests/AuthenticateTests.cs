@@ -5,8 +5,8 @@ namespace SurrealDb.Net.Tests;
 public class AuthenticateTests
 {
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldAuthenticate(string url)
     {
         Jwt? jwt = null;
@@ -66,8 +66,8 @@ public class AuthenticateTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldFailWhenInvalidate(string url)
     {
         Jwt? jwt = null;

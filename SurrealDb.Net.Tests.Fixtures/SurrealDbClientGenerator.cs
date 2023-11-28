@@ -55,7 +55,7 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
         if (_databaseInfo is not null)
         {
             using var client = new SurrealDbClient(
-                "http://localhost:8000",
+                "http://127.0.0.1:8000",
                 _serviceProvider!.GetRequiredService<IHttpClientFactory>()
             );
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });

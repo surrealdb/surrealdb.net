@@ -13,7 +13,7 @@ public class ReactiveLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldConsumeObservable()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var allResults = new List<SurrealDbLiveQueryResponse>();
 
@@ -76,7 +76,7 @@ public class ReactiveLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldConsumeObservableWithLiveQueryManuallyKilled()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var allResults = new List<SurrealDbLiveQueryResponse>();
 
@@ -145,7 +145,7 @@ public class ReactiveLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldConsumeLateObservable()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var allResults = new List<SurrealDbLiveQueryResponse>();
 

@@ -33,9 +33,9 @@ Supported protocols:
 You can easily create a new SurrealDB client easily. All you have to do is define the `endpoint` to the SurrealDB instance.
 
 ```csharp
-var clientHttp = new SurrealDbClient("http://localhost:8000");
+var clientHttp = new SurrealDbClient("http://127.0.0.1:8000");
 var clientHttps = new SurrealDbClient("https://cloud.surrealdb.com");
-var clientWs = new SurrealDbClient("ws://localhost:8000/rpc");
+var clientWs = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
 var clientWss = new SurrealDbClient("wss://cloud.surrealdb.com/rpc");
 
 // Signin & Use ns/db
@@ -46,9 +46,9 @@ var clientWss = new SurrealDbClient("wss://cloud.surrealdb.com/rpc");
 There are some static constructors that you can use for specific contexts. The advantage of this syntax is that all you only need to do is define the `host` and not the `endpoint`.
 
 ```csharp
-var clientHttp = SurrealDbHttpClient.New("localhost:8000");
+var clientHttp = SurrealDbHttpClient.New("127.0.0.1:8000");
 var clientHttps = SurrealDbHttpsClient.New("cloud.surrealdb.com");
-var clientWs = SurrealDbWsClient.New("localhost:8000");
+var clientWs = SurrealDbWsClient.New("127.0.0.1:8000");
 var clientWss = SurrealDbWssClient.New("cloud.surrealdb.com");
 
 // Signin & Use ns/db
@@ -63,7 +63,7 @@ Last but not least, you can use Dependency Injection with the `services.AddSurre
 ```csharp
 var options = SurrealDbOptions
 	.Create()
-	.WithEndpoint("http://localhost:8000")
+	.WithEndpoint("http://127.0.0.1:8000")
 	.WithNamespace("test")
 	.WithDatabase("test")
 	.WithUsername("root")
@@ -109,7 +109,7 @@ Consider the following `appsettings.json` file:
     }
   },
   "ConnectionStrings": {
-    "SurrealDB": "Server=http://localhost:8000;Namespace=test;Database=test;Username=root;Password=root"
+    "SurrealDB": "Server=http://127.0.0.1:8000;Namespace=test;Database=test;Username=root;Password=root"
   }
 }
 ```

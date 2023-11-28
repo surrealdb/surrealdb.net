@@ -14,8 +14,8 @@ public class User : SurrealDbRecord
 public class InfoTests
 {
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldNotRetrieveInfoForRootUser(string url)
     {
         User? currentUser = null;
@@ -38,8 +38,8 @@ public class InfoTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldRetrieveInfoForScopedUser(string url)
     {
         User? currentUser = null;

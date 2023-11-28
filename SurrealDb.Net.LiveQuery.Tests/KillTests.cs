@@ -8,7 +8,7 @@ public class KillTests
     [Fact]
     public async Task ShouldNotBeSupportedOnHttpProtocol()
     {
-        const string url = "http://localhost:8000";
+        const string url = "http://127.0.0.1:8000";
 
         Func<Task> func = async () =>
         {
@@ -30,7 +30,7 @@ public class KillTests
     [Fact]
     public async Task ShouldKillActiveLiveQueryOnWsProtocol()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         Func<Task> func = async () =>
         {
@@ -57,7 +57,7 @@ public class KillTests
     [Fact]
     public async Task ShouldFailToKillInexistantLiveQueryOnWsProtocol()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         Func<Task> func = async () =>
         {

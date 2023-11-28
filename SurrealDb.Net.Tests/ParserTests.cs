@@ -49,8 +49,8 @@ public class Vector4Record : Record<Vector4?> { }
 public class ParserTests
 {
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseThing(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -154,8 +154,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseString(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -218,8 +218,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseLong(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -267,8 +267,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseDecimal(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -336,8 +336,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseFloat(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -405,8 +405,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseDouble(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -474,8 +474,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseDuration(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -583,8 +583,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseDurationAsTimeSpan(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -680,8 +680,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseDurationAsString(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -777,8 +777,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseTimeOnly(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -874,8 +874,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseDateAsDateTime(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -954,8 +954,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseDateOnly(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -1021,8 +1021,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseVector2(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -1075,8 +1075,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseVector3(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -1130,8 +1130,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseVector4(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();

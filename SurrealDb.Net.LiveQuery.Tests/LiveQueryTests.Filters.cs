@@ -11,7 +11,7 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldExcludeCloseResultWithGetResults()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var allResults = new List<SurrealDbLiveQueryResponse>();
         var filteredResults = new List<SurrealDbLiveQueryResponse>();
@@ -89,7 +89,7 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldGetCreatedRecords()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var allResults = new List<SurrealDbLiveQueryResponse>();
         var filteredResults = new List<TestRecord>();
@@ -171,7 +171,7 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldGetUpdatedRecords()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var allResults = new List<SurrealDbLiveQueryResponse>();
         var filteredResults = new List<TestRecord>();
@@ -253,7 +253,7 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldGetDeletedIds()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         TestRecord? record = null;
 

@@ -6,8 +6,8 @@ namespace SurrealDb.Net.Tests;
 public class SetTests
 {
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldSetParam(string url)
     {
         SurrealDbResponse? response = null;
@@ -56,8 +56,8 @@ public class SetTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldUnsetParam(string url)
     {
         SurrealDbResponse? response = null;

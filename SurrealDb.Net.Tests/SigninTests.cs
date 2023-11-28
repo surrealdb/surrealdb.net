@@ -12,8 +12,8 @@ public class AuthParams : ScopeAuth
 public class SignInTests
 {
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldSignInAsRootUser(string url)
     {
         Func<Task> func = async () =>
@@ -28,8 +28,8 @@ public class SignInTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldSignInUsingNamespaceAuth(string url)
     {
         Jwt? jwt = null;
@@ -63,8 +63,8 @@ public class SignInTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldSignInUsingDatabaseAuth(string url)
     {
         Jwt? jwt = null;
@@ -99,8 +99,8 @@ public class SignInTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldSignInUsingScopeAuth(string url)
     {
         Jwt? jwt = null;
