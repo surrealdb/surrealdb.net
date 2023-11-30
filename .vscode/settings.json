@@ -1,0 +1,6 @@
+{
+    "editor.formatOnSave": false,
+    "[csharp]": {
+        "editor.formatOnSave": true
+    }
+}

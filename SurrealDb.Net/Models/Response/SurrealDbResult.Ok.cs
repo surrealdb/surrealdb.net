@@ -8,7 +8,11 @@ namespace SurrealDb.Net.Models.Response;
 public sealed class SurrealDbOkResult : ISurrealDbResult
 {
     private readonly JsonSerializerOptions _jsonSerializerOptions;
-    private readonly JsonElement _value;
+
+    /// <summary>
+    /// The result value of the query.
+    /// </summary>
+    public JsonElement Value { get; }
 
     /// <summary>
     /// Time taken to execute the query.
@@ -31,7 +35,7 @@ public sealed class SurrealDbOkResult : ISurrealDbResult
     {
         Time = time;
         Status = status;
-        _value = value;
+        Value = value;
         _jsonSerializerOptions = jsonSerializerOptions;
     }
 
@@ -39,13 +43,29 @@ public sealed class SurrealDbOkResult : ISurrealDbResult
     /// Gets the result value of the query.
     /// </summary>
     /// <typeparam name="T">The type of the query result value.</typeparam>
-    public T? GetValue<T>() => JsonSerializer.Deserialize<T>(_value, _jsonSerializerOptions);
+    /// <exception cref="JsonException">T is not compatible with the query result value.</exception>
+    /// <exception cref="NotSupportedException">There is no compatible deserializer for T.</exception>
+    public T? GetValue<T>() => Value.Deserialize<T>(_jsonSerializerOptions);
+
+    /// <summary>
+    /// Enumerates the result value of the query.
+    /// </summary>
+    /// <typeparam name="T">The type of the query result value.</typeparam>
+    /// <exception cref="JsonException">T is not compatible with the query result value.</exception>
+    /// <exception cref="NotSupportedException">There is no compatible deserializer for T.</exception>
+    public IEnumerable<T> GetValues<T>() => DeserializeEnumerable<T>();
 
     internal IEnumerable<T> DeserializeEnumerable<T>()
     {
-        foreach (var element in _value.EnumerateArray())
+        if (Value.ValueKind is not JsonValueKind.Array)
+            throw new NotSupportedException(
+                "The query result value is not an array. "
+                    + "This can happen if you have used the 'ONLY' keyword in your query."
+            );
+
+        foreach (var element in Value.EnumerateArray())
         {
-            var item = JsonSerializer.Deserialize<T>(element, _jsonSerializerOptions);
+            var item = element.Deserialize<T>(_jsonSerializerOptions);
             yield return item!;
         }
     }

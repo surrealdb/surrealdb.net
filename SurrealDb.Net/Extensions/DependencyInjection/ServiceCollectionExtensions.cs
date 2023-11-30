@@ -59,6 +59,26 @@ public static class ServiceCollectionExtensions
     /// Registers SurrealDB services with the specified configuration.
     /// </summary>
     /// <param name="services">Service collection.</param>
+    /// <param name="configureOptions">A delegate that is used to configure a <see cref="SurrealDbOptionsBuilder"/>.</param>
+    /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
+    /// <returns>Service collection</returns>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
+    public static IServiceCollection AddSurreal(
+        this IServiceCollection services,
+        Action<SurrealDbOptionsBuilder> configureOptions,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton
+    )
+    {
+        var options = SurrealDbOptions.Create();
+        configureOptions(options);
+        return AddSurreal<ISurrealDbClient>(services, options.Build(), lifetime);
+    }
+
+    /// <summary>
+    /// Registers SurrealDB services with the specified configuration.
+    /// </summary>
+    /// <param name="services">Service collection.</param>
     /// <param name="configuration">Configuration options.</param>
     /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
     /// <returns>Service collection</returns>
