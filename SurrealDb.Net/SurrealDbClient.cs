@@ -210,6 +210,25 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.Merge<T>(thing, data, cancellationToken);
     }
 
+    public Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+        string table,
+        TMerge data,
+        CancellationToken cancellationToken = default
+    )
+        where TMerge : class
+    {
+        return _engine.MergeAll<TMerge, TOutput>(table, data, cancellationToken);
+    }
+
+    public Task<IEnumerable<T>> MergeAll<T>(
+        string table,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.MergeAll<T>(table, data, cancellationToken);
+    }
+
     public Task<SurrealDbResponse> Query(
         string query,
         IReadOnlyDictionary<string, object>? parameters = null,
@@ -280,6 +299,16 @@ public class SurrealDbClient : ISurrealDbClient
     public Task Unset(string key, CancellationToken cancellationToken = default)
     {
         return _engine.Unset(key, cancellationToken);
+    }
+
+    public Task<IEnumerable<T>> UpdateAll<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken = default
+    )
+        where T : class
+    {
+        return _engine.UpdateAll(table, data, cancellationToken);
     }
 
     public Task<T> Upsert<T>(T data, CancellationToken cancellationToken = default)

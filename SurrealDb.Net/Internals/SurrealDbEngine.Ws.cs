@@ -421,6 +421,29 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.GetValue<T>()!;
     }
 
+    public async Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+        string table,
+        TMerge data,
+        CancellationToken cancellationToken
+    )
+        where TMerge : class
+    {
+        var dbResponse = await SendRequest("merge", new() { table, data }, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.DeserializeEnumerable<TOutput>();
+    }
+
+    public async Task<IEnumerable<T>> MergeAll<T>(
+        string table,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken
+    )
+    {
+        var dbResponse = await SendRequest("merge", new() { table, data }, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.DeserializeEnumerable<T>();
+    }
+
     public async Task<SurrealDbResponse> Query(
         string query,
         IReadOnlyDictionary<string, object> parameters,
@@ -521,6 +544,18 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     public async Task Unset(string key, CancellationToken cancellationToken)
     {
         await SendRequest("unset", new() { key }, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<IEnumerable<T>> UpdateAll<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        var dbResponse = await SendRequest("update", new() { table, data }, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.DeserializeEnumerable<T>();
     }
 
     public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)

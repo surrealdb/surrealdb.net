@@ -43,6 +43,17 @@ internal interface ISurrealDbEngine : IDisposable
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     );
+    Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+        string table,
+        TMerge data,
+        CancellationToken cancellationToken
+    )
+        where TMerge : class;
+    Task<IEnumerable<T>> MergeAll<T>(
+        string table,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken
+    );
     Task<SurrealDbResponse> Query(
         string query,
         IReadOnlyDictionary<string, object> parameters,
@@ -60,6 +71,8 @@ internal interface ISurrealDbEngine : IDisposable
         where T : ScopeAuth;
     SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id);
     Task Unset(string key, CancellationToken cancellationToken);
+    Task<IEnumerable<T>> UpdateAll<T>(string table, T data, CancellationToken cancellationToken)
+        where T : class;
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record;
     Task Use(string ns, string db, CancellationToken cancellationToken);

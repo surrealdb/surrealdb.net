@@ -267,6 +267,47 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return okResult.DeserializeEnumerable<T>().First();
     }
 
+    public async Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+        string table,
+        TMerge data,
+        CancellationToken cancellationToken
+    )
+        where TMerge : class
+    {
+        using var wrapper = CreateHttpClientWrapper();
+        using var body = CreateBodyContent(data);
+
+        using var response = await wrapper.Instance
+            .PatchAsync($"/key/{table}", body, cancellationToken)
+            .ConfigureAwait(false);
+
+        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
+            .ConfigureAwait(false);
+
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<TOutput>();
+    }
+
+    public async Task<IEnumerable<T>> MergeAll<T>(
+        string table,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken
+    )
+    {
+        using var wrapper = CreateHttpClientWrapper();
+        using var body = CreateBodyContent(data);
+
+        using var response = await wrapper.Instance
+            .PatchAsync($"/key/{table}", body, cancellationToken)
+            .ConfigureAwait(false);
+
+        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
+            .ConfigureAwait(false);
+
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<T>();
+    }
+
     public async Task<SurrealDbResponse> Query(
         string query,
         IReadOnlyDictionary<string, object> parameters,
@@ -443,6 +484,27 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         _config.RemoveParam(key);
         return Task.CompletedTask;
+    }
+
+    public async Task<IEnumerable<T>> UpdateAll<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        using var wrapper = CreateHttpClientWrapper();
+        using var body = CreateBodyContent(data);
+
+        using var response = await wrapper.Instance
+            .PutAsync($"/key/{table}", body, cancellationToken)
+            .ConfigureAwait(false);
+
+        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
+            .ConfigureAwait(false);
+
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<T>();
     }
 
     public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
