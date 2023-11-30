@@ -458,7 +458,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
-        return dbResponse.DeserializeEnumerable<T>().First();
+        return dbResponse.GetValue<T>()!;
     }
 
     public async Task<IEnumerable<T>> PatchAll<T>(
