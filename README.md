@@ -236,15 +236,7 @@ public class WeatherForecastController : ControllerBase
 
 ## How to contribute?
 
-This project was written following testing best practices:
 
-- TDD, leveraging:
-  - clean code/architecture
-  - regression testing
-  - adding new features and tests easily
-- xUnit and FluentAssertions libraries
-- a vast majority of tests are integration tests, ensuring compatibility with a concrete SurrealDB version
-- each integration test is using a separate SurrealDB instance
 
 ### .NET release versions
 
@@ -264,7 +256,41 @@ Note that the support for .NET standard 2.1 will be maintained until further not
 | .NET 7            | STS         | November 8, 2022  | May 14, 2024      |
 | .NET 8            | Current LTS | November 14, 2023 | November 10, 2026 |
 
+### Formatting
+
+This project is using [CSharpier](https://csharpier.com/), an opinionated code formatter.
+
+#### Command line
+
+You can install it on your machine via `dotnet tool`.
+
+```bash
+# Run this command at the root of the project
+dotnet tool install csharpier
+```
+
+You can then use it as a cli:
+
+```bash
+dotnet csharpier .
+```
+
+The list of command-line options is available here: https://csharpier.com/docs/CLI
+
+#### IDE integration
+
+CSharpier supports [multiple code editors](https://csharpier.com/docs/Editors), including Visual Studio, Jetbrains Rider, VSCode and Neovim. You will be able to run format on file save after configuring the settings in your IDE. 
+
 ### Testing
+
+This project was written following testing best practices:
+
+- TDD, leveraging:
+  - clean code/architecture
+  - regression testing
+  - adding new features and tests easily
+- a vast majority of tests are integration tests, ensuring compatibility with a concrete SurrealDB version
+- each integration test is using a separate SurrealDB namespace/database
 
 Unit/Integration tests are written using [xUnit](https://xunit.net/) and [FluentAssertions](https://fluentassertions.com/).
 
