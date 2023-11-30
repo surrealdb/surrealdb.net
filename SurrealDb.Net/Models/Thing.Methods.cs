@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Json;
@@ -10,71 +10,81 @@ namespace SurrealDb.Net.Models;
 public partial class Thing
 {
     /// <summary>
-    /// Creates a new record ID from a table and a genericly typed id.
+    /// Creates a new record ID from a genericly typed table and a genericly typed id.
     /// </summary>
-    /// <typeparam name="T">The type of the table id</typeparam>
+    /// <typeparam name="TTable">The type of the table part</typeparam>
+    /// <typeparam name="TId">The type of the record id part</typeparam>
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="NotImplementedException"></exception>
-    public static Thing From<T>(ReadOnlySpan<char> table, T id)
+    public static Thing From<TTable, TId>(TTable table, TId id)
     {
+        if (table is null)
+            throw new ArgumentException("Table should not be null", nameof(table));
+
         if (id is null)
             throw new ArgumentException("Id should not be null", nameof(id));
 
-        if (id is string str)
+        var tablePart = ExtractThingPart(table);
+        var idPart = ExtractThingPart(id);
+
+        return new Thing(tablePart.value, tablePart.type, idPart.value, idPart.type);
+    }
+
+    private static (string value, SpecialRecordPartType type) ExtractThingPart<T>(T part)
+    {
+        if (part is string str)
         {
             bool shouldEscape = ShouldEscapeString(str);
-            string recordId = shouldEscape ? CreateEscapedId(str) : str;
-
-            return new(table, recordId);
+            return (shouldEscape ? CreateEscaped(str) : str, SpecialRecordPartType.None);
         }
 
-        if (id is int i)
-            return new(table, i.ToString());
+        if (part is int i)
+            return (i.ToString(), SpecialRecordPartType.None);
 
-        if (id is long l)
-            return new(table, l.ToString());
+        if (part is long l)
+            return (l.ToString(), SpecialRecordPartType.None);
 
-        if (id is short s)
-            return new(table, s.ToString());
+        if (part is short s)
+            return (s.ToString(), SpecialRecordPartType.None);
 
-        if (id is byte b)
-            return new(table, b.ToString());
+        if (part is byte b)
+            return (b.ToString(), SpecialRecordPartType.None);
 
-        if (id is char c)
-            return new(table, c.ToString());
+        if (part is char c)
+            return (c.ToString(), SpecialRecordPartType.None);
 
-        if (id is Guid guid)
-            return new(table, CreateEscapedId(guid.ToString()));
+        if (part is Guid guid)
+            return (CreateEscaped(guid.ToString()), SpecialRecordPartType.None);
 
-        if (id is sbyte sb)
-            return new(table, sb.ToString());
+        if (part is sbyte sb)
+            return (sb.ToString(), SpecialRecordPartType.None);
 
-        if (id is ushort us)
-            return new(table, us.ToString());
+        if (part is ushort us)
+            return (us.ToString(), SpecialRecordPartType.None);
 
-        if (id is uint ui)
-            return new(table, ui.ToString());
+        if (part is uint ui)
+            return (ui.ToString(), SpecialRecordPartType.None);
 
-        if (id is ulong ul)
-            return new(table, ul.ToString());
+        if (part is ulong ul)
+            return (ul.ToString(), SpecialRecordPartType.None);
 
-        var serializedId = System.Text.Json.JsonSerializer.Serialize(
-            id,
+        var serializedPart = System.Text.Json.JsonSerializer.Serialize(
+            part,
             SurrealDbSerializerOptions.Default
         );
 
-        char start = serializedId[0];
-        char end = serializedId[^1];
+        char start = serializedPart[0];
+        char end = serializedPart[^1];
 
         bool isJsonObject = start == '{' && end == '}';
         if (isJsonObject)
-            return new(table, serializedId, SpecialRecordIdType.JsonObject);
+            return (serializedPart, SpecialRecordPartType.JsonObject);
 
         bool isJsonArray = start == '[' && end == ']';
         if (isJsonArray)
-            return new(table, serializedId, SpecialRecordIdType.JsonArray);
+            return (serializedPart, SpecialRecordPartType.JsonArray);
 
         throw new NotImplementedException();
     }
@@ -92,11 +102,11 @@ public partial class Thing
         return str.All(c => char.IsLetterOrDigit(c) || c == '_');
     }
 
-    private static string CreateEscapedId(string id)
+    private static string CreateEscaped(string part)
     {
-        var stringBuilder = new StringBuilder(id.Length + 2);
+        var stringBuilder = new StringBuilder(part.Length + 2);
         stringBuilder.Append(ThingConstants.PREFIX);
-        stringBuilder.Append(id);
+        stringBuilder.Append(part);
         stringBuilder.Append(ThingConstants.SUFFIX);
 
         return stringBuilder.ToString();
@@ -104,36 +114,41 @@ public partial class Thing
 
     internal string ToWsString()
     {
-        if (_specialRecordIdType == SpecialRecordIdType.JsonObject)
+        if (
+            _specialTableType == SpecialRecordPartType.None
+            && _specialRecordIdType == SpecialRecordPartType.None
+        )
         {
-            string rewrittenId = RewriteJsonObjectId(Id);
-
-            var stringBuilder = new StringBuilder(TableSpan.Length + 1 + rewrittenId.Length);
-            stringBuilder.Append(TableSpan);
-            stringBuilder.Append(ThingConstants.SEPARATOR);
-            stringBuilder.Append(rewrittenId);
-
-            return stringBuilder.ToString();
+            return ToString();
         }
 
-        if (_specialRecordIdType == SpecialRecordIdType.JsonArray)
-        {
-            string rewrittenId = RewriteJsonArrayId(Id);
+        var tablePart = ToWsPart(Table, _specialTableType);
+        var idPart = ToWsPart(Id, _specialRecordIdType);
 
-            var stringBuilder = new StringBuilder(TableSpan.Length + 1 + rewrittenId.Length);
-            stringBuilder.Append(TableSpan);
-            stringBuilder.Append(ThingConstants.SEPARATOR);
-            stringBuilder.Append(rewrittenId);
+        var stringBuilder = new StringBuilder(tablePart.Length + 1 + idPart.Length);
+        stringBuilder.Append(tablePart);
+        stringBuilder.Append(ThingConstants.SEPARATOR);
+        stringBuilder.Append(idPart);
 
-            return stringBuilder.ToString();
-        }
-
-        return ToString();
+        return stringBuilder.ToString();
     }
 
-    private static string RewriteJsonObjectId(string id)
+    private static string ToWsPart(string value, SpecialRecordPartType type)
     {
-        var jsonObject = JObject.Parse(id);
+        switch (type)
+        {
+            case SpecialRecordPartType.JsonObject:
+                return RewriteJsonObjectPart(value);
+            case SpecialRecordPartType.JsonArray:
+                return RewriteJsonArrayPart(value);
+            default:
+                return value;
+        }
+    }
+
+    private static string RewriteJsonObjectPart(string part)
+    {
+        var jsonObject = JObject.Parse(part);
 
         var stringBuilder = new StringBuilder();
         using var writer = new StringWriter(stringBuilder);
@@ -145,9 +160,9 @@ public partial class Thing
         return stringBuilder.ToString();
     }
 
-    private static string RewriteJsonArrayId(string id)
+    private static string RewriteJsonArrayPart(string part)
     {
-        var jsonObject = JArray.Parse(id);
+        var jsonObject = JArray.Parse(part);
 
         var stringBuilder = new StringBuilder();
         using var writer = new StringWriter(stringBuilder);
@@ -157,5 +172,16 @@ public partial class Thing
         jsonObject.WriteTo(jsonTextWriter);
 
         return stringBuilder.ToString();
+    }
+
+    private static bool IsStringEscaped(ReadOnlySpan<char> span)
+    {
+        bool isDefaultEscaped =
+            span[0] == ThingConstants.PREFIX && span[^1] == ThingConstants.SUFFIX;
+        bool isAlternativeEscaped =
+            span[0] == ThingConstants.ALTERNATE_ESCAPE
+            && span[^1] == ThingConstants.ALTERNATE_ESCAPE;
+
+        return isDefaultEscaped || isAlternativeEscaped;
     }
 }

@@ -1,4 +1,4 @@
-namespace SurrealDb.Net.Models;
+﻿namespace SurrealDb.Net.Models;
 
 /// <summary>
 /// Reflects a record ID (that contains both the table name and table id).
@@ -16,12 +16,14 @@ public partial class Thing : IEquatable<Thing>
         if (ReferenceEquals(this, other))
             return true;
 
-        bool isSameTable = TableSpan.SequenceEqual(other.TableSpan);
-
-        if (!isSameTable)
+        if (_isIdEscaped != other._isIdEscaped)
             return false;
 
-        if (_isEscaped != other._isEscaped)
+        if (_isTableEscaped != other._isTableEscaped)
+            return false;
+
+        bool isSameTable = UnescapedTableSpan.SequenceEqual(other.UnescapedTableSpan);
+        if (!isSameTable)
             return false;
 
         bool isSameRecordId = UnescapedIdSpan.SequenceEqual(other.UnescapedIdSpan);
