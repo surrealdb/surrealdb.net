@@ -3,36 +3,18 @@
   <PropertyGroup>
 		<TargetFrameworks>netstandard2.1;net6.0;net7.0;net8.0</TargetFrameworks>
 
+    <IsPackable>true</IsPackable>
     <PackageId>SurrealDb.Reactive</PackageId>
     <Description>Reactive Extensions for the SurrealDB library for .NET</Description>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageProjectUrl>https://github.com/surrealdb/surrealdb.net</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/surrealdb/surrealdb.net</RepositoryUrl>
-    <PackageIcon>icon.png</PackageIcon>
-    <PackageTags>SurrealDB Surreal Database</PackageTags>
-
-    <EnablePackageValidation>true</EnablePackageValidation>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <PackageTags>SurrealDB Surreal Database Reactive Extensions</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="System.Interactive.Async" Version="6.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SurrealDb.Net\SurrealDb.Net.csproj" />
   </ItemGroup>
-
-	<ItemGroup>
-		<None Include="..\README.md" Pack="true" PackagePath="\" />
-		<None Include="..\LICENSE" Pack="true" PackagePath="\" Visible="false" />
-		<None Include="..\img\icon.png" Pack="true" PackagePath="\" Visible="false" />
-	</ItemGroup>
 
 </Project>

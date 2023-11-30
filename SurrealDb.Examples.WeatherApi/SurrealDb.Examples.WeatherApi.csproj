@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
-    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
