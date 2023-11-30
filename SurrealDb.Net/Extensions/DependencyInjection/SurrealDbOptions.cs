@@ -7,7 +7,7 @@ public class SurrealDbOptions
     /// <summary>
     /// Endpoint of the SurrealDB instance.<br /><br />
     /// Examples:<br />
-    /// - http://localhost:8000<br />
+    /// - http://127.0.0.1:8000<br />
     /// - wss://cloud.surrealdb.com
     /// </summary>
     public string? Endpoint { get; internal set; }

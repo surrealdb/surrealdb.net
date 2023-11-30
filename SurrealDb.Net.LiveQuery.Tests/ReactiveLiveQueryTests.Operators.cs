@@ -12,7 +12,7 @@ public class ReactiveOperatorsLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldAggregateRecords()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         List<TestRecord>? records = null;
         int calls = 0;
@@ -101,7 +101,7 @@ public class ReactiveOperatorsLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldScanRecords()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         List<TestRecord>? records = null;
         int calls = 0;

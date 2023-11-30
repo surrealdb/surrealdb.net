@@ -10,7 +10,7 @@ public class LiveTableTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldNotBeSupportedOnHttpProtocol()
     {
-        const string url = "http://localhost:8000";
+        const string url = "http://127.0.0.1:8000";
 
         Func<Task> func = async () =>
         {
@@ -30,7 +30,7 @@ public class LiveTableTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldReceiveData()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var allResults = new List<SurrealDbLiveQueryResponse>();
 
@@ -106,7 +106,7 @@ public class LiveTableTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldReceiveDataInJsonPatchFormat()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var allResults = new List<SurrealDbLiveQueryResponse>();
 

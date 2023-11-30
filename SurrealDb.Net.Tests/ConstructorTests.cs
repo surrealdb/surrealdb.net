@@ -5,10 +5,10 @@ public class ConstructorTests
     [Fact]
     public void ShouldSupportHttpProtocol()
     {
-        Func<Uri> func = () => new SurrealDbClient("http://localhost:8000").Uri;
+        Func<Uri> func = () => new SurrealDbClient("http://127.0.0.1:8000").Uri;
 
         func.Should().NotThrow();
-        func().AbsoluteUri.Should().Be("http://localhost:8000/");
+        func().AbsoluteUri.Should().Be("http://127.0.0.1:8000/");
     }
 
     [Fact]
@@ -23,10 +23,10 @@ public class ConstructorTests
     [Fact]
     public void ShouldSupportWsProtocol()
     {
-        Func<Uri> func = () => new SurrealDbClient("ws://localhost:8000/rpc").Uri;
+        Func<Uri> func = () => new SurrealDbClient("ws://127.0.0.1:8000/rpc").Uri;
 
         func.Should().NotThrow();
-        func().AbsoluteUri.Should().Be("ws://localhost:8000/rpc");
+        func().AbsoluteUri.Should().Be("ws://127.0.0.1:8000/rpc");
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class ConstructorTests
     }
 
     [Theory]
-    [InlineData("localhost:8000", "http://localhost:8000/")]
+    [InlineData("127.0.0.1:8000", "http://127.0.0.1:8000/")]
     [InlineData("localhost:80", "http://localhost/")]
     [InlineData("localhost", "http://localhost/")]
     public void ShouldUseStaticConstructorForHttpProtocol(string host, string expected)
@@ -79,7 +79,7 @@ public class ConstructorTests
     }
 
     [Theory]
-    [InlineData("localhost:8000", "ws://localhost:8000/rpc")]
+    [InlineData("127.0.0.1:8000", "ws://127.0.0.1:8000/rpc")]
     [InlineData("localhost:80", "ws://localhost/rpc")]
     [InlineData("localhost", "ws://localhost/rpc")]
     public void ShouldUseStaticConstructorForWsProtocol(string host, string expected)

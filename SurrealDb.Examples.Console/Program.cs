@@ -3,7 +3,7 @@ using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using System.Text.Json;
 
-var db = new SurrealDbClient("ws://localhost:8000/rpc");
+var db = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
 
 await db.SignIn(new RootAuth { Username = "root", Password = "root" });
 await db.Use("test", "test");
