@@ -12,7 +12,7 @@ public sealed class SurrealDbOkResult : ISurrealDbResult
     /// <summary>
     /// The result value of the query.
     /// </summary>
-    public JsonElement Value { get; } 
+    public JsonElement Value { get; }
 
     /// <summary>
     /// Time taken to execute the query.
@@ -59,8 +59,9 @@ public sealed class SurrealDbOkResult : ISurrealDbResult
     {
         if (Value.ValueKind is not JsonValueKind.Array)
             throw new NotSupportedException(
-                "The query result value is not an array. " +
-                "This can happen if you have used the 'ONLY' keyword in your query.");
+                "The query result value is not an array. "
+                    + "This can happen if you have used the 'ONLY' keyword in your query."
+            );
 
         foreach (var element in Value.EnumerateArray())
         {
