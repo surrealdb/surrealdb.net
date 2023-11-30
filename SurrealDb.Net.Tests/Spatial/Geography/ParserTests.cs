@@ -20,8 +20,8 @@ public class GeographyCollectionRecord : Record<GeographyCollection> { }
 public class ParserTests
 {
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeographyPointFromTuple(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -50,8 +50,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeographyPoint(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -80,8 +80,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeographyLineString(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -117,8 +117,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeographyPolygon(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -171,8 +171,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeographyMultiPoint(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -210,8 +210,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeographyMultiLineString(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -274,8 +274,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeographyMultiPolygon(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -353,8 +353,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeographyCollection(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();

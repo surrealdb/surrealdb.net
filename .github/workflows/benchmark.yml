@@ -1,9 +1,9 @@
 name: Benchmark Workflow
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
 
 jobs:
   action:
@@ -38,3 +38,6 @@ jobs:
           tool: "benchmarkdotnet"
           output-file-path: BenchmarkDotNet.Artifacts/results/Combined.Benchmarks.json
           external-data-json-path: ./cache/benchmark-data.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment-on-alert: true
+          summary-always: true

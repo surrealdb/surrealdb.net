@@ -30,8 +30,8 @@ public class ObjectTableId
 public class SelectTests
 {
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldSelectFromEmptyTable(string url)
     {
         IEnumerable<Empty>? result = null;
@@ -54,8 +54,8 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldSelectFromPostTable(string url)
     {
         IEnumerable<Post>? result = null;
@@ -105,8 +105,8 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldSelectSinglePostUsingTwoArguments(string url)
     {
         Post? result = null;
@@ -142,8 +142,8 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldSelectSinglePostUsingThing(string url)
     {
         Post? result = null;
@@ -181,8 +181,8 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldSelectSingleFromNumberId(string url)
     {
         RecordIdRecord? result = null;
@@ -217,8 +217,8 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldSelectSingleFromStringId(string url)
     {
         RecordIdRecord? result = null;
@@ -253,8 +253,8 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldSelectSingleFromGuidId(string url)
     {
         RecordIdRecord? result = null;
@@ -289,8 +289,8 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldSelectSingleFromObjectId(string url)
     {
         RecordIdRecord? result = null;
@@ -325,8 +325,8 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldSelectSingleFromArrayId(string url)
     {
         RecordIdRecord? result = null;

@@ -10,7 +10,7 @@ public class KillLiveQueryTests
     [Fact]
     public async Task ShouldAutomaticallyKillLiveQueryWhenDisposed()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -55,7 +55,7 @@ public class KillLiveQueryTests
     [Fact]
     public async Task ShouldManuallyKillLiveQuery()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();

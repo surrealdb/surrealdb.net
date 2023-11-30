@@ -57,19 +57,19 @@ public class SelectBench : BaseBenchmark
     }
 
     [Benchmark]
-    public Task<IEnumerable<Post>> Http()
+    public Task<List<Post>> Http()
     {
         return Run(_surrealdbHttpClient!);
     }
 
     [Benchmark]
-    public Task<IEnumerable<Post>> HttpWithClientFactory()
+    public Task<List<Post>> HttpWithClientFactory()
     {
         return Run(_surrealdbHttpClientWithHttpClientFactory!);
     }
 
     [Benchmark]
-    public Task<IEnumerable<Post>> WsText()
+    public Task<List<Post>> WsText()
     {
         return Run(_surrealdbWsTextClient!);
     }
@@ -80,8 +80,9 @@ public class SelectBench : BaseBenchmark
         throw new NotImplementedException();
     }
 
-    private static Task<IEnumerable<Post>> Run(ISurrealDbClient surrealDbClient)
+    private static async Task<List<Post>> Run(ISurrealDbClient surrealDbClient)
     {
-        return surrealDbClient.Select<Post>("post");
+        var result = await surrealDbClient.Select<Post>("post");
+        return result.ToList();
     }
 }

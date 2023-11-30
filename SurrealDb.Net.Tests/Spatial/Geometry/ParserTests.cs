@@ -20,8 +20,8 @@ public class GeometryCollectionRecord : Record<GeometryCollection> { }
 public class ParserTests
 {
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeometryPointFromTuple(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -50,8 +50,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeometryPoint(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -80,8 +80,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeometryLineString(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -117,8 +117,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeometryPolygon(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -171,8 +171,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeometryMultiPoint(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -210,8 +210,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeometryMultiLineString(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -274,8 +274,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeometryMultiPolygon(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -353,8 +353,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldParseGeometryCollection(string url)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();

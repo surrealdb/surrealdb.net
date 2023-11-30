@@ -1,4 +1,4 @@
-namespace SurrealDb.Net.Tests.Models;
+﻿namespace SurrealDb.Net.Tests.Models;
 
 public class OperatorsThingTests
 {
@@ -16,6 +16,9 @@ public class OperatorsThingTests
             { new Thing("table", "⟨42⟩"), new Thing("table", "⟨42⟩"), true },
             { new Thing("table", "⟨42⟩"), new Thing("table", "42"), false },
             { new Thing("table", "⟨42⟩"), new Thing("table", "`42`"), true },
+            { new Thing("⟨42⟩", "id"), new Thing("⟨42⟩", "id"), true },
+            { new Thing("⟨42⟩", "id"), new Thing("42", "id"), false },
+            { new Thing("⟨42⟩", "id"), new Thing("`42`", "id"), true },
         };
 
     [Theory]

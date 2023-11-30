@@ -1,4 +1,4 @@
-using SurrealDb.Net.Internals.Constants;
+﻿using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Models;
 using System.Text;
 
@@ -20,12 +20,40 @@ public partial class Thing
     public Thing(string thing)
     {
         _raw = thing.AsMemory();
+
+        char firstChar = _raw.Span[0];
+
+        char? expectedTableSuffix = firstChar switch
+        {
+            ThingConstants.PREFIX => ThingConstants.SUFFIX,
+            ThingConstants.ALTERNATE_ESCAPE => ThingConstants.ALTERNATE_ESCAPE,
+            _ => null
+        };
+
+        if (expectedTableSuffix.HasValue)
+        {
+            int suffixIndex = _raw.Span[1..].IndexOf(expectedTableSuffix.Value) + 1;
+            if (suffixIndex > 0)
+            {
+                _separatorIndex =
+                    _raw.Span[suffixIndex..].IndexOf(ThingConstants.SEPARATOR) + suffixIndex;
+
+                if (_separatorIndex <= suffixIndex)
+                    throw new ArgumentException("Cannot detect separator on Thing", nameof(thing));
+
+                _isTableEscaped = true;
+                _isIdEscaped = IsStringEscaped(thing.AsSpan(_separatorIndex + 1));
+                return;
+            }
+        }
+
         _separatorIndex = _raw.Span.IndexOf(ThingConstants.SEPARATOR);
 
         if (_separatorIndex <= 0)
             throw new ArgumentException("Cannot detect separator on Thing", nameof(thing));
 
-        _isEscaped = IsIdEscaped(thing.AsSpan(_separatorIndex + 1));
+        _isTableEscaped = IsStringEscaped(thing.AsSpan(0, _separatorIndex));
+        _isIdEscaped = IsStringEscaped(thing.AsSpan(_separatorIndex + 1));
     }
 
     /// <summary>
@@ -44,27 +72,19 @@ public partial class Thing
 
         _raw = stringBuilder.ToString().AsMemory();
         _separatorIndex = table.Length;
-        _isEscaped = IsIdEscaped(id);
+        _isTableEscaped = IsStringEscaped(table);
+        _isIdEscaped = IsStringEscaped(id);
     }
 
     internal Thing(
         ReadOnlySpan<char> table,
+        SpecialRecordPartType specialTableType,
         ReadOnlySpan<char> id,
-        SpecialRecordIdType specialRecordIdType
+        SpecialRecordPartType specialRecordIdType
     )
         : this(table, id)
     {
+        _specialTableType = specialTableType;
         _specialRecordIdType = specialRecordIdType;
-    }
-
-    private static bool IsIdEscaped(ReadOnlySpan<char> idSpan)
-    {
-        bool isDefaultEscaped =
-            idSpan[0] == ThingConstants.PREFIX && idSpan[^1] == ThingConstants.SUFFIX;
-        bool isAlternativeEscaped =
-            idSpan[0] == ThingConstants.ALTERNATE_ESCAPE
-            && idSpan[^1] == ThingConstants.ALTERNATE_ESCAPE;
-
-        return isDefaultEscaped || isAlternativeEscaped;
     }
 }

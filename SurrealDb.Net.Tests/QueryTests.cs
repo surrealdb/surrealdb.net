@@ -8,8 +8,8 @@ namespace SurrealDb.Net.Tests;
 public class QueryTests
 {
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldQueryWithParams(string url)
     {
         SurrealDbResponse? response = null;
@@ -59,8 +59,8 @@ public class QueryTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldHaveOneProtocolErrorResult(string url)
     {
         bool isWebsocket = url.StartsWith("ws://", StringComparison.OrdinalIgnoreCase);
@@ -134,8 +134,8 @@ public class QueryTests
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldHave4Results(string url)
     {
         SurrealDbResponse? response = null;
@@ -181,8 +181,8 @@ SELECT xyz FROM post;
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldIterateOnOkResults(string url)
     {
         SurrealDbResponse? response = null;
@@ -231,8 +231,8 @@ CANCEL TRANSACTION;
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldIterateOnErrorResults(string url)
     {
         SurrealDbResponse? response = null;
@@ -281,8 +281,8 @@ CANCEL TRANSACTION;
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldReturnFirstOkResult(string url)
     {
         SurrealDbResponse? response = null;
@@ -331,8 +331,8 @@ CANCEL TRANSACTION;
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldReturnFirstError(string url)
     {
         SurrealDbResponse? response = null;
@@ -381,8 +381,8 @@ CANCEL TRANSACTION;
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldHaveError(string url)
     {
         SurrealDbResponse? response = null;
@@ -431,8 +431,8 @@ CANCEL TRANSACTION;
     }
 
     [Theory]
-    [InlineData("http://localhost:8000")]
-    [InlineData("ws://localhost:8000/rpc")]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldGetValueFromIndex(string url)
     {
         SurrealDbResponse? response = null;

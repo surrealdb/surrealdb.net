@@ -11,7 +11,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldLiveQueryReceiveCreatedRecord()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var results = new List<SurrealDbLiveQueryResponse>();
 
@@ -64,22 +64,24 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
         await func.Should().NotThrowAsync();
 
-        results.Should().HaveCount(1);
+        results.Should().HaveCount(2);
 
-        var firstResult = results.First();
+        var firstResult = results[0];
+        firstResult.Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
 
-        firstResult.Should().BeOfType<SurrealDbLiveQueryCreateResponse<TestRecord>>();
+        var secondResult = results[1];
+        secondResult.Should().BeOfType<SurrealDbLiveQueryCreateResponse<TestRecord>>();
 
-        var firstResultAsSurrealDbLiveQueryResultResponse =
-            (SurrealDbLiveQueryCreateResponse<TestRecord>)firstResult;
+        var secondResultAsSurrealDbLiveQueryResultResponse =
+            (SurrealDbLiveQueryCreateResponse<TestRecord>)secondResult;
 
-        firstResultAsSurrealDbLiveQueryResultResponse.Result.Value.Should().Be(1);
+        secondResultAsSurrealDbLiveQueryResultResponse.Result.Value.Should().Be(1);
     }
 
     [Fact]
     public async Task ShouldLiveQueryReceiveUpdatedRecord()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var results = new List<SurrealDbLiveQueryResponse>();
 
@@ -134,22 +136,24 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
         await func.Should().NotThrowAsync();
 
-        results.Should().HaveCount(1);
+        results.Should().HaveCount(2);
 
-        var firstResult = results.First();
+        var firstResult = results[0];
+        firstResult.Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
 
-        firstResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<TestRecord>>();
+        var secondResult = results[1];
+        secondResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<TestRecord>>();
 
-        var firstResultAsSurrealDbLiveQueryResultResponse =
-            (SurrealDbLiveQueryUpdateResponse<TestRecord>)firstResult;
+        var secondResultAsSurrealDbLiveQueryResultResponse =
+            (SurrealDbLiveQueryUpdateResponse<TestRecord>)secondResult;
 
-        firstResultAsSurrealDbLiveQueryResultResponse.Result.Value.Should().Be(2);
+        secondResultAsSurrealDbLiveQueryResultResponse.Result.Value.Should().Be(2);
     }
 
     [Fact]
     public async Task ShouldLiveQueryReceiveDeletedRecord()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var results = new List<SurrealDbLiveQueryResponse>();
 
@@ -206,22 +210,24 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
         await func.Should().NotThrowAsync();
 
-        results.Should().HaveCount(1);
+        results.Should().HaveCount(2);
 
-        var firstResult = results.First();
+        var firstResult = results[0];
+        firstResult.Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
 
-        firstResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
+        var secondResult = results[1];
+        secondResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
 
-        var firstResultAsSurrealDbLiveQueryResultResponse =
-            (SurrealDbLiveQueryDeleteResponse)firstResult;
+        var secondResultAsSurrealDbLiveQueryResultResponse =
+            (SurrealDbLiveQueryDeleteResponse)secondResult;
 
-        firstResultAsSurrealDbLiveQueryResultResponse.Result.Should().Be(record!.Id);
+        secondResultAsSurrealDbLiveQueryResultResponse.Result.Should().Be(record!.Id);
     }
 
     [Fact]
     public async Task ShouldLiveQueryReceiveSocketClosed()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var results = new List<SurrealDbLiveQueryResponse>();
 
@@ -278,16 +284,18 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
         await func.Should().NotThrowAsync();
 
-        results.Should().HaveCount(1);
+        results.Should().HaveCount(2);
 
-        var firstResult = results.First();
+        var firstResult = results[0];
+        firstResult.Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
 
-        firstResult.Should().BeOfType<SurrealDbLiveQueryCloseResponse>();
+        var secondResult = results[1];
+        secondResult.Should().BeOfType<SurrealDbLiveQueryCloseResponse>();
 
-        var firstResultAsSurrealDbLiveQueryCloseResponse =
-            (SurrealDbLiveQueryCloseResponse)firstResult;
+        var secondResultAsSurrealDbLiveQueryResultResponse =
+            (SurrealDbLiveQueryCloseResponse)secondResult;
 
-        firstResultAsSurrealDbLiveQueryCloseResponse.Reason
+        secondResultAsSurrealDbLiveQueryResultResponse.Reason
             .Should()
             .Be(SurrealDbLiveQueryClosureReason.SocketClosed);
     }
@@ -295,7 +303,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldLiveQueryReceiveQueryKilled()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var results = new List<SurrealDbLiveQueryResponse>();
 
@@ -352,16 +360,18 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
         await func.Should().NotThrowAsync();
 
-        results.Should().HaveCount(1);
+        results.Should().HaveCount(2);
 
-        var firstResult = results.First();
+        var firstResult = results[0];
+        firstResult.Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
 
-        firstResult.Should().BeOfType<SurrealDbLiveQueryCloseResponse>();
+        var secondResult = results[1];
+        secondResult.Should().BeOfType<SurrealDbLiveQueryCloseResponse>();
 
-        var firstResultAsSurrealDbLiveQueryCloseResponse =
-            (SurrealDbLiveQueryCloseResponse)firstResult;
+        var secondResultAsSurrealDbLiveQueryResultResponse =
+            (SurrealDbLiveQueryCloseResponse)secondResult;
 
-        firstResultAsSurrealDbLiveQueryCloseResponse.Reason
+        secondResultAsSurrealDbLiveQueryResultResponse.Reason
             .Should()
             .Be(SurrealDbLiveQueryClosureReason.QueryKilled);
     }

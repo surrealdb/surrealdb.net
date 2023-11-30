@@ -12,7 +12,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldObserveQuery()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var allResults = new List<SurrealDbLiveQueryResponse>();
 
@@ -29,44 +29,70 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             cts.CancelAfter(Timeout);
 
             var testScheduler = new TestScheduler();
+            var completionSource = new TaskCompletionSource<bool>();
 
-            using var _ = client
+            cts.Token.Register(() =>
+            {
+                completionSource.TrySetCanceled();
+            });
+
+            var coldObservable = client
                 .ObserveQuery<TestRecord>("LIVE SELECT * FROM test;")
-                .SubscribeOn(testScheduler)
-                .Subscribe(allResults.Add);
+                .Publish()
+                .RefCount();
 
-            await WaitLiveQueryCreationAsync(5);
+            using var _ = coldObservable.SubscribeOn(testScheduler).Subscribe(allResults.Add);
+
+            using var __ = coldObservable
+                .OfType<SurrealDbLiveQueryOpenResponse>()
+                .Take(1)
+                .Select(
+                    _ =>
+                        Observable.FromAsync(async () =>
+                        {
+                            var record = await client.Create("test", new TestRecord { Value = 1 });
+                            await WaitLiveQueryNotificationAsync();
+
+                            await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
+                            await WaitLiveQueryNotificationAsync();
+
+                            await client.Delete(record.Id!);
+                            await WaitLiveQueryNotificationAsync();
+                        })
+                )
+                .Merge()
+                .SubscribeOn(testScheduler)
+                .Subscribe(_ =>
+                {
+                    completionSource.SetResult(true);
+                });
 
             testScheduler.Start();
 
-            var record = await client.Create("test", new TestRecord { Value = 1 });
-            await WaitLiveQueryNotificationAsync();
-
-            await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
-            await WaitLiveQueryNotificationAsync();
-
-            await client.Delete(record.Id!);
-            await WaitLiveQueryNotificationAsync();
+            await completionSource.Task;
         };
 
         await func.Should().NotThrowAsync();
 
-        allResults.Should().HaveCount(3);
+        allResults.Should().HaveCount(4);
 
         var firstResult = allResults[0];
-        firstResult.Should().BeOfType<SurrealDbLiveQueryCreateResponse<TestRecord>>();
+        firstResult.Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
 
         var secondResult = allResults[1];
-        secondResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<TestRecord>>();
+        secondResult.Should().BeOfType<SurrealDbLiveQueryCreateResponse<TestRecord>>();
 
         var thirdResult = allResults[2];
-        thirdResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
+        thirdResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<TestRecord>>();
+
+        var lastResult = allResults[3];
+        lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
     }
 
     [Fact]
     public async Task ShouldObserveTable()
     {
-        const string url = "ws://localhost:8000/rpc";
+        const string url = "ws://127.0.0.1:8000/rpc";
 
         var allResults = new List<SurrealDbLiveQueryResponse>();
 
@@ -83,37 +109,60 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             cts.CancelAfter(Timeout);
 
             var testScheduler = new TestScheduler();
+            var completionSource = new TaskCompletionSource<bool>();
 
-            using var _ = client
-                .ObserveTable<TestRecord>("test")
+            cts.Token.Register(() =>
+            {
+                completionSource.TrySetCanceled();
+            });
+
+            var coldObservable = client.ObserveTable<TestRecord>("test").Publish().RefCount();
+
+            using var _ = coldObservable.SubscribeOn(testScheduler).Subscribe(allResults.Add);
+
+            using var __ = coldObservable
+                .OfType<SurrealDbLiveQueryOpenResponse>()
+                .Take(1)
+                .Select(
+                    _ =>
+                        Observable.FromAsync(async () =>
+                        {
+                            var record = await client.Create("test", new TestRecord { Value = 1 });
+                            await WaitLiveQueryNotificationAsync();
+
+                            await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
+                            await WaitLiveQueryNotificationAsync();
+
+                            await client.Delete(record.Id!);
+                            await WaitLiveQueryNotificationAsync();
+                        })
+                )
+                .Merge()
                 .SubscribeOn(testScheduler)
-                .Subscribe(allResults.Add);
-
-            await WaitLiveQueryCreationAsync(5);
+                .Subscribe(_ =>
+                {
+                    completionSource.SetResult(true);
+                });
 
             testScheduler.Start();
 
-            var record = await client.Create("test", new TestRecord { Value = 1 });
-            await WaitLiveQueryNotificationAsync();
-
-            await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
-            await WaitLiveQueryNotificationAsync();
-
-            await client.Delete(record.Id!);
-            await WaitLiveQueryNotificationAsync();
+            await completionSource.Task;
         };
 
         await func.Should().NotThrowAsync();
 
-        allResults.Should().HaveCount(3);
+        allResults.Should().HaveCount(4);
 
         var firstResult = allResults[0];
-        firstResult.Should().BeOfType<SurrealDbLiveQueryCreateResponse<TestRecord>>();
+        firstResult.Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
 
         var secondResult = allResults[1];
-        secondResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<TestRecord>>();
+        secondResult.Should().BeOfType<SurrealDbLiveQueryCreateResponse<TestRecord>>();
 
         var thirdResult = allResults[2];
-        thirdResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
+        thirdResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<TestRecord>>();
+
+        var lastResult = allResults[3];
+        lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
     }
 }
