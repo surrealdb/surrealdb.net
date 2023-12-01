@@ -1,18 +1,18 @@
 ﻿using System.Text;
+using SurrealDb.Net.Internals.Json;
+using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.Tests;
 
-public class UpdateAllTests
+public class PatchAllTests
 {
     [Theory]
     [InlineData("http://127.0.0.1:8000")]
     [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldUpdateAllRecords(string url)
+    public async Task ShouldPatchAllRecords(string url)
     {
         IEnumerable<Post>? list = null;
         IEnumerable<Post>? results = null;
-
-        var now = DateTime.UtcNow;
 
         Func<Task> func = async () =>
         {
@@ -32,34 +32,30 @@ public class UpdateAllTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
 
-            var postUpdate = new Post
+            var jsonPatchDocument = new JsonPatchDocument<Post>
             {
-                Title = "# Title",
-                Content = "# Content",
-                CreatedAt = now,
-                Status = "PUBLISHED"
+                Options = SurrealDbSerializerOptions.Default
             };
+            jsonPatchDocument.Replace(x => x.Content, "[Edit] Oops");
 
             list = await client.Select<Post>("post");
 
-            results = await client.UpdateAll("post", postUpdate);
+            results = await client.PatchAll("post", jsonPatchDocument);
         };
 
         await func.Should().NotThrowAsync();
 
         list.Should().NotBeNull().And.HaveCount(2);
 
-        results.Should().NotBeNull();
-
         var expected = list!.Select(
             item =>
                 new Post
                 {
                     Id = item.Id,
-                    Title = "# Title",
-                    Content = "# Content",
-                    CreatedAt = now,
-                    Status = "PUBLISHED",
+                    Title = item.Title,
+                    Content = "[Edit] Oops",
+                    CreatedAt = item.CreatedAt,
+                    Status = item.Status,
                 }
         );
 

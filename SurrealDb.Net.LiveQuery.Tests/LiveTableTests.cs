@@ -1,7 +1,7 @@
 ﻿using SurrealDb.Net.LiveQuery.Tests.Abstract;
 using SurrealDb.Net.LiveQuery.Tests.Models;
 using SurrealDb.Net.Models.LiveQuery;
-using JsonPatchOperations = System.Collections.Immutable.IImmutableList<Microsoft.AspNetCore.JsonPatch.Operations.Operation>;
+using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.LiveQuery.Tests;
 
@@ -119,7 +119,7 @@ public class LiveTableTests : BaseLiveQueryTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            var liveQuery = await client.LiveTable<JsonPatchOperations>("test", true);
+            var liveQuery = await client.LiveTable<JsonPatchDocument<TestRecord>>("test", true);
 
             var cts = new CancellationTokenSource();
 
@@ -167,10 +167,14 @@ public class LiveTableTests : BaseLiveQueryTests
         firstResult.Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
 
         var secondResult = allResults[1];
-        secondResult.Should().BeOfType<SurrealDbLiveQueryCreateResponse<JsonPatchOperations>>();
+        secondResult
+            .Should()
+            .BeOfType<SurrealDbLiveQueryCreateResponse<JsonPatchDocument<TestRecord>>>();
 
         var thirdResult = allResults[2];
-        thirdResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<JsonPatchOperations>>();
+        thirdResult
+            .Should()
+            .BeOfType<SurrealDbLiveQueryUpdateResponse<JsonPatchDocument<TestRecord>>>();
 
         var fourthResult = allResults[3];
         fourthResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();

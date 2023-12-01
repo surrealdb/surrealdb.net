@@ -1,18 +1,18 @@
 ﻿using System.Text;
+using SurrealDb.Net.Internals.Json;
+using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.Tests;
 
-public class UpdateAllTests
+public class PatchTests
 {
     [Theory]
     [InlineData("http://127.0.0.1:8000")]
     [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldUpdateAllRecords(string url)
+    public async Task ShouldPatchExistingPost(string url)
     {
         IEnumerable<Post>? list = null;
-        IEnumerable<Post>? results = null;
-
-        var now = DateTime.UtcNow;
+        Post? result = null;
 
         Func<Task> func = async () =>
         {
@@ -32,37 +32,27 @@ public class UpdateAllTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
 
-            var postUpdate = new Post
+            var jsonPatchDocument = new JsonPatchDocument<Post>
             {
-                Title = "# Title",
-                Content = "# Content",
-                CreatedAt = now,
-                Status = "PUBLISHED"
+                Options = SurrealDbSerializerOptions.Default
             };
+            jsonPatchDocument.Replace(x => x.Content, "[Edit] This is my first article");
+
+            var thing = new Thing("post", "first");
+
+            result = await client.Patch(thing, jsonPatchDocument);
 
             list = await client.Select<Post>("post");
-
-            results = await client.UpdateAll("post", postUpdate);
         };
 
         await func.Should().NotThrowAsync();
 
         list.Should().NotBeNull().And.HaveCount(2);
 
-        results.Should().NotBeNull();
-
-        var expected = list!.Select(
-            item =>
-                new Post
-                {
-                    Id = item.Id,
-                    Title = "# Title",
-                    Content = "# Content",
-                    CreatedAt = now,
-                    Status = "PUBLISHED",
-                }
-        );
-
-        results.Should().BeEquivalentTo(expected);
+        result.Should().NotBeNull();
+        result!.Title.Should().Be("First article");
+        result!.Content.Should().Be("[Edit] This is my first article");
+        result!.CreatedAt.Should().NotBeNull();
+        result!.Status.Should().Be("DRAFT");
     }
 }
