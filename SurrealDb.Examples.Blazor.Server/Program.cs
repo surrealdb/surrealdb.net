@@ -2,10 +2,14 @@ using SurrealDb.Examples.Blazor.Server.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var services = builder.Services;
+var configuration = builder.Configuration;
+
 // Add services to the container.
-builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
-builder.Services.AddSingleton<WeatherForecastService>();
+services.AddRazorPages();
+services.AddServerSideBlazor();
+services.AddSurreal(configuration.GetConnectionString("SurrealDB")!);
+services.AddSingleton<WeatherForecastService>();
 
 var app = builder.Build();
 

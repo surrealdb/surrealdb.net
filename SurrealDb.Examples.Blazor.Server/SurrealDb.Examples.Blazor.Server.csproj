@@ -4,4 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SurrealDb.Net\SurrealDb.Net.csproj" />
+  </ItemGroup>
+
 </Project>

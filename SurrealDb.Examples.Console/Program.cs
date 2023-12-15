@@ -6,7 +6,7 @@ using System.Text.Json;
 var db = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
 
 await db.SignIn(new RootAuth { Username = "root", Password = "root" });
-await db.Use("test", "test");
+await db.Use("examples", "console");
 
 var person = new Person
 {
