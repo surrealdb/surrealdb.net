@@ -1,6 +1,6 @@
 ﻿@page "/counter"
+@using SurrealDb.Examples.Blazor.Server.Models
 @using SurrealDb.Net
-@using SurrealDb.Examples.Blazor.Server.Data
 @inject SurrealDbClient Client
 
 <PageTitle>Counter</PageTitle>
@@ -8,7 +8,7 @@
 <h1>Counter</h1>
 
 <p class="description">
-    This page displays a counter with increment/decrement actions.
+    This component displays a counter with increment/decrement actions.
     Each counter is stored in a single SurrealDB record and each action triggers a query to the remote SurrealDB instance.
 </p>
 

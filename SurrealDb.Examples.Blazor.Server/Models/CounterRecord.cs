@@ -1,6 +1,6 @@
 ﻿using SurrealDb.Net.Models;
 
-namespace SurrealDb.Examples.Blazor.Server.Data;
+namespace SurrealDb.Examples.Blazor.Server.Models;
 
 public class CounterRecord : Record
 {

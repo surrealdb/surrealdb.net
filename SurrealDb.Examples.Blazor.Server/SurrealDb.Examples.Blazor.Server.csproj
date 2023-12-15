@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Bogus" Version="34.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SurrealDb.Net\SurrealDb.Net.csproj" />
   </ItemGroup>
 

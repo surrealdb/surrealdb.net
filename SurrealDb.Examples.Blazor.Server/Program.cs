@@ -1,4 +1,5 @@
-using SurrealDb.Examples.Blazor.Server.Data;
+using SurrealDb.Examples.Blazor.Server.Models;
+using SurrealDb.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,7 +10,6 @@ var configuration = builder.Configuration;
 services.AddRazorPages();
 services.AddServerSideBlazor();
 services.AddSurreal(configuration.GetConnectionString("SurrealDB")!);
-services.AddSingleton<WeatherForecastService>();
 
 var app = builder.Build();
 
@@ -30,4 +30,24 @@ app.UseRouting();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
+_ = Task.Run(async () =>
+{
+    await InitializeDbAsync(app.Services);
+});
+
 app.Run();
+
+async Task InitializeDbAsync(IServiceProvider serviceProvider)
+{
+    using var scope = serviceProvider.CreateScope();
+
+    const int initialCount = 5;
+    var weatherForecasts = new WeatherForecastFaker().Generate(initialCount);
+    var surrealDbClient = scope.ServiceProvider.GetRequiredService<ISurrealDbClient>();
+
+    var tasks = weatherForecasts.Select(
+        weatherForecast => surrealDbClient.Create(WeatherForecast.Table, weatherForecast)
+    );
+
+    await Task.WhenAll(tasks);
+}

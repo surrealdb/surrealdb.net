@@ -1,12 +1,16 @@
 ﻿@page "/fetchdata"
-@using SurrealDb.Examples.Blazor.Server.Data
-@inject WeatherForecastService ForecastService
+@using SurrealDb.Examples.Blazor.Server.Models
+@using SurrealDb.Net
+@inject SurrealDbClient Client
 
-<PageTitle>Weather forecast</PageTitle>
+<PageTitle>Weather forecast - Fetch</PageTitle>
 
-<h1>Weather forecast</h1>
+<h1>Weather forecast - Fetch</h1>
 
-<p>This component demonstrates fetching data from a service.</p>
+<p class="description">
+    This component demonstrates fetching data from a SurrealDB instance.
+    Data is fetched only once, when the page is loaded.
+</p>
 
 @if (forecasts == null)
 {
@@ -18,6 +22,7 @@ else
         <thead>
             <tr>
                 <th>Date</th>
+                <th>Country</th>
                 <th>Temp. (C)</th>
                 <th>Temp. (F)</th>
                 <th>Summary</th>
@@ -27,7 +32,8 @@ else
             @foreach (var forecast in forecasts)
             {
                 <tr>
-                    <td>@forecast.Date.ToShortDateString()</td>
+                    <td>@forecast.Date</td>
+                    <td>@forecast.Country</td>
                     <td>@forecast.TemperatureC</td>
                     <td>@forecast.TemperatureF</td>
                     <td>@forecast.Summary</td>
@@ -38,10 +44,13 @@ else
 }
 
 @code {
-    private WeatherForecast[]? forecasts;
+    private IEnumerable<WeatherForecast>? forecasts;
+    private const int LIMIT = 5;
 
     protected override async Task OnInitializedAsync()
     {
-        forecasts = await ForecastService.GetForecastAsync(DateOnly.FromDateTime(DateTime.Now));
+        var response = await Client.Query($"SELECT * FROM {WeatherForecast.Table} ORDER BY date DESC LIMIT {LIMIT};");
+
+        forecasts = response.FirstOk!.GetValues<WeatherForecast>();
     }
 }
