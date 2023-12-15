@@ -1,3 +1,4 @@
+using SurrealDb.Examples.Blazor.Server.Background;
 using SurrealDb.Examples.Blazor.Server.Models;
 using SurrealDb.Net;
 
@@ -10,6 +11,7 @@ var configuration = builder.Configuration;
 services.AddRazorPages();
 services.AddServerSideBlazor();
 services.AddSurreal(configuration.GetConnectionString("SurrealDB")!);
+services.AddHostedService<WeatherForecastHostedService>();
 
 var app = builder.Build();
 

@@ -1,17 +1,17 @@
-﻿@page "/fetch"
+@page "/live"
 @using SurrealDb.Examples.Blazor.Server.Models
 @using SurrealDb.Net
 @using SurrealDb.Examples.Blazor.Server.Constants
 @inject SurrealDbClient Client
 
-<PageTitle>Weather forecast - Fetch</PageTitle>
+<PageTitle>Weather forecast - Live</PageTitle>
 
-<h1>Weather forecast - Fetch</h1>
+<h1>Weather forecast - Live</h1>
 
 <p class="description">
-    This component demonstrates fetching data from a SurrealDB instance.
-    Data is fetched only once, when the page is loaded.
-    This behavior can be distinguished with the live data example on <NavLink href="live">this page</NavLink>.
+    This component demonstrates how to display live data from a SurrealDB instance, using Live Query.
+    Data is fetched when the page is loaded and updated in realtime as soon as a new weather forecast is created.
+    This behavior can be distinguished with the fetch once data example on <NavLink href="fetch">this page</NavLink>.
 </p>
 
 @if (forecasts == null)
@@ -52,7 +52,16 @@ else
     {
         string query = $"SELECT * FROM {WeatherForecast.Table} ORDER BY date DESC LIMIT {QueryConstants.WEATHER_FORECAST_LIMIT};";
         var response = await Client.Query(query);
-        
+
         forecasts = response.FirstOk!.GetValues<WeatherForecast>();
+        StateHasChanged();
+
+        var liveQuery = await Client.LiveTable<WeatherForecast>(WeatherForecast.Table);
+        
+        await foreach (var record in liveQuery.GetCreatedRecords())
+        {
+            forecasts = new[] { record }.Concat(forecasts).Take(QueryConstants.WEATHER_FORECAST_LIMIT);
+            StateHasChanged();
+        }
     }
 }
