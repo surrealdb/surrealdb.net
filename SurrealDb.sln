@@ -35,6 +35,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Benchmarks", "Benchmarks", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.Net.LocalBenchmarks", "SurrealDb.Net.LocalBenchmarks\SurrealDb.Net.LocalBenchmarks.csproj", "{493922BA-D744-432A-A4E0-35C4D8DB1D16}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.Examples.Blazor.Server", "SurrealDb.Examples.Blazor.Server\SurrealDb.Examples.Blazor.Server.csproj", "{8F9561AA-670D-47D4-BB60-EDD893D93950}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +79,10 @@ Global
 		{493922BA-D744-432A-A4E0-35C4D8DB1D16}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{493922BA-D744-432A-A4E0-35C4D8DB1D16}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{493922BA-D744-432A-A4E0-35C4D8DB1D16}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F9561AA-670D-47D4-BB60-EDD893D93950}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F9561AA-670D-47D4-BB60-EDD893D93950}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F9561AA-670D-47D4-BB60-EDD893D93950}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F9561AA-670D-47D4-BB60-EDD893D93950}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -91,6 +97,7 @@ Global
 		{8A61723E-3341-4F38-9D93-13777E8D5566} = {0137C76C-4DE9-4846-B62A-02F40E3479B5}
 		{A91F00A2-2843-4036-BAFE-169954B57593} = {C96942BD-CC4A-48C1-BC4D-54FB6EC5C168}
 		{493922BA-D744-432A-A4E0-35C4D8DB1D16} = {2AA621E5-D78A-4710-9C77-48B305A67928}
+		{8F9561AA-670D-47D4-BB60-EDD893D93950} = {A83E82FA-2AD7-45FA-A949-9EFA5865D7AE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {70C100EF-E131-45C0-9515-02FC4823BA20}
