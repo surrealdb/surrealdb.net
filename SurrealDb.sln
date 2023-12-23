@@ -35,7 +35,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Benchmarks", "Benchmarks", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.Net.LocalBenchmarks", "SurrealDb.Net.LocalBenchmarks\SurrealDb.Net.LocalBenchmarks.csproj", "{493922BA-D744-432A-A4E0-35C4D8DB1D16}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.Examples.Blazor.Server", "SurrealDb.Examples.Blazor.Server\SurrealDb.Examples.Blazor.Server.csproj", "{8F9561AA-670D-47D4-BB60-EDD893D93950}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Examples.Blazor.Server", "SurrealDb.Examples.Blazor.Server\SurrealDb.Examples.Blazor.Server.csproj", "{8F9561AA-670D-47D4-BB60-EDD893D93950}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

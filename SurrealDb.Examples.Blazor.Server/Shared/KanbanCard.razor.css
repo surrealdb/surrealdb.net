@@ -1,0 +1,22 @@
+﻿.card {
+    border: 1px solid lightgray;
+    border-radius: 8px;
+    padding: 16px;
+    position: relative;
+}
+
+.card-title {
+    font-weight: bold;
+    margin: 0;
+}
+
+.card-due-date {
+    font-size: 12px;
+}
+
+.btn-remove-task {
+    position: absolute;
+    right: 12px;
+    font-size: 14px;
+    padding: 8px 6px 8px 8px;
+}

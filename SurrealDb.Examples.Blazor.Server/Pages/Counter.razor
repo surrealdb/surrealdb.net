@@ -14,7 +14,7 @@
 
 <div class="counter-container">
     <h5>Counter <code>default</code></h5>
-    <div class="counter-value">@currentCount</div>
+    <div class="counter-value">@_currentCount</div>
     
     <div class="actions-container">
         <button class="btn btn-primary" @onclick="DecrementCountAsync">-</button>
@@ -23,12 +23,12 @@
 </div>
 
 @code {
-    private int currentCount;
+    private int _currentCount;
     
     protected override async Task OnInitializedAsync()
     {
         var record = await Client.Select<CounterRecord>("counter", "default");
-        currentCount = record?.Value ?? 0;
+        _currentCount = record?.Value ?? 0;
     }
 
     private async Task DecrementCountAsync()
@@ -36,7 +36,7 @@
         var response = await Client.Query("UPDATE counter:default SET value -= 1;");
 
         var record = response.FirstOk!.GetValues<CounterRecord>().Single();
-        currentCount = record.Value;
+        _currentCount = record.Value;
     }
 
     private async Task IncrementCountAsync()
@@ -44,6 +44,6 @@
         var response = await Client.Query("UPDATE counter:default SET value += 1;");
         
         var record = response.FirstOk!.GetValues<CounterRecord>().Single();
-        currentCount = record.Value;
+        _currentCount = record.Value;
     }
 }

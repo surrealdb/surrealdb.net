@@ -1,0 +1,10 @@
+.description {
+    font-style: italic;
+}
+
+.action-btn {
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    background-color: rgb(229 231 235);
+}

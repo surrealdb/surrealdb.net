@@ -14,7 +14,7 @@
     This behavior can be distinguished with the live data example on <NavLink href="live">this page</NavLink>.
 </p>
 
-@if (forecasts == null)
+@if (_forecasts == null)
 {
     <p><em>Loading...</em></p>
 }
@@ -31,7 +31,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var forecast in forecasts)
+            @foreach (var forecast in _forecasts)
             {
                 <tr>
                     <td>@forecast.Date</td>
@@ -46,13 +46,13 @@ else
 }
 
 @code {
-    private IEnumerable<WeatherForecast>? forecasts;
+    private IEnumerable<WeatherForecast>? _forecasts;
 
     protected override async Task OnInitializedAsync()
     {
         string query = $"SELECT * FROM {WeatherForecast.Table} ORDER BY date DESC LIMIT {QueryConstants.WEATHER_FORECAST_LIMIT};";
         var response = await Client.Query(query);
         
-        forecasts = response.FirstOk!.GetValues<WeatherForecast>();
+        _forecasts = response.FirstOk!.GetValues<WeatherForecast>();
     }
 }

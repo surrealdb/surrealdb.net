@@ -1,0 +1,29 @@
+﻿@using SurrealDb.Examples.Blazor.Server.Models
+@using SurrealDb.Net
+@inject SurrealDbClient Client
+
+<div class="card">
+    <div class="card-title">@Task.Title</div>
+    <div class="card-due-date">
+        Due in @Task.DueDate.Subtract(DateTime.Now).Days days
+    </div>
+
+    <button 
+        type="button"
+        class="btn btn-outline-danger btn-remove-task"
+        @onclick="DeleteTaskAsync"
+    >
+        <span class="oi oi-trash" aria-hidden="true"></span>
+    </button>
+</div>
+
+@code {
+    [Parameter]
+    public DisplayableTask Task { get; set; } = null!;
+
+    private Task DeleteTaskAsync()
+    {
+        var @event = new DeleteTask { Task = Task.Id };
+        return Client.Create(DeleteTask.Table, @event);
+    }
+}

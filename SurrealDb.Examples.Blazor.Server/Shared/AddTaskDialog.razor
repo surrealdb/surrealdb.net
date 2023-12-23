@@ -1,0 +1,43 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using SurrealDb.Examples.Blazor.Server.Models
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField 
+            Label="Title" 
+            @bind-Value="model.Title" 
+            For="@(() => model.Title)" 
+        />
+
+        <MudTextField 
+            T="DateTime?" 
+            Format="yyyy-MM-dd"
+            Label="Due date" 
+            @bind-Value="model.DueDate" 
+            For="@(() => model.DueDate)"
+            InputType="InputType.Date"
+        />
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Info" Variant="Variant.Filled" OnClick="Submit">Create task</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    MudDialogInstance MudDialog { get; set; } = null!;
+
+    private AddTaskForm model = new() { DueDate = DateTime.UtcNow };
+
+    private void Submit()
+    {
+        MudDialog.Close(DialogResult.Ok(model));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

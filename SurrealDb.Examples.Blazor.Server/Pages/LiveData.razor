@@ -3,6 +3,7 @@
 @using SurrealDb.Net
 @using SurrealDb.Examples.Blazor.Server.Constants
 @inject SurrealDbClient Client
+@implements IDisposable
 
 <PageTitle>Weather forecast - Live</PageTitle>
 
@@ -14,7 +15,7 @@
     This behavior can be distinguished with the fetch once data example on <NavLink href="fetch">this page</NavLink>.
 </p>
 
-@if (forecasts == null)
+@if (_forecasts == null)
 {
     <p><em>Loading...</em></p>
 }
@@ -31,7 +32,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var forecast in forecasts)
+            @foreach (var forecast in _forecasts)
             {
                 <tr>
                     <td>@forecast.Date</td>
@@ -46,22 +47,28 @@ else
 }
 
 @code {
-    private IEnumerable<WeatherForecast>? forecasts;
+    private IEnumerable<WeatherForecast>? _forecasts;
+    private bool _isDisposed;
 
     protected override async Task OnInitializedAsync()
     {
         string query = $"SELECT * FROM {WeatherForecast.Table} ORDER BY date DESC LIMIT {QueryConstants.WEATHER_FORECAST_LIMIT};";
         var response = await Client.Query(query);
 
-        forecasts = response.FirstOk!.GetValues<WeatherForecast>();
+        _forecasts = response.FirstOk!.GetValues<WeatherForecast>();
         StateHasChanged();
 
         var liveQuery = await Client.LiveTable<WeatherForecast>(WeatherForecast.Table);
         
-        await foreach (var record in liveQuery.GetCreatedRecords())
+        await foreach (var record in liveQuery.GetCreatedRecords().TakeWhile(_ => !_isDisposed))
         {
-            forecasts = new[] { record }.Concat(forecasts).Take(QueryConstants.WEATHER_FORECAST_LIMIT);
+            _forecasts = new[] { record }.Concat(_forecasts).Take(QueryConstants.WEATHER_FORECAST_LIMIT);
             StateHasChanged();
         }
+    }
+
+    public void Dispose()
+    {
+        _isDisposed = true;
     }
 }

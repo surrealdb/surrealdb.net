@@ -66,3 +66,17 @@ a, .btn-link {
     .blazor-error-boundary::after {
         content: "An error has occurred."
     }
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(260px, 340px));
+    gap: 32px;
+}
+
+.card-list {
+    display: grid;
+    gap: 10px;
+    margin: 0 0 24px !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
