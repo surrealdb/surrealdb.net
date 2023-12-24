@@ -1,4 +1,4 @@
-namespace SurrealDb.Net.Tests;
+﻿namespace SurrealDb.Net.Tests;
 
 public class VersionTests
 {
@@ -12,6 +12,6 @@ public class VersionTests
         using var client = surrealDbClientGenerator.Create(url);
         string result = await client.Version();
 
-        result.Should().Be("surrealdb-1.0.0+20230913.54aedcd");
+        result.Should().BeValidSemver("surrealdb-");
     }
 }

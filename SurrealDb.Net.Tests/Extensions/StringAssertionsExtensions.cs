@@ -1,5 +1,6 @@
-using FluentAssertions.Execution;
+﻿using FluentAssertions.Execution;
 using FluentAssertions.Primitives;
+using Semver;
 using System.Text.RegularExpressions;
 
 namespace SurrealDb.Net.Tests.Extensions;
@@ -53,11 +54,53 @@ public static class StringAssertionsExtensions
 
         Execute.Assertion
             .ForCondition(!string.IsNullOrWhiteSpace(assertions.Subject))
-            .FailWith("Expected a non-null and non-empty JWT, but found {0}.", assertions.Subject);
+            .FailWith(
+                $"Expected a non-null and non-empty JWT, but found {{0}}.",
+                assertions.Subject
+            );
 
         Execute.Assertion
             .ForCondition(Regex.IsMatch(assertions.Subject, jwtRegexPattern))
-            .FailWith("Expected a valid JWT, but found {0}.", assertions.Subject);
+            .FailWith($"Expected a valid JWT, but found {{0}}.", assertions.Subject);
+
+        return new AndConstraint<StringAssertions>(assertions);
+    }
+
+    public static AndConstraint<StringAssertions> BeValidSemver(
+        this StringAssertions assertions,
+        string? prefix = null,
+        string? suffix = null
+    )
+    {
+        string escapedPrefix = Regex.Escape(prefix ?? string.Empty);
+        string escapedSuffix = Regex.Escape(suffix ?? string.Empty);
+        string regexPattern = $"^{escapedPrefix}(.*){escapedSuffix}$";
+
+        var match = Regex.Match(assertions.Subject, regexPattern);
+
+        if (!match.Success)
+        {
+            Execute.Assertion
+                .ForCondition(false)
+                .FailWith(
+                    $"Cannot match prefix '{escapedPrefix}' or suffix '{escapedSuffix}' in {{context:string}}",
+                    assertions.Subject
+                );
+
+            return new AndConstraint<StringAssertions>(assertions);
+        }
+
+        var semverCandidate = match.Groups[1].Value;
+
+        Execute.Assertion
+            .ForCondition(
+                assertions.Subject != null
+                    && SemVersion.TryParse(semverCandidate, SemVersionStyles.Strict, out _)
+            )
+            .FailWith(
+                $"Expected {{context:string}} to be a valid semver, but found {{0}}",
+                assertions.Subject
+            );
 
         return new AndConstraint<StringAssertions>(assertions);
     }
