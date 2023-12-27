@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using SurrealDb.Net.Internals.Models.LiveQuery;
+﻿using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -68,29 +67,7 @@ internal interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     )
         where T : class;
-    Task<SurrealDbResponse> Query(FormattableString query, CancellationToken cancellationToken)
-    {
-        var parameters = new Dictionary<string, object?>();
-
-        var arguments = query.GetArguments();
-        int index = 0;
-
-        foreach (var argument in arguments)
-        {
-            string parameterName = $"p{index}";
-            parameters.Add(parameterName, argument);
-
-            index++;
-        }
-
-        string formattedQuery = string.Format(
-            CultureInfo.InvariantCulture,
-            query.Format,
-            parameters.Select(p => $"${p.Key}").ToArray()
-        );
-
-        return RawQuery(formattedQuery, parameters, cancellationToken);
-    }
+    Task<SurrealDbResponse> Query(FormattableString query, CancellationToken cancellationToken);
     Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,

@@ -5,6 +5,7 @@ using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
+using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using SystemTextJsonPatch;
@@ -212,7 +213,7 @@ public class SurrealDbClient : ISurrealDbClient
     {
         return _engine.LiveRawQuery<T>(
             query,
-            parameters ?? new Dictionary<string, object?>(),
+            parameters ?? ImmutableDictionary<string, object?>.Empty,
             cancellationToken
         );
     }
@@ -307,7 +308,7 @@ public class SurrealDbClient : ISurrealDbClient
     {
         return _engine.RawQuery(
             query,
-            parameters ?? new Dictionary<string, object?>(),
+            parameters ?? ImmutableDictionary<string, object?>.Empty,
             cancellationToken
         );
     }

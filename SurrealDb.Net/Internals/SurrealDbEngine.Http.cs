@@ -11,6 +11,7 @@ using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
+using System.Collections.Immutable;
 using System.Dynamic;
 using System.Globalization;
 using System.Net.Http.Headers;
@@ -208,7 +209,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         const string query = "SELECT * FROM $auth;";
 
-        var dbResponse = await RawQuery(query, new Dictionary<string, object?>(), cancellationToken)
+        var dbResponse = await RawQuery(
+                query,
+                ImmutableDictionary<string, object?>.Empty,
+                cancellationToken
+            )
             .ConfigureAwait(false);
 
         EnsuresFirstResultOk(dbResponse);
@@ -393,6 +398,15 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return okResult.GetValues<T>();
     }
 
+    public async Task<SurrealDbResponse> Query(
+        FormattableString query,
+        CancellationToken cancellationToken
+    )
+    {
+        var (formattedQuery, parameters) = query.ExtractRawQueryParams();
+        return await RawQuery(formattedQuery, parameters, cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
@@ -493,7 +507,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         var dbResponse = await RawQuery(
                 $"RETURN ${escapedKey}",
-                new Dictionary<string, object?>() { { key, value } },
+                new Dictionary<string, object?>(capacity: 1) { { key, value } },
                 cancellationToken
             )
             .ConfigureAwait(false);

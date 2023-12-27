@@ -12,6 +12,7 @@ using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Net.WebSockets;
 using System.Reactive.Concurrency;
@@ -465,9 +466,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        var dbResponse = await ((ISurrealDbEngine)this)
-            .Query(query, cancellationToken)
-            .ConfigureAwait(false);
+        var dbResponse = await Query(query, cancellationToken).ConfigureAwait(false);
 
         if (dbResponse.HasErrors)
         {
@@ -625,6 +624,15 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
+    }
+
+    public async Task<SurrealDbResponse> Query(
+        FormattableString query,
+        CancellationToken cancellationToken
+    )
+    {
+        var (formattedQuery, parameters) = query.ExtractRawQueryParams();
+        return await RawQuery(formattedQuery, parameters, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<SurrealDbResponse> RawQuery(
