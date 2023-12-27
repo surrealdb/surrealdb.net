@@ -168,7 +168,24 @@ public interface ISurrealDbClient : IDisposable
     SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid);
 
     /// <summary>
-    /// Initiates a live query from a SurrealQL query.<br /><br />
+    /// Initiates a live query from an interpolated string representing a SurrealQL query.<br /><br />
+    ///
+    /// Not supported on HTTP(S) protocol.
+    /// </summary>
+    /// <typeparam name="T">The type of the data returned by the live query.</typeparam>
+    /// <param name="query">The SurrealQL query.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>A Live Query instance used to consume data in realtime.</returns>
+    /// <exception cref="NotSupportedException"></exception>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+        FormattableString query,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Initiates a live query from a raw SurrealQL query.<br /><br />
     ///
     /// Not supported on HTTP(S) protocol.
     /// </summary>
@@ -180,9 +197,9 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="NotSupportedException"></exception>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+    Task<SurrealDbLiveQuery<T>> LiveRawQuery<T>(
         string query,
-        IReadOnlyDictionary<string, object>? parameters = null,
+        IReadOnlyDictionary<string, object?>? parameters = null,
         CancellationToken cancellationToken = default
     );
 
@@ -310,7 +327,22 @@ public interface ISurrealDbClient : IDisposable
         where T : class;
 
     /// <summary>
-    /// Executes custom SurrealQL queries.
+    /// Executes SurrealQL queries based on an interpolated string representing a SurrealQL query.
+    /// </summary>
+    /// <param name="query">The SurrealQL query.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The list of results from the SurrealQL queries.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<SurrealDbResponse> Query(
+        FormattableString query,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Executes SurrealQL queries based on a raw SurrealQL query.
     /// </summary>
     /// <param name="query">The SurrealQL query.</param>
     /// <param name="parameters">A list of parameters to be used inside the SurrealQL query.</param>
@@ -320,9 +352,9 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<SurrealDbResponse> Query(
+    Task<SurrealDbResponse> RawQuery(
         string query,
-        IReadOnlyDictionary<string, object>? parameters = null,
+        IReadOnlyDictionary<string, object?>? parameters = null,
         CancellationToken cancellationToken = default
     );
 

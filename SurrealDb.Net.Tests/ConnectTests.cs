@@ -46,7 +46,7 @@ public class ConnectTests
 
             await client.Connect();
 
-            var response = await client.Query("SELECT * FROM $session;");
+            var response = await client.Query($"SELECT * FROM $session;");
 
             var list = response.GetValue<List<SessionInfo>>(0)!;
             result = list[0];

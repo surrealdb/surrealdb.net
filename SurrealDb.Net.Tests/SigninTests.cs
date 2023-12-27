@@ -44,7 +44,7 @@ public class SignInTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             string query = "DEFINE USER johndoe ON NAMESPACE PASSWORD 'password123'";
-            await client.Query(query);
+            await client.RawQuery(query);
 
             jwt = await client.SignIn(
                 new NamespaceAuth
@@ -79,7 +79,7 @@ public class SignInTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             string query = "DEFINE USER johndoe ON DATABASE PASSWORD 'password123'";
-            await client.Query(query);
+            await client.RawQuery(query);
 
             jwt = await client.SignIn(
                 new DatabaseAuth
@@ -121,7 +121,7 @@ public class SignInTests
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
             string query = fileContent;
-            await client.Query(query);
+            await client.RawQuery(query);
 
             var authParams = new AuthParams
             {

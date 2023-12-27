@@ -45,7 +45,7 @@ public class ListenLiveTests : BaseLiveQueryTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            var response = await client.Query("LIVE SELECT * FROM test;");
+            var response = await client.RawQuery("LIVE SELECT * FROM test;");
 
             if (response.FirstResult is not SurrealDbOkResult okResult)
                 throw new Exception("Expected a SurrealDbOkResult");

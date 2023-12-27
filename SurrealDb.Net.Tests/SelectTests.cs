@@ -76,7 +76,7 @@ public class SelectTests
             using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.Query(query);
+            await client.RawQuery(query);
 
             result = await client.Select<Post>("post");
         };
@@ -127,7 +127,7 @@ public class SelectTests
             using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.Query(query);
+            await client.RawQuery(query);
 
             result = await client.Select<Post>(("post", "first"));
         };
@@ -164,7 +164,7 @@ public class SelectTests
             using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.Query(query);
+            await client.RawQuery(query);
 
             var thing = new Thing("post", "first");
 
@@ -203,7 +203,7 @@ public class SelectTests
             using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.Query(query);
+            await client.RawQuery(query);
 
             var thing = Thing.From("thing", 17493);
 
@@ -239,7 +239,7 @@ public class SelectTests
             using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.Query(query);
+            await client.RawQuery(query);
 
             var thing = Thing.From("thing", "surrealdb");
 
@@ -275,7 +275,7 @@ public class SelectTests
             using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.Query(query);
+            await client.RawQuery(query);
 
             var thing = Thing.From("thing", new Guid("8424486b-85b3-4448-ac8d-5d51083391c7"));
 
@@ -311,7 +311,7 @@ public class SelectTests
             using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.Query(query);
+            await client.RawQuery(query);
 
             var thing = Thing.From("thing", new ObjectTableId { Location = "London", Year = 2023 });
 
@@ -347,7 +347,7 @@ public class SelectTests
             using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.Query(query);
+            await client.RawQuery(query);
 
             var thing = Thing.From("thing", new List<object> { "London", 2023 });
 

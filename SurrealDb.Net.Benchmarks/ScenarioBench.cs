@@ -202,7 +202,7 @@ public class ScenarioBench : BaseBenchmark
             await Task.WhenAll(tasks.ToArray());
         }
 
-        await surrealDbClient.Query(
+        await surrealDbClient.RawQuery(
             @"
 RELATE customer:pratim->purchased->product:iphone CONTENT {
     quantity: 1,
@@ -237,7 +237,7 @@ RELATE customer:tobie->purchased->product:iphone CONTENT {
         );
 
         // Custom query
-        var customQueryResponse = await surrealDbClient.Query(
+        var customQueryResponse = await surrealDbClient.RawQuery(
             @"
 SELECT
 	id,

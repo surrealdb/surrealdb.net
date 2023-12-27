@@ -204,17 +204,25 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.ListenLive<T>(queryUuid);
     }
 
-    public Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+    public Task<SurrealDbLiveQuery<T>> LiveRawQuery<T>(
         string query,
-        IReadOnlyDictionary<string, object>? parameters = null,
+        IReadOnlyDictionary<string, object?>? parameters = null,
         CancellationToken cancellationToken = default
     )
     {
-        return _engine.LiveQuery<T>(
+        return _engine.LiveRawQuery<T>(
             query,
-            parameters ?? new Dictionary<string, object>(),
+            parameters ?? new Dictionary<string, object?>(),
             cancellationToken
         );
+    }
+
+    public Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+        FormattableString query,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.LiveQuery<T>(query, cancellationToken);
     }
 
     public Task<SurrealDbLiveQuery<T>> LiveTable<T>(
@@ -284,14 +292,22 @@ public class SurrealDbClient : ISurrealDbClient
     }
 
     public Task<SurrealDbResponse> Query(
-        string query,
-        IReadOnlyDictionary<string, object>? parameters = null,
+        FormattableString query,
         CancellationToken cancellationToken = default
     )
     {
-        return _engine.Query(
+        return _engine.Query(query, cancellationToken);
+    }
+
+    public Task<SurrealDbResponse> RawQuery(
+        string query,
+        IReadOnlyDictionary<string, object?>? parameters = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.RawQuery(
             query,
-            parameters ?? new Dictionary<string, object>(),
+            parameters ?? new Dictionary<string, object?>(),
             cancellationToken
         );
     }

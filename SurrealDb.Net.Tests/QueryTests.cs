@@ -10,7 +10,7 @@ public class QueryTests
     [Theory]
     [InlineData("http://127.0.0.1:8000")]
     [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldQueryWithParams(string url)
+    public async Task ShouldQueryWithoutParam(string url)
     {
         SurrealDbResponse? response = null;
 
@@ -32,15 +32,111 @@ public class QueryTests
 
                 string query = fileContent;
 
-                await client.Query(query);
+                await client.RawQuery(query);
+            }
+
+            response = await client.Query($"SELECT * FROM post;");
+        };
+
+        await func.Should().NotThrowAsync();
+
+        response.Should().NotBeNull().And.HaveCount(1);
+
+        var firstResult = response![0];
+        firstResult.Should().BeOfType<SurrealDbOkResult>();
+
+        var okResult = firstResult as SurrealDbOkResult;
+        var list = okResult!.GetValue<List<Post>>();
+
+        list.Should().NotBeNull().And.HaveCount(2);
+    }
+
+    [Theory]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
+    public async Task ShouldQueryWithOneParam(string url)
+    {
+        SurrealDbResponse? response = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            using var client = surrealDbClientGenerator.Create(url);
+            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            {
+                string filePath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "Schemas/post.surql"
+                );
+                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+                string query = fileContent;
+
+                await client.RawQuery(query);
             }
 
             {
-                string query = "SELECT * FROM post WHERE status == $status;";
+                string status = "DRAFT";
+                response = await client.Query($"SELECT * FROM post WHERE status == {status};");
+            }
+        };
+
+        await func.Should().NotThrowAsync();
+
+        response.Should().NotBeNull().And.HaveCount(1);
+
+        var firstResult = response![0];
+        firstResult.Should().BeOfType<SurrealDbOkResult>();
+
+        var okResult = firstResult as SurrealDbOkResult;
+        var list = okResult!.GetValue<List<Post>>();
+
+        list.Should().NotBeNull().And.HaveCount(2);
+    }
+
+    [Theory]
+    [InlineData("http://127.0.0.1:8000")]
+    [InlineData("ws://127.0.0.1:8000/rpc")]
+    public async Task ShouldQueryWithMultipleParams(string url)
+    {
+        SurrealDbResponse? response = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            using var client = surrealDbClientGenerator.Create(url);
+            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            {
+                string filePath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "Schemas/post.surql"
+                );
+                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+                string query = fileContent;
+
+                await client.RawQuery(query);
+            }
+
+            {
+                string status = "DRAFT";
+                var threeMonthsAgo = DateTime.UtcNow.AddMonths(-3);
 
                 response = await client.Query(
-                    query,
-                    new Dictionary<string, object> { { "status", "DRAFT" } }
+                    $@"
+SELECT * 
+FROM post 
+WHERE status == {status}
+AND created_at >= {threeMonthsAgo};
+"
                 );
             }
         };
@@ -85,14 +181,10 @@ public class QueryTests
 
                 string query = fileContent;
 
-                await client.Query(query);
+                await client.RawQuery(query);
             }
 
-            {
-                string query = "abc def;";
-
-                response = await client.Query(query);
-            }
+            response = await client.Query($"abc def;");
         };
 
         if (isWebsocket)
@@ -131,354 +223,5 @@ public class QueryTests
                     @"There was a problem with the database: Parse error: Failed to parse query at line 1 column 5 expected query to end"
                 );
         }
-    }
-
-    [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldHave4Results(string url)
-    {
-        SurrealDbResponse? response = null;
-
-        Func<Task> func = async () =>
-        {
-            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-            using var client = surrealDbClientGenerator.Create(url);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-            await client.Use(dbInfo.Namespace, dbInfo.Database);
-
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                await client.Query(query);
-            }
-
-            {
-                string query =
-                    @"
-SELECT * FROM post;
-SELECT * FROM empty;
-SELECT * FROM post:first;
-SELECT xyz FROM post;
-";
-
-                response = await client.Query(query);
-            }
-        };
-
-        await func.Should().NotThrowAsync();
-
-        response.Should().NotBeNull();
-        response!.Count.Should().Be(4);
-    }
-
-    [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldIterateOnOkResults(string url)
-    {
-        SurrealDbResponse? response = null;
-
-        Func<Task> func = async () =>
-        {
-            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-            using var client = surrealDbClientGenerator.Create(url);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-            await client.Use(dbInfo.Namespace, dbInfo.Database);
-
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                await client.Query(query);
-            }
-
-            {
-                string query =
-                    @"
-SELECT * FROM post;
-SELECT * FROM empty;
-SELECT * FROM post:first;
-
-BEGIN TRANSACTION;
-CREATE post;
-CANCEL TRANSACTION;
-";
-
-                response = await client.Query(query);
-            }
-        };
-
-        await func.Should().NotThrowAsync();
-
-        response.Should().NotBeNull();
-        response!.Oks.Should().NotBeNull().And.HaveCount(3);
-    }
-
-    [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldIterateOnErrorResults(string url)
-    {
-        SurrealDbResponse? response = null;
-
-        Func<Task> func = async () =>
-        {
-            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-            using var client = surrealDbClientGenerator.Create(url);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-            await client.Use(dbInfo.Namespace, dbInfo.Database);
-
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                await client.Query(query);
-            }
-
-            {
-                string query =
-                    @"
-SELECT * FROM post;
-SELECT * FROM empty;
-SELECT * FROM post:first;
-
-BEGIN TRANSACTION;
-CREATE post;
-CANCEL TRANSACTION;
-";
-
-                response = await client.Query(query);
-            }
-        };
-
-        await func.Should().NotThrowAsync();
-
-        response.Should().NotBeNull();
-        response!.Errors.Should().NotBeNull().And.HaveCount(1);
-    }
-
-    [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldReturnFirstOkResult(string url)
-    {
-        SurrealDbResponse? response = null;
-
-        Func<Task> func = async () =>
-        {
-            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-            using var client = surrealDbClientGenerator.Create(url);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-            await client.Use(dbInfo.Namespace, dbInfo.Database);
-
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                await client.Query(query);
-            }
-
-            {
-                string query =
-                    @"
-SELECT * FROM post;
-SELECT * FROM empty;
-SELECT * FROM post:first;
-
-BEGIN TRANSACTION;
-CREATE post;
-CANCEL TRANSACTION;
-";
-
-                response = await client.Query(query);
-            }
-        };
-
-        await func.Should().NotThrowAsync();
-
-        response.Should().NotBeNull();
-        response!.FirstOk.Should().BeOfType<SurrealDbOkResult>();
-    }
-
-    [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldReturnFirstError(string url)
-    {
-        SurrealDbResponse? response = null;
-
-        Func<Task> func = async () =>
-        {
-            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-            using var client = surrealDbClientGenerator.Create(url);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-            await client.Use(dbInfo.Namespace, dbInfo.Database);
-
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                await client.Query(query);
-            }
-
-            {
-                string query =
-                    @"
-SELECT * FROM post;
-SELECT * FROM empty;
-SELECT * FROM post:first;
-
-BEGIN TRANSACTION;
-CREATE post;
-CANCEL TRANSACTION;
-";
-
-                response = await client.Query(query);
-            }
-        };
-
-        await func.Should().NotThrowAsync();
-
-        response.Should().NotBeNull();
-        response!.FirstError.Should().BeOfType<SurrealDbErrorResult>();
-    }
-
-    [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldHaveError(string url)
-    {
-        SurrealDbResponse? response = null;
-
-        Func<Task> func = async () =>
-        {
-            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-            using var client = surrealDbClientGenerator.Create(url);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-            await client.Use(dbInfo.Namespace, dbInfo.Database);
-
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                await client.Query(query);
-            }
-
-            {
-                string query =
-                    @"
-SELECT * FROM post;
-SELECT * FROM empty;
-SELECT * FROM post:first;
-
-BEGIN TRANSACTION;
-CREATE post;
-CANCEL TRANSACTION;
-";
-
-                response = await client.Query(query);
-            }
-        };
-
-        await func.Should().NotThrowAsync();
-
-        response.Should().NotBeNull();
-        response!.HasErrors.Should().BeTrue();
-    }
-
-    [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldGetValueFromIndex(string url)
-    {
-        SurrealDbResponse? response = null;
-
-        Func<Task> func = async () =>
-        {
-            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-            using var client = surrealDbClientGenerator.Create(url);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-            await client.Use(dbInfo.Namespace, dbInfo.Database);
-
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                await client.Query(query);
-            }
-
-            {
-                string query =
-                    @"
-SELECT * FROM post;
-SELECT * FROM empty;
-SELECT * FROM post:first;
-
-BEGIN TRANSACTION;
-CREATE post;
-CANCEL TRANSACTION;
-";
-
-                response = await client.Query(query);
-            }
-        };
-
-        await func.Should().NotThrowAsync();
-
-        response.Should().NotBeNull();
-        var list = response!.GetValue<List<Post>>(0);
-
-        list.Should().NotBeNull().And.HaveCount(2);
     }
 }

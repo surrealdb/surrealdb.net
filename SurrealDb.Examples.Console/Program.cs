@@ -25,9 +25,9 @@ Console.WriteLine(ToJsonString(updated));
 var people = await db.Select<Person>("person");
 Console.WriteLine(ToJsonString(people));
 
+string table = "person";
 var queryResponse = await db.Query(
-    "SELECT marketing, count() FROM type::table($table) GROUP BY marketing",
-    new Dictionary<string, object> { { "table", "person" } }
+    $"SELECT marketing, count() FROM type::table({table}) GROUP BY marketing"
 );
 var groups = queryResponse.GetValue<List<Group>>(0);
 Console.WriteLine(ToJsonString(groups));

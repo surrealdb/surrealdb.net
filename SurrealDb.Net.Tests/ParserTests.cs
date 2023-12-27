@@ -68,7 +68,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var records = await client.Select<RecordIdRecord>("thing");
 
@@ -173,7 +173,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var records = await client.Select<StringRecord>("string");
 
@@ -237,7 +237,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var records = await client.Select<LongRecord>("number");
 
@@ -286,7 +286,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var records = await client.Select<DecimalRecord>("decimal");
 
@@ -355,7 +355,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var records = await client.Select<FloatRecord>("decimal");
 
@@ -424,7 +424,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var records = await client.Select<DoubleRecord>("decimal");
 
@@ -493,7 +493,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var records = await client.Select<DurationRecord>("duration");
 
@@ -602,7 +602,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var records = await client.Select<TimeSpanRecord>("duration");
 
@@ -699,7 +699,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var records = await client.Select<StringRecord>("duration");
 
@@ -796,7 +796,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var records = await client.Select<TimeOnlyRecord>("duration");
 
@@ -893,7 +893,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var records = await client.Select<DateTimeRecord>("datetime");
 
@@ -973,7 +973,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var records = await client.Select<DateOnlyRecord>("datetime");
 
@@ -1040,7 +1040,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         {
             var noneRecord = await client.Select<Vector2Record>(("vector", "none"));
@@ -1094,7 +1094,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         {
             var noneRecord = await client.Select<Vector3Record>(("vector", "none"));
@@ -1149,7 +1149,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         {
             var noneRecord = await client.Select<Vector4Record>(("vector", "none"));

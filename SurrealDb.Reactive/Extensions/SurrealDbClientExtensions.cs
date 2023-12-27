@@ -8,19 +8,17 @@ namespace SurrealDb.Net;
 public static class SurrealDbClientExtensions
 {
     /// <summary>
-    /// Initiates a live query from a SurrealQL query.<br /><br />
+    /// Initiates a live query from an interpolated string representing a SurrealQL query.<br /><br />
     ///
     /// Not supported on HTTP(S) protocol.
     /// </summary>
     /// <typeparam name="T">The type of the data returned by the live query.</typeparam>
     /// <param name="client">A <see cref="ISurrealDbClient"/> instance.</param>
     /// <param name="query">The SurrealQL query that initiates a Live Query, must be of the form "LIVE SELECT * FROM table;".</param>
-    /// <param name="parameters">A list of parameters to be used inside the SurrealQL query.</param>
     /// <returns>Returns an Observable to consume incoming live query notification.</returns>
     public static IObservable<SurrealDbLiveQueryResponse> ObserveQuery<T>(
         this ISurrealDbClient client,
-        string query,
-        IReadOnlyDictionary<string, object>? parameters = null
+        FormattableString query
     )
     {
         return Observable.Defer(
@@ -32,7 +30,82 @@ public static class SurrealDbClientExtensions
 
                         try
                         {
-                            response = await client.Query(query, parameters, cancellationToken);
+                            response = await client.Query(query, cancellationToken);
+                        }
+                        catch (Exception e)
+                        {
+                            observer.OnError(e);
+                            return () => { };
+                        }
+
+                        if (response.HasErrors)
+                        {
+                            observer.OnError(
+                                new SurrealDbErrorResultException(response.FirstError!)
+                            );
+                            return () => { };
+                        }
+
+                        if (response.FirstOk is null)
+                        {
+                            observer.OnError(new SurrealDbErrorResultException());
+                            return () => { };
+                        }
+
+                        // TODO : handle multi-queries
+
+                        SurrealDbLiveQuery<T> liveQuery = null!;
+
+                        var queryUuid = response.FirstOk!.GetValue<Guid>();
+
+                        try
+                        {
+                            liveQuery = client.ListenLive<T>(queryUuid);
+                        }
+                        catch (Exception e)
+                        {
+                            observer.OnError(e);
+                            return () => { };
+                        }
+
+                        var subscription = liveQuery.ToObservable().Subscribe(observer);
+
+                        return () =>
+                        {
+                            subscription.Dispose();
+                            liveQuery.DisposeAsync().GetAwaiter().GetResult();
+                        };
+                    }
+                )
+        );
+    }
+
+    /// <summary>
+    /// Initiates a live query from a raw SurrealQL query.<br /><br />
+    ///
+    /// Not supported on HTTP(S) protocol.
+    /// </summary>
+    /// <typeparam name="T">The type of the data returned by the live query.</typeparam>
+    /// <param name="client">A <see cref="ISurrealDbClient"/> instance.</param>
+    /// <param name="query">The SurrealQL query that initiates a Live Query, must be of the form "LIVE SELECT * FROM table;".</param>
+    /// <param name="parameters">A list of parameters to be used inside the SurrealQL query.</param>
+    /// <returns>Returns an Observable to consume incoming live query notification.</returns>
+    public static IObservable<SurrealDbLiveQueryResponse> ObserveRawQuery<T>(
+        this ISurrealDbClient client,
+        string query,
+        IReadOnlyDictionary<string, object?>? parameters = null
+    )
+    {
+        return Observable.Defer(
+            () =>
+                Observable.Create<SurrealDbLiveQueryResponse>(
+                    async (observer, cancellationToken) =>
+                    {
+                        SurrealDbResponse response = null!;
+
+                        try
+                        {
+                            response = await client.RawQuery(query, parameters, cancellationToken);
                         }
                         catch (Exception e)
                         {

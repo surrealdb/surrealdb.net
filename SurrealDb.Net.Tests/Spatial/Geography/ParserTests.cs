@@ -39,7 +39,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var record = await client.Select<GeographyPointRecord>(("geometry", "PointFromTuple"));
 
@@ -69,7 +69,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var record = await client.Select<GeographyPointRecord>(("geometry", "Point"));
 
@@ -99,7 +99,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var record = await client.Select<GeographyLineStringRecord>(("geometry", "LineString"));
 
@@ -136,7 +136,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var record = await client.Select<GeographyPolygonRecord>(("geometry", "Polygon"));
 
@@ -190,7 +190,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var record = await client.Select<GeographyMultiPointRecord>(("geometry", "MultiPoint"));
 
@@ -229,7 +229,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var record = await client.Select<GeographyMultiLineStringRecord>(
             ("geometry", "MultiLineString")
@@ -292,7 +292,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var record = await client.Select<GeographyMultiPolygonRecord>(("geometry", "MultiPolygon"));
 
@@ -371,7 +371,7 @@ public class ParserTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.Query(query);
+        await client.RawQuery(query);
 
         var record = await client.Select<GeographyCollectionRecord>(
             ("geometry", "GeometryCollection")

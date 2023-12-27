@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Internals.Models.LiveQuery;
+﻿using System.Globalization;
+using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -28,8 +29,12 @@ internal interface ISurrealDbEngine : IDisposable
     );
     SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid);
     Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+        FormattableString query,
+        CancellationToken cancellationToken
+    );
+    Task<SurrealDbLiveQuery<T>> LiveRawQuery<T>(
         string query,
-        IReadOnlyDictionary<string, object> parameters,
+        IReadOnlyDictionary<string, object?> parameters,
         CancellationToken cancellationToken
     );
     Task<SurrealDbLiveQuery<T>> LiveTable<T>(
@@ -63,9 +68,32 @@ internal interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     )
         where T : class;
-    Task<SurrealDbResponse> Query(
+    Task<SurrealDbResponse> Query(FormattableString query, CancellationToken cancellationToken)
+    {
+        var parameters = new Dictionary<string, object?>();
+
+        var arguments = query.GetArguments();
+        int index = 0;
+
+        foreach (var argument in arguments)
+        {
+            string parameterName = $"p{index}";
+            parameters.Add(parameterName, argument);
+
+            index++;
+        }
+
+        string formattedQuery = string.Format(
+            CultureInfo.InvariantCulture,
+            query.Format,
+            parameters.Select(p => $"${p.Key}").ToArray()
+        );
+
+        return RawQuery(formattedQuery, parameters, cancellationToken);
+    }
+    Task<SurrealDbResponse> RawQuery(
         string query,
-        IReadOnlyDictionary<string, object> parameters,
+        IReadOnlyDictionary<string, object?> parameters,
         CancellationToken cancellationToken
     );
     Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken);

@@ -21,7 +21,7 @@ public class LiveQueryTests : BaseLiveQueryTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            await using var liveQuery = await client.LiveQuery<int>("LIVE SELECT * FROM test;");
+            await using var liveQuery = await client.LiveQuery<int>($"LIVE SELECT * FROM test;");
         };
 
         await func.Should().ThrowAsync<NotSupportedException>();
@@ -43,7 +43,7 @@ public class LiveQueryTests : BaseLiveQueryTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            var liveQuery = await client.LiveQuery<TestRecord>("LIVE SELECT * FROM test;");
+            var liveQuery = await client.LiveQuery<TestRecord>($"LIVE SELECT * FROM test;");
 
             var cts = new CancellationTokenSource();
 

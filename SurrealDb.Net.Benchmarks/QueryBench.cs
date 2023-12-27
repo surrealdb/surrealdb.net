@@ -1,4 +1,4 @@
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 
 namespace SurrealDb.Net.Benchmarks;
 
@@ -65,17 +65,6 @@ public class QueryBench : BaseBenchmark
         _surrealdbWsTextClient?.Dispose();
     }
 
-    const string Query =
-        @"
-SELECT * FROM post;
-SELECT * FROM $auth;
-
-BEGIN TRANSACTION;
-
-CREATE post;
-
-CANCEL TRANSACTION;";
-
     [Benchmark]
     public Task<List<Post>> Http()
     {
@@ -102,9 +91,18 @@ CANCEL TRANSACTION;";
 
     private static async Task<List<Post>> Run(ISurrealDbClient surrealDbClient)
     {
-        var response = await surrealDbClient.Query(Query);
-        var result = response.FirstOk;
+        var response = await surrealDbClient.Query(
+            @$"
+SELECT * FROM post;
+SELECT * FROM $auth;
 
-        return result!.GetValues<Post>().ToList();
+BEGIN TRANSACTION;
+
+CREATE post;
+
+CANCEL TRANSACTION;"
+        );
+
+        return response.GetValue<List<Post>>(0)!;
     }
 }

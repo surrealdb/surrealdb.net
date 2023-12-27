@@ -12,9 +12,11 @@ using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Net.WebSockets;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -459,12 +461,36 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     }
 
     public async Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
-        string query,
-        IReadOnlyDictionary<string, object> parameters,
+        FormattableString query,
         CancellationToken cancellationToken
     )
     {
-        var dbResponse = await Query(query, parameters, cancellationToken).ConfigureAwait(false);
+        var dbResponse = await ((ISurrealDbEngine)this)
+            .Query(query, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (dbResponse.HasErrors)
+        {
+            throw new SurrealDbErrorResultException(dbResponse.FirstError!);
+        }
+
+        if (dbResponse.FirstOk is null)
+        {
+            throw new SurrealDbErrorResultException();
+        }
+
+        var queryUuid = dbResponse.FirstOk.GetValue<Guid>()!;
+
+        return ListenLive<T>(queryUuid);
+    }
+
+    public async Task<SurrealDbLiveQuery<T>> LiveRawQuery<T>(
+        string query,
+        IReadOnlyDictionary<string, object?> parameters,
+        CancellationToken cancellationToken
+    )
+    {
+        var dbResponse = await RawQuery(query, parameters, cancellationToken).ConfigureAwait(false);
 
         if (dbResponse.HasErrors)
         {
@@ -601,9 +627,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<T>();
     }
 
-    public async Task<SurrealDbResponse> Query(
+    public async Task<SurrealDbResponse> RawQuery(
         string query,
-        IReadOnlyDictionary<string, object> parameters,
+        IReadOnlyDictionary<string, object?> parameters,
         CancellationToken cancellationToken
     )
     {
