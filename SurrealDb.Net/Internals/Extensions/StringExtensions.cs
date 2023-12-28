@@ -9,4 +9,18 @@ internal static class StringExtensions
             )
             .ToLower();
     }
+
+    public static bool IsAlphanumeric(string str)
+    {
+        for (int i = 0; i < str.Length; i++)
+        {
+            char c = str[i];
+            if (!char.IsLetterOrDigit(c))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
