@@ -3,12 +3,12 @@ using System.Text;
 
 namespace SurrealDb.Net.Tests;
 
-public class SetTests
+public class UnsetTests
 {
     [Theory]
     [InlineData("http://127.0.0.1:8000")]
     [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldSetParam(string url)
+    public async Task ShouldUnsetParam(string url)
     {
         SurrealDbResponse? response = null;
 
@@ -34,6 +34,7 @@ public class SetTests
             }
 
             await client.Set("status", "DRAFT");
+            await client.Unset("status");
 
             {
                 string query = "SELECT * FROM post WHERE status == $status;";
@@ -52,7 +53,7 @@ public class SetTests
         var okResult = firstResult as SurrealDbOkResult;
         var list = okResult!.GetValue<List<Post>>();
 
-        list.Should().NotBeNull().And.HaveCount(2);
+        list.Should().BeEmpty();
     }
 
     [Theory]
@@ -81,7 +82,8 @@ public class SetTests
                 await client.Query(query);
             }
 
-            await client.Set(null!, "DRAFT");
+            await client.Set("status", "DRAFT");
+            await client.Unset(null!);
         };
 
         await func.Should()
@@ -116,6 +118,7 @@ public class SetTests
             }
 
             await client.Set("st at us", "DRAFT");
+            await client.Unset(null!);
         };
 
         await func.Should()

@@ -10,7 +10,7 @@ internal static class StringExtensions
             .ToLower();
     }
 
-    public static bool IsAlphanumeric(string str)
+    public static bool IsAlphanumeric(this string str)
     {
         for (int i = 0; i < str.Length; i++)
         {

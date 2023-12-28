@@ -1,6 +1,7 @@
 ﻿using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Internals.Constants;
+using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Http;
 using SurrealDb.Net.Internals.Json;
@@ -426,6 +427,15 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public async Task Set(string key, object value, CancellationToken cancellationToken)
     {
+        if (key is null)
+        {
+            throw new ArgumentNullException(nameof(key));
+        }
+        if (!key.IsAlphanumeric())
+        {
+            throw new ArgumentException("Variable name should be alphanumeric", nameof(key));
+        }
+
         var dbResponse = await Query(
                 $"RETURN ${key}",
                 new Dictionary<string, object>() { { key, value } },
@@ -530,6 +540,15 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public Task Unset(string key, CancellationToken _)
     {
+        if (key is null)
+        {
+            throw new ArgumentNullException(nameof(key));
+        }
+        if (!key.IsAlphanumeric())
+        {
+            throw new ArgumentException("Variable name should be alphanumeric", nameof(key));
+        }
+
         _config.RemoveParam(key);
         return Task.CompletedTask;
     }
