@@ -528,9 +528,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         {
             throw new ArgumentNullException(nameof(key));
         }
-        if (!key.IsAlphanumeric())
+        if (!key.IsValidVariableName())
         {
-            throw new ArgumentException("Variable name should be alphanumeric", nameof(key));
+            throw new ArgumentException("Variable name is not valid.", nameof(key));
         }
 
         await SendRequestAsync("let", new() { key, value }, cancellationToken)
@@ -605,9 +605,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         {
             throw new ArgumentNullException(nameof(key));
         }
-        if (!key.IsAlphanumeric())
+        if (!key.IsValidVariableName())
         {
-            throw new ArgumentException("Variable name should be alphanumeric", nameof(key));
+            throw new ArgumentException("Variable name is not valid.", nameof(key));
         }
 
         await SendRequestAsync("unset", new() { key }, cancellationToken).ConfigureAwait(false);

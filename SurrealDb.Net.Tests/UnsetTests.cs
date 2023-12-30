@@ -123,6 +123,6 @@ public class UnsetTests
 
         await func.Should()
             .ThrowAsync<ArgumentException>()
-            .WithMessage("Variable name should be alphanumeric (Parameter 'key')");
+            .WithMessage("Variable name is not valid. (Parameter 'key')");
     }
 }

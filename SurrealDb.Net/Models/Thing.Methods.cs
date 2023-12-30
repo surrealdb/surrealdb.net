@@ -89,24 +89,34 @@ public partial class Thing
         throw new NotImplementedException();
     }
 
-    private static bool ShouldEscapeString(string str)
+    internal static bool ShouldEscapeString(string str)
     {
         if (long.TryParse(str, out _))
+        {
             return true;
+        }
 
         return !IsValidTextRecordId(str);
     }
 
     private static bool IsValidTextRecordId(string str)
     {
-        return str.All(c => char.IsLetterOrDigit(c) || c == '_');
+        foreach (char c in str)
+        {
+            if (!(char.IsLetterOrDigit(c) || c == '_'))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
-    private static string CreateEscaped(string part)
+    internal static string CreateEscaped(string part)
     {
         var stringBuilder = new StringBuilder(part.Length + 2);
         stringBuilder.Append(ThingConstants.PREFIX);
-        stringBuilder.Append(part);
+        stringBuilder.Append(part.AsSpan());
         stringBuilder.Append(ThingConstants.SUFFIX);
 
         return stringBuilder.ToString();

@@ -15,9 +15,8 @@ public class IsAlphanumericBenchmark
     {
         string str = Param!;
 
-        for (int i = 0; i < str.Length; i++)
+        foreach (char c in str)
         {
-            char c = str[i];
             if (!char.IsLetterOrDigit(c))
             {
                 return false;

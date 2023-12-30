@@ -10,12 +10,16 @@ internal static class StringExtensions
             .ToLower();
     }
 
-    public static bool IsAlphanumeric(this string str)
+    public static bool IsValidVariableName(this string str)
     {
-        for (int i = 0; i < str.Length; i++)
+        if (string.IsNullOrWhiteSpace(str))
         {
-            char c = str[i];
-            if (!char.IsLetterOrDigit(c))
+            return false;
+        }
+
+        foreach (char c in str)
+        {
+            if (c == ' ')
             {
                 return false;
             }

@@ -431,13 +431,16 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         {
             throw new ArgumentNullException(nameof(key));
         }
-        if (!key.IsAlphanumeric())
+        if (!key.IsValidVariableName())
         {
-            throw new ArgumentException("Variable name should be alphanumeric", nameof(key));
+            throw new ArgumentException("Variable name is not valid.", nameof(key));
         }
 
+        bool shouldEscapeKey = Thing.ShouldEscapeString(key);
+        string escapedKey = shouldEscapeKey ? Thing.CreateEscaped(key) : key;
+
         var dbResponse = await Query(
-                $"RETURN ${key}",
+                $"RETURN ${escapedKey}",
                 new Dictionary<string, object>() { { key, value } },
                 cancellationToken
             )
@@ -544,9 +547,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         {
             throw new ArgumentNullException(nameof(key));
         }
-        if (!key.IsAlphanumeric())
+        if (!key.IsValidVariableName())
         {
-            throw new ArgumentException("Variable name should be alphanumeric", nameof(key));
+            throw new ArgumentException("Variable name is not valid.", nameof(key));
         }
 
         _config.RemoveParam(key);
