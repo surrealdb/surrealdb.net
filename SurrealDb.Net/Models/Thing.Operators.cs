@@ -1,4 +1,4 @@
-namespace SurrealDb.Net.Models;
+﻿namespace SurrealDb.Net.Models;
 
 public partial class Thing
 {
