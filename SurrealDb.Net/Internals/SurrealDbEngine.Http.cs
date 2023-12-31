@@ -394,6 +394,66 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return await DeserializeDbResponseAsync(response, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
+        string table,
+        IEnumerable<Thing> ins,
+        IEnumerable<Thing> outs,
+        TData? data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : class
+    {
+        var request = new RelateHttpRequest<TData>
+        {
+            Ins = ins,
+            Outs = outs,
+            Content = data
+        };
+
+        using var wrapper = CreateHttpClientWrapper();
+        using var body = CreateBodyContent(request);
+
+        using var response = await wrapper.Instance
+            .PostAsync($"/relate/{table}", body, cancellationToken)
+            .ConfigureAwait(false);
+
+        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
+            .ConfigureAwait(false);
+
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<TOutput>();
+    }
+
+    public async Task<TOutput> Relate<TOutput, TData>(
+        Thing thing,
+        Thing @in,
+        Thing @out,
+        TData? data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : class
+    {
+        var request = new RelateOneHttpRequest<TData>
+        {
+            In = @in,
+            Out = @out,
+            Content = data
+        };
+
+        using var wrapper = CreateHttpClientWrapper();
+        using var body = CreateBodyContent(request);
+
+        using var response = await wrapper.Instance
+            .PostAsync($"/relate/{thing.Table}/{thing.UnescapedId}", body, cancellationToken)
+            .ConfigureAwait(false);
+
+        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
+            .ConfigureAwait(false);
+
+        var okResult = EnsuresFirstResultOk(dbResponse);
+        return okResult.DeserializeEnumerable<TOutput>().First();
+    }
+
     public async Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken)
     {
         using var wrapper = CreateHttpClientWrapper();
