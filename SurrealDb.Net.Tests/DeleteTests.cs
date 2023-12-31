@@ -65,7 +65,7 @@ public class DeleteTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
 
-            result = await client.Delete("post", "first");
+            result = await client.Delete(("post", "first"));
 
             list = await client.Select<Post>("post");
         };

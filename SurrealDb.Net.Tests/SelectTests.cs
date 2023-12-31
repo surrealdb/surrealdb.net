@@ -129,7 +129,7 @@ public class SelectTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.Query(query);
 
-            result = await client.Select<Post>("post", "first");
+            result = await client.Select<Post>(("post", "first"));
         };
 
         await func.Should().NotThrowAsync();
