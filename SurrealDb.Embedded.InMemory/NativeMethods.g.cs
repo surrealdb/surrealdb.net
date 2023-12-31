@@ -78,6 +78,7 @@ namespace SurrealDb.Embedded.InMemory.Internals
         Delete = 11,
         Version = 12,
         Query = 13,
+        Relate = 14,
     }
 
 

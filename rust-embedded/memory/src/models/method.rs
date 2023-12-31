@@ -13,7 +13,7 @@ pub enum Method {
     Delete = 11,
     Version = 12,
     Query = 13,
-    // TODO : Relate
+    Relate = 14,
 }
 
 impl From<Method> for surrealdb::rpc::method::Method {
@@ -31,6 +31,7 @@ impl From<Method> for surrealdb::rpc::method::Method {
             Method::Delete => surrealdb::rpc::method::Method::Delete,
             Method::Version => surrealdb::rpc::method::Method::Version,
             Method::Query => surrealdb::rpc::method::Method::Query,
+            Method::Relate => surrealdb::rpc::method::Method::Relate,
         }
     }
 }

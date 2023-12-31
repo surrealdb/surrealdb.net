@@ -75,6 +75,22 @@ public interface ISurrealDbEngine : IDisposable
         IReadOnlyDictionary<string, object?> parameters,
         CancellationToken cancellationToken
     );
+    Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
+        string table,
+        IEnumerable<Thing> ins,
+        IEnumerable<Thing> outs,
+        TData? data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : class;
+    Task<TOutput> Relate<TOutput, TData>(
+        Thing thing,
+        Thing @in,
+        Thing @out,
+        TData? data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : class;
     Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken);
     Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken);
     Task Set(string key, object value, CancellationToken cancellationToken);

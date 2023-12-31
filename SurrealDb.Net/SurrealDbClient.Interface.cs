@@ -365,6 +365,191 @@ public interface ISurrealDbClient : IDisposable
     );
 
     /// <summary>
+    /// Creates a relation between two records.
+    /// </summary>
+    /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="in">The record from where the relation starts.</param>
+    /// <param name="out">The record to where the relation ends.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created.</returns>
+    Task<TOutput> Relate<TOutput>(
+        string table,
+        Thing @in,
+        Thing @out,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class;
+
+    /// <summary>
+    /// Creates a relation between two records.
+    /// </summary>
+    /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
+    /// <typeparam name="TData">The type of the additional data to add to the relation record.</typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="in">The record from where the relation starts.</param>
+    /// <param name="out">The record to where the relation ends.</param>
+    /// <param name="data">Additional data to store in the relation record.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created.</returns>
+    Task<TOutput> Relate<TOutput, TData>(
+        string table,
+        Thing @in,
+        Thing @out,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class;
+
+    /// <summary>
+    /// Creates relations between records.
+    /// </summary>
+    /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="ins">The records from where the relation starts.</param>
+    /// <param name="out">The record to where the relation ends.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created.</returns>
+    Task<IEnumerable<TOutput>> Relate<TOutput>(
+        string table,
+        IEnumerable<Thing> ins,
+        Thing @out,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class;
+
+    /// <summary>
+    /// Creates relations between records.
+    /// </summary>
+    /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
+    /// <typeparam name="TData">The type of the additional data to add to the relation record.</typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="ins">The records from where the relation starts.</param>
+    /// <param name="out">The record to where the relation ends.</param>
+    /// <param name="data">Additional data to store in the relation record.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created.</returns>
+    Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
+        string table,
+        IEnumerable<Thing> ins,
+        Thing @out,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class;
+
+    /// <summary>
+    /// Creates relations between records.
+    /// </summary>
+    /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="in">The record from where the relation starts.</param>
+    /// <param name="outs">The records to where the relation ends.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created.</returns>
+    Task<IEnumerable<TOutput>> Relate<TOutput>(
+        string table,
+        Thing @in,
+        IEnumerable<Thing> outs,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class;
+
+    /// <summary>
+    /// Creates relations between records.
+    /// </summary>
+    /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
+    /// <typeparam name="TData">The type of the additional data to add to the relation record.</typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="in">The record from where the relation starts.</param>
+    /// <param name="outs">The records to where the relation ends.</param>
+    /// <param name="data">Additional data to store in the relation record.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created.</returns>
+    Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
+        string table,
+        Thing @in,
+        IEnumerable<Thing> outs,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class;
+
+    /// <summary>
+    /// Creates relations between records.
+    /// </summary>
+    /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="ins">The records from where the relation starts.</param>
+    /// <param name="outs">The records to where the relation ends.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created.</returns>
+    Task<IEnumerable<TOutput>> Relate<TOutput>(
+        string table,
+        IEnumerable<Thing> ins,
+        IEnumerable<Thing> outs,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class;
+
+    /// <summary>
+    /// Creates relations between records.
+    /// </summary>
+    /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
+    /// <typeparam name="TData">The type of the additional data to add to the relation record.</typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="ins">The records from where the relation starts.</param>
+    /// <param name="outs">The records to where the relation ends.</param>
+    /// <param name="data">Additional data to store in the relation record.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created.</returns>
+    Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
+        string table,
+        IEnumerable<Thing> ins,
+        IEnumerable<Thing> outs,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class;
+
+    /// <summary>
+    /// Creates a relation between two records.
+    /// </summary>
+    /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
+    /// <param name="thing">The record id.</param>
+    /// <param name="in">The record from where the relation starts.</param>
+    /// <param name="out">The record to where the relation ends.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created.</returns>
+    Task<TOutput> Relate<TOutput>(
+        Thing thing,
+        Thing @in,
+        Thing @out,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class;
+
+    /// <summary>
+    /// Creates a relation between two records.
+    /// </summary>
+    /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
+    /// <typeparam name="TData">The type of the additional data to add to the relation record.</typeparam>
+    /// <param name="thing">The record id.</param>
+    /// <param name="in">The record from where the relation starts.</param>
+    /// <param name="out">The record to where the relation ends.</param>
+    /// <param name="data">Additional data to store in the relation record.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created.</returns>
+    Task<TOutput> Relate<TOutput, TData>(
+        Thing thing,
+        Thing @in,
+        Thing @out,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class;
+
+    /// <summary>
     /// Selects all records in a table.
     /// </summary>
     /// <typeparam name="T">The type of record to extract</typeparam>

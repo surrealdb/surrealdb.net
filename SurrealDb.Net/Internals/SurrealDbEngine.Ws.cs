@@ -668,6 +668,46 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return new SurrealDbResponse(list);
     }
 
+    public async Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
+        string table,
+        IEnumerable<Thing> ins,
+        IEnumerable<Thing> outs,
+        TData? data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : class
+    {
+        var dbResponse = await SendRequestAsync(
+                "relate",
+                [ins, table, outs, data],
+                true,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        return dbResponse.DeserializeEnumerable<TOutput>();
+    }
+
+    public async Task<TOutput> Relate<TOutput, TData>(
+        Thing thing,
+        Thing @in,
+        Thing @out,
+        TData? data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : class
+    {
+        var dbResponse = await SendRequestAsync(
+                "relate",
+                [@in, thing, @out, data],
+                true,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        return dbResponse.GetValue<TOutput>()!;
+    }
+
     public async Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken)
     {
         var dbResponse = await SendRequestAsync("select", [table], true, cancellationToken)
