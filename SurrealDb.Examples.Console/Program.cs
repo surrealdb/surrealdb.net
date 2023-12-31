@@ -1,4 +1,4 @@
-using SurrealDb.Net;
+﻿using SurrealDb.Net;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using System.Text.Json;
@@ -18,7 +18,7 @@ var created = await db.Create("person", person);
 Console.WriteLine(ToJsonString(created));
 
 var updated = await db.Merge<ResponsibilityMerge, Person>(
-    new() { Id = new Thing("person", "jaime"), Marketing = true }
+    new() { Id = ("person", "jaime"), Marketing = true }
 );
 Console.WriteLine(ToJsonString(updated));
 
