@@ -29,7 +29,7 @@ public class RelateTests
 
             result = await client.Relate<EmptyRelation>("empty", ("in", "one"), ("out", "one"));
 
-            list = await client.Select<EmptyRelation>("empty");
+            list = await client.Select<EmptyRelation>("empty").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -67,7 +67,7 @@ public class RelateTests
                 data
             );
 
-            list = await client.Select<WroteRelation>("wrote");
+            list = await client.Select<WroteRelation>("wrote").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -107,7 +107,7 @@ public class RelateTests
                 data
             );
 
-            list = await client.Select<WroteRelation>("wrote");
+            list = await client.Select<WroteRelation>("wrote").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -164,7 +164,7 @@ public class RelateTests
                 data
             );
 
-            list = await client.Select<WroteRelation>("wrote");
+            list = await client.Select<WroteRelation>("wrote").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();

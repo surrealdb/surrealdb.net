@@ -202,8 +202,7 @@ public static class BenchmarkRuns
     [MethodImpl(MethodImplOptions.NoInlining)]
     public static async Task<List<Post>> Select(ISurrealDbClient surrealDbClient)
     {
-        var result = await surrealDbClient.Select<Post>("post");
-        return result.ToList();
+        return await surrealDbClient.Select<Post>("post").ToListAsync();
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]

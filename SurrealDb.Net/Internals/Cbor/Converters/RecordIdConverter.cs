@@ -80,7 +80,13 @@ internal sealed class RecordIdConverter : CborConverterBase<RecordId>
         }
 
         var type = value.GetType();
-        if (type.Namespace == ConverterTypeConstants.ModelsNamespace && type.Name == "RecordIdOf`1")
+        if (
+            string.Equals(
+                type.Namespace,
+                ConverterTypeConstants.ModelsNamespace,
+                StringComparison.Ordinal
+            ) && string.Equals(type.Name, "RecordIdOf`1", StringComparison.Ordinal)
+        )
         {
             var idType = type.GenericTypeArguments[0];
             WriteGenericRecordId(

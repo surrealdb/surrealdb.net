@@ -229,12 +229,13 @@ public interface ISurrealDbEngine
         Guid? transactionId,
         CancellationToken cancellationToken
     );
-    Task<IEnumerable<T>> Select<T>(
+    Task<IEnumerable<T>> SelectAll<T>(
         string table,
         Guid? sessionId,
         Guid? transactionId,
         CancellationToken cancellationToken
     );
+    IQueryable<T> Select<T>(string? table, Guid? sessionId, Guid? transactionId);
     Task<T?> Select<T>(
         RecordId recordId,
         Guid? sessionId,

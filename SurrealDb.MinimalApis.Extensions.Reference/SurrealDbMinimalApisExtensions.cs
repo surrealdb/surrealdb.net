@@ -140,7 +140,7 @@ public static class SurrealDbMinimalApisExtensions
                     (TDbClient surrealDbClient, CancellationToken cancellationToken) =>
                     {
                         string tableName = options?.TableName ?? GetDefaultTableName(typeof(TEntity));
-                        return surrealDbClient.Select<TEntity>(tableName, cancellationToken);
+                        return surrealDbClient.Select<TEntity>(tableName).ToListAsync(cancellationToken);
                     }
                 )
                 .WithName($"GetAll{entityName}")
