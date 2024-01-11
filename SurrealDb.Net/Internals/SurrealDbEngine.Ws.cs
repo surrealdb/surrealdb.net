@@ -20,6 +20,7 @@ using SurrealDb.Net.Internals.DependencyInjection;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Models.LiveQuery;
+using SurrealDb.Net.Internals.Queryable;
 using SurrealDb.Net.Internals.Sessions;
 using SurrealDb.Net.Internals.Stream;
 using SurrealDb.Net.Internals.Ws;
@@ -82,11 +83,13 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     static SurrealDbWsEngine()
     {
         // Sender subscriptions
-        Task.Run(async () =>
+        _ = Task.Run(async () =>
         {
             try
             {
-                await foreach (var request in _sendRequestChannel.ReadAllAsync())
+                await foreach (
+                    var request in _sendRequestChannel.ReadAllAsync().ConfigureAwait(false)
+                )
                 {
                     try
                     {
@@ -174,11 +177,13 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
                             if (message.MessageType == WebSocketMessageType.Binary)
                             {
-                                using var stream =
+#pragma warning disable MA0004
+                                await using var stream =
                                     message.Stream
                                     ?? MemoryStreamProvider.MemoryStreamManager.GetStream(
                                         message.Binary!
                                     );
+#pragma warning restore MA0004
 
                                 if (
                                     _surrealDbLoggerFactory?.Serialization?.IsEnabled(
@@ -290,6 +295,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             .Subscribe();
 
         _wsClient.DisconnectionHappened.Subscribe(
+#pragma warning disable MA0147
             async (_) =>
             {
                 var endChannelsTasks = new List<Task>();
@@ -324,6 +330,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                     catch { }
                 }
             }
+#pragma warning restore MA0147
         );
     }
 
@@ -717,7 +724,9 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             catch (TimeoutException) { }
         }
 
-        await _wsClient.Stop(WebSocketCloseStatus.NormalClosure, "Client disposed");
+        await _wsClient
+            .Stop(WebSocketCloseStatus.NormalClosure, "Client disposed")
+            .ConfigureAwait(false);
         _receiverSubscription.Dispose();
 
 #if NET9_0_OR_GREATER
@@ -1248,7 +1257,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.GetValue<T>()!;
     }
 
-    public async Task<IEnumerable<T>> Select<T>(
+    public async Task<IEnumerable<T>> SelectAll<T>(
         string table,
         Guid? sessionId,
         Guid? transactionId,
@@ -1265,6 +1274,14 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>()!;
+    }
+
+    public IQueryable<T> Select<T>(string? table, Guid? sessionId, Guid? transactionId)
+    {
+        return new SurrealDbQueryable<T>(
+            new SurrealDbQueryProvider<T>(this, sessionId, transactionId),
+            table
+        );
     }
 
     public async Task<T?> Select<T>(
@@ -1866,7 +1883,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     {
         foreach (var sessionId in SessionInfos.Enumerate())
         {
-            await ApplyConfigurationAsync(sessionId, null, cancellationToken);
+            await ApplyConfigurationAsync(sessionId, null, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -2070,7 +2087,9 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
         TimeSpan requestTimeout = _parameters.RequestTimeout ?? TimeSpan.FromSeconds(30);
         using var timeoutCts = new CancellationTokenSource(requestTimeout);
-        await using var registration = cancellationToken.Register(timeoutCts.Cancel);
+        await using var registration = cancellationToken
+            .Register(timeoutCts.Cancel)
+            .ConfigureAwait(false);
 
         bool requireInitialized = priority == SurrealDbWsRequestPriority.Normal;
 
@@ -2108,10 +2127,12 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             priority
         );
 #endif
-        await using var cancelRegistration = timeoutCts.Token.Register(() =>
-        {
-            taskCompletionSource.TrySetCanceled();
-        });
+        await using var cancelRegistration = timeoutCts
+            .Token.Register(() =>
+            {
+                taskCompletionSource.TrySetCanceled();
+            })
+            .ConfigureAwait(false);
 
         string id;
 
@@ -2140,7 +2161,9 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             TransactionId = transactionId,
         };
 
+#pragma warning disable MA0004
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
+#pragma warning restore MA0004
 
         var request = new SurrealDbWsSendRequest(
             innerRequest,

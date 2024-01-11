@@ -14,6 +14,12 @@
         "resolved": "2.0.2",
         "contentHash": "VaHoEN6YHp0jXucxm67vfuRy8zo9ufiKSuaZ4ZudRi8xmWcEFMKxfCsg2nvYNvdISFTURDu+IHqADGh53+Bamw=="
       },
+      "Meziantou.Analyzer": {
+        "type": "Direct",
+        "requested": "[2.0.201, )",
+        "resolved": "2.0.201",
+        "contentHash": "ehMMCZcz1jFsMlxf62K4LBp9t+dF1spSwr4vjWRAiMvc8lVKw27dNpKH7bnrropwdWTSWDim9arCvyNyfPTEnA=="
+      },
       "Microsoft.CodeAnalysis.Analyzers": {
         "type": "Direct",
         "requested": "[3.11.0, )",

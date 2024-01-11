@@ -136,7 +136,7 @@ public class WeatherForecastController : ControllerBase
   [HttpGet]
   public Task<IEnumerable<WeatherForecast>> GetAll(CancellationToken cancellationToken)
   {
-    return _surrealDbClient.Select<WeatherForecast>(Table, cancellationToken);
+    return _surrealDbClient.Select<WeatherForecast>(Table).ToListAsync(cancellationToken);
   }
 
   [HttpGet("{id}")]

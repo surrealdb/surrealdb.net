@@ -20,6 +20,7 @@ using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Http;
 using SurrealDb.Net.Internals.Models.LiveQuery;
+using SurrealDb.Net.Internals.Queryable;
 using SurrealDb.Net.Internals.Sessions;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
@@ -782,7 +783,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return dbResponse.GetValue<T>()!;
     }
 
-    public async Task<IEnumerable<T>> Select<T>(
+    public async Task<IEnumerable<T>> SelectAll<T>(
         string table,
         Guid? sessionId,
         Guid? transactionId,
@@ -794,6 +795,14 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
+    }
+
+    public IQueryable<T> Select<T>(string? table, Guid? sessionId, Guid? transactionId)
+    {
+        return new SurrealDbQueryable<T>(
+            new SurrealDbQueryProvider<T>(this, sessionId, transactionId),
+            table
+        );
     }
 
     public async Task<T?> Select<T>(
@@ -1582,9 +1591,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
     {
 #if NET6_0_OR_GREATER
+#pragma warning disable MA0004
         await using var stream = await response
             .Content.ReadAsStreamAsync(cancellationToken)
             .ConfigureAwait(false);
+#pragma warning restore MA0004
 #else
         await using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 #endif
