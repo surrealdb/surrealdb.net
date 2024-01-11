@@ -86,7 +86,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
         thirdResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<TestRecord>>();
 
         var lastResult = allResults[3];
-        lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
+        lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse<TestRecord>>();
     }
 
     [Fact]
@@ -163,6 +163,6 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
         thirdResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<TestRecord>>();
 
         var lastResult = allResults[3];
-        lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
+        lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse<TestRecord>>();
     }
 }

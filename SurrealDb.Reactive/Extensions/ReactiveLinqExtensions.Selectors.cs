@@ -1,5 +1,4 @@
-﻿using SurrealDb.Net.Models;
-using SurrealDb.Net.Models.LiveQuery;
+﻿using SurrealDb.Net.Models.LiveQuery;
 
 namespace System.Reactive.Linq;
 
@@ -41,13 +40,14 @@ public static partial class ReactiveLinqExtensions
     }
 
     /// <summary>
-    /// Selects deleted record ids from live query notifications.
+    /// Selects deleted record from live query notifications.
     /// </summary>
+    /// <typeparam name="T">The type of record updated.</typeparam>
     /// <param name="source">An observable sequence to filter.</param>
-    public static IObservable<Thing> SelectDeletedIds(
+    public static IObservable<T> SelectDeletedRecords<T>(
         this IObservable<SurrealDbLiveQueryResponse> source
     )
     {
-        return source.OfType<SurrealDbLiveQueryDeleteResponse>().Select(x => x.Result);
+        return source.OfType<SurrealDbLiveQueryDeleteResponse<T>>().Select(x => x.Result);
     }
 }

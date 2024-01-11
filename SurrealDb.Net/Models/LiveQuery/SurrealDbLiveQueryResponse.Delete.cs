@@ -1,10 +1,10 @@
 ﻿namespace SurrealDb.Net.Models.LiveQuery;
 
-public sealed class SurrealDbLiveQueryDeleteResponse : SurrealDbLiveQueryResponse
+public sealed class SurrealDbLiveQueryDeleteResponse<T> : SurrealDbLiveQueryResponse
 {
-    public Thing Result { get; set; } = default!;
+    public T Result { get; set; } = default!;
 
-    internal SurrealDbLiveQueryDeleteResponse(Thing result)
+    internal SurrealDbLiveQueryDeleteResponse(T result)
     {
         Result = result;
     }
