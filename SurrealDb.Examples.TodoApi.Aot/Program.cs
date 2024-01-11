@@ -26,7 +26,7 @@ var todosApi = app.MapGroup("/todos");
 todosApi.MapGet(
     "/",
     (ISurrealDbClient surrealDbClient, CancellationToken cancellationToken) =>
-        surrealDbClient.Select<Todo>(Todo.Table, cancellationToken)
+        surrealDbClient.Select<Todo>(Todo.Table).ToListAsync(cancellationToken)
 );
 todosApi.MapGet(
     "/{id:int}",

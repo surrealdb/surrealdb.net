@@ -23,7 +23,8 @@
     <PackageIcon>icon.png</PackageIcon>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <NoWarn>$(NoWarn);CS1591;MA0002;MA0006;MA0008;MA0011;MA0012;MA0015;MA0016;MA0025;MA0026;MA0048;MA0051;MA0074;MA0097</NoWarn>
+    <!-- TODO : re-enable and fix: MA0002;MA0006;MA0008;MA0011;MA0012;MA0015;MA0016;MA0025;MA0026;MA0074;MA0097 -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,6 +36,13 @@
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 	  </PackageReference>
+  </ItemGroup>
+  
+  <ItemGroup Condition="!$(ProjectName.Contains('Examples')) And !$(ProjectName.Contains('Tests')) And !$(ProjectName.Contains('Benchmarks'))">
+    <PackageReference Include="Meziantou.Analyzer">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

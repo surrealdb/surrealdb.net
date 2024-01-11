@@ -1,0 +1,30 @@
+﻿namespace SurrealDb.Net.Internals.Queryable.Expressions.Surreal;
+
+public enum BuiltinConstant
+{
+    MathE = 1,
+    MathFrac1Pi,
+    MathFrac1Sqrt2,
+    MathFrac2Pi,
+    MathFrac2SqrtPi,
+    MathFracPi2,
+    MathFracPi3,
+    MathFracPi4,
+    MathFracPi6,
+    MathFracPi8,
+    MathInf,
+    MathLn10,
+    MathLn2,
+    MathLog102,
+    MathLog10E,
+    MathLog210,
+    MathLog2E,
+    MathNegInf,
+    MathPi,
+    MathSqrt2,
+    MathTau,
+    TimeEpoch,
+    TimeMin,
+    TimeMax,
+    DurationMax,
+}

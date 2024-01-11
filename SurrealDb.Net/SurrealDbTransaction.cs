@@ -84,6 +84,6 @@ public sealed class SurrealDbTransaction : SurrealDbSession
 
     public new async ValueTask DisposeAsync()
     {
-        await CancelInternal(true, CancellationToken.None);
+        await CancelInternal(disposed: true, CancellationToken.None).ConfigureAwait(false);
     }
 }

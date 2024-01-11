@@ -37,7 +37,7 @@ public class PatchAllTests
             };
             jsonPatchDocument.Replace(x => x.Content, "[Edit] Oops");
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
 
             results = await client.Patch("post", jsonPatchDocument);
         };
