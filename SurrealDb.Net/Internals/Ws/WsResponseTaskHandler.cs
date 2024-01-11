@@ -148,7 +148,7 @@ internal sealed class WsResponseTaskHandler
             }
             else
             {
-                completionTokenSource = new();
+                completionTokenSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
                 _queueSources.Add(priority, completionTokenSource);
             }
         }

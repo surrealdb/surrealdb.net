@@ -17,6 +17,7 @@ using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Models.LiveQuery;
+using SurrealDb.Net.Internals.Queryable;
 using SurrealDb.Net.Internals.Stream;
 using SurrealDb.Net.Internals.Ws;
 using SurrealDb.Net.Models;
@@ -127,11 +128,13 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
                         if (message.MessageType == WebSocketMessageType.Binary)
                         {
-                            using var stream =
+#pragma warning disable MA0004
+                            await using var stream =
                                 message.Stream
                                 ?? MemoryStreamProvider.MemoryStreamManager.GetStream(
                                     message.Binary!
                                 );
+#pragma warning restore MA0004
 
                             if (
                                 _surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug)
@@ -227,6 +230,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             .Subscribe();
 
         _wsClient.DisconnectionHappened.Subscribe(
+#pragma warning disable MA0147
             async (_) =>
             {
                 var endChannelsTasks = new List<Task>();
@@ -261,6 +265,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                     catch { }
                 }
             }
+#pragma warning restore MA0147
         );
     }
 
@@ -453,7 +458,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             catch (TimeoutException) { }
         }
 
-        await _wsClient.Stop(WebSocketCloseStatus.NormalClosure, "Client disposed");
+        await _wsClient
+            .Stop(WebSocketCloseStatus.NormalClosure, "Client disposed")
+            .ConfigureAwait(false);
         _receiverSubscription.Dispose();
 
 #if NET9_0_OR_GREATER
@@ -893,7 +900,10 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.GetValue<T>()!;
     }
 
-    public async Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken)
+    public async Task<IEnumerable<T>> SelectAll<T>(
+        string table,
+        CancellationToken cancellationToken
+    )
     {
         var dbResponse = await SendRequestAsync(
                 "select",
@@ -903,6 +913,11 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>()!;
+    }
+
+    public IQueryable<T> Select<T>(string? table = null)
+    {
+        return new SurrealDbQueryable<T>(new SurrealDbQueryProvider<T>(this), table);
     }
 
     public async Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken)
@@ -1438,7 +1453,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         long executionStartTime = Stopwatch.GetTimestamp();
 
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        await using var registration = cancellationToken.Register(timeoutCts.Cancel);
+        await using var registration = cancellationToken
+            .Register(timeoutCts.Cancel)
+            .ConfigureAwait(false);
 
         bool requireInitialized = priority == SurrealDbWsRequestPriority.Normal;
 
@@ -1464,10 +1481,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             priority
         );
 #endif
-        await using var cancelRegistration = timeoutCts.Token.Register(() =>
-        {
-            taskCompletionSource.TrySetCanceled();
-        });
+        await using var cancelRegistration = timeoutCts
+            .Token.Register(() =>
+            {
+                taskCompletionSource.TrySetCanceled();
+            })
+            .ConfigureAwait(false);
 
         string id;
 
@@ -1493,7 +1512,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             Parameters = shouldSendParamsInRequest ? parameters : null,
         };
 
+#pragma warning disable MA0004
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
+#pragma warning restore MA0004
 
         var request = new SurrealDbWsSendRequest(
             innerRequest,

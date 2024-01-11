@@ -858,13 +858,12 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// </summary>
     /// <typeparam name="T">The type of record to extract</typeparam>
     /// <param name="table">The name of the database table</param>
-    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>The list of extracted records</returns>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken = default);
+    IQueryable<T> Select<T>(string? table = null);
 
     /// <summary>
     /// Selects a single record.<br />

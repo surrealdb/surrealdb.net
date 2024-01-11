@@ -1,0 +1,4 @@
+﻿{
+  city: New York,
+  country: USA
+}
