@@ -92,11 +92,11 @@ public static partial class ReactiveLinqExtensions
             }
 
             if (
-                response is SurrealDbLiveQueryDeleteResponse deleteResponse
-                && deleteResponse.Result is not null
+                response is SurrealDbLiveQueryDeleteResponse<T> deleteResponse
+                && deleteResponse.Result.Id is not null
             )
             {
-                acc.Remove(deleteResponse.Result.ToString());
+                acc.Remove(deleteResponse.Result.Id.ToString());
                 return acc;
             }
 

@@ -216,12 +216,12 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
         firstResult.Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
 
         var secondResult = results[1];
-        secondResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
+        secondResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse<TestRecord>>();
 
         var secondResultAsSurrealDbLiveQueryResultResponse =
-            (SurrealDbLiveQueryDeleteResponse)secondResult;
+            (SurrealDbLiveQueryDeleteResponse<TestRecord>)secondResult;
 
-        secondResultAsSurrealDbLiveQueryResultResponse.Result.Should().Be(record!.Id);
+        secondResultAsSurrealDbLiveQueryResultResponse.Result.Id.Should().Be(record!.Id);
     }
 
     [Fact]

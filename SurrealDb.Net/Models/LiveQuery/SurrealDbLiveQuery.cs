@@ -219,8 +219,8 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
 
             if (surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.DELETE)
             {
-                return new SurrealDbLiveQueryDeleteResponse(
-                    surrealDbWsLiveResponse.Result.GetValue<Thing>()!
+                return new SurrealDbLiveQueryDeleteResponse<T>(
+                    surrealDbWsLiveResponse.Result.GetValue<T>()!
                 );
             }
         }

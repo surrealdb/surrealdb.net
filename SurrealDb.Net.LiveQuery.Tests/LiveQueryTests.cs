@@ -97,7 +97,7 @@ public class LiveQueryTests : BaseLiveQueryTests
         thirdResult.Should().BeOfType<SurrealDbLiveQueryUpdateResponse<TestRecord>>();
 
         var fourthResult = allResults[3];
-        fourthResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse>();
+        fourthResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse<TestRecord>>();
 
         var lastResult = allResults[4];
         lastResult.Should().BeOfType<SurrealDbLiveQueryCloseResponse>();

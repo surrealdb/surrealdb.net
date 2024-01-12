@@ -1,4 +1,4 @@
-using SurrealDb.Net.Exceptions;
+﻿using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Models.Response;
 using System.Net;
 using System.Text;
@@ -103,7 +103,7 @@ public class QueryTests
                     @"There was a problem with the database: Parse error: Failed to parse query at line 1 column 5 expected query to end
   |
 1 | abc def;
-  |    ^ perhaps missing a semicolon on the previous statement?
+  |     ^ perhaps missing a semicolon on the previous statement?
 "
                 );
         }
