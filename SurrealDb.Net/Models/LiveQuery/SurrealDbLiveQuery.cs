@@ -144,11 +144,11 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
     }
 
     /// <summary>
-    /// Returns an enumerator that iterates asynchronously through the collection of deleted record ids.
+    /// Returns an enumerator that iterates asynchronously through the collection of deleted records.
     /// </summary>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <exception cref="Exception">When the SurrealDB client has been disposed.</exception>
-    public async IAsyncEnumerable<Thing> GetDeletedIds(
+    public async IAsyncEnumerable<T> GetDeletedRecords(
         [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
@@ -166,7 +166,7 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
                     && surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.DELETE
                 )
                 {
-                    yield return surrealDbWsLiveResponse.Result.GetValue<Thing>()!;
+                    yield return surrealDbWsLiveResponse.Result.GetValue<T>()!;
                 }
             }
 

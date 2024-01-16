@@ -58,7 +58,6 @@ jobs:
           --results-directory .coverage
           --
           DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-        continue-on-error: true # Skip failure on LQ until it's completely fixed
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3

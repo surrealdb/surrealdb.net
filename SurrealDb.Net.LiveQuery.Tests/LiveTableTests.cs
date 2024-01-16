@@ -103,7 +103,7 @@ public class LiveTableTests : BaseLiveQueryTests
         lastResult.Should().BeOfType<SurrealDbLiveQueryCloseResponse>();
     }
 
-    [Fact]
+    [Fact(Skip = "The DELETE event does not send a JsonPatchDocument at the moment")]
     public async Task ShouldReceiveDataInJsonPatchFormat()
     {
         const string url = "ws://127.0.0.1:8000/rpc";
@@ -177,7 +177,9 @@ public class LiveTableTests : BaseLiveQueryTests
             .BeOfType<SurrealDbLiveQueryUpdateResponse<JsonPatchDocument<TestRecord>>>();
 
         var fourthResult = allResults[3];
-        fourthResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse<TestRecord>>();
+        fourthResult
+            .Should()
+            .BeOfType<SurrealDbLiveQueryDeleteResponse<JsonPatchDocument<TestRecord>>>();
 
         var lastResult = allResults[4];
         lastResult.Should().BeOfType<SurrealDbLiveQueryCloseResponse>();

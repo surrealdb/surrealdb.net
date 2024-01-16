@@ -251,14 +251,14 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
     }
 
     [Fact]
-    public async Task ShouldGetDeletedIds()
+    public async Task ShouldGetDeletedRecords()
     {
         const string url = "ws://127.0.0.1:8000/rpc";
 
         TestRecord? record = null;
 
         var allResults = new List<SurrealDbLiveQueryResponse>();
-        var filteredResults = new List<Thing>();
+        var filteredResults = new List<TestRecord>();
 
         Func<Task> func = async () =>
         {
@@ -290,7 +290,7 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
 
             _ = Task.Run(async () =>
             {
-                await foreach (var result in liveQuery.GetDeletedIds(cts.Token))
+                await foreach (var result in liveQuery.GetDeletedRecords(cts.Token))
                 {
                     filteredResults.Add(result);
                 }
@@ -331,6 +331,6 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
 
         var result = filteredResults.First();
 
-        result.Should().Be(record!.Id);
+        result.Should().BeEquivalentTo(new TestRecord { Id = record!.Id, Value = 2 });
     }
 }
