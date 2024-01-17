@@ -41,7 +41,15 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                 .Publish()
                 .RefCount();
 
-            using var _ = coldObservable.SubscribeOn(testScheduler).Subscribe(allResults.Add);
+            using var _ = coldObservable
+                .SubscribeOn(testScheduler)
+                .Subscribe(
+                    allResults.Add,
+                    e =>
+                    {
+                        e.Should().BeNull();
+                    }
+                );
 
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
@@ -62,10 +70,16 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                 )
                 .Merge()
                 .SubscribeOn(testScheduler)
-                .Subscribe(_ =>
-                {
-                    completionSource.SetResult(true);
-                });
+                .Subscribe(
+                    _ =>
+                    {
+                        completionSource.SetResult(true);
+                    },
+                    e =>
+                    {
+                        e.Should().BeNull();
+                    }
+                );
 
             testScheduler.Start();
 
@@ -118,7 +132,15 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
 
             var coldObservable = client.ObserveTable<TestRecord>("test").Publish().RefCount();
 
-            using var _ = coldObservable.SubscribeOn(testScheduler).Subscribe(allResults.Add);
+            using var _ = coldObservable
+                .SubscribeOn(testScheduler)
+                .Subscribe(
+                    allResults.Add,
+                    e =>
+                    {
+                        e.Should().BeNull();
+                    }
+                );
 
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
@@ -139,10 +161,16 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                 )
                 .Merge()
                 .SubscribeOn(testScheduler)
-                .Subscribe(_ =>
-                {
-                    completionSource.SetResult(true);
-                });
+                .Subscribe(
+                    _ =>
+                    {
+                        completionSource.SetResult(true);
+                    },
+                    e =>
+                    {
+                        e.Should().BeNull();
+                    }
+                );
 
             testScheduler.Start();
 
