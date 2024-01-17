@@ -27,7 +27,7 @@
     
     protected override async Task OnInitializedAsync()
     {
-        var record = await Client.Select<CounterRecord>("counter", "default");
+        var record = await Client.Select<CounterRecord>(("counter", "default"));
         _currentCount = record?.Value ?? 0;
     }
 
