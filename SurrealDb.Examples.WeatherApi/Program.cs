@@ -42,7 +42,7 @@ async Task InitializeDbAsync(IServiceProvider serviceProvider)
 {
     using var scope = serviceProvider.CreateScope();
 
-    int initialCount = 5;
+    const int initialCount = 5;
     var weatherForecasts = new WeatherForecastFaker().Generate(initialCount);
     var surrealDbClient = scope.ServiceProvider.GetRequiredService<ISurrealDbClient>();
 

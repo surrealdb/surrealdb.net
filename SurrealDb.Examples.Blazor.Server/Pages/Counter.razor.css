@@ -1,0 +1,21 @@
+.description {
+    font-style: italic;
+}
+
+.counter-container {
+    width: fit-content;
+}
+
+.counter-value {
+    text-align: center;
+}
+
+.actions-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    .btn {
+        min-width: 40px;
+    }
+}

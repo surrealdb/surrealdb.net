@@ -1,0 +1,158 @@
+@page "/realtime-board"
+@using SurrealDb.Net
+@using SurrealDb.Examples.Blazor.Server.Models
+@using System.Reactive.Linq
+@using SurrealDb.Net.Models
+@inject SurrealDbClient Client
+@inject IDialogService DialogService
+@implements IDisposable
+
+<PageTitle>Realtime Board</PageTitle>
+
+<h1>Realtime Board</h1>
+
+<p class="description">
+    This component demonstrates extensive usage of Live Query using Reactive Extensions (Rx.NET).
+    You can simplify the realtime subscriptions logic by using the <a href="https://www.nuget.org/packages/SurrealDb.Reactive" target="_blank">SurrealDb.Reactive</a> package.
+    In this example, every change in the Kanban board is watched and the board is updated as soon as a new event is triggered: add, update or delete.
+</p>
+
+@if (_loading)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <MudDropContainer
+        @ref="_dropContainer"
+        T="DisplayableTask"
+        Items="_tasks"
+        ItemsSelector="@ItemSelector"
+        ItemDropped="ItemUpdated"
+        class="board"
+    >
+        <ChildContent>
+            @foreach (var column in _columns.OrderBy(c => c.Order))
+            {
+                var dropzone = column.Id!.ToString();
+
+                <section>
+                    <MudList Clickable="false">
+                        <MudListSubheader>
+                            @column.Name
+                        </MudListSubheader>
+                        <MudDropZone 
+                            T="DisplayableTask"
+                            Identifier="@dropzone"
+                            Class="flex-grow-1 card-list"
+                            AllowReorder="true" 
+                        />
+                    </MudList>
+
+                    <button class="btn action-btn" type="button" @onclick="() => OpenCreateTaskDialog(column)">
+                        Add a task
+                    </button>
+                </section>
+            }
+        </ChildContent>
+
+        <ItemRenderer>
+            <KanbanCard Task="@context" />
+        </ItemRenderer>
+    </MudDropContainer>
+}
+
+@code {
+
+    private MudDropContainer<DisplayableTask>? _dropContainer = null;
+
+    private bool _loading = true;
+    private IEnumerable<DisplayableColumn> _columns = Array.Empty<DisplayableColumn>();
+    private IEnumerable<DisplayableTask> _tasks => _columns.SelectMany(c => c.Tasks);
+
+    private IDisposable? _subscription;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        _columns = await Client.Select<DisplayableColumn>(DisplayableColumn.Table);
+        _loading = false;
+
+        _subscription = Client.ObserveTable<DisplayableColumn>(DisplayableColumn.Table)
+            .ScanRecords(_columns.ToDictionary(c => c.Id!.ToString()))
+            .Subscribe(async columnsAsDictionary =>
+            {
+                await InvokeAsync(() =>
+                {
+                    _columns = columnsAsDictionary.Values;
+                    StateHasChanged();
+                    _dropContainer?.Refresh();
+                });
+            });
+    }
+    
+    void IDisposable.Dispose()
+    {
+        _subscription?.Dispose();
+    }
+
+    private bool ItemSelector(DisplayableTask task, string dropzone)
+    {
+        var column = _columns.FirstOrDefault(c => c.Id!.ToString() == dropzone);
+        return column is not null && column.Tasks.Any(t => t.Id == task.Id);
+    }
+
+    private Task ItemUpdated(MudItemDropInfo<DisplayableTask> dropInfo)
+    {
+        var task = dropInfo.Item;
+
+        if (task is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var fromColumn = _columns.FirstOrDefault(c => c.Tasks.Any(t => t.Id == dropInfo.Item!.Id));
+        var toColumn = _columns.FirstOrDefault(c => c.Id!.ToString() == dropInfo.DropzoneIdentifier);
+        var newIndex = dropInfo.IndexInZone;
+
+        if (fromColumn is null || toColumn is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var moveTask = new MoveTask
+            {
+                Task = task.Id!,
+                From = Thing.From(ColumnRecord.Table, fromColumn.Id!.Id),
+                To = Thing.From(ColumnRecord.Table, toColumn.Id!.Id),
+                NewIndex = newIndex
+            };
+        return Client.Create(MoveTask.Table, moveTask);
+    }
+
+    private async Task OpenCreateTaskDialog(DisplayableColumn column)
+    {
+        var dialogOptions = new DialogOptions { CloseButton = true };
+
+        var dialog = await DialogService.ShowAsync<AddTaskDialog>("Add a task", dialogOptions);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is AddTaskForm formData)
+        {
+            await CreateTaskAsync(column, formData);
+        }
+    }
+
+    private Task CreateTaskAsync(DisplayableColumn column, AddTaskForm formData)
+    {
+        var columnId = Thing.From(ColumnRecord.Table, column.Id!.Id);
+
+        var @event = new CreateTask
+            {
+                Title = formData.Title,
+                DueDate = formData.DueDate!.Value,
+                Column = columnId
+            };
+
+        return Client.Create(CreateTask.Table, @event);
+    }
+}

@@ -1,0 +1,74 @@
+@page "/live"
+@using SurrealDb.Examples.Blazor.Server.Models
+@using SurrealDb.Net
+@using SurrealDb.Examples.Blazor.Server.Constants
+@inject SurrealDbClient Client
+@implements IDisposable
+
+<PageTitle>Weather forecast - Live</PageTitle>
+
+<h1>Weather forecast - Live</h1>
+
+<p class="description">
+    This component demonstrates how to display live data from a SurrealDB instance, using Live Query.
+    Data is fetched when the page is loaded and updated in realtime as soon as a new weather forecast is created.
+    This behavior can be distinguished with the fetch once data example on <NavLink href="fetch">this page</NavLink>.
+</p>
+
+@if (_forecasts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Country</th>
+                <th>Temp. (C)</th>
+                <th>Temp. (F)</th>
+                <th>Summary</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var forecast in _forecasts)
+            {
+                <tr>
+                    <td>@forecast.Date</td>
+                    <td>@forecast.Country</td>
+                    <td>@forecast.TemperatureC</td>
+                    <td>@forecast.TemperatureF</td>
+                    <td>@forecast.Summary</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IEnumerable<WeatherForecast>? _forecasts;
+    private bool _isDisposed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        string query = $"SELECT * FROM {WeatherForecast.Table} ORDER BY date DESC LIMIT {QueryConstants.WEATHER_FORECAST_LIMIT};";
+        var response = await Client.Query(query);
+
+        _forecasts = response.FirstOk!.GetValues<WeatherForecast>();
+        StateHasChanged();
+
+        var liveQuery = await Client.LiveTable<WeatherForecast>(WeatherForecast.Table);
+        
+        await foreach (var record in liveQuery.GetCreatedRecords().TakeWhile(_ => !_isDisposed))
+        {
+            _forecasts = new[] { record }.Concat(_forecasts).Take(QueryConstants.WEATHER_FORECAST_LIMIT);
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        _isDisposed = true;
+    }
+}

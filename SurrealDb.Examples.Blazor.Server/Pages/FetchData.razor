@@ -1,0 +1,58 @@
+﻿@page "/fetch"
+@using SurrealDb.Examples.Blazor.Server.Models
+@using SurrealDb.Net
+@using SurrealDb.Examples.Blazor.Server.Constants
+@inject SurrealDbClient Client
+
+<PageTitle>Weather forecast - Fetch</PageTitle>
+
+<h1>Weather forecast - Fetch</h1>
+
+<p class="description">
+    This component demonstrates fetching data from a SurrealDB instance.
+    Data is fetched only once, when the page is loaded.
+    This behavior can be distinguished with the live data example on <NavLink href="live">this page</NavLink>.
+</p>
+
+@if (_forecasts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Country</th>
+                <th>Temp. (C)</th>
+                <th>Temp. (F)</th>
+                <th>Summary</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var forecast in _forecasts)
+            {
+                <tr>
+                    <td>@forecast.Date</td>
+                    <td>@forecast.Country</td>
+                    <td>@forecast.TemperatureC</td>
+                    <td>@forecast.TemperatureF</td>
+                    <td>@forecast.Summary</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IEnumerable<WeatherForecast>? _forecasts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        string query = $"SELECT * FROM {WeatherForecast.Table} ORDER BY date DESC LIMIT {QueryConstants.WEATHER_FORECAST_LIMIT};";
+        var response = await Client.Query(query);
+        
+        _forecasts = response.FirstOk!.GetValues<WeatherForecast>();
+    }
+}

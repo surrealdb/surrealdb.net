@@ -1,0 +1,49 @@
+﻿@page "/counter"
+@using SurrealDb.Examples.Blazor.Server.Models
+@using SurrealDb.Net
+@inject SurrealDbClient Client
+
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+<p class="description">
+    This component displays a counter with increment/decrement actions.
+    Each counter is stored in a single SurrealDB record and each action triggers a query to the remote SurrealDB instance.
+</p>
+
+<div class="counter-container">
+    <h5>Counter <code>default</code></h5>
+    <div class="counter-value">@_currentCount</div>
+    
+    <div class="actions-container">
+        <button class="btn btn-primary" @onclick="DecrementCountAsync">-</button>
+        <button class="btn btn-primary" @onclick="IncrementCountAsync">+</button>
+    </div>
+</div>
+
+@code {
+    private int _currentCount;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var record = await Client.Select<CounterRecord>(("counter", "default"));
+        _currentCount = record?.Value ?? 0;
+    }
+
+    private async Task DecrementCountAsync()
+    {
+        var response = await Client.Query("UPDATE counter:default SET value -= 1;");
+
+        var record = response.FirstOk!.GetValues<CounterRecord>().Single();
+        _currentCount = record.Value;
+    }
+
+    private async Task IncrementCountAsync()
+    {
+        var response = await Client.Query("UPDATE counter:default SET value += 1;");
+        
+        var record = response.FirstOk!.GetValues<CounterRecord>().Single();
+        _currentCount = record.Value;
+    }
+}
