@@ -41,11 +41,8 @@ public class ConnectTests
             using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = SurrealDbWsClient.New(
-                "127.0.0.1:8000",
-                dbInfo.Namespace,
-                dbInfo.Database
-            );
+            using var client = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
+            client.Configure(dbInfo.Namespace, dbInfo.Database);
 
             await client.Connect();
 

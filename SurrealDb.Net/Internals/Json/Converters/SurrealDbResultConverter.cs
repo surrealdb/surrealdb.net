@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Models.Response;
+﻿using System.Net;
+using SurrealDb.Net.Models.Response;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -10,9 +11,13 @@ internal class SurrealDbResultConverter : JsonConverter<ISurrealDbResult>
     const string StatusPropertyName = "status";
     const string TimePropertyName = "time";
     const string ResultPropertyName = "result";
+    const string ErrorDetailsPropertyName = "detail";
     const string CodePropertyName = "code";
+    const string DetailsPropertyName = "details";
+    const string DescriptionPropertyName = "description";
+    const string InformationPropertyName = "information";
 
-    public override ISurrealDbResult? Read(
+    public override ISurrealDbResult Read(
         ref Utf8JsonReader reader,
         Type typeToConvert,
         JsonSerializerOptions options
@@ -25,27 +30,61 @@ internal class SurrealDbResultConverter : JsonConverter<ISurrealDbResult>
         {
             var status = statusProperty.GetString();
 
+            var timeProperty = root.GetProperty(TimePropertyName);
+            var time = timeProperty.ValueKind switch
+            {
+                JsonValueKind.Undefined or JsonValueKind.Null => TimeSpan.Zero,
+                JsonValueKind.String
+                    => TimeSpanValueConverter.GetValueFromString(timeProperty.GetString()),
+                JsonValueKind.Number
+                    => TimeSpanValueConverter.GetValueFromNumber(timeProperty.GetInt64()),
+                _ => throw new JsonException($"Cannot deserialize 'time' to {nameof(TimeSpan)}")
+            };
+
             if (status == OkStatus)
             {
-                var timeProperty = root.GetProperty(TimePropertyName);
-                var time =
-                    timeProperty.ValueKind == JsonValueKind.Null
-                        ? TimeSpan.Zero
-                        : JsonSerializer.Deserialize<TimeSpan>(timeProperty.GetRawText(), options);
-
                 var value = root.GetProperty(ResultPropertyName).Clone();
 
                 return new SurrealDbOkResult(time, status, value, options);
             }
 
-            return JsonSerializer.Deserialize<SurrealDbErrorResult>(root.GetRawText(), options);
+            if (status is not null)
+            {
+                var details = root.TryGetProperty(
+                    ErrorDetailsPropertyName,
+                    out var errorDetailsProperty
+                )
+                    ? errorDetailsProperty.GetString()
+                    : null;
+
+                return new SurrealDbErrorResult(time, status, details!);
+            }
         }
 
-        if (root.TryGetProperty(CodePropertyName, out _))
-            return JsonSerializer.Deserialize<SurrealDbProtocolErrorResult>(
-                root.GetRawText(),
-                options
-            );
+        if (
+            root.TryGetProperty(CodePropertyName, out var codeProperty)
+            && Enum.TryParse(codeProperty.GetInt16().ToString(), true, out HttpStatusCode code)
+        )
+        {
+            // TODO : Use Source Generator to convert a number to HttpStatusCode, instead of ".GetInt16().ToString()"
+            var details = root.TryGetProperty(DetailsPropertyName, out var detailsProperty)
+                ? detailsProperty.GetString()
+                : null;
+            var description = root.TryGetProperty(
+                DescriptionPropertyName,
+                out var descriptionProperty
+            )
+                ? descriptionProperty.GetString()
+                : null;
+            var information = root.TryGetProperty(
+                InformationPropertyName,
+                out var informationProperty
+            )
+                ? informationProperty.GetString()
+                : null;
+
+            return new SurrealDbProtocolErrorResult(code, details!, description!, information!);
+        }
 
         return new SurrealDbUnknownResult();
     }
@@ -56,6 +95,6 @@ internal class SurrealDbResultConverter : JsonConverter<ISurrealDbResult>
         JsonSerializerOptions options
     )
     {
-        JsonSerializer.Serialize(writer, value, options);
+        throw new NotSupportedException($"Cannot write {nameof(ISurrealDbResult)} back in json...");
     }
 }

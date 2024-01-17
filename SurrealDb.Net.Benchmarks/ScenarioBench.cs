@@ -25,17 +25,26 @@ public class ScenarioBench : BaseBenchmark
             switch (index)
             {
                 case 0:
-                    _surrealdbHttpClient = new SurrealDbClient(HttpUrl);
+                    _surrealdbHttpClient = new SurrealDbClient(
+                        HttpUrl,
+                        appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
+                    );
                     InitializeSurrealDbClient(_surrealdbHttpClient, dbInfo);
                     await _surrealdbHttpClient.Connect();
                     break;
                 case 1:
-                    _surrealdbHttpClientWithHttpClientFactory = clientGenerator.Create(HttpUrl);
+                    _surrealdbHttpClientWithHttpClientFactory = clientGenerator.Create(
+                        HttpUrl,
+                        GetFuncJsonSerializerContexts()
+                    );
                     InitializeSurrealDbClient(_surrealdbHttpClientWithHttpClientFactory, dbInfo);
                     await _surrealdbHttpClientWithHttpClientFactory.Connect();
                     break;
                 case 2:
-                    _surrealdbWsTextClient = new SurrealDbClient(WsUrl);
+                    _surrealdbWsTextClient = new SurrealDbClient(
+                        WsUrl,
+                        appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
+                    );
                     InitializeSurrealDbClient(_surrealdbWsTextClient, dbInfo);
                     await _surrealdbWsTextClient.Connect();
                     break;
@@ -96,7 +105,7 @@ public class ScenarioBench : BaseBenchmark
 
         var addresses = new List<Address>
         {
-            new Address
+            new()
             {
                 Id = pratimHomeId,
                 Number = "221B",
@@ -104,7 +113,7 @@ public class ScenarioBench : BaseBenchmark
                 City = "London",
                 Country = "UK"
             },
-            new Address
+            new()
             {
                 Id = tobieHomeId,
                 Number = "221A",
@@ -112,7 +121,7 @@ public class ScenarioBench : BaseBenchmark
                 City = "London",
                 Country = "UK"
             },
-            new Address
+            new()
             {
                 Id = alexHomeId,
                 Number = "221C",
@@ -235,7 +244,8 @@ SELECT
 	array::distinct(<-purchased<-customer->purchased->product.*) AS purchases
 FROM product:shirt;"
         );
+        var customQueryResult = customQueryResponse.FirstOk;
 
-        return customQueryResponse.GetValue<List<ProductAlsoPurchased>>(0)!;
+        return customQueryResult!.GetValues<ProductAlsoPurchased>().ToList();
     }
 }

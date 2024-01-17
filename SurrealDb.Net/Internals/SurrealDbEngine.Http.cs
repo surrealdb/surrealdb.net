@@ -17,14 +17,37 @@ using System.Text;
 using System.Text.Json;
 using System.Web;
 using SystemTextJsonPatch;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace SurrealDb.Net.Internals;
+
+#if NET8_0_OR_GREATER
+[JsonSourceGenerationOptions(
+    AllowTrailingCommas = true,
+    NumberHandling = JsonNumberHandling.AllowReadingFromString
+        | JsonNumberHandling.AllowNamedFloatingPointLiterals,
+    PropertyNameCaseInsensitive = true,
+    PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower,
+    ReadCommentHandling = JsonCommentHandling.Skip
+)]
+[JsonSerializable(typeof(ISurrealDbResult))]
+[JsonSerializable(typeof(IReadOnlyDictionary<string, object>))]
+[JsonSerializable(typeof(RootAuth))]
+[JsonSerializable(typeof(NamespaceAuth))]
+[JsonSerializable(typeof(DatabaseAuth))]
+[JsonSerializable(typeof(ScopeAuth))]
+[JsonSerializable(typeof(AuthResponse))]
+internal partial class SurrealDbHttpJsonSerializerContext : JsonSerializerContext;
+#endif
 
 internal class SurrealDbHttpEngine : ISurrealDbEngine
 {
     private readonly Uri _uri;
     private readonly IHttpClientFactory? _httpClientFactory;
     private readonly Action<JsonSerializerOptions>? _configureJsonSerializerOptions;
+    private readonly Func<JsonSerializerContext[]>? _prependJsonSerializerContexts;
+    private readonly Func<JsonSerializerContext[]>? _appendJsonSerializerContexts;
     private readonly Lazy<HttpClient> _singleHttpClient = new(() => new HttpClient(), true);
     private HttpClientConfiguration? _singleHttpClientConfiguration;
     private readonly SurrealDbHttpEngineConfig _config = new();
@@ -32,12 +55,16 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public SurrealDbHttpEngine(
         Uri uri,
         IHttpClientFactory? httpClientFactory,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions
+        Action<JsonSerializerOptions>? configureJsonSerializerOptions,
+        Func<JsonSerializerContext[]>? prependJsonSerializerContexts,
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts
     )
     {
         _uri = uri;
         _httpClientFactory = httpClientFactory;
         _configureJsonSerializerOptions = configureJsonSerializerOptions;
+        _prependJsonSerializerContexts = prependJsonSerializerContexts;
+        _appendJsonSerializerContexts = appendJsonSerializerContexts;
     }
 
     public async Task Authenticate(Jwt jwt, CancellationToken cancellationToken)
@@ -105,7 +132,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 
         var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.DeserializeEnumerable<T>().First();
+        return okResult.GetValues<T>().First();
     }
 
     public async Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken)
@@ -121,7 +148,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 
         var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.DeserializeEnumerable<T>().First();
+        return okResult.GetValues<T>().First();
     }
 
     public async Task Delete(string table, CancellationToken cancellationToken)
@@ -149,7 +176,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 
         var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.DeserializeEnumerable<object>().Any(r => r is not null);
+        return okResult.GetValues<object?>().Any(r => r is not null);
     }
 
     public void Dispose()
@@ -247,7 +274,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 
         var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.DeserializeEnumerable<TOutput>().First();
+        return okResult.GetValues<TOutput>().First();
     }
 
     public async Task<T> Merge<T>(
@@ -267,7 +294,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 
         var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.DeserializeEnumerable<T>().First();
+        return okResult.GetValues<T>().First();
     }
 
     public async Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
@@ -288,7 +315,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 
         var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.DeserializeEnumerable<TOutput>();
+        return okResult.GetValues<TOutput>();
     }
 
     public async Task<IEnumerable<T>> MergeAll<T>(
@@ -308,7 +335,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 
         var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.DeserializeEnumerable<T>();
+        return okResult.GetValues<T>();
     }
 
     public async Task<T> Patch<T>(
@@ -331,7 +358,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 
         var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.DeserializeEnumerable<T>().First();
+        return okResult.GetValues<T>().First();
     }
 
     public async Task<IEnumerable<T>> PatchAll<T>(
@@ -354,7 +381,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 
         var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.DeserializeEnumerable<T>();
+        return okResult.GetValues<T>();
     }
 
     public async Task<SurrealDbResponse> Query(
@@ -372,11 +399,27 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         foreach (var (key, value) in _config.Parameters)
         {
-            queryString[key] = JsonSerializer.Serialize(value, jsonSerializerOptions);
+            queryString[key] = JsonSerializer.IsReflectionEnabledByDefault
+                ?
+#pragma warning disable IL2026, IL3050
+                JsonSerializer.Serialize(value, jsonSerializerOptions)
+#pragma warning restore IL2026, IL3050
+                : JsonSerializer.Serialize(
+                    value,
+                    GetJsonSerializerOptions().GetTypeInfo(typeof(object))
+                );
         }
         foreach (var (key, value) in parameters)
         {
-            queryString[key] = JsonSerializer.Serialize(value, jsonSerializerOptions);
+            queryString[key] = JsonSerializer.IsReflectionEnabledByDefault
+                ?
+#pragma warning disable IL2026, IL3050
+                JsonSerializer.Serialize(value, jsonSerializerOptions)
+#pragma warning restore IL2026, IL3050
+                : JsonSerializer.Serialize(
+                    value,
+                    GetJsonSerializerOptions().GetTypeInfo(typeof(object))
+                );
         }
 
         var uriBuilder = new UriBuilder
@@ -407,7 +450,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 
         var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.DeserializeEnumerable<T>();
+        return okResult.GetValues<T>();
     }
 
     public async Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken)
@@ -422,7 +465,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 
         var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.DeserializeEnumerable<T>().FirstOrDefault();
+        return okResult.GetValues<T>().FirstOrDefault();
     }
 
     public async Task Set(string key, object value, CancellationToken cancellationToken)
@@ -574,7 +617,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 
         var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.DeserializeEnumerable<T>();
+        return okResult.GetValues<T>();
     }
 
     public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
@@ -594,7 +637,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 
         var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.DeserializeEnumerable<T>().First();
+        return okResult.GetValues<T>().First();
     }
 
     public async Task Use(string ns, string db, CancellationToken cancellationToken)
@@ -629,17 +672,27 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 #endif
     }
 
+    private CurrentJsonSerializerOptionsForAot? _currentJsonSerializerOptionsForAot;
+
     private JsonSerializerOptions GetJsonSerializerOptions()
     {
-        if (_configureJsonSerializerOptions is not null)
-        {
-            var jsonSerializerOptions = SurrealDbSerializerOptions.CreateJsonSerializerOptions();
-            _configureJsonSerializerOptions(jsonSerializerOptions);
+        var jsonSerializerOptions = SurrealDbSerializerOptions.GetJsonSerializerOptions(
+#if NET8_0_OR_GREATER
+            SurrealDbHttpJsonSerializerContext.Default,
+#endif
+            _configureJsonSerializerOptions,
+            _prependJsonSerializerContexts,
+            _appendJsonSerializerContexts,
+            _currentJsonSerializerOptionsForAot,
+            out var updatedJsonSerializerOptionsForAot
+        );
 
-            return jsonSerializerOptions;
+        if (updatedJsonSerializerOptionsForAot is not null)
+        {
+            _currentJsonSerializerOptionsForAot = updatedJsonSerializerOptionsForAot;
         }
 
-        return SurrealDbSerializerOptions.Default;
+        return jsonSerializerOptions;
     }
 
     private HttpClientWrapper CreateHttpClientWrapper(
@@ -718,26 +771,28 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         var auth = overridedAuth ?? _config.Auth;
 
-        if (auth is BearerAuth bearerAuth)
+        switch (auth)
         {
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-                AuthConstants.BEARER,
-                bearerAuth.Token
-            );
-        }
-        if (auth is BasicAuth basicAuth)
-        {
-            string credentials = Convert.ToBase64String(
-                Encoding.ASCII.GetBytes($"{basicAuth.Username}:{basicAuth.Password}")
-            );
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-                AuthConstants.BASIC,
-                credentials
-            );
-        }
-        if (auth is NoAuth)
-        {
-            client.DefaultRequestHeaders.Authorization = null;
+            case BearerAuth bearerAuth:
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                    AuthConstants.BEARER,
+                    bearerAuth.Token
+                );
+                break;
+            case BasicAuth basicAuth:
+            {
+                string credentials = Convert.ToBase64String(
+                    Encoding.ASCII.GetBytes($"{basicAuth.Username}:{basicAuth.Password}")
+                );
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                    AuthConstants.BASIC,
+                    credentials
+                );
+                break;
+            }
+            case NoAuth:
+                client.DefaultRequestHeaders.Authorization = null;
+                break;
         }
     }
 
@@ -773,13 +828,24 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return _singleHttpClient.IsValueCreated && client == _singleHttpClient.Value;
     }
 
+    private StringContent CreateBodyContent(string data)
+    {
+        return new StringContent(data, Encoding.UTF8, "application/json");
+    }
+
     private StringContent CreateBodyContent<T>(T data)
     {
-        string bodyContent = data is string str
-            ? str
-            : JsonSerializer.Serialize(data, GetJsonSerializerOptions());
+        string bodyContent = JsonSerializer.IsReflectionEnabledByDefault
+            ?
+#pragma warning disable IL2026, IL3050
+            JsonSerializer.Serialize(data, GetJsonSerializerOptions())
+#pragma warning restore IL2026, IL3050
+            : JsonSerializer.Serialize(
+                data,
+                (GetJsonSerializerOptions().GetTypeInfo(typeof(T)) as JsonTypeInfo<T>)!
+            );
 
-        return new StringContent(bodyContent, Encoding.UTF8, "application/json");
+        return CreateBodyContent(bodyContent);
     }
 
     private async Task<SurrealDbResponse> DeserializeDbResponseAsync(
@@ -799,6 +865,27 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         if (!response.IsSuccessStatusCode)
         {
+#if NET8_0_OR_GREATER
+            var taskResult = JsonSerializer.IsReflectionEnabledByDefault
+                ?
+#pragma warning disable IL2026, IL3050
+                JsonSerializer.DeserializeAsync<ISurrealDbResult>(
+                    stream,
+                    jsonSerializerOptions,
+                    cancellationToken
+                )
+#pragma warning restore IL2026, IL3050
+                : JsonSerializer.DeserializeAsync(
+                    stream,
+                    (
+                        jsonSerializerOptions.GetTypeInfo(typeof(ISurrealDbResult))
+                        as JsonTypeInfo<ISurrealDbResult>
+                    )!,
+                    cancellationToken
+                );
+
+            var result = await taskResult.ConfigureAwait(false);
+#else
             var result = await JsonSerializer
                 .DeserializeAsync<ISurrealDbResult>(
                     stream,
@@ -806,19 +893,34 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
                     cancellationToken
                 )
                 .ConfigureAwait(false);
+#endif
 
             return new SurrealDbResponse(result!);
         }
 
         var list = new List<ISurrealDbResult>();
 
+        var taskEnumerableResult = JsonSerializer.IsReflectionEnabledByDefault
+            ?
+#pragma warning disable IL2026, IL3050
+            JsonSerializer.DeserializeAsyncEnumerable<ISurrealDbResult>(
+                stream,
+                jsonSerializerOptions,
+                cancellationToken
+            )
+#pragma warning restore IL2026, IL3050
+            : JsonSerializer.DeserializeAsyncEnumerable(
+                stream,
+                (
+                    jsonSerializerOptions.GetTypeInfo(typeof(ISurrealDbResult))
+                    as JsonTypeInfo<ISurrealDbResult>
+                )!,
+                cancellationToken
+            );
+
         await foreach (
-            var result in JsonSerializer
-                .DeserializeAsyncEnumerable<ISurrealDbResult>(
-                    stream,
-                    jsonSerializerOptions,
-                    cancellationToken
-                )
+            var result in taskEnumerableResult
+                .WithCancellation(cancellationToken)
                 .ConfigureAwait(false)
         )
         {
@@ -842,13 +944,27 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 #endif
 
-        var authResponse = await JsonSerializer
-            .DeserializeAsync<AuthResponse>(stream, GetJsonSerializerOptions(), cancellationToken)
-            .ConfigureAwait(false);
+        var taskAuth = JsonSerializer.IsReflectionEnabledByDefault
+            ?
+#pragma warning disable IL2026, IL3050
+            JsonSerializer.DeserializeAsync<AuthResponse>(
+                stream,
+                GetJsonSerializerOptions(),
+                cancellationToken
+            )
+#pragma warning restore IL2026, IL3050
+            : JsonSerializer.DeserializeAsync(
+                stream,
+                (
+                    GetJsonSerializerOptions().GetTypeInfo(typeof(AuthResponse))
+                    as JsonTypeInfo<AuthResponse>
+                )!,
+                cancellationToken
+            );
 
-        return authResponse is not null
-            ? authResponse
-            : throw new SurrealDbException("Cannot deserialize auth response");
+        var authResponse = await taskAuth.ConfigureAwait(false);
+
+        return authResponse ?? throw new SurrealDbException("Cannot deserialize auth response");
     }
 
     private ExpandoObject ConvertJsonPatchDocumentToObject<T>(JsonPatchDocument<T> patches)

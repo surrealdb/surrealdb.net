@@ -137,7 +137,7 @@ public class ConstructorsThingTests
     [Fact]
     public void ShouldFailToCreateThingFromNullTable()
     {
-        Action act = () => Thing.From((string?)null, "id");
+        Action act = () => Thing.From<string?, string>(null, "id");
 
         act.Should()
             .Throw<ArgumentException>()
@@ -147,7 +147,7 @@ public class ConstructorsThingTests
     [Fact]
     public void ShouldFailToCreateThingFromNullId()
     {
-        Action act = () => Thing.From("table", (string?)null);
+        Action act = () => Thing.From<string, string?>("table", null);
 
         act.Should()
             .Throw<ArgumentException>()

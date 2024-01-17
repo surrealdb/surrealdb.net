@@ -1,6 +1,7 @@
 ﻿using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Models;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace SurrealDb.Net.Models;
 
@@ -17,6 +18,7 @@ public partial class Thing
     /// </remarks>
     /// </param>
     /// <exception cref="ArgumentException"></exception>
+    [JsonConstructor]
     public Thing(string thing)
     {
         _raw = thing.AsMemory();

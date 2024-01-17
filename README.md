@@ -28,8 +28,6 @@ Supported protocols:
 
 #### Construct a new SurrealDB client
 
-##### As-is
-
 You can easily create a new SurrealDB client easily. All you have to do is define the `endpoint` to the SurrealDB instance.
 
 ```csharp
@@ -41,24 +39,11 @@ var clientWss = new SurrealDbClient("wss://cloud.surrealdb.com/rpc");
 // Signin & Use ns/db
 ```
 
-##### Static constructor
+#### Dependency injection
 
-There are some static constructors that you can use for specific contexts. The advantage of this syntax is that all you only need to do is define the `host` and not the `endpoint`.
+You can use Dependency Injection with the `services.AddSurreal()` function.
 
-```csharp
-var clientHttp = SurrealDbHttpClient.New("127.0.0.1:8000");
-var clientHttps = SurrealDbHttpsClient.New("cloud.surrealdb.com");
-var clientWs = SurrealDbWsClient.New("127.0.0.1:8000");
-var clientWss = SurrealDbWssClient.New("cloud.surrealdb.com");
-
-// Signin & Use ns/db
-```
-
-##### Dependency injection
-
-Last but not least, you can use Dependency Injection with the `services.AddSurreal()` function.
-
-###### Default instance
+##### Default instance
 
 ```csharp
 var options = SurrealDbOptions
@@ -95,7 +80,7 @@ Note that the default lifetime of this service is `Singleton`. You can override 
 services.AddSurreal(options, ServiceLifetime.Scoped);
 ```
 
-###### Connection String
+##### Connection String
 
 Consider the following `appsettings.json` file:
 
@@ -122,7 +107,7 @@ services.AddSurreal(configuration.GetConnectionString("SurrealDB"));
 
 It will automatically create a new SurrealDB using the `Server endpoint` and configure the client using the different values for `namespace`, `database`, `username` and `password`. Note that these values are optional but the `endpoint` is still required.
 
-###### Multiple instances
+##### Multiple instances
 
 Having a default instance for a project is enough most of the time, but there may be times when you'd like to target multiple SurrealDB instances, either at different addresses or at the same address but inside different NS/DBs. You can use multiple instances as long as you provide 1 interface per client, as in the following example.
 
