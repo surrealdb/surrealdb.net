@@ -1043,32 +1043,32 @@ public class ParserTests
         await client.Query(query);
 
         {
-            var noneRecord = await client.Select<Vector2Record>("vector", "none");
+            var noneRecord = await client.Select<Vector2Record>(("vector", "none"));
             noneRecord.Should().NotBeNull();
             noneRecord!.Value.Should().BeNull();
         }
 
         {
-            Func<Task> act = async () => await client.Select<Vector2Record>("vector", "empty");
+            Func<Task> act = async () => await client.Select<Vector2Record>(("vector", "empty"));
             await act.Should()
                 .ThrowAsync<JsonException>()
                 .WithMessage("Cannot deserialize Vector2");
         }
 
         {
-            var vector2Record = await client.Select<Vector2Record>("vector", "vector2");
+            var vector2Record = await client.Select<Vector2Record>(("vector", "vector2"));
             vector2Record.Should().NotBeNull();
             vector2Record!.Value.Should().Be(new Vector2(2.5f, 0.5f));
         }
 
         {
-            var vector3Record = await client.Select<Vector2Record>("vector", "vector3");
+            var vector3Record = await client.Select<Vector2Record>(("vector", "vector3"));
             vector3Record.Should().NotBeNull();
             vector3Record!.Value.Should().Be(new Vector2(4, 9));
         }
 
         {
-            var vector4Record = await client.Select<Vector2Record>("vector", "vector4");
+            var vector4Record = await client.Select<Vector2Record>(("vector", "vector4"));
             vector4Record.Should().NotBeNull();
             vector4Record!.Value.Should().Be(new Vector2(2, 3));
         }
@@ -1097,33 +1097,33 @@ public class ParserTests
         await client.Query(query);
 
         {
-            var noneRecord = await client.Select<Vector3Record>("vector", "none");
+            var noneRecord = await client.Select<Vector3Record>(("vector", "none"));
             noneRecord.Should().NotBeNull();
             noneRecord!.Value.Should().BeNull();
         }
 
         {
-            Func<Task> act = async () => await client.Select<Vector3Record>("vector", "empty");
+            Func<Task> act = async () => await client.Select<Vector3Record>(("vector", "empty"));
             await act.Should()
                 .ThrowAsync<JsonException>()
                 .WithMessage("Cannot deserialize Vector3");
         }
 
         {
-            Func<Task> act = async () => await client.Select<Vector3Record>("vector", "vector2");
+            Func<Task> act = async () => await client.Select<Vector3Record>(("vector", "vector2"));
             await act.Should()
                 .ThrowAsync<JsonException>()
                 .WithMessage("Cannot deserialize Vector3");
         }
 
         {
-            var vector3Record = await client.Select<Vector3Record>("vector", "vector3");
+            var vector3Record = await client.Select<Vector3Record>(("vector", "vector3"));
             vector3Record.Should().NotBeNull();
             vector3Record!.Value.Should().Be(new Vector3(4, 9, 16));
         }
 
         {
-            var vector4Record = await client.Select<Vector3Record>("vector", "vector4");
+            var vector4Record = await client.Select<Vector3Record>(("vector", "vector4"));
             vector4Record.Should().NotBeNull();
             vector4Record!.Value.Should().Be(new Vector3(2, 3, 4));
         }
@@ -1152,34 +1152,34 @@ public class ParserTests
         await client.Query(query);
 
         {
-            var noneRecord = await client.Select<Vector4Record>("vector", "none");
+            var noneRecord = await client.Select<Vector4Record>(("vector", "none"));
             noneRecord.Should().NotBeNull();
             noneRecord!.Value.Should().BeNull();
         }
 
         {
-            Func<Task> act = async () => await client.Select<Vector4Record>("vector", "empty");
+            Func<Task> act = async () => await client.Select<Vector4Record>(("vector", "empty"));
             await act.Should()
                 .ThrowAsync<JsonException>()
                 .WithMessage("Cannot deserialize Vector4");
         }
 
         {
-            Func<Task> act = async () => await client.Select<Vector4Record>("vector", "vector2");
+            Func<Task> act = async () => await client.Select<Vector4Record>(("vector", "vector2"));
             await act.Should()
                 .ThrowAsync<JsonException>()
                 .WithMessage("Cannot deserialize Vector4");
         }
 
         {
-            Func<Task> act = async () => await client.Select<Vector4Record>("vector", "vector3");
+            Func<Task> act = async () => await client.Select<Vector4Record>(("vector", "vector3"));
             await act.Should()
                 .ThrowAsync<JsonException>()
                 .WithMessage("Cannot deserialize Vector4");
         }
 
         {
-            var vector4Record = await client.Select<Vector4Record>("vector", "vector4");
+            var vector4Record = await client.Select<Vector4Record>(("vector", "vector4"));
             vector4Record.Should().NotBeNull();
             vector4Record!.Value.Should().Be(new Vector4(2, 3, 4, 5));
         }

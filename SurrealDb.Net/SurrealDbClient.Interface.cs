@@ -104,19 +104,6 @@ public interface ISurrealDbClient : IDisposable
     /// <summary>
     /// Deletes the specified record from the database.
     /// </summary>
-    /// <param name="table">The name of the database table</param>
-    /// <param name="id">The id of the record</param>
-    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-    /// <returns>Returns true if the record was removed successfully.</returns>
-    /// <exception cref="OperationCanceledException"></exception>
-    /// <exception cref="HttpRequestException"></exception>
-    /// <exception cref="InvalidOperationException"></exception>
-    /// <exception cref="SurrealDbException"></exception>
-    Task<bool> Delete(string table, string id, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Deletes the specified record from the database.
-    /// </summary>
     /// <param name="thing">The record id.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>Returns true if the record was removed successfully.</returns>
@@ -351,20 +338,6 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Selects a single record.
-    /// </summary>
-    /// <typeparam name="T">The type of the record</typeparam>
-    /// <param name="table">The name of the database table</param>
-    /// <param name="id">The id of the record</param>
-    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-    /// <returns>The extracted record</returns>
-    /// <exception cref="OperationCanceledException"></exception>
-    /// <exception cref="HttpRequestException"></exception>
-    /// <exception cref="InvalidOperationException"></exception>
-    /// <exception cref="SurrealDbException"></exception>
-    Task<T?> Select<T>(string table, string id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Selects a single record.

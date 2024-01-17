@@ -127,11 +127,6 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.Delete(table, cancellationToken);
     }
 
-    public Task<bool> Delete(string table, string id, CancellationToken cancellationToken = default)
-    {
-        return Delete(new Thing(table, id), cancellationToken);
-    }
-
     public Task<bool> Delete(Thing thing, CancellationToken cancellationToken = default)
     {
         return _engine.Delete(thing, cancellationToken);
@@ -269,15 +264,6 @@ public class SurrealDbClient : ISurrealDbClient
     )
     {
         return _engine.Select<T>(table, cancellationToken);
-    }
-
-    public Task<T?> Select<T>(
-        string table,
-        string id,
-        CancellationToken cancellationToken = default
-    )
-    {
-        return Select<T?>(new Thing(table, id), cancellationToken);
     }
 
     public Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken = default)

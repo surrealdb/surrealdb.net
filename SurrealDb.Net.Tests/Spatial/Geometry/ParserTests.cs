@@ -1,4 +1,4 @@
-using Microsoft.Spatial;
+﻿using Microsoft.Spatial;
 using System.Text;
 
 namespace SurrealDb.Net.Tests.Spatial.Geometry;
@@ -41,7 +41,7 @@ public class ParserTests
 
         await client.Query(query);
 
-        var record = await client.Select<GeometryPointRecord>("geometry", "PointFromTuple");
+        var record = await client.Select<GeometryPointRecord>(("geometry", "PointFromTuple"));
 
         record.Should().NotBeNull();
         record!.Value.Should().NotBeNull();
@@ -71,7 +71,7 @@ public class ParserTests
 
         await client.Query(query);
 
-        var record = await client.Select<GeometryPointRecord>("geometry", "Point");
+        var record = await client.Select<GeometryPointRecord>(("geometry", "Point"));
 
         record.Should().NotBeNull();
         record!.Value.Should().NotBeNull();
@@ -101,7 +101,7 @@ public class ParserTests
 
         await client.Query(query);
 
-        var record = await client.Select<GeometryLineStringRecord>("geometry", "LineString");
+        var record = await client.Select<GeometryLineStringRecord>(("geometry", "LineString"));
 
         record.Should().NotBeNull();
         record!.Value.Should().NotBeNull();
@@ -138,7 +138,7 @@ public class ParserTests
 
         await client.Query(query);
 
-        var record = await client.Select<GeometryPolygonRecord>("geometry", "Polygon");
+        var record = await client.Select<GeometryPolygonRecord>(("geometry", "Polygon"));
 
         record.Should().NotBeNull();
         record!.Value.Should().NotBeNull();
@@ -192,7 +192,7 @@ public class ParserTests
 
         await client.Query(query);
 
-        var record = await client.Select<GeometryMultiPointRecord>("geometry", "MultiPoint");
+        var record = await client.Select<GeometryMultiPointRecord>(("geometry", "MultiPoint"));
 
         record.Should().NotBeNull();
         record!.Value.Should().NotBeNull();
@@ -232,8 +232,7 @@ public class ParserTests
         await client.Query(query);
 
         var record = await client.Select<GeometryMultiLineStringRecord>(
-            "geometry",
-            "MultiLineString"
+            ("geometry", "MultiLineString")
         );
 
         record.Should().NotBeNull();
@@ -295,7 +294,7 @@ public class ParserTests
 
         await client.Query(query);
 
-        var record = await client.Select<GeometryMultiPolygonRecord>("geometry", "MultiPolygon");
+        var record = await client.Select<GeometryMultiPolygonRecord>(("geometry", "MultiPolygon"));
 
         record.Should().NotBeNull();
         record!.Value.Should().NotBeNull();
@@ -375,8 +374,7 @@ public class ParserTests
         await client.Query(query);
 
         var record = await client.Select<GeometryCollectionRecord>(
-            "geometry",
-            "GeometryCollection"
+            ("geometry", "GeometryCollection")
         );
 
         record.Should().NotBeNull();
