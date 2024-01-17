@@ -166,7 +166,7 @@ public class WeatherForecastController : ControllerBase
 	[HttpGet("{id}")]
 	public async Task<IActionResult> Get(string id, CancellationToken cancellationToken)
 	{
-		var weatherForecast = await _surrealDbClient.Select<WeatherForecast>(Table, id, cancellationToken);
+		var weatherForecast = await _surrealDbClient.Select<WeatherForecast>((Table, id), cancellationToken);
 
 		if (weatherForecast is null)
 			return NotFound();
@@ -210,9 +210,7 @@ public class WeatherForecastController : ControllerBase
         CancellationToken cancellationToken
     )
     {
-        var thing = new Thing(Table, id);
-
-        return _surrealDbClient.Patch(thing, patches, cancellationToken);
+        return _surrealDbClient.Patch((Table, id), patches, cancellationToken);
     }
 
 	[HttpDelete]
@@ -224,7 +222,7 @@ public class WeatherForecastController : ControllerBase
 	[HttpDelete("{id}")]
 	public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
 	{
-		bool success = await _surrealDbClient.Delete(Table, id, cancellationToken);
+		bool success = await _surrealDbClient.Delete((Table, id), cancellationToken);
 
 		if (!success)
 			return NotFound();
