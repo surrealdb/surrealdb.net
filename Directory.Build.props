@@ -9,13 +9,13 @@
 	  <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
 
     <IsPackable>false</IsPackable>
-    <VersionSuffix>0.3.0</VersionSuffix>
+    <Version>0.3.1</Version>
     <Authors>surrealdb</Authors>
     <Company>SurrealDB</Company>
     <Copyright>Copyright © SurrealDB Ltd</Copyright>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(IsPackable)' == 'true'">
+  <PropertyGroup>
     <EnablePackageValidation>true</EnablePackageValidation>
     <PackageProjectUrl>https://github.com/surrealdb/surrealdb.net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/surrealdb/surrealdb.net</RepositoryUrl>
@@ -32,16 +32,13 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(IsPackable)' == 'true'">
 	  <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 	  </PackageReference>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+  <ItemGroup>
 	  <None Include="..\README.md" Pack="true" PackagePath="\" />
 	  <None Include="..\LICENSE" Pack="true" PackagePath="\" Visible="false" />
 	  <None Include="..\img\icon.png" Pack="true" PackagePath="\" Visible="false" />
