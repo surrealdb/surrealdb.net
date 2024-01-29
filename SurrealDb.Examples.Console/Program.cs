@@ -8,26 +8,27 @@ var db = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
 await db.SignIn(new RootAuth { Username = "root", Password = "root" });
 await db.Use("examples", "console");
 
+const string TABLE = "person";
+
 var person = new Person
 {
     Title = "Founder & CEO",
     Name = new() { FirstName = "Tobie", LastName = "Morgan Hitchcock" },
     Marketing = true
 };
-var created = await db.Create("person", person);
+var created = await db.Create(TABLE, person);
 Console.WriteLine(ToJsonString(created));
 
 var updated = await db.Merge<ResponsibilityMerge, Person>(
-    new() { Id = ("person", "jaime"), Marketing = true }
+    new() { Id = (TABLE, "jaime"), Marketing = true }
 );
 Console.WriteLine(ToJsonString(updated));
 
-var people = await db.Select<Person>("person");
+var people = await db.Select<Person>(TABLE);
 Console.WriteLine(ToJsonString(people));
 
 var queryResponse = await db.Query(
-    "SELECT marketing, count() FROM type::table($table) GROUP BY marketing",
-    new Dictionary<string, object> { { "table", "person" } }
+    $"SELECT marketing, count() FROM type::table({TABLE}) GROUP BY marketing"
 );
 var groups = queryResponse.GetValue<List<Group>>(0);
 Console.WriteLine(ToJsonString(groups));

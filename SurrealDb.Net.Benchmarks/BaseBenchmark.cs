@@ -42,7 +42,7 @@ public class BaseBenchmark
         InitializeSurrealDbClient(client, databaseInfo);
 
         string query = GetPostQueryContent();
-        await client.Query(query);
+        await client.RawQuery(query);
     }
 
     protected async Task CreateEcommerceTables(string url, DatabaseInfo databaseInfo)
@@ -54,7 +54,7 @@ public class BaseBenchmark
         InitializeSurrealDbClient(client, databaseInfo);
 
         string query = GetEcommerceQueryContent();
-        await client.Query(query);
+        await client.RawQuery(query);
     }
 
     protected async Task<List<GeneratedPost>> SeedData(
@@ -78,7 +78,7 @@ public class BaseBenchmark
             {
                 string statement =
                     $"CREATE post SET title = \"{post.Title}\", content = \"{post.Content}\";";
-                tasks.Add(client.Query(statement));
+                tasks.Add(client.RawQuery(statement));
             }
         );
 

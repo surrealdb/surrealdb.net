@@ -27,7 +27,7 @@ public class SignUpTests
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
             string query = fileContent;
-            await client.Query(query);
+            await client.RawQuery(query);
 
             var authParams = new AuthParams
             {

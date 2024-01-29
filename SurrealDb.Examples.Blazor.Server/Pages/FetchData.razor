@@ -51,7 +51,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         string query = $"SELECT * FROM {WeatherForecast.Table} ORDER BY date DESC LIMIT {QueryConstants.WEATHER_FORECAST_LIMIT};";
-        var response = await Client.Query(query);
+        var response = await Client.RawQuery(query);
         
         _forecasts = response.FirstOk!.GetValues<WeatherForecast>();
     }

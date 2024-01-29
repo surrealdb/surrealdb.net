@@ -24,7 +24,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            var response = await client.Query("LIVE SELECT * FROM test;");
+            var response = await client.RawQuery("LIVE SELECT * FROM test;");
 
             if (response.FirstResult is not SurrealDbOkResult okResult)
                 throw new Exception("Expected a SurrealDbOkResult");
@@ -96,7 +96,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
             var record = await client.Create("test", new TestRecord { Value = 1 });
 
-            var response = await client.Query("LIVE SELECT * FROM test;");
+            var response = await client.RawQuery("LIVE SELECT * FROM test;");
 
             if (response.FirstResult is not SurrealDbOkResult okResult)
                 throw new Exception("Expected a SurrealDbOkResult");
@@ -170,7 +170,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
             record = await client.Create("test", new TestRecord { Value = 1 });
 
-            var response = await client.Query("LIVE SELECT * FROM test;");
+            var response = await client.RawQuery("LIVE SELECT * FROM test;");
 
             if (response.FirstResult is not SurrealDbOkResult okResult)
                 throw new Exception("Expected a SurrealDbOkResult");
@@ -244,7 +244,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
             record = await client.Create("test", new TestRecord { Value = 1 });
 
-            var response = await client.Query("LIVE SELECT * FROM test;");
+            var response = await client.RawQuery("LIVE SELECT * FROM test;");
 
             if (response.FirstResult is not SurrealDbOkResult okResult)
                 throw new Exception("Expected a SurrealDbOkResult");
@@ -320,7 +320,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
             record = await client.Create("test", new TestRecord { Value = 1 });
 
-            var response = await client.Query("LIVE SELECT * FROM test;");
+            var response = await client.RawQuery("LIVE SELECT * FROM test;");
 
             if (response.FirstResult is not SurrealDbOkResult okResult)
                 throw new Exception("Expected a SurrealDbOkResult");

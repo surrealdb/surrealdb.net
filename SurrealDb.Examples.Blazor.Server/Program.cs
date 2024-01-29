@@ -61,7 +61,7 @@ async Task DefineSchemaAsync(IServiceProvider serviceProvider)
     string schema = File.ReadAllText(filePath, Encoding.UTF8);
 
     var surrealDbClient = serviceProvider.GetRequiredService<ISurrealDbClient>();
-    await surrealDbClient.Query(schema);
+    await surrealDbClient.RawQuery(schema);
 }
 
 async Task GenerateWeatherForecastsAsync(IServiceProvider serviceProvider)

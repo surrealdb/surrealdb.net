@@ -29,7 +29,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.Query(query);
+                await client.RawQuery(query);
             }
 
             {
@@ -40,7 +40,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.Query(query);
+                await client.RawQuery(query);
             }
 
             var authParams = new AuthParams
@@ -90,7 +90,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.Query(query);
+                await client.RawQuery(query);
             }
 
             {
@@ -101,7 +101,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.Query(query);
+                await client.RawQuery(query);
             }
 
             var authParams = new AuthParams

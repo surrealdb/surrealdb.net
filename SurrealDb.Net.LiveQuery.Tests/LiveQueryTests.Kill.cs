@@ -23,7 +23,7 @@ public class KillLiveQueryTests
 
         Func<Task> createLiveQueryFunc = async () =>
         {
-            var response = await client.Query("LIVE SELECT * FROM test;");
+            var response = await client.RawQuery("LIVE SELECT * FROM test;");
 
             if (response.FirstResult is not SurrealDbOkResult okResult)
                 throw new Exception("Expected a SurrealDbOkResult");
@@ -68,7 +68,7 @@ public class KillLiveQueryTests
 
         Func<Task> createLiveQueryFunc = async () =>
         {
-            var response = await client.Query("LIVE SELECT * FROM test;");
+            var response = await client.RawQuery("LIVE SELECT * FROM test;");
 
             if (response.FirstResult is not SurrealDbOkResult okResult)
                 throw new Exception("Expected a SurrealDbOkResult");

@@ -65,8 +65,7 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(_databaseInfo.Namespace, _databaseInfo.Database);
 
-            string query = $"REMOVE DATABASE {_databaseInfo.Database};";
-            await client.Query(query);
+            await client.RawQuery($"REMOVE DATABASE {_databaseInfo.Database};");
         }
 
         Dispose();

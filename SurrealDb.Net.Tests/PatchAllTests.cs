@@ -30,7 +30,7 @@ public class PatchAllTests
             using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.Query(query);
+            await client.RawQuery(query);
 
             var jsonPatchDocument = new JsonPatchDocument<Post>
             {

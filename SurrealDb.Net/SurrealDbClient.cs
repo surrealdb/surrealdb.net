@@ -5,6 +5,7 @@ using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
+using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using SystemTextJsonPatch;
@@ -204,17 +205,25 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.ListenLive<T>(queryUuid);
     }
 
-    public Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+    public Task<SurrealDbLiveQuery<T>> LiveRawQuery<T>(
         string query,
-        IReadOnlyDictionary<string, object>? parameters = null,
+        IReadOnlyDictionary<string, object?>? parameters = null,
         CancellationToken cancellationToken = default
     )
     {
-        return _engine.LiveQuery<T>(
+        return _engine.LiveRawQuery<T>(
             query,
-            parameters ?? new Dictionary<string, object>(),
+            parameters ?? ImmutableDictionary<string, object?>.Empty,
             cancellationToken
         );
+    }
+
+    public Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+        FormattableString query,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.LiveQuery<T>(query, cancellationToken);
     }
 
     public Task<SurrealDbLiveQuery<T>> LiveTable<T>(
@@ -284,14 +293,22 @@ public class SurrealDbClient : ISurrealDbClient
     }
 
     public Task<SurrealDbResponse> Query(
-        string query,
-        IReadOnlyDictionary<string, object>? parameters = null,
+        FormattableString query,
         CancellationToken cancellationToken = default
     )
     {
-        return _engine.Query(
+        return _engine.Query(query, cancellationToken);
+    }
+
+    public Task<SurrealDbResponse> RawQuery(
+        string query,
+        IReadOnlyDictionary<string, object?>? parameters = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.RawQuery(
             query,
-            parameters ?? new Dictionary<string, object>(),
+            parameters ?? ImmutableDictionary<string, object?>.Empty,
             cancellationToken
         );
     }

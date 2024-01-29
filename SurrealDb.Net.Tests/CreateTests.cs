@@ -28,7 +28,7 @@ public class CreateTests
             using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.Query(query);
+            await client.RawQuery(query);
 
             result = await client.Create<Empty>("empty");
 
@@ -66,7 +66,7 @@ public class CreateTests
             using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.Query(query);
+            await client.RawQuery(query);
 
             var post = new Post
             {
@@ -114,7 +114,7 @@ public class CreateTests
             using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.Query(query);
+            await client.RawQuery(query);
 
             var post = new Post
             {
@@ -170,7 +170,7 @@ public class CreateTests
             using var client = surrealDbClientGenerator.Create(url);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.Query(query);
+            await client.RawQuery(query);
 
             var posts = new List<Post>
             {

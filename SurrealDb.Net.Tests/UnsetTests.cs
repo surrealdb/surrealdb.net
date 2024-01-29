@@ -30,7 +30,7 @@ public class UnsetTests
 
                 string query = fileContent;
 
-                await client.Query(query);
+                await client.RawQuery(query);
             }
 
             await client.Set("status", "DRAFT");
@@ -38,8 +38,7 @@ public class UnsetTests
 
             {
                 string query = "SELECT * FROM post WHERE status == $status;";
-
-                response = await client.Query(query);
+                response = await client.RawQuery(query);
             }
         };
 
@@ -79,7 +78,7 @@ public class UnsetTests
 
                 string query = fileContent;
 
-                await client.Query(query);
+                await client.RawQuery(query);
             }
 
             await client.Set("status", "DRAFT");
@@ -114,7 +113,7 @@ public class UnsetTests
 
                 string query = fileContent;
 
-                await client.Query(query);
+                await client.RawQuery(query);
             }
 
             await client.Set("st at us", "DRAFT");
