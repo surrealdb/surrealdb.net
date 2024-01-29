@@ -406,7 +406,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         try
         {
-            await _wsClient.StartOrFail().ConfigureAwait(false);
+            await InternalConnectAsync(true, cancellationToken).ConfigureAwait(false);
             return true;
         }
         catch (Exception)
@@ -829,15 +829,15 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     private readonly SemaphoreSlim _semaphoreConnect = new(1, 1);
 
-    private async Task<SurrealDbWsOkResponse> SendRequestAsync(
-        string method,
-        List<object?>? parameters,
+    /// <summary>
+    /// Avoid multiple connections in a multi-threading context
+    /// and prevent usage before initialized
+    /// </summary>
+    private async Task InternalConnectAsync(
         bool requireInitialized,
         CancellationToken cancellationToken
     )
     {
-        // 💡 Avoid multiple connections in a multi-threading context
-        // And prevent usage before initialized
         if (!_wsClient.IsStarted || (requireInitialized && !_isInitialized))
         {
             await _semaphoreConnect.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -854,6 +854,16 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                 _semaphoreConnect.Release();
             }
         }
+    }
+
+    private async Task<SurrealDbWsOkResponse> SendRequestAsync(
+        string method,
+        List<object?>? parameters,
+        bool requireInitialized,
+        CancellationToken cancellationToken
+    )
+    {
+        await InternalConnectAsync(requireInitialized, cancellationToken).ConfigureAwait(false);
 
         cancellationToken.ThrowIfCancellationRequested();
 
