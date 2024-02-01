@@ -1,4 +1,5 @@
-﻿using FluentAssertions.Execution;
+﻿using FluentAssertions;
+using FluentAssertions.Execution;
 using FluentAssertions.Primitives;
 using Semver;
 using System.Text.RegularExpressions;

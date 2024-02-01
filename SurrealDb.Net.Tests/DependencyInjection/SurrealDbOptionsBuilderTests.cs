@@ -1,6 +1,6 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace SurrealDb.Net.Tests;
+namespace SurrealDb.Net.Tests.DependencyInjection;
 
 public class SurrealDbOptionsBuilderTests
 {
@@ -106,7 +106,7 @@ public class SurrealDbOptionsBuilderTests
     [Fact]
     public void ShouldCreateFromConnectionString()
     {
-        string connectionString =
+        var connectionString =
             "Server=http://127.0.0.1:8000;Namespace=test;Database=test;Username=root;Password=root";
 
         var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
@@ -122,8 +122,7 @@ public class SurrealDbOptionsBuilderTests
     [Fact]
     public void ShouldCreateFromAlternativeConnectionString()
     {
-        string connectionString =
-            "Endpoint=http://127.0.0.1:8000;NS=test;DB=test;User=root;Pass=root";
+        var connectionString = "Endpoint=http://127.0.0.1:8000;NS=test;DB=test;User=root;Pass=root";
 
         var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
 
@@ -138,7 +137,7 @@ public class SurrealDbOptionsBuilderTests
     [Fact]
     public void ShouldCreateFromConnectionStringWithAccessToken()
     {
-        string connectionString =
+        var connectionString =
             "Endpoint=http://127.0.0.1:8000;NS=test;DB=test;Token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 
         var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
