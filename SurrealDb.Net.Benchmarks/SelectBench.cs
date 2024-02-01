@@ -32,7 +32,7 @@ public class SelectBench : BaseBenchmark
                 case 1:
                     _surrealdbHttpClientWithHttpClientFactory = clientGenerator.Create(
                         HttpUrl,
-                        GetFuncJsonSerializerContexts()
+                        funcJsonSerializerContexts: GetFuncJsonSerializerContexts()
                     );
                     InitializeSurrealDbClient(_surrealdbHttpClientWithHttpClientFactory, dbInfo);
                     await _surrealdbHttpClientWithHttpClientFactory.Connect();

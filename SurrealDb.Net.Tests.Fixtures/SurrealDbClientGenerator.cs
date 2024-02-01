@@ -1,3 +1,4 @@
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Bogus;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,7 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 
     public SurrealDbClient Create(
         string endpoint,
+        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
         Func<JsonSerializerContext[]>? funcJsonSerializerContexts = null
     )
     {
@@ -36,7 +38,11 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 
         var options = SurrealDbOptions.Create().WithEndpoint(endpoint).Build();
 
-        services.AddSurreal(options, appendJsonSerializerContexts: funcJsonSerializerContexts);
+        services.AddSurreal(
+            options,
+            configureJsonSerializerOptions: configureJsonSerializerOptions,
+            appendJsonSerializerContexts: funcJsonSerializerContexts
+        );
 
         _serviceProvider = services.BuildServiceProvider(validateScopes: true);
 

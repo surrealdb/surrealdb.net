@@ -1,5 +1,4 @@
-using SurrealDb.Net.Internals.Models;
-using System.Collections;
+﻿using System.Collections;
 
 namespace SurrealDb.Net.Models.Response;
 
@@ -79,11 +78,38 @@ public sealed class SurrealDbResponse : IReadOnlyList<ISurrealDbResult>
     /// </summary>
     /// <typeparam name="T">The type of the query result value.</typeparam>
     /// <param name="index">The index of the result in the query response.</param>
+    /// <exception cref="IndexOutOfRangeException">Index is out of range.</exception>
+    /// <exception cref="NotSupportedException">The result is not an OK result.</exception>
     public T? GetValue<T>(int index)
     {
+        if (index < 0 || index >= _results.Count)
+            throw new IndexOutOfRangeException();
+
         if (_results[index] is SurrealDbOkResult okResult)
             return okResult.GetValue<T>();
 
-        return default;
+        throw new NotSupportedException(
+            $"Cannot get value from a result of type {_results[index].GetType()}"
+        );
+    }
+
+    /// <summary>
+    /// Gets the result value of the query based on its index.
+    /// </summary>
+    /// <typeparam name="T">The type of the query result value.</typeparam>
+    /// <param name="index">The index of the result in the query response.</param>
+    /// <exception cref="IndexOutOfRangeException">Index is out of range.</exception>
+    /// <exception cref="NotSupportedException">The result is not an OK result.</exception>
+    public IEnumerable<T> GetValues<T>(int index)
+    {
+        if (index < 0 || index >= _results.Count)
+            throw new IndexOutOfRangeException();
+
+        if (_results[index] is SurrealDbOkResult okResult)
+            return okResult.GetValues<T>();
+
+        throw new NotSupportedException(
+            $"Cannot get values from a result of type {_results[index].GetType()}"
+        );
     }
 }

@@ -1,4 +1,4 @@
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using SurrealDb.Net.Models;
 
 namespace SurrealDb.Net.Benchmarks;
@@ -35,7 +35,7 @@ public class ScenarioBench : BaseBenchmark
                 case 1:
                     _surrealdbHttpClientWithHttpClientFactory = clientGenerator.Create(
                         HttpUrl,
-                        GetFuncJsonSerializerContexts()
+                        funcJsonSerializerContexts: GetFuncJsonSerializerContexts()
                     );
                     InitializeSurrealDbClient(_surrealdbHttpClientWithHttpClientFactory, dbInfo);
                     await _surrealdbHttpClientWithHttpClientFactory.Connect();
