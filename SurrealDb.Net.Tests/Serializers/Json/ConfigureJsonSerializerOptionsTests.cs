@@ -2,6 +2,12 @@
 
 namespace SurrealDb.Net.Tests.Serializers.Json;
 
+public class DeviceInput : SurrealDbRecord
+{
+    public bool Mouse { get; set; }
+    public bool MechanicalKeyboard { get; set; }
+}
+
 public class ConfigureJsonSerializerOptionsTests
 {
     [Theory]
@@ -9,7 +15,7 @@ public class ConfigureJsonSerializerOptionsTests
     [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldUseCamelCasePolicyOnSelect(string url)
     {
-        IEnumerable<Post>? result = null;
+        IEnumerable<DeviceInput>? result = null;
 
         Func<Task> func = async () =>
         {
@@ -27,17 +33,15 @@ public class ConfigureJsonSerializerOptionsTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.Create(
-                new Post
+                new DeviceInput
                 {
-                    Id = ("post", "first"),
-                    Title = "First article",
-                    Content = "This is my first article",
-                    Status = "DRAFT",
-                    CreatedAt = DateTime.UtcNow,
+                    Id = ("device_input", "primary"),
+                    Mouse = true,
+                    MechanicalKeyboard = true,
                 }
             );
 
-            result = await client.Select<Post>("post");
+            result = await client.Select<DeviceInput>("device_input");
         };
 
         await func.Should().NotThrowAsync();
@@ -45,14 +49,11 @@ public class ConfigureJsonSerializerOptionsTests
         result.Should().NotBeNull().And.HaveCount(1);
 
         var list = result!.ToList();
+        var firstRecord = list.First();
 
-        var firstPost = list.First(p => p.Id!.Id == "first");
-
-        firstPost.Should().NotBeNull();
-        firstPost!.Title.Should().Be("First article");
-        firstPost!.Content.Should().Be("This is my first article");
-        firstPost!.CreatedAt.Should().NotBeNull();
-        firstPost!.Status.Should().Be("DRAFT");
+        firstRecord.Should().NotBeNull();
+        firstRecord!.Mouse.Should().BeTrue();
+        firstRecord!.MechanicalKeyboard.Should().BeTrue();
     }
 
     [Theory]
@@ -60,7 +61,8 @@ public class ConfigureJsonSerializerOptionsTests
     [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldUseCamelCasePolicyOnQuery(string url)
     {
-        IEnumerable<Post>? result = null;
+        IEnumerable<DeviceInput>? result = null;
+        string? rawValue = null;
 
         Func<Task> func = async () =>
         {
@@ -78,34 +80,34 @@ public class ConfigureJsonSerializerOptionsTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.Create(
-                new Post
+                new DeviceInput
                 {
-                    Id = ("post", "first"),
-                    Title = "First article",
-                    Content = "This is my first article",
-                    Status = "DRAFT",
-                    CreatedAt = DateTime.UtcNow,
+                    Id = ("device_input", "primary"),
+                    Mouse = true,
+                    MechanicalKeyboard = true,
                 }
             );
 
-            var response = await client.Query($"SELECT * FROM post");
+            var response = await client.Query($"SELECT * FROM device_input");
 
-            result = response.GetValues<Post>(0);
+            rawValue = response.FirstOk?.RawValue.ToString();
+            result = response.GetValues<DeviceInput>(0);
         };
 
         await func.Should().NotThrowAsync();
 
+        rawValue
+            .Should()
+            .Be("[{\"id\":\"device_input:primary\",\"mechanicalKeyboard\":true,\"mouse\":true}]");
+
         result.Should().NotBeNull().And.HaveCount(1);
 
         var list = result!.ToList();
+        var firstRecord = list.First();
 
-        var firstPost = list.First(p => p.Id!.Id == "first");
-
-        firstPost.Should().NotBeNull();
-        firstPost!.Title.Should().Be("First article");
-        firstPost!.Content.Should().Be("This is my first article");
-        firstPost!.CreatedAt.Should().NotBeNull();
-        firstPost!.Status.Should().Be("DRAFT");
+        firstRecord.Should().NotBeNull();
+        firstRecord!.Mouse.Should().BeTrue();
+        firstRecord!.MechanicalKeyboard.Should().BeTrue();
     }
 
     [Theory]
@@ -113,7 +115,7 @@ public class ConfigureJsonSerializerOptionsTests
     [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldUseKebabCasePolicyOnSelect(string url)
     {
-        IEnumerable<Post>? result = null;
+        IEnumerable<DeviceInput>? result = null;
 
         Func<Task> func = async () =>
         {
@@ -131,17 +133,15 @@ public class ConfigureJsonSerializerOptionsTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.Create(
-                new Post
+                new DeviceInput
                 {
-                    Id = ("post", "first"),
-                    Title = "First article",
-                    Content = "This is my first article",
-                    Status = "DRAFT",
-                    CreatedAt = DateTime.UtcNow,
+                    Id = ("device_input", "primary"),
+                    Mouse = true,
+                    MechanicalKeyboard = true,
                 }
             );
 
-            result = await client.Select<Post>("post");
+            result = await client.Select<DeviceInput>("device_input");
         };
 
         await func.Should().NotThrowAsync();
@@ -149,14 +149,11 @@ public class ConfigureJsonSerializerOptionsTests
         result.Should().NotBeNull().And.HaveCount(1);
 
         var list = result!.ToList();
+        var firstRecord = list.First();
 
-        var firstPost = list.First(p => p.Id!.Id == "first");
-
-        firstPost.Should().NotBeNull();
-        firstPost!.Title.Should().Be("First article");
-        firstPost!.Content.Should().Be("This is my first article");
-        firstPost!.CreatedAt.Should().NotBeNull();
-        firstPost!.Status.Should().Be("DRAFT");
+        firstRecord.Should().NotBeNull();
+        firstRecord!.Mouse.Should().BeTrue();
+        firstRecord!.MechanicalKeyboard.Should().BeTrue();
     }
 
     [Theory]
@@ -164,7 +161,8 @@ public class ConfigureJsonSerializerOptionsTests
     [InlineData("ws://127.0.0.1:8000/rpc")]
     public async Task ShouldUseKebabCasePolicyOnQuery(string url)
     {
-        IEnumerable<Post>? result = null;
+        IEnumerable<DeviceInput>? result = null;
+        string? rawValue = null;
 
         Func<Task> func = async () =>
         {
@@ -182,33 +180,33 @@ public class ConfigureJsonSerializerOptionsTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.Create(
-                new Post
+                new DeviceInput
                 {
-                    Id = ("post", "first"),
-                    Title = "First article",
-                    Content = "This is my first article",
-                    Status = "DRAFT",
-                    CreatedAt = DateTime.UtcNow,
+                    Id = ("device_input", "primary"),
+                    Mouse = true,
+                    MechanicalKeyboard = true,
                 }
             );
 
-            var response = await client.Query($"SELECT * FROM post");
+            var response = await client.Query($"SELECT * FROM device_input");
 
-            result = response.GetValues<Post>(0);
+            rawValue = response.FirstOk?.RawValue.ToString();
+            result = response.GetValues<DeviceInput>(0);
         };
 
         await func.Should().NotThrowAsync();
 
+        rawValue
+            .Should()
+            .Be("[{\"id\":\"device_input:primary\",\"mechanical-keyboard\":true,\"mouse\":true}]");
+
         result.Should().NotBeNull().And.HaveCount(1);
 
         var list = result!.ToList();
+        var firstRecord = list.First();
 
-        var firstPost = list.First(p => p.Id!.Id == "first");
-
-        firstPost.Should().NotBeNull();
-        firstPost!.Title.Should().Be("First article");
-        firstPost!.Content.Should().Be("This is my first article");
-        firstPost!.CreatedAt.Should().NotBeNull();
-        firstPost!.Status.Should().Be("DRAFT");
+        firstRecord.Should().NotBeNull();
+        firstRecord!.Mouse.Should().BeTrue();
+        firstRecord!.MechanicalKeyboard.Should().BeTrue();
     }
 }

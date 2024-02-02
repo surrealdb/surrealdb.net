@@ -169,7 +169,8 @@ internal static class SurrealDbSerializerOptions
 
             return jsonSerializerOptions;
         }
-#else
+#endif
+
         if (configureJsonSerializerOptions is not null)
         {
             var jsonSerializerOptions = CreateJsonSerializerOptions();
@@ -177,7 +178,6 @@ internal static class SurrealDbSerializerOptions
 
             return jsonSerializerOptions;
         }
-#endif
 
         return Default;
     }
