@@ -21,6 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\SurrealDb.Net.Tests.Extensions\SurrealDb.Net.Tests.Extensions.csproj" />
       <ProjectReference Include="..\SurrealDb.Net.Tests.Fixtures\SurrealDb.Net.Tests.Fixtures.csproj" />
       <ProjectReference Include="..\SurrealDb.Net\SurrealDb.Net.csproj" />
     </ItemGroup>
