@@ -89,7 +89,11 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         _configureJsonSerializerOptions = configureJsonSerializerOptions;
         _prependJsonSerializerContexts = prependJsonSerializerContexts;
         _appendJsonSerializerContexts = appendJsonSerializerContexts;
-        _wsClient = new WebsocketClient(uri) { IsTextMessageConversionEnabled = false };
+        _wsClient = new WebsocketClient(uri)
+        {
+            IsTextMessageConversionEnabled = false,
+            IsStreamDisposedAutomatically = false
+        };
         _pinger = new(Ping);
 
         _receiverSubscription = _wsClient
@@ -133,7 +137,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                                 break;
                             case WebSocketMessageType.Binary:
                             {
-                                using var stream = _memoryStreamManager.GetStream(message.Binary);
+                                using var stream = message.Stream is not null
+                                    ? message.Stream
+                                    : _memoryStreamManager.GetStream(message.Binary!);
 
 #if NET8_0_OR_GREATER
                                 if (JsonSerializer.IsReflectionEnabledByDefault)
@@ -944,15 +950,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             .ConfigureAwait(false);
 #endif
 
-        stream.Seek(0, SeekOrigin.Begin);
-        using var reader = new StreamReader(stream);
-#if NET7_0_OR_GREATER
-        string payload = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
-#else
-        string payload = await reader.ReadToEndAsync().ConfigureAwait(false);
-#endif
-
-        _wsClient.Send(payload);
+        var payload = stream.ToArray();
+        _wsClient.SendAsText(payload);
 
         var response = await taskCompletionSource.Task.ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
