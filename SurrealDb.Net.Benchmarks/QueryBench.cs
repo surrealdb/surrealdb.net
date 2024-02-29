@@ -103,6 +103,7 @@ CREATE post;
 CANCEL TRANSACTION;"
         );
 
-        return response.GetValue<List<Post>>(0)!;
+        var posts = response.GetValues<Post>(0)!;
+        return posts.ToList();
     }
 }
