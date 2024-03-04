@@ -14,16 +14,16 @@ public class ParserBenchmark
     [Benchmark]
     public Dictionary<DurationUnit, int> Superpower()
     {
-        return SuperpowerDurationParser.Parser
-            .Parse(Param)
+        return SuperpowerDurationParser
+            .Parser.Parse(Param)
             .ToDictionary(kv => kv.unit, kv => kv.value);
     }
 
     [Benchmark]
     public Dictionary<DurationUnit, int> Pidgin()
     {
-        return PidginDurationParser.Parser
-            .ParseOrThrow(Param)
+        return PidginDurationParser
+            .Parser.ParseOrThrow(Param)
             .ToDictionary(kv => kv.unit, kv => kv.value);
     }
 }
