@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+
+    <IsPackable>true</IsPackable>
+    <PackageId>SurrealDb.MinimalApis.Extensions</PackageId>
+    <Description>A set of extensions and helpers to use SurrealDB with ASP.NET Core Minimal APIs</Description>
+    <PackageTags>SurrealDB Surreal Database ASP.NET Web MinimalApis Apis</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Using Include="Microsoft.AspNetCore.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SurrealDb.Net\SurrealDb.Net.csproj" />
+  </ItemGroup>
+
+</Project>

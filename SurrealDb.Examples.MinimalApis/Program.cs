@@ -1,7 +1,6 @@
 ﻿using Microsoft.OpenApi.Models;
+using SurrealDb.Examples.MinimalApis.Models;
 using SurrealDb.Net;
-using SurrealDb.Examples.WeatherApi.Controllers;
-using SurrealDb.Examples.WeatherApi.Models;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,11 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 var configuration = builder.Configuration;
 
-services.AddControllers();
 services.AddEndpointsApiExplorer();
 services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "WeatherForecast API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "MinimalApis Examples API", Version = "v1" });
 
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
@@ -30,9 +28,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseAuthorization();
 
-app.MapControllers();
+app.MapGet(
+    "/api/weatherForecast",
+    (ISurrealDbClient surrealDbClient, CancellationToken cancellationToken) =>
+        surrealDbClient.Select<WeatherForecast>(WeatherForecast.Table, cancellationToken)
+);
 
 await InitializeDbAsync();
 
@@ -50,7 +51,7 @@ async Task InitializeDbAsync()
     );
 
     var tasks = weatherForecasts.Select(
-        weatherForecast => surrealDbClient.Create(WeatherForecastController.Table, weatherForecast)
+        weatherForecast => surrealDbClient.Create(WeatherForecast.Table, weatherForecast)
     );
 
     await Task.WhenAll(tasks);

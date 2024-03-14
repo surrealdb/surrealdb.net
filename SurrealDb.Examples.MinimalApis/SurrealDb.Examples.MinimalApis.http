@@ -1,0 +1,6 @@
+@SurrealDb.Examples.MinimalApis_HostAddress = http://localhost:5142
+
+GET {{SurrealDb.Examples.MinimalApis_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
