@@ -10,33 +10,30 @@ public class SurrealDbMinimalApisExtensionsGenerator : ISourceGenerator
 {
     public void Execute(GeneratorExecutionContext context)
     {
+        var embeddedGeneratedFiles = new Dictionary<string, string>
+        {
+            {
+                "SurrealDb.MinimalApis.Extensions.SurrealDbMinimalApisExtensions.cs",
+                "SurrealDbMinimalApisExtensions.g.cs"
+            },
+            {
+                "SurrealDb.MinimalApis.Extensions.SurrealDbMinimalApisOptions.cs",
+                "SurrealDbMinimalApisOptions.g.cs"
+            }
+        };
+
         var assembly = Assembly.GetExecutingAssembly();
 
+        foreach (var item in embeddedGeneratedFiles)
         {
-            string resourceName =
-                "SurrealDb.MinimalApis.Extensions.SurrealDbMinimalApisExtensions.cs";
+            string resourceName = item.Key;
+            string generatedFileName = item.Value;
 
             using var stream = assembly.GetManifestResourceStream(resourceName);
             using var reader = new StreamReader(stream);
             string generatedCode = reader.ReadToEnd();
 
-            context.AddSource(
-                "SurrealDbMinimalApisExtensions.g.cs",
-                SourceText.From(generatedCode, Encoding.UTF8)
-            );
-        }
-
-        {
-            string resourceName = "SurrealDb.MinimalApis.Extensions.SurrealDbMinimalApisOptions.cs";
-
-            using var stream = assembly.GetManifestResourceStream(resourceName);
-            using var reader = new StreamReader(stream);
-            string generatedCode = reader.ReadToEnd();
-
-            context.AddSource(
-                "SurrealDbMinimalApisOptions.g.cs",
-                SourceText.From(generatedCode, Encoding.UTF8)
-            );
+            context.AddSource(generatedFileName, SourceText.From(generatedCode, Encoding.UTF8));
         }
     }
 
