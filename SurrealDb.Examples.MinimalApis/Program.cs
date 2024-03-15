@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Microsoft.OpenApi.Models;
 using SurrealDb.Examples.MinimalApis.Models;
 using SurrealDb.Net;
@@ -30,8 +30,11 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapGroup("/api")
-    .MapSurrealEndpoints<WeatherForecast>("/weatherForecast", new() { EnableMutations = false })
-    .MapSurrealEndpoints<Todo>("/todo");
+    .MapSurrealEndpoints<WeatherForecast>(
+        "/weatherForecast",
+        new() { Tags = ["WeatherForecast"], EnableMutations = false }
+    )
+    .MapSurrealEndpoints<Todo>("/todo", new() { Tags = ["Todo"] });
 
 await InitializeDbAsync();
 

@@ -56,4 +56,9 @@ public class SurrealDbMinimalApisOptions
     /// Enable or disable HTTP DELETE request to delete a single record from a SurrealDB table.
     /// </summary>
     public bool? EnableDeleteSingle { get; set; }
+
+    /// <summary>
+    /// A set of tags to be used to document the generated endpoints using OpenAPI.
+    /// </summary>
+    public string[]? Tags { get; set; }
 }
