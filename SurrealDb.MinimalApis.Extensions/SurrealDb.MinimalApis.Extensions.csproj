@@ -1,7 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net7.0;net8.0</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <!-- TODO : Get rid of <EnforceExtendedAnalyzerRules> warning -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
 
     <IsPackable>true</IsPackable>
     <PackageId>SurrealDb.MinimalApis.Extensions</PackageId>
@@ -10,23 +12,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <Using Include="Microsoft.AspNetCore.Http" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\SurrealDb.Net\SurrealDb.Net.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi">
-      <Version>7.0.17</Version>
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi">
-      <Version>8.0.3</Version>
-    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
   </ItemGroup>
 
 </Project>

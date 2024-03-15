@@ -35,9 +35,6 @@
 	<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
 	  <_Parameter1>SurrealDb.Reactive</_Parameter1>
 	</AssemblyAttribute>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-      <_Parameter1>SurrealDb.MinimalApis.Extensions</_Parameter1>
-    </AssemblyAttribute>
   </ItemGroup>
 
 </Project>
