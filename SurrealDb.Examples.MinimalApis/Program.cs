@@ -1,7 +1,7 @@
-﻿using Microsoft.OpenApi.Models;
+using System.Reflection;
+using Microsoft.OpenApi.Models;
 using SurrealDb.Examples.MinimalApis.Models;
 using SurrealDb.Net;
-using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,8 +48,8 @@ async Task InitializeDbAsync()
             .Build()
     );
 
-    var tasks = weatherForecasts.Select(
-        weatherForecast => surrealDbClient.Create(WeatherForecast.Table, weatherForecast)
+    var tasks = weatherForecasts.Select(weatherForecast =>
+        surrealDbClient.Create(WeatherForecast.Table, weatherForecast)
     );
 
     await Task.WhenAll(tasks);

@@ -1,6 +1,6 @@
-using SurrealDb.Net.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SurrealDb.Net.Models;
 
 namespace SurrealDb.Net.Internals.Json.Converters;
 

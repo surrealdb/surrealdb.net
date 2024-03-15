@@ -1,7 +1,7 @@
-﻿using SurrealDb.Net.Exceptions;
-using SurrealDb.Net.Models.Response;
-using System.Net;
+﻿using System.Net;
 using System.Text;
+using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Tests;
 
@@ -120,13 +120,13 @@ public class RawQueryTests
 
             errorResult!.Code.Should().Be(HttpStatusCode.BadRequest);
             errorResult!.Details.Should().Be("Request problems detected");
-            errorResult!.Description
-                .Should()
+            errorResult!
+                .Description.Should()
                 .Be(
                     "There is a problem with your request. Refer to the documentation for further information."
                 );
-            errorResult!.Information
-                .Should()
+            errorResult!
+                .Information.Should()
                 .Contain(
                     @"There was a problem with the database: Parse error: Failed to parse query at line 1 column 5 expected query to end"
                 );

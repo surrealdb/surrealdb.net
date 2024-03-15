@@ -1,5 +1,5 @@
-using SurrealDb.Net.Internals.Constants;
 using System.Text;
+using SurrealDb.Net.Internals.Constants;
 
 namespace SurrealDb.Net.Internals.Formatters;
 

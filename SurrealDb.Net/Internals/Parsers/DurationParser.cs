@@ -1,5 +1,5 @@
-using Superpower.Parsers;
 using Superpower;
+using Superpower.Parsers;
 using SurrealDb.Net.Internals.Models;
 
 namespace SurrealDb.Net.Internals.Parsers;

@@ -1,13 +1,13 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Collections.Immutable;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
-using System.Collections.Immutable;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using SystemTextJsonPatch;
 
 namespace SurrealDb.Net;

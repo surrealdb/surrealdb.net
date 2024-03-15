@@ -1,5 +1,5 @@
-﻿using SurrealDb.Net.Models.Response;
-using System.Text;
+﻿using System.Text;
+using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Tests;
 

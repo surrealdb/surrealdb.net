@@ -1,7 +1,7 @@
-﻿using SurrealDb.Net.Internals.Constants;
-using SurrealDb.Net.Internals.Models;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json.Serialization;
+using SurrealDb.Net.Internals.Constants;
+using SurrealDb.Net.Internals.Models;
 
 namespace SurrealDb.Net.Models;
 

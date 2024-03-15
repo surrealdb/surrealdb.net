@@ -1,4 +1,13 @@
-﻿using SurrealDb.Net.Exceptions;
+﻿using System.Collections.Immutable;
+using System.Dynamic;
+using System.Globalization;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
+using System.Web;
+using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
@@ -11,16 +20,7 @@ using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
-using System.Collections.Immutable;
-using System.Dynamic;
-using System.Globalization;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
-using System.Web;
 using SystemTextJsonPatch;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 
 namespace SurrealDb.Net.Internals;
 
@@ -74,8 +74,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper(new BearerAuth(jwt.Token));
         using var body = CreateBodyContent("RETURN TRUE");
 
-        using var response = await wrapper.Instance
-            .PostAsync("/sql", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PostAsync("/sql", body, cancellationToken)
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -108,8 +108,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent("RETURN TRUE");
 
-        using var response = await wrapper.Instance
-            .PostAsync("/sql", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PostAsync("/sql", body, cancellationToken)
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -126,8 +126,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        using var response = await wrapper.Instance
-            .PostAsync($"/key/{data.Id.Table}/{data.Id.UnescapedId}", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PostAsync(
+                $"/key/{data.Id.Table}/{data.Id.UnescapedId}",
+                body,
+                cancellationToken
+            )
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -142,8 +146,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
         using var body = data is null ? new StringContent("{}") : CreateBodyContent(data);
 
-        using var response = await wrapper.Instance
-            .PostAsync($"/key/{table}", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PostAsync($"/key/{table}", body, cancellationToken)
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -157,8 +161,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         using var wrapper = CreateHttpClientWrapper();
 
-        using var response = await wrapper.Instance
-            .DeleteAsync($"/key/{table}", cancellationToken)
+        using var response = await wrapper
+            .Instance.DeleteAsync($"/key/{table}", cancellationToken)
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -170,8 +174,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         using var wrapper = CreateHttpClientWrapper();
 
-        using var response = await wrapper.Instance
-            .DeleteAsync($"/key/{thing.Table}/{thing.UnescapedId}", cancellationToken)
+        using var response = await wrapper
+            .Instance.DeleteAsync($"/key/{thing.Table}/{thing.UnescapedId}", cancellationToken)
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -193,8 +197,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         try
         {
-            using var response = await wrapper.Instance
-                .GetAsync("/health", cancellationToken)
+            using var response = await wrapper
+                .Instance.GetAsync("/health", cancellationToken)
                 .ConfigureAwait(false);
 
             return response.IsSuccessStatusCode;
@@ -280,8 +284,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        using var response = await wrapper.Instance
-            .PatchAsync($"/key/{data.Id.Table}/{data.Id.UnescapedId}", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PatchAsync(
+                $"/key/{data.Id.Table}/{data.Id.UnescapedId}",
+                body,
+                cancellationToken
+            )
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -300,8 +308,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(data);
 
-        using var response = await wrapper.Instance
-            .PatchAsync($"/key/{thing.Table}/{thing.UnescapedId}", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PatchAsync($"/key/{thing.Table}/{thing.UnescapedId}", body, cancellationToken)
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -321,8 +329,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(data);
 
-        using var response = await wrapper.Instance
-            .PatchAsync($"/key/{table}", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PatchAsync($"/key/{table}", body, cancellationToken)
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -341,8 +349,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(data);
 
-        using var response = await wrapper.Instance
-            .PatchAsync($"/key/{table}", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PatchAsync($"/key/{table}", body, cancellationToken)
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -364,8 +372,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(expandoObject);
 
-        using var response = await wrapper.Instance
-            .PatchAsync($"/key/{thing.Table}/{thing.UnescapedId}", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PatchAsync($"/key/{thing.Table}/{thing.UnescapedId}", body, cancellationToken)
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -387,8 +395,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(expandoObject);
 
-        using var response = await wrapper.Instance
-            .PatchAsync($"/key/{table}", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PatchAsync($"/key/{table}", body, cancellationToken)
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -454,8 +462,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         };
         var requestUri = uriBuilder.ToString();
 
-        using var response = await wrapper.Instance
-            .PostAsync(requestUri, body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PostAsync(requestUri, body, cancellationToken)
             .ConfigureAwait(false);
 
         return await DeserializeDbResponseAsync(response, cancellationToken).ConfigureAwait(false);
@@ -465,8 +473,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         using var wrapper = CreateHttpClientWrapper();
 
-        using var response = await wrapper.Instance
-            .GetAsync($"/key/{table}", cancellationToken)
+        using var response = await wrapper
+            .Instance.GetAsync($"/key/{table}", cancellationToken)
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -480,8 +488,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         using var wrapper = CreateHttpClientWrapper();
 
-        using var response = await wrapper.Instance
-            .GetAsync($"/key/{thing.Table}/{thing.UnescapedId}", cancellationToken)
+        using var response = await wrapper
+            .Instance.GetAsync($"/key/{thing.Table}/{thing.UnescapedId}", cancellationToken)
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -522,8 +530,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(rootAuth);
 
-        using var response = await wrapper.Instance
-            .PostAsync("/signin", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PostAsync("/signin", body, cancellationToken)
             .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
@@ -535,8 +543,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(nsAuth);
 
-        using var response = await wrapper.Instance
-            .PostAsync("/signin", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PostAsync("/signin", body, cancellationToken)
             .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
@@ -553,8 +561,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(dbAuth);
 
-        using var response = await wrapper.Instance
-            .PostAsync("/signin", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PostAsync("/signin", body, cancellationToken)
             .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
@@ -572,8 +580,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(scopeAuth);
 
-        using var response = await wrapper.Instance
-            .PostAsync("/signin", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PostAsync("/signin", body, cancellationToken)
             .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
@@ -591,8 +599,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(scopeAuth);
 
-        using var response = await wrapper.Instance
-            .PostAsync("/signup", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PostAsync("/signup", body, cancellationToken)
             .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
@@ -632,8 +640,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(data);
 
-        using var response = await wrapper.Instance
-            .PutAsync($"/key/{table}", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PutAsync($"/key/{table}", body, cancellationToken)
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -652,8 +660,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        using var response = await wrapper.Instance
-            .PutAsync($"/key/{data.Id.Table}/{data.Id.UnescapedId}", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PutAsync(
+                $"/key/{data.Id.Table}/{data.Id.UnescapedId}",
+                body,
+                cancellationToken
+            )
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -671,8 +683,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         );
         using var body = CreateBodyContent("RETURN TRUE");
 
-        using var response = await wrapper.Instance
-            .PostAsync("/sql", body, cancellationToken)
+        using var response = await wrapper
+            .Instance.PostAsync("/sql", body, cancellationToken)
             .ConfigureAwait(false);
 
         var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
@@ -687,8 +699,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
 
 #if NET6_0_OR_GREATER
-        return await wrapper.Instance
-            .GetStringAsync("/version", cancellationToken)
+        return await wrapper
+            .Instance.GetStringAsync("/version", cancellationToken)
             .ConfigureAwait(false);
 #else
         return await wrapper.Instance.GetStringAsync("/version").ConfigureAwait(false);
@@ -877,8 +889,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
     {
 #if NET6_0_OR_GREATER
-        using var stream = await response.Content
-            .ReadAsStreamAsync(cancellationToken)
+        using var stream = await response
+            .Content.ReadAsStreamAsync(cancellationToken)
             .ConfigureAwait(false);
 #else
         using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -960,8 +972,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
     {
 #if NET6_0_OR_GREATER
-        using var stream = await response.Content
-            .ReadAsStreamAsync(cancellationToken)
+        using var stream = await response
+            .Content.ReadAsStreamAsync(cancellationToken)
             .ConfigureAwait(false);
 #else
         using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);

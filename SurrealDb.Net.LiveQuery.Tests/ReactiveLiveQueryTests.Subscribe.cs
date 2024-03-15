@@ -1,9 +1,9 @@
-﻿using Microsoft.Reactive.Testing;
+﻿using System.Reactive.Linq;
+using Microsoft.Reactive.Testing;
 using SurrealDb.Net.LiveQuery.Tests.Abstract;
 using SurrealDb.Net.LiveQuery.Tests.Models;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
-using System.Reactive.Linq;
 
 namespace SurrealDb.Net.LiveQuery.Tests;
 

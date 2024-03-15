@@ -1,7 +1,7 @@
-﻿using SurrealDb.Net;
+﻿using System.Text.Json;
+using SurrealDb.Net;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
-using System.Text.Json;
 
 var db = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
 

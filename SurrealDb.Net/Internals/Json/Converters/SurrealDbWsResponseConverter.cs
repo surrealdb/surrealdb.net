@@ -1,6 +1,6 @@
-﻿using SurrealDb.Net.Internals.Ws;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using SurrealDb.Net.Internals.Ws;
 
 namespace SurrealDb.Net.Internals.Json.Converters;
 

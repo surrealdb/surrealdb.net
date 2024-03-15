@@ -96,8 +96,8 @@ public class SurrealDbOptionsBuilderTests
         options.Database.Should().BeNull();
         options.Username.Should().BeNull();
         options.Password.Should().BeNull();
-        options.Token
-            .Should()
+        options
+            .Token.Should()
             .Be(
                 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
             );
@@ -147,8 +147,8 @@ public class SurrealDbOptionsBuilderTests
         options.Database.Should().Be("test");
         options.Username.Should().BeNull();
         options.Password.Should().BeNull();
-        options.Token
-            .Should()
+        options
+            .Token.Should()
             .Be(
                 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
             );

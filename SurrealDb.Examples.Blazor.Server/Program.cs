@@ -70,8 +70,8 @@ async Task GenerateWeatherForecastsAsync(IServiceProvider serviceProvider)
     var weatherForecasts = new WeatherForecastFaker().Generate(initialCount);
     var surrealDbClient = serviceProvider.GetRequiredService<ISurrealDbClient>();
 
-    var tasks = weatherForecasts.Select(
-        weatherForecast => surrealDbClient.Create(WeatherForecast.Table, weatherForecast)
+    var tasks = weatherForecasts.Select(weatherForecast =>
+        surrealDbClient.Create(WeatherForecast.Table, weatherForecast)
     );
 
     await Task.WhenAll(tasks);
@@ -101,8 +101,8 @@ async Task GenerateKanbanAsync(IServiceProvider serviceProvider)
         DueDate = DateTime.Now.AddDays(5)
     };
 
-    var taskTasks = new[] { task1, task2, task3, task4, task5 }.Select(
-        t => surrealDbClient.Create(TaskRecord.Table, t)
+    var taskTasks = new[] { task1, task2, task3, task4, task5 }.Select(t =>
+        surrealDbClient.Create(TaskRecord.Table, t)
     );
 
     var taskRecords = await Task.WhenAll(taskTasks);
@@ -126,8 +126,8 @@ async Task GenerateKanbanAsync(IServiceProvider serviceProvider)
         Tasks = new[] { taskRecords[4].Id! }
     };
 
-    var columnTasks = new[] { todoColumn, inProgressColumn, doneColumn }.Select(
-        column => surrealDbClient.Create(ColumnRecord.Table, column)
+    var columnTasks = new[] { todoColumn, inProgressColumn, doneColumn }.Select(column =>
+        surrealDbClient.Create(ColumnRecord.Table, column)
     );
     await Task.WhenAll(columnTasks);
 }
