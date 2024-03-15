@@ -1,13 +1,17 @@
-﻿namespace SurrealDb.Net.Internals.Extensions;
+﻿using System.Text.Json;
+
+namespace SurrealDb.Net.Internals.Extensions;
 
 internal static class StringExtensions
 {
     public static string ToSnakeCase(this string str)
     {
-        return string.Concat(
-                str.Select((x, i) => i > 0 && char.IsUpper(x) ? "_" + x.ToString() : x.ToString())
-            )
-            .ToLower();
+        return JsonNamingPolicy.SnakeCaseLower.ConvertName(str);
+    }
+
+    public static string ToCamelCase(this string str)
+    {
+        return JsonNamingPolicy.CamelCase.ConvertName(str);
     }
 
     public static bool IsValidVariableName(this string str)

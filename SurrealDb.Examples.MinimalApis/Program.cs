@@ -29,11 +29,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet(
-    "/api/weatherForecast",
-    (ISurrealDbClient surrealDbClient, CancellationToken cancellationToken) =>
-        surrealDbClient.Select<WeatherForecast>(WeatherForecast.Table, cancellationToken)
-);
+app.MapGroup("/api")
+    .MapSurrealEndpoints<WeatherForecast>("/weatherForecast")
+    .MapSurrealEndpoints<Todo>("/todo");
 
 await InitializeDbAsync();
 

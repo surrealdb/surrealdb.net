@@ -7,7 +7,7 @@ namespace SurrealDb.Examples.MinimalApis.Models;
 /// </summary>
 public class WeatherForecast : Record
 {
-    internal const string Table = "weatherForecast";
+    internal const string Table = "weather_forecast";
 
     /// <summary>
     /// Date of the weather forecast.
