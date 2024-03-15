@@ -30,7 +30,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapGroup("/api")
-    .MapSurrealEndpoints<WeatherForecast>("/weatherForecast")
+    .MapSurrealEndpoints<WeatherForecast>("/weatherForecast", new() { EnableMutations = false })
     .MapSurrealEndpoints<Todo>("/todo");
 
 await InitializeDbAsync();
