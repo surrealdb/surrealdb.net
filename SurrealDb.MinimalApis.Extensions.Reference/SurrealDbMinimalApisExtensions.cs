@@ -67,6 +67,61 @@ public static class SurrealDbMinimalApisExtensions
     )
         where TEntity : Record
     {
+        return endpoints.MapSurrealEndpoints<TEntity, ISurrealDbClient>(pattern, options);
+    }
+
+    /// <summary>
+    /// Adds a complete list of <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP requests for the specified pattern.
+    /// This method will add the following routes by default:
+    /// <list type="table">
+    /// <item>
+    /// <term>GET /</term>
+    /// <description>Select all records from a SurrealDB table.</description>
+    /// </item>
+    /// <item>
+    /// <term>GET /{id}</term>
+    /// <description>Select a single record from a SurrealDB table.</description>
+    /// </item>
+    /// <item>
+    /// <term>POST /</term>
+    /// <description>Create a new record in a SurrealDB table.</description>
+    /// </item>
+    /// <item>
+    /// <term>PUT /</term>
+    /// <description>Update a record in a SurrealDB table.</description>
+    /// </item>
+    /// <item>
+    /// <term>PATCH /</term>
+    /// <description>Patch all records in a SurrealDB table.</description>
+    /// </item>
+    /// <item>
+    /// <term>PATCH /{id}</term>
+    /// <description>Patch a single record in a SurrealDB table.</description>
+    /// </item>
+    /// <item>
+    /// <term>DELETE /</term>
+    /// <description>Delete all records from a SurrealDB table.</description>
+    /// </item>
+    /// <item>
+    /// <term>DELETE /{id}</term>
+    /// <description>Delete a single record from a SurrealDB table.</description>
+    /// </item>
+    /// </list>
+    /// </summary>
+    /// <typeparam name="TEntity">Type of the record stored in a SurrealDB instance.</typeparam>
+    /// <typeparam name="TDbClient">Type of the SurrealDB client.</typeparam>
+    /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+    /// <param name="pattern">The route pattern.</param>
+    /// <param name="options">Options to customize the behavior of the different endpoints.</param>
+    /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
+    public static IEndpointRouteBuilder MapSurrealEndpoints<TEntity, TDbClient>(
+        this IEndpointRouteBuilder endpoints,
+        string pattern,
+        SurrealDbMinimalApisOptions? options = null
+    )
+        where TEntity : Record
+        where TDbClient : ISurrealDbClient
+    {
         string entityName = typeof(TEntity).Name;
         string tableName = entityName.ToSnakeCase();
 
@@ -82,7 +137,7 @@ public static class SurrealDbMinimalApisExtensions
             group
                 .MapGet(
                     "/",
-                    (ISurrealDbClient surrealDbClient, CancellationToken cancellationToken) =>
+                    (TDbClient surrealDbClient, CancellationToken cancellationToken) =>
                     {
                         return surrealDbClient.Select<TEntity>(tableName, cancellationToken);
                     }
@@ -100,7 +155,7 @@ public static class SurrealDbMinimalApisExtensions
                     "/{id}",
                     async (
                         string id,
-                        ISurrealDbClient surrealDbClient,
+                        TDbClient surrealDbClient,
                         CancellationToken cancellationToken
                     ) =>
                     {
@@ -129,7 +184,7 @@ public static class SurrealDbMinimalApisExtensions
                     "/",
                     (
                         TEntity data,
-                        ISurrealDbClient surrealDbClient,
+                        TDbClient surrealDbClient,
                         CancellationToken cancellationToken
                     ) =>
                     {
@@ -149,7 +204,7 @@ public static class SurrealDbMinimalApisExtensions
                     "/",
                     (
                         TEntity data,
-                        ISurrealDbClient surrealDbClient,
+                        TDbClient surrealDbClient,
                         CancellationToken cancellationToken
                     ) =>
                     {
@@ -169,7 +224,7 @@ public static class SurrealDbMinimalApisExtensions
                     "/",
                     (
                         JsonPatchDocument<TEntity> patches,
-                        ISurrealDbClient surrealDbClient,
+                        TDbClient surrealDbClient,
                         CancellationToken cancellationToken
                     ) =>
                     {
@@ -190,7 +245,7 @@ public static class SurrealDbMinimalApisExtensions
                     (
                         string id,
                         JsonPatchDocument<TEntity> patches,
-                        ISurrealDbClient surrealDbClient,
+                        TDbClient surrealDbClient,
                         CancellationToken cancellationToken
                     ) =>
                     {
@@ -208,7 +263,7 @@ public static class SurrealDbMinimalApisExtensions
             group
                 .MapDelete(
                     "/",
-                    (ISurrealDbClient surrealDbClient, CancellationToken cancellationToken) =>
+                    (TDbClient surrealDbClient, CancellationToken cancellationToken) =>
                     {
                         return surrealDbClient.Delete(tableName, cancellationToken);
                     }
@@ -226,7 +281,7 @@ public static class SurrealDbMinimalApisExtensions
                     "/{id}",
                     async (
                         string id,
-                        ISurrealDbClient surrealDbClient,
+                        TDbClient surrealDbClient,
                         CancellationToken cancellationToken
                     ) =>
                     {
