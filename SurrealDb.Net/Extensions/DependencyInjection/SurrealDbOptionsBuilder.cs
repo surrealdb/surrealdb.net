@@ -1,3 +1,6 @@
+﻿using System.Text.Json;
+using SurrealDb.Net.Internals.Constants;
+
 namespace Microsoft.Extensions.DependencyInjection;
 
 public class SurrealDbOptionsBuilder
@@ -8,6 +11,7 @@ public class SurrealDbOptionsBuilder
     private string? _username;
     private string? _password;
     private string? _token;
+    private string? _namingPolicy;
 
     /// <summary>
     /// Parses the connection string and set the configuration accordingly.
@@ -59,6 +63,9 @@ public class SurrealDbOptionsBuilder
                 case "token":
                     _token = value;
                     break;
+                case "namingpolicy":
+                    _namingPolicy = value;
+                    break;
             }
         }
 
@@ -101,6 +108,40 @@ public class SurrealDbOptionsBuilder
         return this;
     }
 
+    public SurrealDbOptionsBuilder WithNamingPolicy(string namingPolicy)
+    {
+        EnsuresCorrectNamingPolicy(namingPolicy);
+
+        _namingPolicy = namingPolicy;
+        return this;
+    }
+
+    private static void EnsuresCorrectNamingPolicy(string namingPolicy)
+    {
+        if (string.IsNullOrWhiteSpace(namingPolicy))
+        {
+            return;
+        }
+
+        string[] validNamingPolicies =
+        [
+            NamingPolicyConstants.CAMEL_CASE,
+            NamingPolicyConstants.SNAKE_CASE,
+            NamingPolicyConstants.SNAKE_CASE_LOWER,
+            NamingPolicyConstants.SNAKE_CASE_UPPER,
+            NamingPolicyConstants.KEBAB_CASE,
+            NamingPolicyConstants.KEBAB_CASE_LOWER,
+            NamingPolicyConstants.KEBAB_CASE_UPPER
+        ];
+
+        if (validNamingPolicies.Contains(namingPolicy.ToLowerInvariant()))
+        {
+            return;
+        }
+
+        throw new ArgumentException($"Invalid naming policy: {namingPolicy}", nameof(namingPolicy));
+    }
+
     public SurrealDbOptions Build()
     {
         return new SurrealDbOptions
@@ -110,7 +151,8 @@ public class SurrealDbOptionsBuilder
             Database = _database,
             Username = _username,
             Password = _password,
-            Token = _token
+            Token = _token,
+            NamingPolicy = _namingPolicy
         };
     }
 }

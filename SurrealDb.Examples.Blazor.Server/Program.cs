@@ -35,40 +35,42 @@ app.UseRouting();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
-_ = Task.Run(async () =>
-{
-    await InitializeDbAsync(app.Services);
-});
+await InitializeDbAsync();
 
 app.Run();
 
-async Task InitializeDbAsync(IServiceProvider serviceProvider)
+async Task InitializeDbAsync()
 {
-    await DefineSchemaAsync(serviceProvider);
+    var surrealDbClient = new SurrealDbClient(
+        SurrealDbOptions
+            .Create()
+            .FromConnectionString(configuration.GetConnectionString("SurrealDB")!)
+            .Build()
+    );
+
+    await DefineSchemaAsync(surrealDbClient);
 
     var tasks = new[]
     {
-        GenerateWeatherForecastsAsync(serviceProvider),
-        GenerateKanbanAsync(serviceProvider)
+        GenerateWeatherForecastsAsync(surrealDbClient),
+        GenerateKanbanAsync(surrealDbClient)
     };
 
     await Task.WhenAll(tasks);
 }
 
-async Task DefineSchemaAsync(IServiceProvider serviceProvider)
+async Task DefineSchemaAsync(ISurrealDbClient surrealDbClient)
 {
     string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "schema.surql");
     string schema = File.ReadAllText(filePath, Encoding.UTF8);
 
-    var surrealDbClient = serviceProvider.GetRequiredService<ISurrealDbClient>();
     await surrealDbClient.RawQuery(schema);
 }
 
-async Task GenerateWeatherForecastsAsync(IServiceProvider serviceProvider)
+async Task GenerateWeatherForecastsAsync(ISurrealDbClient surrealDbClient)
 {
     const int initialCount = 5;
     var weatherForecasts = new WeatherForecastFaker().Generate(initialCount);
-    var surrealDbClient = serviceProvider.GetRequiredService<ISurrealDbClient>();
 
     var tasks = weatherForecasts.Select(weatherForecast =>
         surrealDbClient.Create(WeatherForecast.Table, weatherForecast)
@@ -77,10 +79,8 @@ async Task GenerateWeatherForecastsAsync(IServiceProvider serviceProvider)
     await Task.WhenAll(tasks);
 }
 
-async Task GenerateKanbanAsync(IServiceProvider serviceProvider)
+async Task GenerateKanbanAsync(ISurrealDbClient surrealDbClient)
 {
-    var surrealDbClient = serviceProvider.GetRequiredService<ISurrealDbClient>();
-
     var existingColumns = await surrealDbClient.Select<ColumnRecord>(ColumnRecord.Table);
     if (existingColumns.Any())
     {
