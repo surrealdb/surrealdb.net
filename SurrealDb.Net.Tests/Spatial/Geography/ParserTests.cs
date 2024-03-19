@@ -1,5 +1,5 @@
-﻿using Microsoft.Spatial;
-using System.Text;
+﻿using System.Text;
+using Microsoft.Spatial;
 
 namespace SurrealDb.Net.Tests.Spatial.Geography;
 

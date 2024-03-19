@@ -9,11 +9,10 @@ using BenchmarkDotNet.Running;
 using SurrealDb.Net.Benchmarks.Constants;
 using SurrealDb.Net.Benchmarks.Helpers;
 
-var config = DefaultConfig.Instance
-    .AddJob(Job.Default.WithRuntime(CoreRuntime.Core80))
+var config = DefaultConfig
+    .Instance.AddJob(Job.Default.WithRuntime(CoreRuntime.Core80))
     .AddJob(
-        Job.Default
-            .WithRuntime(NativeAotRuntime.Net80)
+        Job.Default.WithRuntime(NativeAotRuntime.Net80)
             .WithEnvironmentVariable(EnvVariablesConstants.NativeAotRuntime, "true")
     )
     .AddDiagnoser(MemoryDiagnoser.Default)

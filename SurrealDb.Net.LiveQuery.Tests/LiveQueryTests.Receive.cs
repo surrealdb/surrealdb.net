@@ -295,8 +295,8 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
         var secondResultAsSurrealDbLiveQueryResultResponse =
             (SurrealDbLiveQueryCloseResponse)secondResult;
 
-        secondResultAsSurrealDbLiveQueryResultResponse.Reason
-            .Should()
+        secondResultAsSurrealDbLiveQueryResultResponse
+            .Reason.Should()
             .Be(SurrealDbLiveQueryClosureReason.SocketClosed);
     }
 
@@ -371,8 +371,8 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
         var secondResultAsSurrealDbLiveQueryResultResponse =
             (SurrealDbLiveQueryCloseResponse)secondResult;
 
-        secondResultAsSurrealDbLiveQueryResultResponse.Reason
-            .Should()
+        secondResultAsSurrealDbLiveQueryResultResponse
+            .Reason.Should()
             .Be(SurrealDbLiveQueryClosureReason.QueryKilled);
     }
 }

@@ -47,17 +47,14 @@ public class PatchAllTests
 
         list.Should().NotBeNull().And.HaveCount(2);
 
-        var expected = list!.Select(
-            item =>
-                new Post
-                {
-                    Id = item.Id,
-                    Title = item.Title,
-                    Content = "[Edit] Oops",
-                    CreatedAt = item.CreatedAt,
-                    Status = item.Status,
-                }
-        );
+        var expected = list!.Select(item => new Post
+        {
+            Id = item.Id,
+            Title = item.Title,
+            Content = "[Edit] Oops",
+            CreatedAt = item.CreatedAt,
+            Status = item.Status,
+        });
 
         results.Should().BeEquivalentTo(expected);
     }

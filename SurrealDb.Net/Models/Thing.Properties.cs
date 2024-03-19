@@ -1,5 +1,5 @@
-﻿using SurrealDb.Net.Internals.Models;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using SurrealDb.Net.Internals.Models;
 
 namespace SurrealDb.Net.Models;
 

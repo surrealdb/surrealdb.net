@@ -1,8 +1,8 @@
-﻿using Microsoft.OpenApi.Models;
-using SurrealDb.Net;
+﻿using System.Reflection;
+using Microsoft.OpenApi.Models;
 using SurrealDb.Examples.WeatherApi.Controllers;
 using SurrealDb.Examples.WeatherApi.Models;
-using System.Reflection;
+using SurrealDb.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,20 +34,23 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+await InitializeDbAsync();
+
 app.Run();
 
-await InitializeDbAsync(app.Services);
-
-async Task InitializeDbAsync(IServiceProvider serviceProvider)
+async Task InitializeDbAsync()
 {
-    using var scope = serviceProvider.CreateScope();
-
     const int initialCount = 5;
     var weatherForecasts = new WeatherForecastFaker().Generate(initialCount);
-    var surrealDbClient = scope.ServiceProvider.GetRequiredService<ISurrealDbClient>();
+    var surrealDbClient = new SurrealDbClient(
+        SurrealDbOptions
+            .Create()
+            .FromConnectionString(configuration.GetConnectionString("SurrealDB")!)
+            .Build()
+    );
 
-    var tasks = weatherForecasts.Select(
-        weatherForecast => surrealDbClient.Create(WeatherForecastController.Table, weatherForecast)
+    var tasks = weatherForecasts.Select(weatherForecast =>
+        surrealDbClient.Create(WeatherForecastController.Table, weatherForecast)
     );
 
     await Task.WhenAll(tasks);

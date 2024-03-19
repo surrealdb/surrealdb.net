@@ -1,7 +1,7 @@
-using SurrealDb.Net.Internals.Helpers;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SurrealDb.Net.Internals.Helpers;
 
 namespace SurrealDb.Net.Internals.Json.Converters;
 

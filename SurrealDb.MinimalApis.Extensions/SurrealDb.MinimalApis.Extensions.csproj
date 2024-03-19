@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <!-- TODO : Get rid of <EnforceExtendedAnalyzerRules> warning -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <IsPackable>true</IsPackable>
+    <PackageId>SurrealDb.MinimalApis.Extensions</PackageId>
+    <Description>A set of extensions and helpers to use SurrealDB with ASP.NET Core Minimal APIs</Description>
+    <PackageTags>SurrealDB Surreal Database ASP.NET Web MinimalApis Apis</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\SurrealDb.MinimalApis.Extensions.Reference\SurrealDbMinimalApisExtensions.cs" Link="SurrealDbMinimalApisExtensions.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\SurrealDb.MinimalApis.Extensions.Reference\SurrealDbMinimalApisOptions.cs" Link="SurrealDbMinimalApisOptions.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
+  </ItemGroup>
+
+</Project>

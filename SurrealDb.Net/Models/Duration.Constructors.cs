@@ -18,8 +18,8 @@ public readonly partial struct Duration
     internal Duration(string value)
     {
         _value = value;
-        _unitValues = DurationParser.Parser
-            .Parse(value)
+        _unitValues = DurationParser
+            .Parser.Parse(value)
             .Where(kv => kv.value != 0)
             .ToDictionary(kv => kv.unit, kv => (int)kv.value);
     }

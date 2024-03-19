@@ -1,4 +1,14 @@
-﻿using Microsoft.IO;
+﻿using System.Collections.Concurrent;
+using System.Collections.Immutable;
+using System.Globalization;
+using System.Net.WebSockets;
+using System.Reactive.Concurrency;
+using System.Reactive.Linq;
+using System.Security.Cryptography;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
+using Microsoft.IO;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Internals.Extensions;
@@ -11,16 +21,6 @@ using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
-using System.Collections.Concurrent;
-using System.Collections.Immutable;
-using System.Globalization;
-using System.Net.WebSockets;
-using System.Reactive.Concurrency;
-using System.Reactive.Linq;
-using System.Security.Cryptography;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using SystemTextJsonPatch;
 using Websocket.Client;
 
@@ -92,80 +92,53 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         _wsClient = new WebsocketClient(uri) { IsTextMessageConversionEnabled = false };
         _pinger = new(Ping);
 
-        _receiverSubscription = _wsClient.MessageReceived
-            .ObserveOn(TaskPoolScheduler.Default)
-            .Select(
-                message =>
-                    Observable.FromAsync(
-                        async (cancellationToken) =>
-                        {
-                            ISurrealDbWsResponse? response = null;
+        _receiverSubscription = _wsClient
+            .MessageReceived.ObserveOn(TaskPoolScheduler.Default)
+            .Select(message =>
+                Observable.FromAsync(
+                    async (cancellationToken) =>
+                    {
+                        ISurrealDbWsResponse? response = null;
 
-                            switch (message.MessageType)
-                            {
-                                case WebSocketMessageType.Text:
+                        switch (message.MessageType)
+                        {
+                            case WebSocketMessageType.Text:
 #if NET8_0_OR_GREATER
-                                    if (JsonSerializer.IsReflectionEnabledByDefault)
-                                    {
+                                if (JsonSerializer.IsReflectionEnabledByDefault)
+                                {
 #pragma warning disable IL2026, IL3050
-                                        response = JsonSerializer.Deserialize<ISurrealDbWsResponse>(
-                                            message.Text!,
-                                            GetJsonSerializerOptions()
-                                        );
-#pragma warning restore IL2026, IL3050
-                                    }
-                                    else
-                                    {
-                                        response = JsonSerializer.Deserialize(
-                                            message.Text!,
-                                            (
-                                                GetJsonSerializerOptions()
-                                                    .GetTypeInfo(typeof(ISurrealDbWsResponse))
-                                                as JsonTypeInfo<ISurrealDbWsResponse>
-                                            )!
-                                        );
-                                    }
-#else
                                     response = JsonSerializer.Deserialize<ISurrealDbWsResponse>(
                                         message.Text!,
                                         GetJsonSerializerOptions()
                                     );
-#endif
-                                    break;
-                                case WebSocketMessageType.Binary:
+#pragma warning restore IL2026, IL3050
+                                }
+                                else
                                 {
-                                    using var stream = _memoryStreamManager.GetStream(
-                                        message.Binary
+                                    response = JsonSerializer.Deserialize(
+                                        message.Text!,
+                                        (
+                                            GetJsonSerializerOptions()
+                                                .GetTypeInfo(typeof(ISurrealDbWsResponse))
+                                            as JsonTypeInfo<ISurrealDbWsResponse>
+                                        )!
                                     );
+                                }
+#else
+                                response = JsonSerializer.Deserialize<ISurrealDbWsResponse>(
+                                    message.Text!,
+                                    GetJsonSerializerOptions()
+                                );
+#endif
+                                break;
+                            case WebSocketMessageType.Binary:
+                            {
+                                using var stream = _memoryStreamManager.GetStream(message.Binary);
 
 #if NET8_0_OR_GREATER
-                                    if (JsonSerializer.IsReflectionEnabledByDefault)
-                                    {
+                                if (JsonSerializer.IsReflectionEnabledByDefault)
+                                {
 #pragma warning disable IL2026, IL3050
-                                        response = await JsonSerializer
-                                            .DeserializeAsync<ISurrealDbWsResponse>(
-                                                stream,
-                                                GetJsonSerializerOptions(),
-                                                cancellationToken
-                                            )
-                                            .ConfigureAwait(false);
-#pragma warning restore IL2026, IL3050
-                                    }
-                                    else
-                                    {
-                                        response = await JsonSerializer
-                                            .DeserializeAsync(
-                                                stream,
-                                                (
-                                                    GetJsonSerializerOptions()
-                                                        .GetTypeInfo(typeof(ISurrealDbWsResponse))
-                                                    as JsonTypeInfo<ISurrealDbWsResponse>
-                                                )!,
-                                                cancellationToken
-                                            )
-                                            .ConfigureAwait(false);
-                                    }
-#else
                                     response = await JsonSerializer
                                         .DeserializeAsync<ISurrealDbWsResponse>(
                                             stream,
@@ -173,63 +146,86 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                                             cancellationToken
                                         )
                                         .ConfigureAwait(false);
-#endif
-                                    break;
+#pragma warning restore IL2026, IL3050
                                 }
-                            }
-
-                            if (response is SurrealDbWsLiveResponse surrealDbWsLiveResponse)
-                            {
-                                var liveQueryUuid = surrealDbWsLiveResponse.Result.Id;
-
-                                if (
-                                    _liveQueryChannelSubscriptionsPerQuery.TryGetValue(
-                                        liveQueryUuid,
-                                        out var _liveQueryChannelSubscriptions
-                                    )
-                                )
+                                else
                                 {
-                                    var tasks =
-                                        _liveQueryChannelSubscriptions.Select(liveQueryChannel =>
-                                        {
-                                            return liveQueryChannel.WriteAsync(
-                                                surrealDbWsLiveResponse
-                                            );
-                                        });
-
-                                    await Task.WhenAll(tasks).ConfigureAwait(false);
+                                    response = await JsonSerializer
+                                        .DeserializeAsync(
+                                            stream,
+                                            (
+                                                GetJsonSerializerOptions()
+                                                    .GetTypeInfo(typeof(ISurrealDbWsResponse))
+                                                as JsonTypeInfo<ISurrealDbWsResponse>
+                                            )!,
+                                            cancellationToken
+                                        )
+                                        .ConfigureAwait(false);
                                 }
-
-                                return;
+#else
+                                response = await JsonSerializer
+                                    .DeserializeAsync<ISurrealDbWsResponse>(
+                                        stream,
+                                        GetJsonSerializerOptions(),
+                                        cancellationToken
+                                    )
+                                    .ConfigureAwait(false);
+#endif
+                                break;
                             }
+                        }
+
+                        if (response is SurrealDbWsLiveResponse surrealDbWsLiveResponse)
+                        {
+                            var liveQueryUuid = surrealDbWsLiveResponse.Result.Id;
 
                             if (
-                                response is ISurrealDbWsStandardResponse surrealDbWsStandardResponse
-                                && _responseTasks.TryRemove(
-                                    surrealDbWsStandardResponse.Id,
-                                    out var responseTaskCompletionSource
+                                _liveQueryChannelSubscriptionsPerQuery.TryGetValue(
+                                    liveQueryUuid,
+                                    out var _liveQueryChannelSubscriptions
                                 )
                             )
                             {
-                                switch (response)
-                                {
-                                    case SurrealDbWsOkResponse okResponse:
-                                        responseTaskCompletionSource.SetResult(okResponse);
-                                        break;
-                                    case SurrealDbWsErrorResponse errorResponse:
-                                        responseTaskCompletionSource.SetException(
-                                            new SurrealDbException(errorResponse.Error.Message)
-                                        );
-                                        break;
-                                    default:
-                                        responseTaskCompletionSource.SetException(
-                                            new SurrealDbException("Unknown response type")
-                                        );
-                                        break;
-                                }
+                                var tasks = _liveQueryChannelSubscriptions.Select(
+                                    liveQueryChannel =>
+                                    {
+                                        return liveQueryChannel.WriteAsync(surrealDbWsLiveResponse);
+                                    }
+                                );
+
+                                await Task.WhenAll(tasks).ConfigureAwait(false);
+                            }
+
+                            return;
+                        }
+
+                        if (
+                            response is ISurrealDbWsStandardResponse surrealDbWsStandardResponse
+                            && _responseTasks.TryRemove(
+                                surrealDbWsStandardResponse.Id,
+                                out var responseTaskCompletionSource
+                            )
+                        )
+                        {
+                            switch (response)
+                            {
+                                case SurrealDbWsOkResponse okResponse:
+                                    responseTaskCompletionSource.SetResult(okResponse);
+                                    break;
+                                case SurrealDbWsErrorResponse errorResponse:
+                                    responseTaskCompletionSource.SetException(
+                                        new SurrealDbException(errorResponse.Error.Message)
+                                    );
+                                    break;
+                                default:
+                                    responseTaskCompletionSource.SetException(
+                                        new SurrealDbException("Unknown response type")
+                                    );
+                                    break;
                             }
                         }
-                    )
+                    }
+                )
             )
             .Merge()
             .Subscribe();

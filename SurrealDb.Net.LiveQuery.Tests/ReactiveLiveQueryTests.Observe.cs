@@ -1,8 +1,8 @@
-﻿using Microsoft.Reactive.Testing;
+﻿using System.Reactive.Linq;
+using Microsoft.Reactive.Testing;
 using SurrealDb.Net.LiveQuery.Tests.Abstract;
 using SurrealDb.Net.LiveQuery.Tests.Models;
 using SurrealDb.Net.Models.LiveQuery;
-using System.Reactive.Linq;
 
 namespace SurrealDb.Net.LiveQuery.Tests;
 
@@ -46,19 +46,18 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
                 .Take(1)
-                .Select(
-                    _ =>
-                        Observable.FromAsync(async () =>
-                        {
-                            var record = await client.Create("test", new TestRecord { Value = 1 });
-                            await WaitLiveQueryNotificationAsync();
+                .Select(_ =>
+                    Observable.FromAsync(async () =>
+                    {
+                        var record = await client.Create("test", new TestRecord { Value = 1 });
+                        await WaitLiveQueryNotificationAsync();
 
-                            await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
-                            await WaitLiveQueryNotificationAsync();
+                        await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
+                        await WaitLiveQueryNotificationAsync();
 
-                            await client.Delete(record.Id!);
-                            await WaitLiveQueryNotificationAsync();
-                        })
+                        await client.Delete(record.Id!);
+                        await WaitLiveQueryNotificationAsync();
+                    })
                 )
                 .Merge()
                 .SubscribeOn(testScheduler)
@@ -134,19 +133,18 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
                 .Take(1)
-                .Select(
-                    _ =>
-                        Observable.FromAsync(async () =>
-                        {
-                            var record = await client.Create("test", new TestRecord { Value = 1 });
-                            await WaitLiveQueryNotificationAsync();
+                .Select(_ =>
+                    Observable.FromAsync(async () =>
+                    {
+                        var record = await client.Create("test", new TestRecord { Value = 1 });
+                        await WaitLiveQueryNotificationAsync();
 
-                            await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
-                            await WaitLiveQueryNotificationAsync();
+                        await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
+                        await WaitLiveQueryNotificationAsync();
 
-                            await client.Delete(record.Id!);
-                            await WaitLiveQueryNotificationAsync();
-                        })
+                        await client.Delete(record.Id!);
+                        await WaitLiveQueryNotificationAsync();
+                    })
                 )
                 .Merge()
                 .SubscribeOn(testScheduler)
@@ -225,19 +223,18 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
                 .Take(1)
-                .Select(
-                    _ =>
-                        Observable.FromAsync(async () =>
-                        {
-                            var record = await client.Create("test", new TestRecord { Value = 1 });
-                            await WaitLiveQueryNotificationAsync();
+                .Select(_ =>
+                    Observable.FromAsync(async () =>
+                    {
+                        var record = await client.Create("test", new TestRecord { Value = 1 });
+                        await WaitLiveQueryNotificationAsync();
 
-                            await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
-                            await WaitLiveQueryNotificationAsync();
+                        await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
+                        await WaitLiveQueryNotificationAsync();
 
-                            await client.Delete(record.Id!);
-                            await WaitLiveQueryNotificationAsync();
-                        })
+                        await client.Delete(record.Id!);
+                        await WaitLiveQueryNotificationAsync();
+                    })
                 )
                 .Merge()
                 .SubscribeOn(testScheduler)

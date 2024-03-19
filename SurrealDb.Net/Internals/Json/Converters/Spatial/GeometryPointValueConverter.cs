@@ -1,7 +1,7 @@
-using Microsoft.Spatial;
-using SurrealDb.Net.Internals.Constants;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Spatial;
+using SurrealDb.Net.Internals.Constants;
 
 namespace SurrealDb.Net.Internals.Json.Converters.Spatial;
 

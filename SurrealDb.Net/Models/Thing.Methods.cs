@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Models;
-using System.Text;
 
 namespace SurrealDb.Net.Models;
 

@@ -1,7 +1,7 @@
-﻿using FluentAssertions.Extensions;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Text;
 using System.Text.Json;
+using FluentAssertions.Extensions;
 
 namespace SurrealDb.Net.Tests;
 
@@ -323,8 +323,8 @@ public class ParserTests
         {
             var decimalPrecisionRecord = records.First(r => r.Name == "decimal-precision");
             decimalPrecisionRecord.Should().NotBeNull();
-            decimalPrecisionRecord!.Value
-                .Should()
+            decimalPrecisionRecord!
+                .Value.Should()
                 .Be(13.5719384719384719385639856394139476937756394756m);
         }
 
@@ -392,8 +392,8 @@ public class ParserTests
         {
             var decimalPrecisionRecord = records.First(r => r.Name == "decimal-precision");
             decimalPrecisionRecord.Should().NotBeNull();
-            decimalPrecisionRecord!.Value
-                .Should()
+            decimalPrecisionRecord!
+                .Value.Should()
                 .Be(13.5719384719384719385639856394139476937756394756f);
         }
 
@@ -461,8 +461,8 @@ public class ParserTests
         {
             var decimalPrecisionRecord = records.First(r => r.Name == "decimal-precision");
             decimalPrecisionRecord.Should().NotBeNull();
-            decimalPrecisionRecord!.Value
-                .Should()
+            decimalPrecisionRecord!
+                .Value.Should()
                 .Be(13.5719384719384719385639856394139476937756394756d);
         }
 
@@ -912,16 +912,16 @@ public class ParserTests
         {
             var nanoRecord = records.First(r => r.Name == "nano");
             nanoRecord.Should().NotBeNull();
-            nanoRecord!.Value
-                .Should()
+            nanoRecord!
+                .Value.Should()
                 .Be(new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(841_147_000));
         }
 
         {
             var timezoneRecord = records.First(r => r.Name == "timezone");
             timezoneRecord.Should().NotBeNull();
-            timezoneRecord!.Value
-                .Should()
+            timezoneRecord!
+                .Value.Should()
                 .Be(
                     new DateTime(2022, 7, 3, 7, 18, 52)
                         .AddNanoseconds(841_147_000)
@@ -939,16 +939,16 @@ public class ParserTests
         {
             var nanoPlusDurationRecord = records.First(r => r.Name == "nano+duration");
             nanoPlusDurationRecord.Should().NotBeNull();
-            nanoPlusDurationRecord!.Value
-                .Should()
+            nanoPlusDurationRecord!
+                .Value.Should()
                 .Be(new DateTime(2022, 7, 3, 8, 49, 14).AddNanoseconds(191_147_000));
         }
 
         {
             var fullNanoRecord = records.First(r => r.Name == "full-nano");
             fullNanoRecord.Should().NotBeNull();
-            fullNanoRecord!.Value
-                .Should()
+            fullNanoRecord!
+                .Value.Should()
                 .Be(new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(123_456_789));
         }
     }

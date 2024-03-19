@@ -1,12 +1,12 @@
-﻿using SurrealDb.Net.Internals.Json.Converters;
+﻿using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using SurrealDb.Net.Internals.Json.Converters;
 using SurrealDb.Net.Internals.Json.Converters.Spatial;
+using SurrealDb.Net.Internals.Models;
 #if !NET8_0_OR_GREATER
 using SurrealDb.Net.Internals.Json.Policies;
 #endif
-using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using SurrealDb.Net.Internals.Models;
 
 namespace SurrealDb.Net.Internals.Json;
 

@@ -51,17 +51,14 @@ public class UpdateAllTests
 
         results.Should().NotBeNull();
 
-        var expected = list!.Select(
-            item =>
-                new Post
-                {
-                    Id = item.Id,
-                    Title = "# Title",
-                    Content = "# Content",
-                    CreatedAt = now,
-                    Status = "PUBLISHED",
-                }
-        );
+        var expected = list!.Select(item => new Post
+        {
+            Id = item.Id,
+            Title = "# Title",
+            Content = "# Content",
+            CreatedAt = now,
+            Status = "PUBLISHED",
+        });
 
         results.Should().BeEquivalentTo(expected);
     }
