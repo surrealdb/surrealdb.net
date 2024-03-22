@@ -7,15 +7,15 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 [CollectionDefinition("LiveQuery")]
 public class KillLiveQueryTests
 {
-    [Fact]
-    public async Task ShouldAutomaticallyKillLiveQueryWhenDisposed()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldAutomaticallyKillLiveQueryWhenDisposed(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -52,15 +52,15 @@ public class KillLiveQueryTests
             );
     }
 
-    [Fact]
-    public async Task ShouldManuallyKillLiveQuery()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldManuallyKillLiveQuery(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 

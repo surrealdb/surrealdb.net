@@ -45,6 +45,12 @@ public class SurrealDbOptions
     /// </summary>
     public string? NamingPolicy { get; internal set; }
 
+    /// <summary>
+    /// Default serialization method to use when new <see cref="ISurrealDbClient"/> is generated.
+    /// Either JSON or CBOR. Defaults to JSON.
+    /// </summary>
+    public string? Serialization { get; internal set; }
+
     public static SurrealDbOptionsBuilder Create()
     {
         return new SurrealDbOptionsBuilder();
