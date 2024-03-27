@@ -21,11 +21,13 @@ public class SurrealDbClient : ISurrealDbClient
     private readonly ISurrealDbEngine _engine;
 
     public Uri Uri { get; }
+    public string? NamingPolicy { get; }
 
     /// <summary>
     /// Creates a new SurrealDbClient, with the defined endpoint.
     /// </summary>
     /// <param name="endpoint">The endpoint to access a SurrealDB instance.</param>
+    /// <param name="namingPolicy">The naming policy to use for serialization.</param>
     /// <param name="httpClientFactory">An IHttpClientFactory instance, or none.</param>
     /// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
     /// <param name="prependJsonSerializerContexts">
@@ -39,13 +41,14 @@ public class SurrealDbClient : ISurrealDbClient
     /// <exception cref="ArgumentException"></exception>
     public SurrealDbClient(
         string endpoint,
+        string? namingPolicy = null,
         IHttpClientFactory? httpClientFactory = null,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
         Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null
     )
         : this(
-            new SurrealDbClientParams(endpoint),
+            new SurrealDbClientParams(endpoint, namingPolicy),
             httpClientFactory,
             configureJsonSerializerOptions,
             prependJsonSerializerContexts,
@@ -95,6 +98,7 @@ public class SurrealDbClient : ISurrealDbClient
             throw new ArgumentNullException(nameof(parameters), "The endpoint is required.");
 
         Uri = new Uri(parameters.Endpoint);
+        NamingPolicy = parameters.NamingPolicy;
 
         var protocol = Uri.Scheme;
 
@@ -103,7 +107,7 @@ public class SurrealDbClient : ISurrealDbClient
             "http"
             or "https"
                 => new SurrealDbHttpEngine(
-                    Uri,
+                    parameters,
                     httpClientFactory,
                     configureJsonSerializerOptions,
                     prependJsonSerializerContexts,
@@ -112,7 +116,7 @@ public class SurrealDbClient : ISurrealDbClient
             "ws"
             or "wss"
                 => new SurrealDbWsEngine(
-                    Uri,
+                    parameters,
                     configureJsonSerializerOptions,
                     prependJsonSerializerContexts,
                     appendJsonSerializerContexts

@@ -19,6 +19,8 @@ services.AddSwaggerGen(c =>
 });
 services.AddSurreal(configuration.GetConnectionString("SurrealDB")!);
 
+// 💡 Be sure to have "NamingPolicy=CamelCase" in your connection string for PATCH methods to work as expected.
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

@@ -1,22 +1,30 @@
-﻿using System.Text.Encodings.Web;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Json.Converters;
 using SurrealDb.Net.Internals.Json.Converters.Spatial;
 using SurrealDb.Net.Internals.Models;
-#if !NET8_0_OR_GREATER
-using SurrealDb.Net.Internals.Json.Policies;
-#endif
 
 namespace SurrealDb.Net.Internals.Json;
 
 internal static class SurrealDbSerializerOptions
 {
-    private static readonly Lazy<JsonSerializerOptions> _lazy = new(CreateJsonSerializerOptions);
+    private static readonly string DefaultKey = string.Empty;
 
-    public static JsonSerializerOptions Default => _lazy.Value;
+    private static readonly ConcurrentDictionary<
+        string,
+        JsonSerializerOptions
+    > DefaultSerializerOptionsCache = new();
 
-    private static JsonSerializerOptions CreateJsonSerializerOptions()
+    public static JsonSerializerOptions Default =>
+        DefaultSerializerOptionsCache.GetValueOrDefault(DefaultKey)!;
+
+    private static JsonSerializerOptions CreateJsonSerializerOptions(
+        JsonNamingPolicy? jsonNamingPolicy
+    )
     {
         var options = new JsonSerializerOptions
         {
@@ -26,11 +34,7 @@ internal static class SurrealDbSerializerOptions
                 JsonNumberHandling.AllowReadingFromString
                 | JsonNumberHandling.AllowNamedFloatingPointLiterals,
             PropertyNameCaseInsensitive = true,
-#if NET8_0_OR_GREATER
-            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-#else
-            PropertyNamingPolicy = SnakeCaseNamingPolicy.Instance,
-#endif
+            PropertyNamingPolicy = jsonNamingPolicy,
             ReadCommentHandling = JsonCommentHandling.Skip,
         };
 
@@ -98,10 +102,39 @@ internal static class SurrealDbSerializerOptions
             .Concat(dbResponseConverters);
     }
 
+    private static (string key, JsonNamingPolicy? jsonNamingPolicy) DetectJsonNamingPolicy(
+        string? namingPolicy
+    )
+    {
+        var jsonNamingPolicy = (namingPolicy?.ToLowerInvariant()) switch
+        {
+            NamingPolicyConstants.CAMEL_CASE => JsonNamingPolicy.CamelCase,
+            NamingPolicyConstants.SNAKE_CASE
+            or NamingPolicyConstants.SNAKE_CASE_LOWER
+                => JsonNamingPolicy.SnakeCaseLower,
+            NamingPolicyConstants.SNAKE_CASE_UPPER => JsonNamingPolicy.SnakeCaseUpper,
+            NamingPolicyConstants.KEBAB_CASE
+            or NamingPolicyConstants.KEBAB_CASE_LOWER
+                => JsonNamingPolicy.KebabCaseLower,
+            NamingPolicyConstants.KEBAB_CASE_UPPER => JsonNamingPolicy.KebabCaseUpper,
+            _ => null,
+        };
+
+        string key = jsonNamingPolicy?.GetType().FullName ?? DefaultKey;
+
+        return (key, jsonNamingPolicy);
+    }
+
+    private static readonly ConcurrentDictionary<
+        string,
+        (string key, JsonNamingPolicy? jsonNamingPolicy)
+    > DetectedJsonNamingPolicies = new();
+
     public static JsonSerializerOptions GetJsonSerializerOptions(
 #if NET8_0_OR_GREATER
         JsonSerializerContext mainContext,
 #endif
+        string? namingPolicy,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts,
         Func<JsonSerializerContext[]>? appendJsonSerializerContexts,
@@ -110,6 +143,11 @@ internal static class SurrealDbSerializerOptions
     )
     {
         updatedJsonSerializerOptionsForAot = null;
+
+        var (key, jsonNamingPolicy) = DetectedJsonNamingPolicies.GetOrAdd(
+            namingPolicy ?? string.Empty,
+            DetectJsonNamingPolicy(namingPolicy)
+        );
 
 #if NET8_0_OR_GREATER
         if (prependJsonSerializerContexts is not null || appendJsonSerializerContexts is not null)
@@ -121,7 +159,7 @@ internal static class SurrealDbSerializerOptions
 
             if (configureJsonSerializerOptions is not null)
             {
-                jsonSerializerOptions = CreateJsonSerializerOptions();
+                jsonSerializerOptions = CreateJsonSerializerOptions(jsonNamingPolicy);
                 AddAllJsonConverters(jsonSerializerOptions);
 
                 configureJsonSerializerOptions(jsonSerializerOptions);
@@ -139,7 +177,7 @@ internal static class SurrealDbSerializerOptions
                     return currentJsonSerializerOptionsForAot.Options;
                 }
 
-                jsonSerializerOptions = CreateJsonSerializerOptions();
+                jsonSerializerOptions = CreateJsonSerializerOptions(jsonNamingPolicy);
                 AddAllJsonConverters(jsonSerializerOptions);
             }
 
@@ -173,12 +211,31 @@ internal static class SurrealDbSerializerOptions
 
         if (configureJsonSerializerOptions is not null)
         {
-            var jsonSerializerOptions = CreateJsonSerializerOptions();
+            var jsonSerializerOptions = CreateJsonSerializerOptions(jsonNamingPolicy);
             configureJsonSerializerOptions(jsonSerializerOptions);
 
             return jsonSerializerOptions;
         }
 
-        return Default;
+        return GetDefaultSerializerFromPolicy(key, jsonNamingPolicy);
+    }
+
+    public static JsonSerializerOptions GetDefaultSerializerFromPolicy(
+        JsonNamingPolicy? jsonNamingPolicy
+    )
+    {
+        string key = jsonNamingPolicy?.GetType().FullName ?? DefaultKey;
+        return GetDefaultSerializerFromPolicy(key, jsonNamingPolicy);
+    }
+
+    public static JsonSerializerOptions GetDefaultSerializerFromPolicy(
+        string key,
+        JsonNamingPolicy? jsonNamingPolicy
+    )
+    {
+        return DefaultSerializerOptionsCache.GetOrAdd(
+            key,
+            CreateJsonSerializerOptions(jsonNamingPolicy)
+        );
     }
 }

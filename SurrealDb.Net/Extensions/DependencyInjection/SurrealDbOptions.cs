@@ -1,3 +1,4 @@
+﻿using System.Text.Json;
 using SurrealDb.Net;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -36,6 +37,13 @@ public class SurrealDbOptions
     /// Default token (User auth) to use when new <see cref="ISurrealDbClient"/> is generated.
     /// </summary>
     public string? Token { get; internal set; }
+
+    /// <summary>
+    /// Naming policy used to interact with the database.
+    /// It will change the default <see cref="JsonNamingPolicy"/> of the <see cref="ISurrealDbClient"/> used.
+    /// Valid options are "CamelCase", "SnakeCaseLower", "SnakeCaseUpper", "KebabCaseLower" and "KebabCaseUpper".
+    /// </summary>
+    public string? NamingPolicy { get; internal set; }
 
     public static SurrealDbOptionsBuilder Create()
     {

@@ -41,14 +41,11 @@ todosApi.MapGet(
     }
 );
 
-_ = Task.Run(async () =>
-{
-    await InitializeDbAsync(app.Services);
-});
+await InitializeDbAsync();
 
 app.Run();
 
-async Task InitializeDbAsync(IServiceProvider serviceProvider)
+async Task InitializeDbAsync()
 {
     var sampleTodos = new Todo[]
     {
@@ -59,9 +56,13 @@ async Task InitializeDbAsync(IServiceProvider serviceProvider)
         new(5, "Clean the car", DateOnly.FromDateTime(DateTime.Now.AddDays(2)))
     };
 
-    using var scope = serviceProvider.CreateScope();
-
-    var surrealDbClient = scope.ServiceProvider.GetRequiredService<ISurrealDbClient>();
+    var surrealDbClient = new SurrealDbClient(
+        SurrealDbOptions
+            .Create()
+            .FromConnectionString(configuration.GetConnectionString("SurrealDB")!)
+            .Build(),
+        appendJsonSerializerContexts: () => jsonSerializerContexts
+    );
 
     var tasks = sampleTodos.Select(async todo =>
     {

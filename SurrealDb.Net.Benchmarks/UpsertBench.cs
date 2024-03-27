@@ -26,6 +26,7 @@ public class UpsertBench : BaseBenchmark
                 case 0:
                     _surrealdbHttpClient = new SurrealDbClient(
                         HttpUrl,
+                        NamingPolicy,
                         appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
                     );
                     InitializeSurrealDbClient(_surrealdbHttpClient, dbInfo);
@@ -42,6 +43,7 @@ public class UpsertBench : BaseBenchmark
                 case 2:
                     _surrealdbWsTextClient = new SurrealDbClient(
                         WsUrl,
+                        NamingPolicy,
                         appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
                     );
                     InitializeSurrealDbClient(_surrealdbWsTextClient, dbInfo);

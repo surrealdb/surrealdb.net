@@ -1,4 +1,4 @@
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals.Helpers;
 
@@ -41,6 +41,7 @@ public class ColdStartBenchmark : BaseBenchmark
     {
         var client = new SurrealDbClient(
             HttpUrl,
+            NamingPolicy,
             _serviceProvider!.GetRequiredService<IHttpClientFactory>(),
             appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
         );
@@ -55,6 +56,7 @@ public class ColdStartBenchmark : BaseBenchmark
     {
         var client = new SurrealDbClient(
             WsUrl,
+            NamingPolicy,
             appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
         );
         _clients.Add(client);

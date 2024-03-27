@@ -19,6 +19,12 @@ public interface ISurrealDbClient : IDisposable
     Uri Uri { get; }
 
     /// <summary>
+    /// The naming policy used to serialize and deserialize data (eg. JSON for table name and record field names).
+    /// Default: PascalCase.
+    /// </summary>
+    string? NamingPolicy { get; }
+
+    /// <summary>
     /// Authenticates the current connection with a JWT.
     /// </summary>
     /// <param name="jwt">The JWT holder of the token.</param>

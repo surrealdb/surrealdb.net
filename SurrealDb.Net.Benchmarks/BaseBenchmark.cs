@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json.Serialization;
 using SurrealDb.Net.Benchmarks.Constants;
 
@@ -9,6 +9,7 @@ public class BaseBenchmark
     public static string Host { get; } = "127.0.0.1:8000";
     protected string HttpUrl { get; } = $"http://{Host}";
     protected string WsUrl { get; } = $"ws://{Host}/rpc";
+    protected string NamingPolicy { get; } = "SnakeCase";
 
     private readonly Func<JsonSerializerContext[]>? _funcJsonSerializerContexts;
 
@@ -37,6 +38,7 @@ public class BaseBenchmark
     {
         var client = new SurrealDbClient(
             url,
+            NamingPolicy,
             appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
         );
         InitializeSurrealDbClient(client, databaseInfo);
@@ -49,6 +51,7 @@ public class BaseBenchmark
     {
         var client = new SurrealDbClient(
             url,
+            NamingPolicy,
             appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
         );
         InitializeSurrealDbClient(client, databaseInfo);
@@ -65,6 +68,7 @@ public class BaseBenchmark
     {
         var client = new SurrealDbClient(
             url,
+            NamingPolicy,
             appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
         );
         InitializeSurrealDbClient(client, databaseInfo);
@@ -91,6 +95,7 @@ public class BaseBenchmark
     {
         var client = new SurrealDbClient(
             httpUrl,
+            NamingPolicy,
             appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
         );
         InitializeSurrealDbClient(client, databaseInfo);

@@ -27,6 +27,7 @@ public class ScenarioBench : BaseBenchmark
                 case 0:
                     _surrealdbHttpClient = new SurrealDbClient(
                         HttpUrl,
+                        NamingPolicy,
                         appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
                     );
                     InitializeSurrealDbClient(_surrealdbHttpClient, dbInfo);
@@ -43,6 +44,7 @@ public class ScenarioBench : BaseBenchmark
                 case 2:
                     _surrealdbWsTextClient = new SurrealDbClient(
                         WsUrl,
+                        NamingPolicy,
                         appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
                     );
                     InitializeSurrealDbClient(_surrealdbWsTextClient, dbInfo);

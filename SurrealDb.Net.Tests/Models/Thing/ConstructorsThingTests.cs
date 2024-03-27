@@ -1,4 +1,6 @@
-﻿namespace SurrealDb.Net.Tests.Models;
+﻿using System.Text.Json;
+
+namespace SurrealDb.Net.Tests.Models;
 
 public class ObjectTableIdWithDateTime
 {
@@ -239,7 +241,7 @@ public class ConstructorsThingTests
     [MemberData(nameof(CreateThingFromTableCases))]
     public void CreateThingFromTable(object table, string expected)
     {
-        var thing = Thing.From(table, "id");
+        var thing = Thing.From(table, "id", JsonNamingPolicy.SnakeCaseLower);
 
         thing.ToString().Should().Be(expected);
     }
@@ -279,7 +281,7 @@ public class ConstructorsThingTests
     [MemberData(nameof(CreateThingFromRecordIdCases))]
     public void CreateThingFromRecordId(object id, string expected)
     {
-        var thing = Thing.From("table", id);
+        var thing = Thing.From("table", id, JsonNamingPolicy.SnakeCaseLower);
 
         thing.ToString().Should().Be(expected);
     }
