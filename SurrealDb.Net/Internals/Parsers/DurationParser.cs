@@ -1,3 +1,38 @@
+﻿#if NET5_0_OR_GREATER
+using Pidgin;
+using SurrealDb.Net.Internals.Models;
+using static Pidgin.Parser;
+
+namespace SurrealDb.Net.Internals.Parsers;
+
+internal static class DurationParser
+{
+    public static readonly Parser<char, DurationUnit> DurationUnitParser = Try(
+            String("ns").Map(_ => DurationUnit.NanoSecond)
+        )
+        .Or(Try(String("µs").Or(String("us")).Map(_ => DurationUnit.MicroSecond)))
+        .Or(Try(String("ms").Map(_ => DurationUnit.MilliSecond)))
+        .Or(Try(String("s").Map(_ => DurationUnit.Second)))
+        .Or(Try(String("m").Map(_ => DurationUnit.Minute)))
+        .Or(Try(String("h").Map(_ => DurationUnit.Hour)))
+        .Or(Try(String("d").Map(_ => DurationUnit.Day)))
+        .Or(Try(String("w").Map(_ => DurationUnit.Week)))
+        .Or(Try(String("y").Map(_ => DurationUnit.Year)));
+
+    public static readonly Parser<char, (double value, DurationUnit unit)> DurationRaw =
+        from v in Real
+        from u in DurationUnitParser!
+        select (v, u);
+
+    public static readonly Parser<char, IEnumerable<(double value, DurationUnit unit)>> Parser =
+        DurationRaw.AtLeastOnce();
+
+    public static IEnumerable<(double value, DurationUnit unit)> Parse(string input)
+    {
+        return Parser.ParseOrThrow(input);
+    }
+}
+#else
 using Superpower;
 using Superpower.Parsers;
 using SurrealDb.Net.Internals.Models;
@@ -27,11 +62,17 @@ internal static class DurationParser
         .Try()
         .Or(Span.EqualTo("y").Value(DurationUnit.Year));
 
-    public static readonly TextParser<(decimal value, DurationUnit unit)> DurationRaw =
-        from v in Numerics.DecimalDecimal
+    public static readonly TextParser<(double value, DurationUnit unit)> DurationRaw =
+        from v in Numerics.DecimalDouble
         from u in DurationUnitParser!
         select (v, u);
 
-    public static readonly TextParser<(decimal value, DurationUnit unit)[]> Parser =
+    public static readonly TextParser<(double value, DurationUnit unit)[]> Parser =
         DurationRaw.AtLeastOnce();
+
+    public static (double value, DurationUnit unit)[] Parse(string input)
+    {
+        return Parser.Parse(input);
+    }
 }
+#endif
