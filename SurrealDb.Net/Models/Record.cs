@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using SurrealDb.Net.Internals.Json.Converters;
 
 namespace SurrealDb.Net.Models;
@@ -12,6 +12,7 @@ public abstract class Record
     /// The id of the record
     /// </summary>
     [JsonConverter(typeof(ThingConverter))]
+    [JsonPropertyName("id")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] // 💡 ignore null value to prevent failure on Create operation
     public Thing? Id { get; set; }
 }

@@ -12,11 +12,6 @@ namespace Microsoft.AspNetCore.Builder;
 
 public static class SurrealDbMinimalApisExtensions
 {
-    private static string ToSnakeCase(this string str)
-    {
-        return JsonNamingPolicy.SnakeCaseLower.ConvertName(str);
-    }
-
     /// <summary>
     /// Adds a complete list of <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP requests for the specified pattern.
     /// This method will add the following routes by default:
@@ -123,7 +118,6 @@ public static class SurrealDbMinimalApisExtensions
         where TDbClient : ISurrealDbClient
     {
         string entityName = typeof(TEntity).Name;
-        string tableName = entityName.ToSnakeCase();
 
         var group = endpoints.MapGroup(pattern);
 
@@ -139,11 +133,12 @@ public static class SurrealDbMinimalApisExtensions
                     "/",
                     (TDbClient surrealDbClient, CancellationToken cancellationToken) =>
                     {
+                        string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
                         return surrealDbClient.Select<TEntity>(tableName, cancellationToken);
                     }
                 )
                 .WithName($"GetAll{entityName}")
-                .WithSummary($"Get all records from {tableName} table.")
+                .WithSummary($"Get all {entityName} records.")
                 .Produces<IEnumerable<TEntity>>()
                 .WithOpenApi();
         }
@@ -159,6 +154,7 @@ public static class SurrealDbMinimalApisExtensions
                         CancellationToken cancellationToken
                     ) =>
                     {
+                        string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
                         var data = await surrealDbClient.Select<TEntity>(
                             (tableName, id),
                             cancellationToken
@@ -171,7 +167,7 @@ public static class SurrealDbMinimalApisExtensions
                     }
                 )
                 .WithName($"Get{entityName}")
-                .WithSummary($"Get a single record from {tableName} table.")
+                .WithSummary($"Get a single {entityName} record.")
                 .Produces<TEntity>()
                 .ProducesProblem(StatusCodes.Status404NotFound)
                 .WithOpenApi();
@@ -188,11 +184,12 @@ public static class SurrealDbMinimalApisExtensions
                         CancellationToken cancellationToken
                     ) =>
                     {
+                        string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
                         return surrealDbClient.Create(tableName, data, cancellationToken);
                     }
                 )
                 .WithName($"Create{entityName}")
-                .WithSummary($"Create a record in {tableName} table.")
+                .WithSummary($"Create a {entityName} record.")
                 .Produces<TEntity>()
                 .WithOpenApi();
         }
@@ -212,7 +209,7 @@ public static class SurrealDbMinimalApisExtensions
                     }
                 )
                 .WithName($"Update{entityName}")
-                .WithSummary($"Update a record in {tableName} table.")
+                .WithSummary($"Update a {entityName} record.")
                 .Produces<TEntity>()
                 .WithOpenApi();
         }
@@ -228,11 +225,12 @@ public static class SurrealDbMinimalApisExtensions
                         CancellationToken cancellationToken
                     ) =>
                     {
+                        string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
                         return surrealDbClient.PatchAll(tableName, patches, cancellationToken);
                     }
                 )
                 .WithName($"PatchAll{entityName}")
-                .WithSummary($"Patch all records in {tableName} table.")
+                .WithSummary($"Patch all {entityName} records.")
                 .Produces<IEnumerable<TEntity>>()
                 .WithOpenApi();
         }
@@ -249,11 +247,12 @@ public static class SurrealDbMinimalApisExtensions
                         CancellationToken cancellationToken
                     ) =>
                     {
+                        string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
                         return surrealDbClient.Patch((tableName, id), patches, cancellationToken);
                     }
                 )
                 .WithName($"Patch{entityName}")
-                .WithSummary($"Patch a single record in {tableName} table.")
+                .WithSummary($"Patch a single {entityName} record.")
                 .Produces<TEntity>()
                 .WithOpenApi();
         }
@@ -265,11 +264,12 @@ public static class SurrealDbMinimalApisExtensions
                     "/",
                     (TDbClient surrealDbClient, CancellationToken cancellationToken) =>
                     {
+                        string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
                         return surrealDbClient.Delete(tableName, cancellationToken);
                     }
                 )
                 .WithName($"DeleteAll{entityName}")
-                .WithSummary($"Delete the {tableName} table.")
+                .WithSummary($"Delete all {entityName} records.")
                 .Produces(StatusCodes.Status200OK)
                 .WithOpenApi();
         }
@@ -285,6 +285,7 @@ public static class SurrealDbMinimalApisExtensions
                         CancellationToken cancellationToken
                     ) =>
                     {
+                        string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
                         bool success = await surrealDbClient.Delete(
                             (tableName, id),
                             cancellationToken
@@ -297,12 +298,50 @@ public static class SurrealDbMinimalApisExtensions
                     }
                 )
                 .WithName($"Delete{entityName}")
-                .WithSummary($"Delete a record in {tableName} table.")
+                .WithSummary($"Delete a {entityName} record.")
                 .Produces(StatusCodes.Status200OK)
                 .ProducesProblem(StatusCodes.Status404NotFound)
                 .WithOpenApi();
         }
 
         return endpoints;
+    }
+
+    private static string GetDefaultTableName(string entityName, string? namingPolicy)
+    {
+        return (namingPolicy?.ToLowerInvariant()) switch
+        {
+            "camelcase" => entityName.ToCamelCase(),
+            "snakecase" or "snakecaselower" => entityName.ToSnakeCaseLower(),
+            "snakecaseupper" => entityName.ToSnakeCaseUpper(),
+            "kebabcase" or "kebabcaselower" => entityName.ToKebabCaseLower(),
+            "kebabcaseupper" => entityName.ToKebabCaseUpper(),
+            _ => entityName
+        };
+    }
+
+    private static string ToCamelCase(this string str)
+    {
+        return JsonNamingPolicy.CamelCase.ConvertName(str);
+    }
+
+    private static string ToSnakeCaseLower(this string str)
+    {
+        return JsonNamingPolicy.SnakeCaseLower.ConvertName(str);
+    }
+
+    private static string ToSnakeCaseUpper(this string str)
+    {
+        return JsonNamingPolicy.SnakeCaseUpper.ConvertName(str);
+    }
+
+    private static string ToKebabCaseLower(this string str)
+    {
+        return JsonNamingPolicy.KebabCaseLower.ConvertName(str);
+    }
+
+    private static string ToKebabCaseUpper(this string str)
+    {
+        return JsonNamingPolicy.KebabCaseUpper.ConvertName(str);
     }
 }

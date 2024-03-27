@@ -36,7 +36,11 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
     {
         var services = new ServiceCollection();
 
-        var options = SurrealDbOptions.Create().WithEndpoint(endpoint).Build();
+        var options = SurrealDbOptions
+            .Create()
+            .WithEndpoint(endpoint)
+            .WithNamingPolicy("SnakeCase")
+            .Build();
 
         services.AddSurreal(
             options,
@@ -64,10 +68,7 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
     {
         if (_databaseInfo is not null)
         {
-            using var client = new SurrealDbClient(
-                "http://127.0.0.1:8000",
-                _serviceProvider!.GetRequiredService<IHttpClientFactory>()
-            );
+            using var client = new SurrealDbClient("ws://127.0.0.1:8000/rpc", "SnakeCase");
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(_databaseInfo.Namespace, _databaseInfo.Database);
 
