@@ -21,13 +21,13 @@ internal class Pinger : IDisposable
     public void Start()
     {
 #if NET5_0_OR_GREATER
-        if (_timerTask is not null)
+        if (_timerTask is null)
         {
             _cancellationTokenSource = new();
             _timerTask = ExecuteAsync();
         }
 #else
-        if (_timer != null)
+        if (_timer is null)
         {
             _timer = new(Execute, null, TimeSpan.Zero, _timerInterval);
         }
@@ -37,9 +37,14 @@ internal class Pinger : IDisposable
     public void Dispose()
     {
 #if NET5_0_OR_GREATER
-        _timerTask?.Dispose();
-        _cancellationTokenSource?.Cancel();
-        _cancellationTokenSource?.Dispose();
+        if (_cancellationTokenSource is not null)
+        {
+            if (!_cancellationTokenSource.IsCancellationRequested)
+            {
+                _cancellationTokenSource?.Cancel();
+            }
+            _cancellationTokenSource?.Dispose();
+        }
 #endif
         _timer?.Dispose();
     }
