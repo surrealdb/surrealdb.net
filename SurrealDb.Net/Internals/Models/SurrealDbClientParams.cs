@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace SurrealDb.Net.Internals.Models;
 
@@ -10,10 +10,12 @@ internal class SurrealDbClientParams
     public string? Username { get; }
     public string? Password { get; }
     public string? Token { get; }
+    public string? NamingPolicy { get; }
 
-    public SurrealDbClientParams(string endpoint)
+    public SurrealDbClientParams(string endpoint, string? namingPolicy = null)
     {
         Endpoint = endpoint;
+        NamingPolicy = namingPolicy;
     }
 
     public SurrealDbClientParams(SurrealDbOptions configuration)
@@ -24,5 +26,6 @@ internal class SurrealDbClientParams
         Username = configuration.Username;
         Password = configuration.Password;
         Token = configuration.Token;
+        NamingPolicy = configuration.NamingPolicy;
     }
 }

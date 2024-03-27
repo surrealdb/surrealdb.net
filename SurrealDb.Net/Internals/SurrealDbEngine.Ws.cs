@@ -32,7 +32,6 @@ namespace SurrealDb.Net.Internals;
     NumberHandling = JsonNumberHandling.AllowReadingFromString
         | JsonNumberHandling.AllowNamedFloatingPointLiterals,
     PropertyNameCaseInsensitive = true,
-    PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower,
     ReadCommentHandling = JsonCommentHandling.Skip
 )]
 [JsonSerializable(typeof(ISurrealDbWsResponse))]
@@ -56,6 +55,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     private static readonly RecyclableMemoryStreamManager _memoryStreamManager = new();
 
     private readonly string _id;
+    private readonly SurrealDbClientParams _parameters;
     private readonly Action<JsonSerializerOptions>? _configureJsonSerializerOptions;
     private readonly Func<JsonSerializerContext[]>? _prependJsonSerializerContexts;
     private readonly Func<JsonSerializerContext[]>? _appendJsonSerializerContexts;
@@ -71,7 +71,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     private bool _isInitialized;
 
     public SurrealDbWsEngine(
-        Uri uri,
+        SurrealDbClientParams parameters,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts,
         Func<JsonSerializerContext[]>? appendJsonSerializerContexts
@@ -86,10 +86,11 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         } while (!_wsEngines.TryAdd(id, this));
 
         _id = id;
+        _parameters = parameters;
         _configureJsonSerializerOptions = configureJsonSerializerOptions;
         _prependJsonSerializerContexts = prependJsonSerializerContexts;
         _appendJsonSerializerContexts = appendJsonSerializerContexts;
-        _wsClient = new WebsocketClient(uri)
+        _wsClient = new WebsocketClient(new Uri(parameters.Endpoint!))
         {
             IsTextMessageConversionEnabled = false,
             IsStreamDisposedAutomatically = false
@@ -840,6 +841,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 #if NET8_0_OR_GREATER
             SurrealDbWsJsonSerializerContext.Default,
 #endif
+            _parameters.NamingPolicy,
             _configureJsonSerializerOptions,
             _prependJsonSerializerContexts,
             _appendJsonSerializerContexts,

@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.Json;
 using SurrealDb.Net.Internals.Json;
 using SystemTextJsonPatch;
 
@@ -34,7 +35,9 @@ public class PatchTests
 
             var jsonPatchDocument = new JsonPatchDocument<Post>
             {
-                Options = SurrealDbSerializerOptions.Default
+                Options = SurrealDbSerializerOptions.GetDefaultSerializerFromPolicy(
+                    JsonNamingPolicy.SnakeCaseLower
+                )
             };
             jsonPatchDocument.Replace(x => x.Content, "[Edit] This is my first article");
 

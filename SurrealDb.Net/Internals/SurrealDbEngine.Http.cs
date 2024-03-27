@@ -30,7 +30,6 @@ namespace SurrealDb.Net.Internals;
     NumberHandling = JsonNumberHandling.AllowReadingFromString
         | JsonNumberHandling.AllowNamedFloatingPointLiterals,
     PropertyNameCaseInsensitive = true,
-    PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower,
     ReadCommentHandling = JsonCommentHandling.Skip
 )]
 [JsonSerializable(typeof(ISurrealDbResult))]
@@ -46,6 +45,7 @@ internal partial class SurrealDbHttpJsonSerializerContext : JsonSerializerContex
 internal class SurrealDbHttpEngine : ISurrealDbEngine
 {
     private readonly Uri _uri;
+    private readonly SurrealDbClientParams _parameters;
     private readonly IHttpClientFactory? _httpClientFactory;
     private readonly Action<JsonSerializerOptions>? _configureJsonSerializerOptions;
     private readonly Func<JsonSerializerContext[]>? _prependJsonSerializerContexts;
@@ -55,14 +55,15 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     private readonly SurrealDbHttpEngineConfig _config = new();
 
     public SurrealDbHttpEngine(
-        Uri uri,
+        SurrealDbClientParams parameters,
         IHttpClientFactory? httpClientFactory,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts,
         Func<JsonSerializerContext[]>? appendJsonSerializerContexts
     )
     {
-        _uri = uri;
+        _uri = new Uri(parameters.Endpoint!);
+        _parameters = parameters;
         _httpClientFactory = httpClientFactory;
         _configureJsonSerializerOptions = configureJsonSerializerOptions;
         _prependJsonSerializerContexts = prependJsonSerializerContexts;
@@ -715,6 +716,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 #if NET8_0_OR_GREATER
             SurrealDbHttpJsonSerializerContext.Default,
 #endif
+            _parameters.NamingPolicy,
             _configureJsonSerializerOptions,
             _prependJsonSerializerContexts,
             _appendJsonSerializerContexts,

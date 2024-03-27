@@ -63,4 +63,10 @@ public class SurrealDbMinimalApisOptions
     /// A set of tags to be used to document the generated endpoints using OpenAPI.
     /// </summary>
     public string[]? Tags { get; set; }
+
+    /// <summary>
+    /// The name of the SurrealDB table to be used in the generated endpoints.
+    /// Defaults to the type name.
+    /// </summary>
+    public string? TableName { get; set; }
 }

@@ -1,5 +1,4 @@
-using Superpower;
-using SurrealDb.Net.Internals.Constants;
+﻿using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Parsers;
 
 namespace SurrealDb.Net.Models;
@@ -19,7 +18,7 @@ public readonly partial struct Duration
     {
         _value = value;
         _unitValues = DurationParser
-            .Parser.Parse(value)
+            .Parse(value)
             .Where(kv => kv.value != 0)
             .ToDictionary(kv => kv.unit, kv => (int)kv.value);
     }
