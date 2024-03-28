@@ -11,6 +11,19 @@ public class ParserBenchmark
     [Params("0ns", "5y4w3h115ms4ns")]
     public string Param = string.Empty;
 
+    private (long? Seconds, int? Nanos) _paramAsArray = (null, null);
+
+    [GlobalSetup]
+    public void GlobalSetup()
+    {
+        _paramAsArray = Param switch
+        {
+            "0ns" => (null, null),
+            "5y4w3h115ms4ns" => (160_110_000, 115_000_004),
+            _ => throw new ArgumentOutOfRangeException(nameof(Param)),
+        };
+    }
+
     [Benchmark]
     public Dictionary<DurationUnit, int> Superpower()
     {
@@ -25,5 +38,11 @@ public class ParserBenchmark
         return PidginDurationParser
             .Parser.ParseOrThrow(Param)
             .ToDictionary(kv => kv.unit, kv => kv.value);
+    }
+
+    [Benchmark]
+    public Dictionary<DurationUnit, int> FromArray()
+    {
+        return FromArrayDurationParser.Parse(_paramAsArray.Seconds, _paramAsArray.Nanos);
     }
 }
