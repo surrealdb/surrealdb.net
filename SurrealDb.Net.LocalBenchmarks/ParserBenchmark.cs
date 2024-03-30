@@ -24,7 +24,7 @@ public class ParserBenchmark
         };
     }
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public Dictionary<DurationUnit, int> Superpower()
     {
         return SuperpowerDurationParser
@@ -38,6 +38,12 @@ public class ParserBenchmark
         return PidginDurationParser
             .Parser.ParseOrThrow(Param)
             .ToDictionary(kv => kv.unit, kv => kv.value);
+    }
+
+    [Benchmark]
+    public Dictionary<DurationUnit, int> FromSpan()
+    {
+        return FromSpanDurationParser.Parse(Param);
     }
 
     [Benchmark]
