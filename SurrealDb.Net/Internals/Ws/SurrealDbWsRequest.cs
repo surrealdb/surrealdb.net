@@ -16,5 +16,6 @@ internal class SurrealDbWsRequest
     [JsonPropertyName("params")]
     [CborProperty("params")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<object?>? Parameters { get; set; }
+    [CborIgnoreIfDefault]
+    public object?[]? Parameters { get; set; }
 }
