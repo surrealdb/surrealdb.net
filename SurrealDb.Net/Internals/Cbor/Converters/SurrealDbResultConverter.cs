@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Text;
 using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
@@ -31,53 +32,79 @@ internal class SurrealDbResultConverter : CborConverterBase<ISurrealDbResult>
         string? details = null;
         string? description = null;
         string? information = null;
-        int? code = null;
-        ReadOnlyMemory<byte> result = default;
+        short? code = null;
+        ReadOnlyMemory<byte>? result = null;
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
-            var key = reader.ReadString();
+            ReadOnlySpan<byte> key = reader.ReadRawString();
 
-            switch (key)
+            if (key.SequenceEqual("id"u8))
             {
-                case SurrealDbResultConstants.IdPropertyName:
-                    id = reader.ReadString();
-                    break;
-                case SurrealDbResultConstants.StatusPropertyName:
-                    status = reader.ReadString();
-                    break;
-                case SurrealDbResultConstants.ErrorDetailsPropertyName:
-                    errorDetails = reader.ReadString();
-                    break;
-                case SurrealDbResultConstants.TimePropertyName:
-                    timeString = reader.ReadString();
-                    break;
-                case SurrealDbResultConstants.DetailsPropertyName:
-                    details = reader.ReadString();
-                    break;
-                case SurrealDbResultConstants.DescriptionPropertyName:
-                    description = reader.ReadString();
-                    break;
-                case SurrealDbResultConstants.InformationPropertyName:
-                    information = reader.ReadString();
-                    break;
-                case SurrealDbResultConstants.ResultPropertyName:
-                    result = reader.ReadDataItemAsMemory();
-                    break;
-                default:
-                    throw new CborException(
-                        $"{key} is not a valid property of {nameof(ISurrealDbResult)}."
-                    );
+                id = reader.ReadString();
+                continue;
             }
+
+            if (key.SequenceEqual("status"u8))
+            {
+                status = reader.ReadString();
+                continue;
+            }
+
+            if (key.SequenceEqual("errorDetails"u8))
+            {
+                errorDetails = reader.ReadString();
+                continue;
+            }
+
+            if (key.SequenceEqual("time"u8))
+            {
+                timeString = reader.ReadString();
+                continue;
+            }
+
+            if (key.SequenceEqual("detail"u8))
+            {
+                details = reader.ReadString();
+                continue;
+            }
+
+            if (key.SequenceEqual("description"u8))
+            {
+                description = reader.ReadString();
+                continue;
+            }
+
+            if (key.SequenceEqual("information"u8))
+            {
+                information = reader.ReadString();
+                continue;
+            }
+
+            if (key.SequenceEqual("result"u8))
+            {
+                result = reader.ReadDataItemAsMemory();
+                continue;
+            }
+
+            if (key.SequenceEqual("code"u8))
+            {
+                code = reader.ReadInt16();
+                continue;
+            }
+
+            throw new CborException(
+                $"{Encoding.Unicode.GetString(key)} is not a valid property of {nameof(ISurrealDbResult)}."
+            );
         }
 
         if (status is not null)
         {
             var time = timeString is not null ? TimeSpanParser.Parse(timeString) : TimeSpan.Zero;
 
-            if (status == SurrealDbResultConstants.OkStatus && !result.IsEmpty)
+            if (status == SurrealDbResultConstants.OkStatus && result.HasValue)
             {
-                return new SurrealDbOkResult(time, status, result, _options);
+                return new SurrealDbOkResult(time, status, result.Value, _options);
             }
 
             if (status is not null)

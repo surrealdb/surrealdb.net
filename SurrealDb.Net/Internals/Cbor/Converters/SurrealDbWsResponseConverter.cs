@@ -1,7 +1,7 @@
-﻿using Dahomey.Cbor;
+﻿using System.Text;
+using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
-using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Ws;
 
@@ -28,35 +28,40 @@ internal class SurrealDbWsResponseConverter : CborConverterBase<ISurrealDbWsResp
 
         string? rootId = null;
         SurrealDbWsErrorResponseContent? errorContent = null;
-        ReadOnlyMemory<byte> result = default;
+        ReadOnlyMemory<byte>? result = null;
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
-            var key = reader.ReadString();
+            ReadOnlySpan<byte> key = reader.ReadRawString();
 
-            switch (key)
+            if (key.SequenceEqual("id"u8))
             {
-                case SurrealDbWsResponseConstants.IdPropertyName:
-                    rootId = reader.ReadString();
-                    break;
-                case SurrealDbWsResponseConstants.ErrorPropertyName:
-                    errorContent = _surrealDbWsErrorResponseContentConverter.Read(ref reader);
-                    break;
-                case SurrealDbWsResponseConstants.ResultPropertyName:
-                    result = reader.ReadDataItemAsMemory();
-                    break;
-                default:
-                    throw new CborException(
-                        $"{key} is not a valid property of {nameof(ISurrealDbWsResponse)}."
-                    );
+                rootId = reader.ReadString();
+                continue;
             }
+
+            if (key.SequenceEqual("error"u8))
+            {
+                errorContent = _surrealDbWsErrorResponseContentConverter.Read(ref reader);
+                continue;
+            }
+
+            if (key.SequenceEqual("result"u8))
+            {
+                result = reader.ReadDataItemAsMemory();
+                continue;
+            }
+
+            throw new CborException(
+                $"{Encoding.Unicode.GetString(key)} is not a valid property of {nameof(ISurrealDbWsResponse)}."
+            );
         }
 
         if (rootId is not null)
         {
-            if (!result.IsEmpty)
+            if (result.HasValue)
             {
-                return new SurrealDbWsOkResponse(rootId, result, _options);
+                return new SurrealDbWsOkResponse(rootId, result.Value, _options);
             }
 
             if (errorContent is not null)
@@ -67,10 +72,10 @@ internal class SurrealDbWsResponseConverter : CborConverterBase<ISurrealDbWsResp
             return new SurrealDbWsUnknownResponse();
         }
 
-        if (!result.IsEmpty)
+        if (result.HasValue)
         {
             var content = CborSerializer.Deserialize<SurrealDbWsLiveResponseContent>(
-                result.Span,
+                result.Value.Span,
                 _options
             );
             return new SurrealDbWsLiveResponse(content);

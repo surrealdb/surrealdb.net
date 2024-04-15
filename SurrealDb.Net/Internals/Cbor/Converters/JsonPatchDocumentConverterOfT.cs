@@ -1,7 +1,6 @@
 ﻿using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
-using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Json;
 using SystemTextJsonPatch;
@@ -45,38 +44,45 @@ internal class JsonPatchDocumentConverter<T> : CborConverterBase<JsonPatchDocume
 
             while (reader.MoveNextMapItem(ref remainingItemCount))
             {
-                var key = reader.ReadString();
+                ReadOnlySpan<byte> key = reader.ReadRawString();
 
-                switch (key)
+                if (key.SequenceEqual("op"u8))
                 {
-                    case JsonPatchDocumentConstants.OperationPropertyName:
-                        op = reader.ReadString();
-                        break;
-                    case JsonPatchDocumentConstants.PathPropertyName:
-                        path = reader.ReadString();
-                        break;
-                    case JsonPatchDocumentConstants.FromPropertyName:
-                        from = reader.ReadString();
-                        break;
-                    case JsonPatchDocumentConstants.ValuePropertyName:
-                        // TODO : Handle Semantic Tag
-                        var itemType = reader.GetCurrentDataItemType();
-
-                        value = itemType switch
-                        {
-                            CborDataItemType.Null => reader.ReadNull(),
-                            CborDataItemType.Boolean => reader.ReadBoolean(),
-                            CborDataItemType.String => reader.ReadString(),
-                            CborDataItemType.Signed
-                            or CborDataItemType.Unsigned
-                                => reader.ReadDecimal(),
-                            _ => reader.ReadDataItemAsMemory()
-                        };
-                        break;
-                    default:
-                        reader.SkipDataItem();
-                        break;
+                    op = reader.ReadString();
+                    continue;
                 }
+
+                if (key.SequenceEqual("path"u8))
+                {
+                    path = reader.ReadString();
+                    continue;
+                }
+
+                if (key.SequenceEqual("from"u8))
+                {
+                    from = reader.ReadString();
+                    continue;
+                }
+
+                if (key.SequenceEqual("value"u8))
+                {
+                    // TODO : Handle Semantic Tag
+                    var itemType = reader.GetCurrentDataItemType();
+
+                    value = itemType switch
+                    {
+                        CborDataItemType.Null => reader.ReadNull(),
+                        CborDataItemType.Boolean => reader.ReadBoolean(),
+                        CborDataItemType.String => reader.ReadString(),
+                        CborDataItemType.Signed
+                        or CborDataItemType.Unsigned
+                            => reader.ReadDecimal(),
+                        _ => reader.ReadDataItemAsMemory()
+                    };
+                    continue;
+                }
+
+                reader.SkipDataItem();
             }
 
             if (op is null)
@@ -112,10 +118,10 @@ internal class JsonPatchDocumentConverter<T> : CborConverterBase<JsonPatchDocume
 
             writer.WriteBeginMap(jsonPatchPropertiesCount);
 
-            writer.WriteString("op");
+            writer.WriteString("op"u8);
             writer.WriteString(operation.Op!);
 
-            writer.WriteString("path");
+            writer.WriteString("path"u8);
             if (operation.Path is null)
             {
                 writer.WriteNull();
@@ -125,7 +131,7 @@ internal class JsonPatchDocumentConverter<T> : CborConverterBase<JsonPatchDocume
                 writer.WriteString(operation.Path);
             }
 
-            writer.WriteString("from");
+            writer.WriteString("from"u8);
             if (operation.From is null)
             {
                 writer.WriteNull();
@@ -135,7 +141,7 @@ internal class JsonPatchDocumentConverter<T> : CborConverterBase<JsonPatchDocume
                 writer.WriteString(operation.From);
             }
 
-            writer.WriteString("value");
+            writer.WriteString("value"u8);
             if (operation.Value is null)
             {
                 writer.WriteNull();

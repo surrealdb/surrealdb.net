@@ -1,7 +1,7 @@
-﻿using Dahomey.Cbor;
+﻿using System.Text;
+using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
-using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Ws;
 
@@ -26,35 +26,40 @@ internal class SurrealDbWsLiveResponseContentConverter
 
         int remainingItemCount = reader.ReadSize();
 
-        Guid? id = default;
+        Guid? id = null;
         string? action = null;
-        ReadOnlyMemory<byte> result = default;
+        ReadOnlyMemory<byte>? result = null;
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
-            var key = reader.ReadString();
+            ReadOnlySpan<byte> key = reader.ReadRawString();
 
-            switch (key)
+            if (key.SequenceEqual("id"u8))
             {
-                case SurrealDbWsResponseConstants.IdPropertyName:
-                    id = _guidConverter.Read(ref reader);
-                    break;
-                case SurrealDbWsResponseConstants.ActionPropertyName:
-                    action = reader.ReadString();
-                    break;
-                case SurrealDbWsResponseConstants.ResultPropertyName:
-                    result = reader.ReadDataItemAsMemory();
-                    break;
-                default:
-                    throw new CborException(
-                        $"{key} is not a valid property of {nameof(SurrealDbWsLiveResponseContent)}."
-                    );
+                id = _guidConverter.Read(ref reader);
+                continue;
             }
+
+            if (key.SequenceEqual("action"u8))
+            {
+                action = reader.ReadString();
+                continue;
+            }
+
+            if (key.SequenceEqual("result"u8))
+            {
+                result = reader.ReadDataItemAsMemory();
+                continue;
+            }
+
+            throw new CborException(
+                $"{Encoding.Unicode.GetString(key)} is not a valid property of {nameof(SurrealDbWsLiveResponseContent)}."
+            );
         }
 
-        if (!result.IsEmpty && id.HasValue && action is not null)
+        if (result.HasValue && id.HasValue && action is not null)
         {
-            return new SurrealDbWsLiveResponseContent(id.Value, action!, result, _options);
+            return new SurrealDbWsLiveResponseContent(id.Value, action!, result.Value, _options);
         }
 
         throw new CborException("Expected a valid response content");

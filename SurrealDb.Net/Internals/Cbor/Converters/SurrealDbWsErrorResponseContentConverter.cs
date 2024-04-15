@@ -1,7 +1,7 @@
-﻿using Dahomey.Cbor;
+﻿using System.Text;
+using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
-using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Ws;
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
@@ -20,21 +20,23 @@ internal class SurrealDbWsErrorResponseContentConverter
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
-            var key = reader.ReadString();
+            ReadOnlySpan<byte> key = reader.ReadRawString();
 
-            switch (key)
+            if (key.SequenceEqual("code"u8))
             {
-                case SurrealDbWsResponseConstants.CodePropertyName:
-                    code = reader.ReadInt64();
-                    break;
-                case SurrealDbWsResponseConstants.MessagePropertyName:
-                    message = reader.ReadString();
-                    break;
-                default:
-                    throw new CborException(
-                        $"{key} is not a valid property of {nameof(SurrealDbWsErrorResponseContent)}."
-                    );
+                code = reader.ReadInt64();
+                continue;
             }
+
+            if (key.SequenceEqual("message"u8))
+            {
+                message = reader.ReadString();
+                continue;
+            }
+
+            throw new CborException(
+                $"{Encoding.Unicode.GetString(key)} is not a valid property of {nameof(SurrealDbWsErrorResponseContent)}."
+            );
         }
 
         return new SurrealDbWsErrorResponseContent { Code = code, Message = message! };
