@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Text.Json;
 using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals.Constants;
@@ -63,17 +64,19 @@ public class CreateBench : BaseBenchmark
                     await _surrealdbWsTextClient.Connect();
                     break;
                 case 3:
-                    _surrealdbWsBinaryClient = new SurrealDbClient(
-                        SurrealDbOptions
-                            .Create()
-                            .WithEndpoint(WsUrl)
-                            .WithNamingPolicy(NamingPolicy)
-                            .WithSerialization(SerializationConstants.CBOR)
-                            .Build(),
-                        appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
-                    );
-                    InitializeSurrealDbClient(_surrealdbWsBinaryClient, dbInfo);
-                    await _surrealdbWsBinaryClient.Connect();
+                    if (JsonSerializer.IsReflectionEnabledByDefault)
+                    {
+                        _surrealdbWsBinaryClient = new SurrealDbClient(
+                            SurrealDbOptions
+                                .Create()
+                                .WithEndpoint(WsUrl)
+                                .WithNamingPolicy(NamingPolicy)
+                                .WithSerialization(SerializationConstants.CBOR)
+                                .Build()
+                        );
+                        InitializeSurrealDbClient(_surrealdbWsBinaryClient, dbInfo);
+                        await _surrealdbWsBinaryClient.Connect();
+                    }
                     break;
             }
         }
