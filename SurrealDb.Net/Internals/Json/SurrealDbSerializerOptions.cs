@@ -97,6 +97,7 @@ internal static class SurrealDbSerializerOptions
         var dbResponseConverters = new List<JsonConverter>
         {
             new SurrealDbResultConverter(),
+            new SurrealDbHttpResponseConverter(),
             new SurrealDbWsResponseConverter(),
         };
 

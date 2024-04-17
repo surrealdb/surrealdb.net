@@ -1,14 +1,13 @@
 ﻿using System.Collections.Immutable;
-using System.Dynamic;
-using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using System.Web;
+using Dahomey.Cbor;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Internals.Auth;
+using SurrealDb.Net.Internals.Cbor;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Helpers;
@@ -32,6 +31,8 @@ namespace SurrealDb.Net.Internals;
     PropertyNameCaseInsensitive = true,
     ReadCommentHandling = JsonCommentHandling.Skip
 )]
+[JsonSerializable(typeof(ISurrealDbHttpResponse))]
+[JsonSerializable(typeof(SurrealDbHttpRequest))]
 [JsonSerializable(typeof(ISurrealDbResult))]
 [JsonSerializable(typeof(IReadOnlyDictionary<string, object>))]
 [JsonSerializable(typeof(RootAuth))]
@@ -44,6 +45,9 @@ internal partial class SurrealDbHttpJsonSerializerContext : JsonSerializerContex
 
 internal class SurrealDbHttpEngine : ISurrealDbEngine
 {
+    private const string RPC_ENDPOINT = "/rpc";
+
+    private readonly bool _useCbor = false;
     private readonly Uri _uri;
     private readonly SurrealDbClientParams _parameters;
     private readonly IHttpClientFactory? _httpClientFactory;
@@ -72,16 +76,13 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public async Task Authenticate(Jwt jwt, CancellationToken cancellationToken)
     {
-        using var wrapper = CreateHttpClientWrapper(new BearerAuth(jwt.Token));
-        using var body = CreateBodyContent("RETURN TRUE");
+        var request = new SurrealDbHttpRequest
+        {
+            Method = "authenticate",
+            Parameters = [jwt.Token]
+        };
 
-        using var response = await wrapper
-            .Instance.PostAsync("/sql", body, cancellationToken)
-            .ConfigureAwait(false);
-
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
-        EnsuresFirstResultOk(dbResponse);
+        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
 
         _config.SetBearerAuth(jwt.Token);
     }
@@ -106,14 +107,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public async Task Connect(CancellationToken cancellationToken)
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent("RETURN TRUE");
-
-        using var response = await wrapper
-            .Instance.PostAsync("/sql", body, cancellationToken)
-            .ConfigureAwait(false);
-
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
+        var dbResponse = await RawQuery(
+                "RETURN TRUE",
+                ImmutableDictionary<string, object?>.Empty,
+                cancellationToken
+            )
             .ConfigureAwait(false);
         EnsuresFirstResultOk(dbResponse);
     }
@@ -121,69 +119,50 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<T> Create<T>(T data, CancellationToken cancellationToken)
         where T : Record
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(data);
-
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        using var response = await wrapper
-            .Instance.PostAsync(
-                $"/key/{data.Id.Table}/{data.Id.UnescapedId}",
-                body,
-                cancellationToken
-            )
+        object?[] @params = _useCbor ? [data.Id, data] : [data.Id.ToString(), data];
+        var request = new SurrealDbHttpRequest { Method = "create", Parameters = @params };
+
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
 
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
-
-        var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.GetValues<T>().First();
+        return dbResponse.GetValue<T>()!;
     }
 
     public async Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken)
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = data is null ? new StringContent("{}") : CreateBodyContent(data);
+        var request = new SurrealDbHttpRequest { Method = "create", Parameters = [table, data] };
 
-        using var response = await wrapper
-            .Instance.PostAsync($"/key/{table}", body, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
 
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
-
-        var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.GetValues<T>().First();
+        return dbResponse.DeserializeEnumerable<T>().First();
     }
 
     public async Task Delete(string table, CancellationToken cancellationToken)
     {
-        using var wrapper = CreateHttpClientWrapper();
+        var request = new SurrealDbHttpRequest { Method = "delete", Parameters = [table] };
 
-        using var response = await wrapper
-            .Instance.DeleteAsync($"/key/{table}", cancellationToken)
-            .ConfigureAwait(false);
-
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
-        EnsuresFirstResultOk(dbResponse);
+        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<bool> Delete(Thing thing, CancellationToken cancellationToken)
     {
-        using var wrapper = CreateHttpClientWrapper();
+        object?[] @params = _useCbor ? [thing] : [thing.ToString()];
+        var request = new SurrealDbHttpRequest { Method = "delete", Parameters = @params };
 
-        using var response = await wrapper
-            .Instance.DeleteAsync($"/key/{thing.Table}/{thing.UnescapedId}", cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
 
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
+        if (dbResponse.Result.HasValue)
+        {
+            var valueKind = dbResponse.Result.Value.ValueKind;
+            return valueKind != JsonValueKind.Null && valueKind != JsonValueKind.Undefined;
+        }
 
-        var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.GetValues<object?>().Any(r => r is not null);
+        return !dbResponse.ExpectNone() && !dbResponse.ExpectEmptyArray();
     }
 
     public void Dispose()
@@ -195,11 +174,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<bool> Health(CancellationToken cancellationToken)
     {
         using var wrapper = CreateHttpClientWrapper();
+        using var body = CreateBodyContent(new SurrealDbHttpRequest { Method = "ping" });
 
         try
         {
             using var response = await wrapper
-                .Instance.GetAsync("/health", cancellationToken)
+                .Instance.PostAsync(RPC_ENDPOINT, body, cancellationToken)
                 .ConfigureAwait(false);
 
             return response.IsSuccessStatusCode;
@@ -212,19 +192,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public async Task<T> Info<T>(CancellationToken cancellationToken)
     {
-        const string query = "SELECT * FROM $auth;";
+        var request = new SurrealDbHttpRequest { Method = "info" };
 
-        var dbResponse = await RawQuery(
-                query,
-                ImmutableDictionary<string, object?>.Empty,
-                cancellationToken
-            )
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
 
-        EnsuresFirstResultOk(dbResponse);
-
-        var results = dbResponse.GetValue<List<T>>(0)!;
-        return results.First();
+        return dbResponse.GetValue<T>()!;
     }
 
     public Task Invalidate(CancellationToken _)
@@ -279,25 +252,15 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where TMerge : Record
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(data);
-
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        using var response = await wrapper
-            .Instance.PatchAsync(
-                $"/key/{data.Id.Table}/{data.Id.UnescapedId}",
-                body,
-                cancellationToken
-            )
-            .ConfigureAwait(false);
+        object?[] @params = _useCbor ? [data.Id, data] : [data.Id.ToWsString(), data];
+        var request = new SurrealDbHttpRequest { Method = "merge", Parameters = @params };
 
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-
-        var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.GetValues<TOutput>().First();
+        return dbResponse.GetValue<TOutput>()!;
     }
 
     public async Task<T> Merge<T>(
@@ -306,18 +269,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(data);
+        object?[] @params = _useCbor ? [thing, data] : [thing.ToWsString(), data];
+        var request = new SurrealDbHttpRequest { Method = "merge", Parameters = @params };
 
-        using var response = await wrapper
-            .Instance.PatchAsync($"/key/{thing.Table}/{thing.UnescapedId}", body, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
-
-        var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.GetValues<T>().First();
+        return dbResponse.GetValue<T>()!;
     }
 
     public async Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
@@ -327,18 +284,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where TMerge : class
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(data);
+        var request = new SurrealDbHttpRequest { Method = "merge", Parameters = [table, data] };
 
-        using var response = await wrapper
-            .Instance.PatchAsync($"/key/{table}", body, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
-
-        var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.GetValues<TOutput>();
+        return dbResponse.DeserializeEnumerable<TOutput>();
     }
 
     public async Task<IEnumerable<T>> MergeAll<T>(
@@ -347,18 +297,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(data);
+        var request = new SurrealDbHttpRequest { Method = "merge", Parameters = [table, data] };
 
-        using var response = await wrapper
-            .Instance.PatchAsync($"/key/{table}", body, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
-
-        var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.GetValues<T>();
+        return dbResponse.DeserializeEnumerable<T>();
     }
 
     public async Task<T> Patch<T>(
@@ -368,20 +311,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where T : class
     {
-        var expandoObject = ConvertJsonPatchDocumentToObject(patches);
+        object?[] @params = _useCbor ? [thing, patches] : [thing.ToWsString(), patches];
+        var request = new SurrealDbHttpRequest { Method = "patch", Parameters = @params };
 
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(expandoObject);
-
-        using var response = await wrapper
-            .Instance.PatchAsync($"/key/{thing.Table}/{thing.UnescapedId}", body, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
-
-        var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.GetValues<T>().First();
+        return dbResponse.GetValue<T>()!;
     }
 
     public async Task<IEnumerable<T>> PatchAll<T>(
@@ -391,20 +326,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where T : class
     {
-        var expandoObject = ConvertJsonPatchDocumentToObject(patches);
+        var request = new SurrealDbHttpRequest { Method = "patch", Parameters = [table, patches] };
 
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(expandoObject);
-
-        using var response = await wrapper
-            .Instance.PatchAsync($"/key/{table}", body, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
-
-        var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.GetValues<T>();
+        return dbResponse.DeserializeEnumerable<T>();
     }
 
     public async Task<SurrealDbResponse> Query(
@@ -422,82 +348,50 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(query);
-
-        var queryString = HttpUtility.ParseQueryString(string.Empty);
-
-        var jsonSerializerOptions = GetJsonSerializerOptions();
+        var allParameters = new Dictionary<string, object?>(
+            _config.Parameters.Count + parameters.Count
+        );
 
         foreach (var (key, value) in _config.Parameters)
         {
-            queryString[key] = JsonSerializer.IsReflectionEnabledByDefault
-                ?
-#pragma warning disable IL2026, IL3050
-                JsonSerializer.Serialize(value, jsonSerializerOptions)
-#pragma warning restore IL2026, IL3050
-                : JsonSerializer.Serialize(
-                    value,
-                    GetJsonSerializerOptions().GetTypeInfo(typeof(object))
-                );
+            allParameters.Add(key, value);
         }
+
         foreach (var (key, value) in parameters)
         {
-            queryString[key] = JsonSerializer.IsReflectionEnabledByDefault
-                ?
-#pragma warning disable IL2026, IL3050
-                JsonSerializer.Serialize(value, jsonSerializerOptions)
-#pragma warning restore IL2026, IL3050
-                : JsonSerializer.Serialize(
-                    value,
-                    GetJsonSerializerOptions().GetTypeInfo(typeof(object))
-                );
+            allParameters.Add(key, value);
         }
 
-        var uriBuilder = new UriBuilder
+        var request = new SurrealDbHttpRequest
         {
-            Scheme = string.Empty,
-            Host = string.Empty,
-            Path = "/sql",
-            Query = queryString.ToString()
+            Method = "query",
+            Parameters = [query, allParameters]
         };
-        var requestUri = uriBuilder.ToString();
 
-        using var response = await wrapper
-            .Instance.PostAsync(requestUri, body, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
 
-        return await DeserializeDbResponseAsync(response, cancellationToken).ConfigureAwait(false);
+        var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? [];
+        return new SurrealDbResponse(list);
     }
 
     public async Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken)
     {
-        using var wrapper = CreateHttpClientWrapper();
+        var request = new SurrealDbHttpRequest { Method = "select", Parameters = [table] };
 
-        using var response = await wrapper
-            .Instance.GetAsync($"/key/{table}", cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
-
-        var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.GetValues<T>();
+        return dbResponse.DeserializeEnumerable<T>();
     }
 
     public async Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken)
     {
-        using var wrapper = CreateHttpClientWrapper();
+        object?[] @params = _useCbor ? [thing] : [thing.ToWsString()];
+        var request = new SurrealDbHttpRequest { Method = "select", Parameters = @params };
 
-        using var response = await wrapper
-            .Instance.GetAsync($"/key/{thing.Table}/{thing.UnescapedId}", cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
-
-        var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.GetValues<T>().FirstOrDefault();
+        return dbResponse.GetValue<T?>();
     }
 
     public async Task Set(string key, object value, CancellationToken cancellationToken)
@@ -528,87 +422,65 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public async Task SignIn(RootAuth rootAuth, CancellationToken cancellationToken)
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(rootAuth);
+        var request = new SurrealDbHttpRequest { Method = "signin", Parameters = [rootAuth] };
 
-        using var response = await wrapper
-            .Instance.PostAsync("/signin", body, cancellationToken)
-            .ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
+        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
 
         _config.SetBasicAuth(rootAuth.Username, rootAuth.Password);
     }
 
     public async Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken)
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(nsAuth);
+        var request = new SurrealDbHttpRequest { Method = "signin", Parameters = [nsAuth] };
 
-        using var response = await wrapper
-            .Instance.PostAsync("/signin", body, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
+        var token = dbResponse.GetValue<string>();
 
-        var result = await DeserializeAuthResponse(response, cancellationToken)
-            .ConfigureAwait(false);
+        _config.SetBearerAuth(token!);
 
-        _config.SetBearerAuth(result.Token!);
-
-        return new Jwt { Token = result.Token! };
+        return new Jwt { Token = token! };
     }
 
     public async Task<Jwt> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken)
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(dbAuth);
+        var request = new SurrealDbHttpRequest { Method = "signin", Parameters = [dbAuth] };
 
-        using var response = await wrapper
-            .Instance.PostAsync("/signin", body, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
+        var token = dbResponse.GetValue<string>();
 
-        var result = await DeserializeAuthResponse(response, cancellationToken)
-            .ConfigureAwait(false);
+        _config.SetBearerAuth(token!);
 
-        _config.SetBearerAuth(result.Token!);
-
-        return new Jwt { Token = result.Token! };
+        return new Jwt { Token = token! };
     }
 
     public async Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken)
         where T : ScopeAuth
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(scopeAuth);
+        var request = new SurrealDbHttpRequest { Method = "signin", Parameters = [scopeAuth] };
 
-        using var response = await wrapper
-            .Instance.PostAsync("/signin", body, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
+        var token = dbResponse.GetValue<string>();
 
-        var result = await DeserializeAuthResponse(response, cancellationToken)
-            .ConfigureAwait(false);
+        _config.SetBearerAuth(token!);
 
-        _config.SetBearerAuth(result.Token!);
-
-        return new Jwt { Token = result.Token! };
+        return new Jwt { Token = token! };
     }
 
     public async Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken)
         where T : ScopeAuth
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(scopeAuth);
+        var request = new SurrealDbHttpRequest { Method = "signup", Parameters = [scopeAuth] };
 
-        using var response = await wrapper
-            .Instance.PostAsync("/signup", body, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
+        var token = dbResponse.GetValue<string>();
 
-        var result = await DeserializeAuthResponse(response, cancellationToken)
-            .ConfigureAwait(false);
+        _config.SetBearerAuth(token!);
 
-        return new Jwt { Token = result.Token! };
+        return new Jwt { Token = token! };
     }
 
     public SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id)
@@ -638,74 +510,42 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where T : class
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(data);
+        var request = new SurrealDbHttpRequest { Method = "update", Parameters = [table, data] };
 
-        using var response = await wrapper
-            .Instance.PutAsync($"/key/{table}", body, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
-
-        var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.GetValues<T>();
+        return dbResponse.DeserializeEnumerable<T>();
     }
 
     public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record
     {
-        using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(data);
-
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        using var response = await wrapper
-            .Instance.PutAsync(
-                $"/key/{data.Id.Table}/{data.Id.UnescapedId}",
-                body,
-                cancellationToken
-            )
-            .ConfigureAwait(false);
+        object?[] @params = _useCbor ? [data.Id, data] : [data.Id.ToWsString(), data];
+        var request = new SurrealDbHttpRequest { Method = "update", Parameters = @params };
 
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-
-        var okResult = EnsuresFirstResultOk(dbResponse);
-        return okResult.GetValues<T>().First();
+        return dbResponse.GetValue<T>()!;
     }
 
     public async Task Use(string ns, string db, CancellationToken cancellationToken)
     {
-        using var wrapper = CreateHttpClientWrapper(
-            null,
-            new UseConfiguration { Ns = ns, Db = db }
-        );
-        using var body = CreateBodyContent("RETURN TRUE");
-
-        using var response = await wrapper
-            .Instance.PostAsync("/sql", body, cancellationToken)
-            .ConfigureAwait(false);
-
-        var dbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
-        EnsuresFirstResultOk(dbResponse);
+        var request = new SurrealDbHttpRequest { Method = "use", Parameters = [ns, db] };
+        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
 
         _config.Use(ns, db);
     }
 
     public async Task<string> Version(CancellationToken cancellationToken)
     {
-        using var wrapper = CreateHttpClientWrapper();
-
-#if NET6_0_OR_GREATER
-        return await wrapper
-            .Instance.GetStringAsync("/version", cancellationToken)
+        var request = new SurrealDbHttpRequest { Method = "version" };
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-#else
-        return await wrapper.Instance.GetStringAsync("/version").ConfigureAwait(false);
-#endif
+
+        return dbResponse.GetValue<string>()!;
     }
 
     private CurrentJsonSerializerOptionsForAot? _currentJsonSerializerOptionsForAot;
@@ -730,6 +570,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         }
 
         return jsonSerializerOptions;
+    }
+
+    private CborOptions GetCborSerializerOptions()
+    {
+        return SurrealDbCborOptions.GetCborSerializerOptions(_parameters.NamingPolicy);
     }
 
     private HttpClientWrapper CreateHttpClientWrapper(
@@ -797,7 +642,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         client.DefaultRequestHeaders.Add(
             HttpConstants.ACCEPT_HEADER_NAME,
-            HttpConstants.ACCEPT_HEADER_VALUES
+            _useCbor ? ["application/cbor"] : ["application/json"]
         );
 
         var ns = useConfiguration is not null ? useConfiguration.Ns : _config.Ns;
@@ -865,12 +710,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return _singleHttpClient.IsValueCreated && client == _singleHttpClient.Value;
     }
 
-    private StringContent CreateBodyContent(string data)
+    private static StringContent CreateBodyContent(string data)
     {
-        return new StringContent(data, Encoding.UTF8, "application/json");
+        return new StringContentWithoutCharset(data, Encoding.UTF8, "application/json");
     }
 
-    private StringContent CreateBodyContent<T>(T data)
+    private HttpContent CreateBodyContent<T>(T data)
     {
         string bodyContent = JsonSerializer.IsReflectionEnabledByDefault
             ?
@@ -885,7 +730,22 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return CreateBodyContent(bodyContent);
     }
 
-    private async Task<SurrealDbResponse> DeserializeDbResponseAsync(
+    private async Task<SurrealDbHttpOkResponse> ExecuteRequestAsync(
+        SurrealDbHttpRequest request,
+        CancellationToken cancellationToken
+    )
+    {
+        using var wrapper = CreateHttpClientWrapper();
+        using var body = CreateBodyContent(request);
+
+        using var response = await wrapper
+            .Instance.PostAsync(RPC_ENDPOINT, body, cancellationToken)
+            .ConfigureAwait(false);
+
+        return await DeserializeDbResponseAsync(response, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<SurrealDbHttpOkResponse> DeserializeDbResponseAsync(
         HttpResponseMessage response,
         CancellationToken cancellationToken
     )
@@ -900,123 +760,50 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         var jsonSerializerOptions = GetJsonSerializerOptions();
 
-        if (!response.IsSuccessStatusCode)
-        {
 #if NET8_0_OR_GREATER
-            var taskResult = JsonSerializer.IsReflectionEnabledByDefault
-                ?
-#pragma warning disable IL2026, IL3050
-                JsonSerializer.DeserializeAsync<ISurrealDbResult>(
-                    stream,
-                    jsonSerializerOptions,
-                    cancellationToken
-                )
-#pragma warning restore IL2026, IL3050
-                : JsonSerializer.DeserializeAsync(
-                    stream,
-                    (
-                        jsonSerializerOptions.GetTypeInfo(typeof(ISurrealDbResult))
-                        as JsonTypeInfo<ISurrealDbResult>
-                    )!,
-                    cancellationToken
-                );
-
-            var result = await taskResult.ConfigureAwait(false);
-#else
-            var result = await JsonSerializer
-                .DeserializeAsync<ISurrealDbResult>(
-                    stream,
-                    jsonSerializerOptions,
-                    cancellationToken
-                )
-                .ConfigureAwait(false);
-#endif
-
-            return new SurrealDbResponse(result!);
-        }
-
-        var list = new List<ISurrealDbResult>();
-
-        var taskEnumerableResult = JsonSerializer.IsReflectionEnabledByDefault
+        var taskResult = JsonSerializer.IsReflectionEnabledByDefault
             ?
 #pragma warning disable IL2026, IL3050
-            JsonSerializer.DeserializeAsyncEnumerable<ISurrealDbResult>(
+            JsonSerializer.DeserializeAsync<ISurrealDbHttpResponse>(
                 stream,
                 jsonSerializerOptions,
-                cancellationToken
-            )
-#pragma warning restore IL2026, IL3050
-            : JsonSerializer.DeserializeAsyncEnumerable(
-                stream,
-                (
-                    jsonSerializerOptions.GetTypeInfo(typeof(ISurrealDbResult))
-                    as JsonTypeInfo<ISurrealDbResult>
-                )!,
-                cancellationToken
-            );
-
-        await foreach (
-            var result in taskEnumerableResult
-                .WithCancellation(cancellationToken)
-                .ConfigureAwait(false)
-        )
-        {
-            if (result is not null)
-                list.Add(result);
-        }
-
-        return new SurrealDbResponse(list);
-    }
-
-    private async Task<AuthResponse> DeserializeAuthResponse(
-        HttpResponseMessage response,
-        CancellationToken cancellationToken
-    )
-    {
-#if NET6_0_OR_GREATER
-        using var stream = await response
-            .Content.ReadAsStreamAsync(cancellationToken)
-            .ConfigureAwait(false);
-#else
-        using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-#endif
-
-        var taskAuth = JsonSerializer.IsReflectionEnabledByDefault
-            ?
-#pragma warning disable IL2026, IL3050
-            JsonSerializer.DeserializeAsync<AuthResponse>(
-                stream,
-                GetJsonSerializerOptions(),
                 cancellationToken
             )
 #pragma warning restore IL2026, IL3050
             : JsonSerializer.DeserializeAsync(
                 stream,
                 (
-                    GetJsonSerializerOptions().GetTypeInfo(typeof(AuthResponse))
-                    as JsonTypeInfo<AuthResponse>
+                    jsonSerializerOptions.GetTypeInfo(typeof(ISurrealDbHttpResponse))
+                    as JsonTypeInfo<ISurrealDbHttpResponse>
                 )!,
                 cancellationToken
             );
 
-        var authResponse = await taskAuth.ConfigureAwait(false);
+        var result = await taskResult.ConfigureAwait(false);
+#else
+        var result = await JsonSerializer
+            .DeserializeAsync<ISurrealDbHttpResponse>(
+                stream,
+                jsonSerializerOptions,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+#endif
 
-        return authResponse ?? throw new SurrealDbException("Cannot deserialize auth response");
+        return ExtractSurrealDbOkResponse(result);
     }
 
-    private ExpandoObject ConvertJsonPatchDocumentToObject<T>(JsonPatchDocument<T> patches)
-        where T : class
+    private static SurrealDbHttpOkResponse ExtractSurrealDbOkResponse(
+        ISurrealDbHttpResponse? result
+    )
     {
-        var innerJsonPatchDocument = new JsonPatchDocument()
+        return result switch
         {
-            Options = GetJsonSerializerOptions()
+            SurrealDbHttpOkResponse okResponse => okResponse,
+            SurrealDbHttpErrorResponse errorResponse
+                => throw new SurrealDbException(errorResponse.Error.Message),
+            _ => throw new SurrealDbException("Unknown response type"),
         };
-        innerJsonPatchDocument.Operations.AddRange(patches.Operations);
-
-        var expandoObject = new ExpandoObject();
-        innerJsonPatchDocument.ApplyTo(expandoObject);
-
-        return expandoObject;
     }
 
     private static SurrealDbOkResult EnsuresFirstResultOk(SurrealDbResponse dbResponse)

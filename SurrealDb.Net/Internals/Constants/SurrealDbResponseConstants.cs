@@ -1,6 +1,6 @@
 ﻿namespace SurrealDb.Net.Internals.Constants;
 
-internal static class SurrealDbWsResponseConstants
+internal static class SurrealDbResponseConstants
 {
     public const string IdPropertyName = "id";
     public const string ResultPropertyName = "result";
