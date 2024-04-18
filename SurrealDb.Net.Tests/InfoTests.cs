@@ -14,7 +14,8 @@ public class User : SurrealDbRecord
 public class InfoTests
 {
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldNotRetrieveInfoForRootUser(string connectionString)
@@ -39,7 +40,8 @@ public class InfoTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldRetrieveInfoForScopedUser(string connectionString)

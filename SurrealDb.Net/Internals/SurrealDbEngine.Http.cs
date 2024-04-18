@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System.Buffers;
+using System.Collections.Immutable;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -47,7 +48,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 {
     private const string RPC_ENDPOINT = "/rpc";
 
-    private readonly bool _useCbor = false;
+    private readonly bool _useCbor;
     private readonly Uri _uri;
     private readonly SurrealDbClientParams _parameters;
     private readonly IHttpClientFactory? _httpClientFactory;
@@ -66,6 +67,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         Func<JsonSerializerContext[]>? appendJsonSerializerContexts
     )
     {
+        _useCbor = parameters.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR;
         _uri = new Uri(parameters.Endpoint!);
         _parameters = parameters;
         _httpClientFactory = httpClientFactory;
@@ -717,6 +719,18 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     private HttpContent CreateBodyContent<T>(T data)
     {
+        if (_useCbor)
+        {
+            var writer = new ArrayBufferWriter<byte>();
+            CborSerializer.Serialize(data, writer, GetCborSerializerOptions());
+            var payload = writer.WrittenSpan.ToArray();
+
+            var content = new ByteArrayContent(payload);
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/cbor");
+
+            return content;
+        }
+
         string bodyContent = JsonSerializer.IsReflectionEnabledByDefault
             ?
 #pragma warning disable IL2026, IL3050
@@ -758,37 +772,54 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 #endif
 
-        var jsonSerializerOptions = GetJsonSerializerOptions();
+        ISurrealDbHttpResponse? result;
+
+        if (_useCbor)
+        {
+            var cborSerializerOptions = GetCborSerializerOptions();
+
+            result = await CborSerializer
+                .DeserializeAsync<ISurrealDbHttpResponse>(
+                    stream,
+                    cborSerializerOptions,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+        }
+        else
+        {
+            var jsonSerializerOptions = GetJsonSerializerOptions();
 
 #if NET8_0_OR_GREATER
-        var taskResult = JsonSerializer.IsReflectionEnabledByDefault
-            ?
+            var taskResult = JsonSerializer.IsReflectionEnabledByDefault
+                ?
 #pragma warning disable IL2026, IL3050
-            JsonSerializer.DeserializeAsync<ISurrealDbHttpResponse>(
-                stream,
-                jsonSerializerOptions,
-                cancellationToken
-            )
+                JsonSerializer.DeserializeAsync<ISurrealDbHttpResponse>(
+                    stream,
+                    jsonSerializerOptions,
+                    cancellationToken
+                )
 #pragma warning restore IL2026, IL3050
-            : JsonSerializer.DeserializeAsync(
-                stream,
-                (
-                    jsonSerializerOptions.GetTypeInfo(typeof(ISurrealDbHttpResponse))
-                    as JsonTypeInfo<ISurrealDbHttpResponse>
-                )!,
-                cancellationToken
-            );
+                : JsonSerializer.DeserializeAsync(
+                    stream,
+                    (
+                        jsonSerializerOptions.GetTypeInfo(typeof(ISurrealDbHttpResponse))
+                        as JsonTypeInfo<ISurrealDbHttpResponse>
+                    )!,
+                    cancellationToken
+                );
 
-        var result = await taskResult.ConfigureAwait(false);
+            result = await taskResult.ConfigureAwait(false);
 #else
-        var result = await JsonSerializer
-            .DeserializeAsync<ISurrealDbHttpResponse>(
-                stream,
-                jsonSerializerOptions,
-                cancellationToken
-            )
-            .ConfigureAwait(false);
+            var result = await JsonSerializer
+                .DeserializeAsync<ISurrealDbHttpResponse>(
+                    stream,
+                    jsonSerializerOptions,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
 #endif
+        }
 
         return ExtractSurrealDbOkResponse(result);
     }

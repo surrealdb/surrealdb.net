@@ -5,6 +5,7 @@ using SurrealDb.Net.Internals.Cbor.Converters;
 using SurrealDb.Net.Internals.Cbor.Converters.Numerics;
 using SurrealDb.Net.Internals.Cbor.Converters.Spatial;
 using SurrealDb.Net.Internals.Constants;
+using SurrealDb.Net.Internals.Http;
 using SurrealDb.Net.Internals.Ws;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Response;
@@ -103,46 +104,22 @@ internal static class SurrealDbCborOptions
         );
     }
 
-    private static void RegisterPrimitiveConverters(CborOptions options)
-    {
-        options.Registry.ConverterRegistry.RegisterConverter(
-            typeof(decimal),
-            new DecimalConverter()
-        );
-        options.Registry.ConverterRegistry.RegisterConverter(
-            typeof(DateTime),
-            new DateTimeConverter()
-        );
-#if NET6_0_OR_GREATER
-        options.Registry.ConverterRegistry.RegisterConverter(
-            typeof(DateOnly),
-            new DateOnlyConverter()
-        );
-#endif
-        options.Registry.ConverterRegistry.RegisterConverter(
-            typeof(TimeSpan),
-            new TimeSpanConverter()
-        );
-#if NET6_0_OR_GREATER
-        options.Registry.ConverterRegistry.RegisterConverter(
-            typeof(TimeOnly),
-            new TimeOnlyConverter()
-        );
-#endif
-        options.Registry.ConverterRegistry.RegisterConverter(typeof(Guid), new GuidConverter());
-    }
-
-    private static void RegisterCustomPrimitiveConverters(CborOptions options)
-    {
-        options.Registry.ConverterRegistry.RegisterConverter(
-            typeof(Duration),
-            new DurationConverter()
-        );
-        options.Registry.ConverterRegistry.RegisterConverter(typeof(Thing), new ThingConverter());
-    }
-
     private static void RegisterWsEngineConverters(CborOptions options)
     {
+        options.Registry.ConverterRegistry.RegisterConverter(
+            typeof(ISurrealDbResult),
+            new SurrealDbResultConverter(options)
+        );
+
+        options.Registry.ConverterRegistry.RegisterConverter(
+            typeof(SurrealDbHttpErrorResponseContent),
+            new SurrealDbHttpErrorResponseContentConverter()
+        );
+        options.Registry.ConverterRegistry.RegisterConverter(
+            typeof(ISurrealDbHttpResponse),
+            new SurrealDbHttpResponseConverter(options)
+        );
+
         options.Registry.ConverterRegistry.RegisterConverter(
             typeof(SurrealDbWsLiveResponseContent),
             new SurrealDbWsLiveResponseContentConverter(options)
@@ -150,10 +127,6 @@ internal static class SurrealDbCborOptions
         options.Registry.ConverterRegistry.RegisterConverter(
             typeof(SurrealDbWsErrorResponseContent),
             new SurrealDbWsErrorResponseContentConverter()
-        );
-        options.Registry.ConverterRegistry.RegisterConverter(
-            typeof(ISurrealDbResult),
-            new SurrealDbResultConverter(options)
         );
         options.Registry.ConverterRegistry.RegisterConverter(
             typeof(ISurrealDbWsResponse),

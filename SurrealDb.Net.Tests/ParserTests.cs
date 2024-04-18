@@ -54,7 +54,8 @@ public class NoneRecord : Record<None> { }
 public class ParserTests
 {
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseThing(string connectionString)
@@ -171,7 +172,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseString(string connectionString)
@@ -236,7 +238,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseLong(string connectionString)
@@ -286,7 +289,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseDecimal(string connectionString)
@@ -361,7 +365,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseFloat(string connectionString)
@@ -431,7 +436,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseDouble(string connectionString)
@@ -501,7 +507,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseDuration(string connectionString)
@@ -611,7 +618,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseDurationAsTimeSpan(string connectionString)
@@ -709,7 +717,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR", Skip = "Not supported")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR", Skip = "Not supported")]
     public async Task ShouldParseDurationAsString(string connectionString)
@@ -807,7 +816,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseTimeOnly(string connectionString)
@@ -905,7 +915,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseDateAsDateTime(string connectionString)
@@ -986,7 +997,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseDateOnly(string connectionString)
@@ -1054,7 +1066,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseVector2(string connectionString)
@@ -1122,7 +1135,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseVector3(string connectionString)
@@ -1201,7 +1215,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseVector4(string connectionString)

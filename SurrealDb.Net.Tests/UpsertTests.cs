@@ -5,7 +5,8 @@ namespace SurrealDb.Net.Tests;
 public class UpsertTests
 {
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldCreateNewPost(string connectionString)
@@ -63,7 +64,8 @@ public class UpsertTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldUpdateExistingPost(string connectionString)

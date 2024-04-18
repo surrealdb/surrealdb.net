@@ -11,7 +11,8 @@ public class DeviceInput : SurrealDbRecord
 public class ConfigureJsonSerializerOptionsTests
 {
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR", Skip = "Not supported")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR", Skip = "Not supported")]
     public async Task ShouldUseCamelCasePolicyOnSelect(string connectionString)
@@ -58,7 +59,8 @@ public class ConfigureJsonSerializerOptionsTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR", Skip = "Not supported")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR", Skip = "Not supported")]
     public async Task ShouldUseCamelCasePolicyOnQuery(string connectionString)
@@ -113,7 +115,8 @@ public class ConfigureJsonSerializerOptionsTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR", Skip = "Not supported")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR", Skip = "Not supported")]
     public async Task ShouldUseKebabCasePolicyOnSelect(string connectionString)
@@ -160,7 +163,8 @@ public class ConfigureJsonSerializerOptionsTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR", Skip = "Not supported")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR", Skip = "Not supported")]
     public async Task ShouldUseKebabCasePolicyOnQuery(string connectionString)

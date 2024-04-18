@@ -20,7 +20,8 @@ public class GeometryCollectionRecord : Record<GeometryCollection> { }
 public class ParserTests
 {
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseGeometryPointFromTuple(string connectionString)
@@ -51,7 +52,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseGeometryPoint(string connectionString)
@@ -82,7 +84,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseGeometryLineString(string connectionString)
@@ -120,7 +123,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseGeometryPolygon(string connectionString)
@@ -175,7 +179,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseGeometryMultiPoint(string connectionString)
@@ -215,7 +220,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseGeometryMultiLineString(string connectionString)
@@ -279,7 +285,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseGeometryMultiPolygon(string connectionString)
@@ -359,7 +366,8 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseGeometryCollection(string connectionString)
