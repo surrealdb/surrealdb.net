@@ -3,7 +3,7 @@
 namespace SurrealDb.Net.LocalBenchmarks;
 
 /// <summary>
-/// A simple benchmark to compare performance of various `IsAlphanumeric` method implementations.
+/// A simple benchmark to compare performance of various <c>IsAlphanumeric</c> method implementations.
 /// </summary>
 public class IsAlphanumericBenchmark
 {
