@@ -240,6 +240,16 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.Info<T>(cancellationToken);
     }
 
+    public Task<IEnumerable<T>> Insert<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken = default
+    )
+        where T : Record
+    {
+        return _engine.Insert(table, data, cancellationToken);
+    }
+
     public Task Invalidate(CancellationToken cancellationToken = default)
     {
         return _engine.Invalidate(cancellationToken);

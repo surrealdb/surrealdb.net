@@ -174,6 +174,25 @@ public interface ISurrealDbClient : IDisposable
     Task<T> Info<T>(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Creates a collection of records in the database.
+    /// </summary>
+    /// <typeparam name="T">The type of the record to create.</typeparam>
+    /// <param name="table">The table name where the records will be stored.</param>
+    /// <param name="data">The records to create.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The records created.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<IEnumerable<T>> Insert<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken = default
+    )
+        where T : Record;
+
+    /// <summary>
     /// Invalidates the authentication for the current connection.
     /// </summary>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
