@@ -6,7 +6,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using Dahomey.Cbor;
+using Semver;
 using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Extensions;
 using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Internals.Cbor;
 using SurrealDb.Net.Internals.Constants;
@@ -109,6 +111,15 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public async Task Connect(CancellationToken cancellationToken)
     {
+        if (_useCbor)
+        {
+            string version = await Version(cancellationToken).ConfigureAwait(false);
+            if (version.ToSemver().CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
+            {
+                throw new SurrealDbException("CBOR is only supported on SurrealDB 1.4.0 or later.");
+            }
+        }
+
         var dbResponse = await RawQuery(
                 "RETURN TRUE",
                 ImmutableDictionary<string, object?>.Empty,
@@ -811,7 +822,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
             result = await taskResult.ConfigureAwait(false);
 #else
-            var result = await JsonSerializer
+            result = await JsonSerializer
                 .DeserializeAsync<ISurrealDbHttpResponse>(
                     stream,
                     jsonSerializerOptions,
