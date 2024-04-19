@@ -19,8 +19,8 @@ internal class DurationConverter : CborConverterBase<Duration>
             throw new CborException("Expected a CBOR array with at most 2 elements");
         }
 
-        long? seconds = size >= 1 ? reader.ReadInt64() : null;
-        int? nanos = size >= 2 ? reader.ReadInt32() : null;
+        long seconds = size >= 1 ? reader.ReadInt64() : 0;
+        int nanos = size >= 2 ? reader.ReadInt32() : 0;
 
         return new Duration(seconds, nanos);
     }
