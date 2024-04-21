@@ -92,7 +92,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             id = RandomHelper.CreateRandomId();
         } while (!_wsEngines.TryAdd(id, this));
 
-        _useCbor = parameters.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR;
+        _useCbor = SurrealDbEngineHelpers.ShouldUseCbor(parameters);
         _id = id;
         _parameters = parameters;
         _configureJsonSerializerOptions = configureJsonSerializerOptions;

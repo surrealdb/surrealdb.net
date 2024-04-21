@@ -71,7 +71,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         Action<CborOptions>? configureCborOptions = null
     )
     {
-        _useCbor = parameters.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR;
+        _useCbor = SurrealDbEngineHelpers.ShouldUseCbor(parameters);
         _uri = new Uri(parameters.Endpoint!);
         _parameters = parameters;
         _httpClientFactory = httpClientFactory;
