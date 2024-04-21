@@ -64,6 +64,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     private readonly Action<JsonSerializerOptions>? _configureJsonSerializerOptions;
     private readonly Func<JsonSerializerContext[]>? _prependJsonSerializerContexts;
     private readonly Func<JsonSerializerContext[]>? _appendJsonSerializerContexts;
+    private readonly Action<CborOptions>? _configureCborOptions;
     private readonly SurrealDbWsEngineConfig _config = new();
     private readonly WebsocketClient _wsClient;
     private readonly IDisposable _receiverSubscription;
@@ -79,7 +80,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         SurrealDbClientParams parameters,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts,
+        Action<CborOptions>? configureCborOptions = null
     )
     {
         string id;
@@ -96,6 +98,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         _configureJsonSerializerOptions = configureJsonSerializerOptions;
         _prependJsonSerializerContexts = prependJsonSerializerContexts;
         _appendJsonSerializerContexts = appendJsonSerializerContexts;
+        _configureCborOptions = configureCborOptions;
 
         var clientWebSocketFactory = _useCbor
             ? new Func<ClientWebSocket>(() =>
@@ -833,7 +836,10 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     private CborOptions GetCborOptions()
     {
-        return SurrealDbCborOptions.GetCborSerializerOptions(_parameters.NamingPolicy);
+        return SurrealDbCborOptions.GetCborSerializerOptions(
+            _parameters.NamingPolicy,
+            _configureCborOptions
+        );
     }
 
     private async Task Ping(CancellationToken cancellationToken)

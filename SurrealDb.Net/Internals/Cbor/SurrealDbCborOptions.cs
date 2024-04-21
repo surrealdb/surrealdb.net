@@ -77,12 +77,23 @@ internal static class SurrealDbCborOptions
         (string key, INamingConvention? namingConvention)
     > DetectedNamingConventions = new();
 
-    public static CborOptions GetCborSerializerOptions(string? namingPolicy)
+    public static CborOptions GetCborSerializerOptions(
+        string? namingPolicy,
+        Action<CborOptions>? configureCborOptions
+    )
     {
         var (key, jsonNamingPolicy) = DetectedNamingConventions.GetOrAdd(
             namingPolicy ?? string.Empty,
             DetectNamingConvention(namingPolicy)
         );
+
+        if (configureCborOptions is not null)
+        {
+            var cborOptions = CreateCborSerializerOptions(jsonNamingPolicy);
+            configureCborOptions(cborOptions);
+
+            return cborOptions;
+        }
 
         return GetDefaultSerializerFromPolicy(key, jsonNamingPolicy);
     }

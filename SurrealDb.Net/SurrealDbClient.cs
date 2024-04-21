@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Models;
@@ -38,6 +39,7 @@ public class SurrealDbClient : ISurrealDbClient
     /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
     /// in AoT mode.
     /// </param>
+    /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <exception cref="ArgumentException"></exception>
     public SurrealDbClient(
         string endpoint,
@@ -45,14 +47,16 @@ public class SurrealDbClient : ISurrealDbClient
         IHttpClientFactory? httpClientFactory = null,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
+        Action<CborOptions>? configureCborOptions = null
     )
         : this(
             new SurrealDbClientParams(endpoint, namingPolicy),
             httpClientFactory,
             configureJsonSerializerOptions,
             prependJsonSerializerContexts,
-            appendJsonSerializerContexts
+            appendJsonSerializerContexts,
+            configureCborOptions
         ) { }
 
     /// <summary>
@@ -69,6 +73,7 @@ public class SurrealDbClient : ISurrealDbClient
     /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
     /// in AoT mode.
     /// </param>
+    /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
     public SurrealDbClient(
@@ -76,14 +81,16 @@ public class SurrealDbClient : ISurrealDbClient
         IHttpClientFactory? httpClientFactory = null,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
+        Action<CborOptions>? configureCborOptions = null
     )
         : this(
             new SurrealDbClientParams(configuration),
             httpClientFactory,
             configureJsonSerializerOptions,
             prependJsonSerializerContexts,
-            appendJsonSerializerContexts
+            appendJsonSerializerContexts,
+            configureCborOptions
         ) { }
 
     internal SurrealDbClient(
@@ -91,7 +98,8 @@ public class SurrealDbClient : ISurrealDbClient
         IHttpClientFactory? httpClientFactory = null,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
+        Action<CborOptions>? configureCborOptions = null
     )
     {
         if (parameters.Endpoint is null)
@@ -111,7 +119,8 @@ public class SurrealDbClient : ISurrealDbClient
                     httpClientFactory,
                     configureJsonSerializerOptions,
                     prependJsonSerializerContexts,
-                    appendJsonSerializerContexts
+                    appendJsonSerializerContexts,
+                    configureCborOptions
                 ),
             "ws"
             or "wss"
@@ -119,7 +128,8 @@ public class SurrealDbClient : ISurrealDbClient
                     parameters,
                     configureJsonSerializerOptions,
                     prependJsonSerializerContexts,
-                    appendJsonSerializerContexts
+                    appendJsonSerializerContexts,
+                    configureCborOptions
                 ),
             _ => throw new ArgumentException("This protocol is not supported."),
         };
