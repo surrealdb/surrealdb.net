@@ -14,12 +14,125 @@ defaults:
     shell: pwsh
 
 jobs:
+  embedded-builds:
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.continue-on-error }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            libpath: |
+              **/release/surreal-memory.dll
+              **/release/surreal-memory.pdb
+            continue-on-error: false
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            libpath: |
+              **/release/libsurreal-memory.so
+            continue-on-error: false
+          # 💡 not supported by the toolchain
+          # - os: ubuntu-latest
+          #   target: x86_64-unknown-linux-musl
+          #   libpath: |
+          #     **/release/libsurreal-memory.so
+          # 💡 not supported by the toolchain
+          # - os: ubuntu-latest
+          #   target: aarch64-unknown-linux-musl
+          #   libpath: |
+          #     **/release/libsurreal-memory.so
+          - os: ubuntu-latest
+            target: arm-unknown-linux-gnueabihf
+            libpath: |
+              **/release/libsurreal-memory.so
+            continue-on-error: true
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            libpath: |
+              **/release/libsurreal-memory.so
+            continue-on-error: true
+          - os: ubuntu-latest
+            target: aarch64-linux-android
+            libpath: |
+              **/release/libsurreal-memory.so
+            continue-on-error: false
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            libpath: |
+              **/release/libsurreal-memory.dylib
+            continue-on-error: false
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            libpath: |
+              **/release/libsurreal-memory.dylib
+            continue-on-error: false
+          - os: macos-latest
+            target: aarch64-apple-ios
+            libpath: |
+              **/release/libsurreal-memory.dylib
+            continue-on-error: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            rust-embedded
+
+      - name: Install gcc-aarch64-linux-gnu
+        run: sudo apt-get install gcc-aarch64-linux-gnu
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26d
+        if: matrix.target == 'aarch64-linux-android'
+
+      - name: Set Android linker for Rust target
+        run: echo "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/" >> $GITHUB_PATH
+        shell: bash
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        if: matrix.target == 'aarch64-linux-android'
+
+      - name: Install arm-linux-gnueabihf-gcc
+        run: sudo apt-get install arm-linux-gnueabihf-gcc
+        if: matrix.target == 'arm-unknown-linux-gnueabihf'
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build libraries
+        working-directory: ./rust-embedded
+        run: cargo build --release --target ${{ matrix.target }}
+      
+      - name: Publish embedded artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: embedded-${{ matrix.target }}
+          path: ${{ matrix.libpath }}
+
+
   create-package:
+    needs: [embedded-builds]
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Download embedded artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: embedded-*
+          merge-multiple: true
 
       - name: Setup dotnet 8.0
         uses: actions/setup-dotnet@v3
@@ -57,23 +170,23 @@ jobs:
       - name: Validate package
         run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg")
 
-  publish-package:
-    needs: [validate-package]
-    runs-on: ubuntu-latest
+  # publish-package:
+  #   needs: [validate-package]
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Setup dotnet 8.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: "8.0.x"
+  #   steps:
+  #     - name: Setup dotnet 8.0
+  #       uses: actions/setup-dotnet@v3
+  #       with:
+  #         dotnet-version: "8.0.x"
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: nuget
-          path: ${{ env.NuGetDirectory }}
+  #     - uses: actions/download-artifact@v3
+  #       with:
+  #         name: nuget
+  #         path: ${{ env.NuGetDirectory }}
 
-      - name: Publish NuGet package
-        run: |
-          foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
-              dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
-          }
+  #     - name: Publish NuGet package
+  #       run: |
+  #         foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
+  #             dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+  #         }

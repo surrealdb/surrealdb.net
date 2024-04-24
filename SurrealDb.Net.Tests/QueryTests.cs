@@ -1,5 +1,4 @@
-﻿using System.Net;
-using System.Text;
+﻿using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Models.Response;
@@ -9,10 +8,11 @@ namespace SurrealDb.Net.Tests;
 public class QueryTests
 {
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldQueryWithoutParam(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -23,7 +23,6 @@ public class QueryTests
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
             using var client = surrealDbClientGenerator.Create(connectionString);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             {
@@ -55,10 +54,11 @@ public class QueryTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldQueryWithOneParam(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -69,7 +69,6 @@ public class QueryTests
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
             using var client = surrealDbClientGenerator.Create(connectionString);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             {
@@ -104,10 +103,11 @@ public class QueryTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldQueryWithMultipleParams(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -118,7 +118,6 @@ public class QueryTests
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
             using var client = surrealDbClientGenerator.Create(connectionString);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             {
@@ -162,12 +161,15 @@ AND created_at >= {threeMonthsAgo};
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldHaveOneProtocolErrorResult(string connectionString)
     {
+        var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
+
         SurrealDbResponse? response = null;
 
         Func<Task> func = async () =>
@@ -176,7 +178,6 @@ AND created_at >= {threeMonthsAgo};
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
             using var client = surrealDbClientGenerator.Create(connectionString);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             {
@@ -194,14 +195,27 @@ AND created_at >= {threeMonthsAgo};
             response = await client.Query($"abc def;");
         };
 
-        await func.Should()
-            .ThrowAsync<SurrealDbException>()
-            .WithMessage(
+        string errorMessage;
+
+        if (options.IsEmbedded)
+        {
+            errorMessage =
+                @"Parse error: Failed to parse query at line 1 column 5 expected query to end
+  |
+1 | abc def;
+  |     ^ perhaps missing a semicolon on the previous statement?
+";
+        }
+        else
+        {
+            errorMessage =
                 @"There was a problem with the database: Parse error: Failed to parse query at line 1 column 5 expected query to end
   |
 1 | abc def;
   |     ^ perhaps missing a semicolon on the previous statement?
-"
-            );
+";
+        }
+
+        await func.Should().ThrowAsync<SurrealDbException>().WithMessage(errorMessage);
     }
 }

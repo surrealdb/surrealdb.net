@@ -52,6 +52,7 @@ public class SurrealDbClient : ISurrealDbClient
     )
         : this(
             new SurrealDbClientParams(endpoint, namingPolicy),
+            null,
             httpClientFactory,
             configureJsonSerializerOptions,
             prependJsonSerializerContexts,
@@ -86,6 +87,7 @@ public class SurrealDbClient : ISurrealDbClient
     )
         : this(
             new SurrealDbClientParams(configuration),
+            null,
             httpClientFactory,
             configureJsonSerializerOptions,
             prependJsonSerializerContexts,
@@ -95,6 +97,7 @@ public class SurrealDbClient : ISurrealDbClient
 
     internal SurrealDbClient(
         SurrealDbClientParams parameters,
+        IServiceProvider? serviceProvider = null,
         IHttpClientFactory? httpClientFactory = null,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
@@ -131,13 +134,30 @@ public class SurrealDbClient : ISurrealDbClient
                     appendJsonSerializerContexts,
                     configureCborOptions
                 ),
-            _ => throw new ArgumentException("This protocol is not supported."),
+            "mem"
+                => ResolveInMemoryProvider(serviceProvider, parameters, configureCborOptions)
+                    ?? throw new Exception(
+                        "Impossible to create a new in-memory SurrealDB client. Make sure to use `AddInMemoryProvider`."
+                    ),
+            _ => throw new NotSupportedException($"The protocol '{protocol}' is not supported."),
         };
 
         if (parameters.Username is not null)
             Configure(parameters.Ns, parameters.Db, parameters.Username, parameters.Password);
         else
             Configure(parameters.Ns, parameters.Db, parameters.Token);
+    }
+
+    private static ISurrealDbInMemoryEngine? ResolveInMemoryProvider(
+        IServiceProvider? serviceProvider,
+        SurrealDbClientParams parameters,
+        Action<CborOptions>? configureCborOptions
+    )
+    {
+        var engine = serviceProvider?.GetService<ISurrealDbInMemoryEngine>();
+        engine?.Initialize(parameters, configureCborOptions);
+
+        return engine;
     }
 
     public Task Authenticate(Jwt jwt, CancellationToken cancellationToken = default)

@@ -1,4 +1,6 @@
-﻿using SurrealDb.Net.Internals.Models.LiveQuery;
+﻿using Dahomey.Cbor;
+using SurrealDb.Net.Internals.Models;
+using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -7,7 +9,7 @@ using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.Internals;
 
-internal interface ISurrealDbEngine : IDisposable
+public interface ISurrealDbEngine : IDisposable
 {
     Task Authenticate(Jwt jwt, CancellationToken cancellationToken);
     void Configure(string? ns, string? db, string? username, string? password);
@@ -92,3 +94,13 @@ internal interface ISurrealDbEngine : IDisposable
     Task Use(string ns, string db, CancellationToken cancellationToken);
     Task<string> Version(CancellationToken cancellationToken);
 }
+
+public interface ISurrealDbProviderEngine : ISurrealDbEngine
+{
+    /// <summary>
+    /// Initializes engine dynamically, due to DependencyInjection interop.
+    /// </summary>
+    void Initialize(SurrealDbClientParams parameters, Action<CborOptions>? configureCborOptions);
+}
+
+public interface ISurrealDbInMemoryEngine : ISurrealDbProviderEngine { }

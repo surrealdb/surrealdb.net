@@ -1,15 +1,16 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals.Helpers;
+using SurrealDb.Net.Tests.Fixtures;
 
-namespace SurrealDb.Net.Benchmarks;
+namespace SurrealDb.Net.Benchmarks.Remote;
 
-public class ColdStartBenchmark : BaseBenchmark
+public class ColdStartBench : BaseRemoteBenchmark
 {
     private ServiceProvider? _serviceProvider;
     private DatabaseInfo? _databaseInfo;
 
-    private List<ISurrealDbClient> _clients = new();
+    private readonly List<ISurrealDbClient> _clients = new();
 
     [GlobalSetup]
     public void GlobalSetup()

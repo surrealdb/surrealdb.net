@@ -13,10 +13,17 @@ on:
       - '**.md'
 jobs:
   build:
+    needs: [embedded-build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      
+      - name: Download embedded artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: embedded
+          path: ./rust-embedded/target/debug
 
       - name: Download SurrealDB
         run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh
@@ -67,3 +74,82 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           directory: .coverage
+
+  embedded-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            rust-embedded
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build libraries
+        working-directory: ./rust-embedded
+        run: cargo build
+      
+      - name: Publish embedded artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: embedded
+          path: ./rust-embedded/target/debug/libsurreal-memory.so
+
+  cargo-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            rust-embedded
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run check
+        working-directory: ./rust-embedded
+        run: cargo check --all
+
+      - name: Run tests
+        working-directory: ./rust-embedded
+        run: cargo test
+
+      - name: Run format
+        working-directory: ./rust-embedded
+        run: |
+          cargo check --all
+          cargo fix
+
+      - name: Run lint
+        working-directory: ./rust-embedded
+        run: cargo clippy -- -Dwarnings
+
+  cargo-deny:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        manifests:
+          - ./rust-embedded/memory/Cargo.toml
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            rust-embedded
+
+      - uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          manifest-path: ${{ matrix.manifests }}
+      

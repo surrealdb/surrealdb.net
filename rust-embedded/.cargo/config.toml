@@ -1,0 +1,9 @@
+[build]
+rustflags = ["--cfg", "surrealdb_unstable"]
+rustdocflags = ["--cfg", "surrealdb_unstable"]
+
+[net]
+git-fetch-with-cli = true
+
+[target.aarch64-linux-android]
+linker = "aarch64-linux-android29-clang"
