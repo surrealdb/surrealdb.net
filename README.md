@@ -1,49 +1,75 @@
+<br>
+
+<p align="center">
+    <img width=120 src="https://raw.githubusercontent.com/surrealdb/icons/main/surreal.svg" />
+    &nbsp;
+    <img width=120 src="https://raw.githubusercontent.com/surrealdb/icons/main/dotnet.svg" />
+</p>
+
+<h3 align="center">The official SurrealDB SDK for .NET.</h3>
+
+<br>
+
+<p align="center">
+    <a href="https://github.com/surrealdb/surrealdb.net"><img src="https://img.shields.io/badge/status-beta-ff00bb.svg?style=flat-square"></a>
+    &nbsp;
+    <a href="https://surrealdb.com/docs/integration/libraries/dotnet"><img src="https://img.shields.io/badge/docs-view-44cc11.svg?style=flat-square"></a>
+    &nbsp;
+    <a href="https://www.nuget.org/packages/SurrealDb.Net"><img src="https://img.shields.io/nuget/v/surrealdb.net?style=flat-square"></a>
+    &nbsp;
+    <a href="https://www.nuget.org/packages/SurrealDb.Net"><img src="https://img.shields.io/nuget/dt/surrealdb?style=flat-square"></a>
+    &nbsp;
+    <a href="https://codecov.io/github/surrealdb/surrealdb.net"><img src="https://img.shields.io/codecov/c/github/surrealdb/surrealdb.net?style=flat-square"></a>
+</p>
+
+<p align="center">
+    <a href="https://surrealdb.com/discord"><img src="https://img.shields.io/discord/902568124350599239?label=discord&style=flat-square&color=5a66f6"></a>
+    &nbsp;
+    <a href="https://twitter.com/surrealdb"><img src="https://img.shields.io/badge/twitter-follow_us-1d9bf0.svg?style=flat-square"></a>
+    &nbsp;
+    <a href="https://www.linkedin.com/company/surrealdb/"><img src="https://img.shields.io/badge/linkedin-connect_with_us-0a66c2.svg?style=flat-square"></a>
+    &nbsp;
+    <a href="https://www.youtube.com/channel/UCjf2teVEuYVvvVC-gFZNq6w"><img src="https://img.shields.io/badge/youtube-subscribe-fc1c1c.svg?style=flat-square"></a>
+</p>
+
 # surrealdb.net
 
-The official SurrealDB library for .NET.
+The official SurrealDB SDK for .NET.
 
-[![](https://img.shields.io/badge/status-beta-ff00bb.svg?style=flat-square)](https://github.com/surrealdb/surrealdb.net)
-[![](https://img.shields.io/badge/docs-view-44cc11.svg?style=flat-square)](https://surrealdb.com/docs/integration/libraries/dotnet)
-[![](https://img.shields.io/badge/license-Apache_License_2.0-00bfff.svg?style=flat-square)](https://github.com/surrealdb/surrealdb.net)
-[![](https://img.shields.io/nuget/v/surrealdb.net?style=flat-square)](https://www.nuget.org/packages/SurrealDb.Net)
-[![](https://img.shields.io/codecov/c/github/surrealdb/surrealdb.net?style=flat-square)](https://codecov.io/github/surrealdb/surrealdb.net?branch=main)
+## Documentation
 
-⚠️ This driver is currently community maintained.
+View the SDK documentation [here](https://surrealdb.com/docs/integration/libraries/dotnet).
 
-## Getting started
+## How to install
 
-### Installation
-
-```
+```sh
 dotnet add package SurrealDb.Net
 ```
 
-### How to use?
+## Getting started
 
-Supported protocols:
+This library supports connecting to SurrealDB over the remote connection protocols `http`, `https`, `ws`, and `wss`.
 
-- ✅ HTTP(S)
-- ✅ WS(S)
-- 🚧 and more to come...
+> The examples below require SurrealDB to be [installed](https://surrealdb.com/install) and running on port 8000.
 
-#### Construct a new SurrealDB client
+### Constructing a new SurrealDB client
 
-You can easily create a new SurrealDB client easily. All you have to do is define the `endpoint` to the SurrealDB instance.
+You can easily create a new SurrealDB client. All you have to do is define the `endpoint` to the SurrealDB instance.
 
 ```csharp
 var clientHttp = new SurrealDbClient("http://127.0.0.1:8000");
-var clientHttps = new SurrealDbClient("https://cloud.surrealdb.com");
+var clientHttps = new SurrealDbClient("https://127.0.0.1:8000");
 var clientWs = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
-var clientWss = new SurrealDbClient("wss://cloud.surrealdb.com/rpc");
+var clientWss = new SurrealDbClient("wss://127.0.0.1:8000/rpc");
 
-// Signin & Use ns/db
+// Now you can call other methods including Signin & Use
 ```
 
-#### Dependency injection
+### Dependency injection
 
 You can use Dependency Injection with the `services.AddSurreal()` function.
 
-##### Default instance
+#### Default instance
 
 ```csharp
 var options = SurrealDbOptions
@@ -80,7 +106,7 @@ Note that the default lifetime of this service is `Singleton`. You can override 
 services.AddSurreal(options, ServiceLifetime.Scoped);
 ```
 
-##### Connection String
+#### Connection String
 
 Consider the following `appsettings.json` file:
 
@@ -107,7 +133,7 @@ services.AddSurreal(configuration.GetConnectionString("SurrealDB"));
 
 It will automatically create a new SurrealDB using the `Server endpoint` and configure the client using the different values for `namespace`, `database`, `username` and `password`. Note that these values are optional but the `endpoint` is still required.
 
-##### Multiple instances
+#### Multiple instances
 
 Having a default instance for a project is enough most of the time, but there may be times when you'd like to target multiple SurrealDB instances, either at different addresses or at the same address but inside different NS/DBs. You can use multiple instances as long as you provide 1 interface per client, as in the following example.
 
@@ -126,7 +152,7 @@ Here you will have 3 instances:
 - a client for backup purpose, using the `IBackupSurrealDbClient` interface
 - a client for monitoring purpose, using the `IMonitoringSurrealDbClient` interface
 
-#### Use the client
+### Use the client
 
 ```csharp
 [ApiController]
@@ -217,9 +243,7 @@ public class WeatherForecastController : ControllerBase
 }
 ```
 
-## How to contribute?
-
-
+## Contributing
 
 ### .NET release versions
 
