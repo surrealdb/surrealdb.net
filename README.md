@@ -48,7 +48,7 @@ dotnet add package SurrealDb.Net
 
 ## Getting started
 
-This library supports connecting to SurrealDB over the remote connection protocols `http`, `https`, `ws`, and `wss`.
+This library supports connecting to SurrealDB over the remote HTTP and WebSocket connection protocols `http`, `https`, `ws`, and `wss`.
 
 > The examples below require SurrealDB to be [installed](https://surrealdb.com/install) and running on port 8000.
 
