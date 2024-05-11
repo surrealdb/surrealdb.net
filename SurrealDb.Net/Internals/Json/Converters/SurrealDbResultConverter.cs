@@ -1,22 +1,13 @@
 ﻿using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Internals.Json.Converters;
 
 internal class SurrealDbResultConverter : JsonConverter<ISurrealDbResult>
 {
-    const string OkStatus = "OK";
-    const string StatusPropertyName = "status";
-    const string TimePropertyName = "time";
-    const string ResultPropertyName = "result";
-    const string ErrorDetailsPropertyName = "detail";
-    const string CodePropertyName = "code";
-    const string DetailsPropertyName = "details";
-    const string DescriptionPropertyName = "description";
-    const string InformationPropertyName = "information";
-
     public override ISurrealDbResult Read(
         ref Utf8JsonReader reader,
         Type typeToConvert,
@@ -26,11 +17,13 @@ internal class SurrealDbResultConverter : JsonConverter<ISurrealDbResult>
         using var doc = JsonDocument.ParseValue(ref reader);
         var root = doc.RootElement;
 
-        if (root.TryGetProperty(StatusPropertyName, out var statusProperty))
+        if (
+            root.TryGetProperty(SurrealDbResultConstants.StatusPropertyName, out var statusProperty)
+        )
         {
             var status = statusProperty.GetString();
 
-            var timeProperty = root.GetProperty(TimePropertyName);
+            var timeProperty = root.GetProperty(SurrealDbResultConstants.TimePropertyName);
             var time = timeProperty.ValueKind switch
             {
                 JsonValueKind.Undefined or JsonValueKind.Null => TimeSpan.Zero,
@@ -41,9 +34,9 @@ internal class SurrealDbResultConverter : JsonConverter<ISurrealDbResult>
                 _ => throw new JsonException($"Cannot deserialize 'time' to {nameof(TimeSpan)}")
             };
 
-            if (status == OkStatus)
+            if (status == SurrealDbResultConstants.OkStatus)
             {
-                var value = root.GetProperty(ResultPropertyName).Clone();
+                var value = root.GetProperty(SurrealDbResultConstants.ResultPropertyName).Clone();
 
                 return new SurrealDbOkResult(time, status, value, options);
             }
@@ -51,7 +44,7 @@ internal class SurrealDbResultConverter : JsonConverter<ISurrealDbResult>
             if (status is not null)
             {
                 var details = root.TryGetProperty(
-                    ErrorDetailsPropertyName,
+                    SurrealDbResultConstants.ErrorDetailsPropertyName,
                     out var errorDetailsProperty
                 )
                     ? errorDetailsProperty.GetString()
@@ -62,22 +55,25 @@ internal class SurrealDbResultConverter : JsonConverter<ISurrealDbResult>
         }
 
         if (
-            root.TryGetProperty(CodePropertyName, out var codeProperty)
+            root.TryGetProperty(SurrealDbResultConstants.CodePropertyName, out var codeProperty)
             && Enum.TryParse(codeProperty.GetInt16().ToString(), true, out HttpStatusCode code)
         )
         {
             // TODO : Use Source Generator to convert a number to HttpStatusCode, instead of ".GetInt16().ToString()"
-            var details = root.TryGetProperty(DetailsPropertyName, out var detailsProperty)
+            var details = root.TryGetProperty(
+                SurrealDbResultConstants.DetailsPropertyName,
+                out var detailsProperty
+            )
                 ? detailsProperty.GetString()
                 : null;
             var description = root.TryGetProperty(
-                DescriptionPropertyName,
+                SurrealDbResultConstants.DescriptionPropertyName,
                 out var descriptionProperty
             )
                 ? descriptionProperty.GetString()
                 : null;
             var information = root.TryGetProperty(
-                InformationPropertyName,
+                SurrealDbResultConstants.InformationPropertyName,
                 out var informationProperty
             )
                 ? informationProperty.GetString()

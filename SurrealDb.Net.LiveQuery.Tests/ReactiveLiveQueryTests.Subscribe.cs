@@ -10,11 +10,11 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 [CollectionDefinition("Reactive")]
 public class ReactiveLiveQueryTests : BaseLiveQueryTests
 {
-    [Fact]
-    public async Task ShouldConsumeObservable()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldConsumeObservable(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         var allResults = new List<SurrealDbLiveQueryResponse>();
 
         Func<Task> func = async () =>
@@ -22,7 +22,7 @@ public class ReactiveLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -76,11 +76,11 @@ public class ReactiveLiveQueryTests : BaseLiveQueryTests
         lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse<TestRecord>>();
     }
 
-    [Fact]
-    public async Task ShouldConsumeObservableWithLiveQueryManuallyKilled()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldConsumeObservableWithLiveQueryManuallyKilled(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         var allResults = new List<SurrealDbLiveQueryResponse>();
 
         Func<Task> func = async () =>
@@ -88,7 +88,7 @@ public class ReactiveLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -148,11 +148,11 @@ public class ReactiveLiveQueryTests : BaseLiveQueryTests
         lastResult.Should().BeOfType<SurrealDbLiveQueryCloseResponse>();
     }
 
-    [Fact]
-    public async Task ShouldConsumeLateObservable()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldConsumeLateObservable(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         var allResults = new List<SurrealDbLiveQueryResponse>();
 
         Func<Task> func = async () =>
@@ -160,7 +160,7 @@ public class ReactiveLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 

@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Spatial;
 using SurrealDb.Net.Internals.Constants;
@@ -42,8 +42,8 @@ internal class GeographyPointValueConverter : JsonConverter<GeographyPoint>
                         $"Cannot deserialize {nameof(GeographyPoint)} because it contains wrong coordinates"
                     );
 
-                var longitude = coordinatesProperty[0].GetDouble();
                 var latitude = coordinatesProperty[1].GetDouble();
+                var longitude = coordinatesProperty[0].GetDouble();
 
                 return GeographyPoint.Create(latitude, longitude);
             }

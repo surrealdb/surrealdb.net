@@ -1,28 +1,32 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using Dahomey.Cbor.Attributes;
 
 namespace SurrealDb.Net.Tests;
 
 public class SessionInfo
 {
     [JsonPropertyName("ns")]
+    [CborProperty("ns")]
     public string Namespace { get; set; } = string.Empty;
 
     [JsonPropertyName("db")]
+    [CborProperty("db")]
     public string Database { get; set; } = string.Empty;
 }
 
 public class ConnectTests
 {
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldConnect(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldConnect(string connectionString)
     {
         Func<Task> func = async () =>
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
 
             await client.Connect();
         };

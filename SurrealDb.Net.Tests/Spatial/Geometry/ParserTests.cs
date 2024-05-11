@@ -20,9 +20,10 @@ public class GeometryCollectionRecord : Record<GeometryCollection> { }
 public class ParserTests
 {
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseGeometryPointFromTuple(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseGeometryPointFromTuple(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -35,7 +36,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -50,9 +51,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseGeometryPoint(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseGeometryPoint(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -65,7 +67,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -80,9 +82,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseGeometryLineString(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseGeometryLineString(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -95,7 +98,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -117,9 +120,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseGeometryPolygon(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseGeometryPolygon(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -132,7 +136,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -171,9 +175,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseGeometryMultiPoint(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseGeometryMultiPoint(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -186,7 +191,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -210,9 +215,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseGeometryMultiLineString(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseGeometryMultiLineString(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -225,7 +231,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -273,9 +279,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseGeometryMultiPolygon(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseGeometryMultiPolygon(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -288,7 +295,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -352,9 +359,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseGeometryCollection(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseGeometryCollection(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -367,7 +375,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 

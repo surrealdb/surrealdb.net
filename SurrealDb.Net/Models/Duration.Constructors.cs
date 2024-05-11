@@ -22,4 +22,10 @@ public readonly partial struct Duration
             .Where(kv => kv.value != 0)
             .ToDictionary(kv => kv.unit, kv => (int)kv.value);
     }
+
+    internal Duration(long? seconds, int? nanos)
+    {
+        _unitValues = DurationParser.Convert(seconds, nanos);
+        _value = ""; // TODO
+    }
 }

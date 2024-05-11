@@ -12,6 +12,7 @@ public class SurrealDbOptionsBuilder
     private string? _password;
     private string? _token;
     private string? _namingPolicy;
+    private string? _serialization;
 
     /// <summary>
     /// Parses the connection string and set the configuration accordingly.
@@ -65,6 +66,9 @@ public class SurrealDbOptionsBuilder
                     break;
                 case "namingpolicy":
                     _namingPolicy = value;
+                    break;
+                case "serialization":
+                    _serialization = value;
                     break;
             }
         }
@@ -142,6 +146,34 @@ public class SurrealDbOptionsBuilder
         throw new ArgumentException($"Invalid naming policy: {namingPolicy}", nameof(namingPolicy));
     }
 
+    public SurrealDbOptionsBuilder WithSerialization(string serialization)
+    {
+        EnsuresSerialization(serialization);
+
+        _serialization = serialization;
+        return this;
+    }
+
+    private static void EnsuresSerialization(string serialization)
+    {
+        if (string.IsNullOrWhiteSpace(serialization))
+        {
+            return;
+        }
+
+        string[] validSerializations = [SerializationConstants.JSON, SerializationConstants.CBOR];
+
+        if (validSerializations.Contains(serialization.ToLowerInvariant()))
+        {
+            return;
+        }
+
+        throw new ArgumentException(
+            $"Invalid serialization: {serialization}",
+            nameof(serialization)
+        );
+    }
+
     public SurrealDbOptions Build()
     {
         return new SurrealDbOptions
@@ -152,7 +184,8 @@ public class SurrealDbOptionsBuilder
             Username = _username,
             Password = _password,
             Token = _token,
-            NamingPolicy = _namingPolicy
+            NamingPolicy = _namingPolicy,
+            Serialization = _serialization
         };
     }
 }

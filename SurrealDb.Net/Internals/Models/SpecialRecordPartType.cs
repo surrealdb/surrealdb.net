@@ -4,5 +4,6 @@ internal enum SpecialRecordPartType
 {
     None,
     JsonObject,
-    JsonArray
+    JsonArray,
+    SerializedCbor
 }

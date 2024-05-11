@@ -56,6 +56,24 @@ public partial class Thing
 
         _isTableEscaped = IsStringEscaped(thing.AsSpan(0, _separatorIndex));
         _isIdEscaped = IsStringEscaped(thing.AsSpan(_separatorIndex + 1));
+
+        if (!_isIdEscaped && IdSpan.Length >= 2)
+        {
+            char start = IdSpan[0];
+            char end = IdSpan[^1];
+
+            bool isJsonObject = start == '{' && end == '}';
+            if (isJsonObject)
+            {
+                _specialRecordIdType = SpecialRecordPartType.JsonObject;
+            }
+
+            bool isJsonArray = start == '[' && end == ']';
+            if (isJsonArray)
+            {
+                _specialRecordIdType = SpecialRecordPartType.JsonArray;
+            }
+        }
     }
 
     /// <summary>
@@ -88,5 +106,20 @@ public partial class Thing
     {
         _specialTableType = specialTableType;
         _specialRecordIdType = specialRecordIdType;
+    }
+
+    internal Thing(
+        ReadOnlySpan<char> table,
+        SpecialRecordPartType specialTableType,
+        ReadOnlyMemory<byte> id
+    )
+    {
+        _specialTableType = specialTableType;
+        _specialRecordIdType = SpecialRecordPartType.SerializedCbor;
+
+        _raw = table.ToString().AsMemory();
+        _separatorIndex = table.Length;
+        _isTableEscaped = IsStringEscaped(table);
+        _serializedCborId = id;
     }
 }

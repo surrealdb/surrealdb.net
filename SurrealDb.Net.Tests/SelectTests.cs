@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json.Serialization;
+using Dahomey.Cbor.Attributes;
 
 namespace SurrealDb.Net.Tests;
 
@@ -8,31 +9,35 @@ public class Empty : SurrealDbRecord { }
 public class Post : SurrealDbRecord
 {
     public string Title { get; set; } = string.Empty;
-
     public string Content { get; set; } = string.Empty;
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [CborIgnoreIfDefault]
     public DateTime? CreatedAt { get; set; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [CborIgnoreIfDefault]
     public string? Status { get; set; }
 }
 
 public class ObjectTableId
 {
     [JsonPropertyName("location")]
+    [CborProperty("location")]
     public string Location { get; set; } = string.Empty;
 
     [JsonPropertyName("year")]
+    [CborProperty("year")]
     public int Year { get; set; }
 }
 
 public class SelectTests
 {
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldSelectFromEmptyTable(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldSelectFromEmptyTable(string connectionString)
     {
         IEnumerable<Empty>? result = null;
 
@@ -41,7 +46,7 @@ public class SelectTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -54,9 +59,10 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldSelectFromPostTable(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldSelectFromPostTable(string connectionString)
     {
         IEnumerable<Post>? result = null;
 
@@ -73,7 +79,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
@@ -105,9 +111,10 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldSelectSinglePostUsingTwoArguments(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldSelectSinglePostUsingTwoArguments(string connectionString)
     {
         Post? result = null;
 
@@ -124,7 +131,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
@@ -142,9 +149,10 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldSelectSinglePostUsingThing(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldSelectSinglePostUsingThing(string connectionString)
     {
         Post? result = null;
 
@@ -161,7 +169,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
@@ -181,9 +189,10 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldSelectSingleFromNumberId(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldSelectSingleFromNumberId(string connectionString)
     {
         RecordIdRecord? result = null;
 
@@ -200,7 +209,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
@@ -217,9 +226,10 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldSelectSingleFromStringId(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldSelectSingleFromStringId(string connectionString)
     {
         RecordIdRecord? result = null;
 
@@ -236,7 +246,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
@@ -253,9 +263,10 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldSelectSingleFromGuidId(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldSelectSingleFromGuidId(string connectionString)
     {
         RecordIdRecord? result = null;
 
@@ -272,7 +283,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
@@ -289,9 +300,10 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldSelectSingleFromObjectId(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldSelectSingleFromObjectId(string connectionString)
     {
         RecordIdRecord? result = null;
 
@@ -308,7 +320,7 @@ public class SelectTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
@@ -325,9 +337,10 @@ public class SelectTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldSelectSingleFromArrayId(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldSelectSingleFromArrayId(string connectionString)
     {
         RecordIdRecord? result = null;
 
@@ -344,12 +357,12 @@ public class SelectTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
 
-            var thing = Thing.From("thing", new List<object> { "London", 2023 });
+            var thing = Thing.From("thing", new object[] { "London", 2023 });
 
             result = await client.Select<RecordIdRecord>(thing);
         };

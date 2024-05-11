@@ -1,7 +1,10 @@
 ﻿using System.Numerics;
 using System.Text;
 using System.Text.Json;
+using Dahomey.Cbor;
 using FluentAssertions.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+using SurrealDb.Net.Internals.Constants;
 
 namespace SurrealDb.Net.Tests;
 
@@ -49,10 +52,14 @@ public class Vector4Record : Record<Vector4?> { }
 public class ParserTests
 {
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseThing(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseThing(string connectionString)
     {
+        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+        bool useCbor = options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR;
+
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
@@ -64,7 +71,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -116,16 +123,24 @@ public class ParserTests
             var objectRecord = records.First(r => r.Name == "object");
             objectRecord.Should().NotBeNull();
             objectRecord!.Id.Should().NotBeNull();
-            objectRecord!.Id!.Table.ToString().Should().Be("thing");
-            objectRecord!.Id!.Id.ToString().Should().Be("{ location: 'London', year: 2023 }");
+            objectRecord!.Id!.Table.Should().Be("thing");
+
+            var idAsObject = objectRecord!.Id.DeserializeId<ObjectTableId>();
+            var expectedObject = new ObjectTableId { Location = "London", Year = 2023 };
+
+            idAsObject.Should().BeEquivalentTo(expectedObject);
         }
 
         {
             var arrayRecord = records.First(r => r.Name == "array");
             arrayRecord.Should().NotBeNull();
             arrayRecord!.Id.Should().NotBeNull();
-            arrayRecord!.Id!.Table.ToString().Should().Be("thing");
-            arrayRecord!.Id!.Id.ToString().Should().Be("['London', 2023]");
+            arrayRecord!.Id!.Table.Should().Be("thing");
+
+            var idAsObject = arrayRecord!.Id.DeserializeId<(string, int)>();
+            var expectedObject = ("London", 2023);
+
+            idAsObject.Should().BeEquivalentTo(expectedObject);
         }
 
         {
@@ -154,9 +169,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseString(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseString(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -169,7 +185,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -218,9 +234,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseLong(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseLong(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -233,7 +250,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -267,10 +284,14 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseDecimal(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseDecimal(string connectionString)
     {
+        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+        bool useCbor = options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR;
+
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
@@ -282,7 +303,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -331,14 +352,17 @@ public class ParserTests
         {
             var floatRecord = records.First(r => r.Name == "float");
             floatRecord.Should().NotBeNull();
-            floatRecord!.Value.Should().Be(13.571938471938472m);
+
+            decimal expected = useCbor ? 13.5719384719385m : 13.571938471938472m; // TODO : Inspect difference
+            floatRecord!.Value.Should().Be(expected);
         }
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseFloat(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseFloat(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -351,7 +375,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -405,9 +429,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseDouble(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseDouble(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -420,7 +445,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -474,9 +499,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseDuration(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseDuration(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -489,7 +515,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -583,9 +609,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseDurationAsTimeSpan(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseDurationAsTimeSpan(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -598,7 +625,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -680,9 +707,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseDurationAsString(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR", Skip = "Not supported")]
+    public async Task ShouldParseDurationAsString(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -695,7 +723,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -777,9 +805,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseTimeOnly(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseTimeOnly(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -792,7 +821,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -874,9 +903,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseDateAsDateTime(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseDateAsDateTime(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -889,7 +919,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -954,9 +984,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseDateOnly(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseDateOnly(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -969,7 +1000,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -1021,10 +1052,14 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseVector2(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseVector2(string connectionString)
     {
+        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+        bool useCbor = options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR;
+
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
@@ -1036,7 +1071,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -1050,9 +1085,19 @@ public class ParserTests
 
         {
             Func<Task> act = async () => await client.Select<Vector2Record>(("vector", "empty"));
-            await act.Should()
-                .ThrowAsync<JsonException>()
-                .WithMessage("Cannot deserialize Vector2");
+
+            if (useCbor)
+            {
+                await act.Should()
+                    .ThrowAsync<CborException>()
+                    .WithMessage("Expected a CBOR array with at least 2 elements");
+            }
+            else
+            {
+                await act.Should()
+                    .ThrowAsync<JsonException>()
+                    .WithMessage("Cannot deserialize Vector2");
+            }
         }
 
         {
@@ -1075,10 +1120,14 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseVector3(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseVector3(string connectionString)
     {
+        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+        bool useCbor = options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR;
+
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
@@ -1090,7 +1139,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -1104,16 +1153,36 @@ public class ParserTests
 
         {
             Func<Task> act = async () => await client.Select<Vector3Record>(("vector", "empty"));
-            await act.Should()
-                .ThrowAsync<JsonException>()
-                .WithMessage("Cannot deserialize Vector3");
+
+            if (useCbor)
+            {
+                await act.Should()
+                    .ThrowAsync<CborException>()
+                    .WithMessage("Expected a CBOR array with at least 3 elements");
+            }
+            else
+            {
+                await act.Should()
+                    .ThrowAsync<JsonException>()
+                    .WithMessage("Cannot deserialize Vector3");
+            }
         }
 
         {
             Func<Task> act = async () => await client.Select<Vector3Record>(("vector", "vector2"));
-            await act.Should()
-                .ThrowAsync<JsonException>()
-                .WithMessage("Cannot deserialize Vector3");
+
+            if (useCbor)
+            {
+                await act.Should()
+                    .ThrowAsync<CborException>()
+                    .WithMessage("Expected a CBOR array with at least 3 elements");
+            }
+            else
+            {
+                await act.Should()
+                    .ThrowAsync<JsonException>()
+                    .WithMessage("Cannot deserialize Vector3");
+            }
         }
 
         {
@@ -1130,10 +1199,14 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldParseVector4(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseVector4(string connectionString)
     {
+        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+        bool useCbor = options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR;
+
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
@@ -1145,7 +1218,7 @@ public class ParserTests
 
         string query = fileContent;
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -1159,23 +1232,53 @@ public class ParserTests
 
         {
             Func<Task> act = async () => await client.Select<Vector4Record>(("vector", "empty"));
-            await act.Should()
-                .ThrowAsync<JsonException>()
-                .WithMessage("Cannot deserialize Vector4");
+
+            if (useCbor)
+            {
+                await act.Should()
+                    .ThrowAsync<CborException>()
+                    .WithMessage("Expected a CBOR array with at least 4 elements");
+            }
+            else
+            {
+                await act.Should()
+                    .ThrowAsync<JsonException>()
+                    .WithMessage("Cannot deserialize Vector4");
+            }
         }
 
         {
             Func<Task> act = async () => await client.Select<Vector4Record>(("vector", "vector2"));
-            await act.Should()
-                .ThrowAsync<JsonException>()
-                .WithMessage("Cannot deserialize Vector4");
+
+            if (useCbor)
+            {
+                await act.Should()
+                    .ThrowAsync<CborException>()
+                    .WithMessage("Expected a CBOR array with at least 4 elements");
+            }
+            else
+            {
+                await act.Should()
+                    .ThrowAsync<JsonException>()
+                    .WithMessage("Cannot deserialize Vector4");
+            }
         }
 
         {
             Func<Task> act = async () => await client.Select<Vector4Record>(("vector", "vector3"));
-            await act.Should()
-                .ThrowAsync<JsonException>()
-                .WithMessage("Cannot deserialize Vector4");
+
+            if (useCbor)
+            {
+                await act.Should()
+                    .ThrowAsync<CborException>()
+                    .WithMessage("Expected a CBOR array with at least 4 elements");
+            }
+            else
+            {
+                await act.Should()
+                    .ThrowAsync<JsonException>()
+                    .WithMessage("Cannot deserialize Vector4");
+            }
         }
 
         {

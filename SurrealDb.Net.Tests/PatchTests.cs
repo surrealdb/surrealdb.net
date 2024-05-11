@@ -8,9 +8,10 @@ namespace SurrealDb.Net.Tests;
 public class PatchTests
 {
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldPatchExistingPost(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldPatchExistingPost(string connectionString)
     {
         IEnumerable<Post>? list = null;
         Post? result = null;
@@ -28,7 +29,7 @@ public class PatchTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);

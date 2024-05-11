@@ -8,11 +8,11 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 [CollectionDefinition("LiveQuery")]
 public class FiltersLiveQueryTests : BaseLiveQueryTests
 {
-    [Fact]
-    public async Task ShouldExcludeCloseResultWithGetResults()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldExcludeCloseResultWithGetResults(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         var allResults = new List<SurrealDbLiveQueryResponse>();
         var filteredResults = new List<SurrealDbLiveQueryResponse>();
 
@@ -21,7 +21,7 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -86,11 +86,11 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
         filteredResults.Should().HaveCount(3);
     }
 
-    [Fact]
-    public async Task ShouldGetCreatedRecords()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldGetCreatedRecords(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         var allResults = new List<SurrealDbLiveQueryResponse>();
         var filteredResults = new List<TestRecord>();
 
@@ -99,7 +99,7 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -168,11 +168,11 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
         result.Value.Should().Be(1);
     }
 
-    [Fact]
-    public async Task ShouldGetUpdatedRecords()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldGetUpdatedRecords(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         var allResults = new List<SurrealDbLiveQueryResponse>();
         var filteredResults = new List<TestRecord>();
 
@@ -181,7 +181,7 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -250,11 +250,11 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
         result.Value.Should().Be(2);
     }
 
-    [Fact]
-    public async Task ShouldGetDeletedRecords()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldGetDeletedRecords(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         TestRecord? record = null;
 
         var allResults = new List<SurrealDbLiveQueryResponse>();
@@ -265,7 +265,7 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 

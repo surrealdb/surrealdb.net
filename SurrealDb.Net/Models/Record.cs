@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using Dahomey.Cbor.Attributes;
 using SurrealDb.Net.Internals.Json.Converters;
 
 namespace SurrealDb.Net.Models;
@@ -13,6 +14,8 @@ public abstract class Record
     /// </summary>
     [JsonConverter(typeof(ThingConverter))]
     [JsonPropertyName("id")]
+    [CborProperty("id")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] // 💡 ignore null value to prevent failure on Create operation
+    [CborIgnoreIfDefault]
     public Thing? Id { get; set; }
 }

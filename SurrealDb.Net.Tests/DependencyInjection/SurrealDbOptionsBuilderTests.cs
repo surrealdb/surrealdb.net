@@ -16,6 +16,7 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().BeNull();
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().BeNull();
+        options.Serialization.Should().BeNull();
     }
 
     [Fact]
@@ -30,6 +31,7 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().BeNull();
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().BeNull();
+        options.Serialization.Should().BeNull();
     }
 
     [Fact]
@@ -44,6 +46,7 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().BeNull();
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().BeNull();
+        options.Serialization.Should().BeNull();
     }
 
     [Fact]
@@ -58,6 +61,7 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().BeNull();
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().BeNull();
+        options.Serialization.Should().BeNull();
     }
 
     [Fact]
@@ -72,6 +76,7 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().BeNull();
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().BeNull();
+        options.Serialization.Should().BeNull();
     }
 
     [Fact]
@@ -86,6 +91,7 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().Be("password");
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().BeNull();
+        options.Serialization.Should().BeNull();
     }
 
     [Fact]
@@ -108,6 +114,7 @@ public class SurrealDbOptionsBuilderTests
                 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
             );
         options.NamingPolicy.Should().BeNull();
+        options.Serialization.Should().BeNull();
     }
 
     [Theory]
@@ -127,6 +134,7 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().BeNull();
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().Be(namingPolicy);
+        options.Serialization.Should().BeNull();
     }
 
     [Fact]
@@ -137,11 +145,36 @@ public class SurrealDbOptionsBuilderTests
         act.Should().Throw<ArgumentException>().WithParameterName("namingPolicy");
     }
 
+    [Theory]
+    [InlineData("JSON")]
+    [InlineData("CBOR")]
+    public void ShouldCreateWithSerialization(string serialization)
+    {
+        var options = new SurrealDbOptionsBuilder().WithSerialization(serialization).Build();
+
+        options.Endpoint.Should().BeNull();
+        options.Namespace.Should().BeNull();
+        options.Database.Should().BeNull();
+        options.Username.Should().BeNull();
+        options.Password.Should().BeNull();
+        options.Token.Should().BeNull();
+        options.NamingPolicy.Should().BeNull();
+        options.Serialization.Should().Be(serialization);
+    }
+
+    [Fact]
+    public void ShouldFailToCreateWithIncorrectSerialization()
+    {
+        Action act = () => new SurrealDbOptionsBuilder().WithSerialization("test").Build();
+
+        act.Should().Throw<ArgumentException>().WithParameterName("serialization");
+    }
+
     [Fact]
     public void ShouldCreateFromConnectionString()
     {
         var connectionString =
-            "Server=http://127.0.0.1:8000;Namespace=test;Database=test;Username=root;Password=root;NamingPolicy=CamelCase";
+            "Server=http://127.0.0.1:8000;Namespace=test;Database=test;Username=root;Password=root;NamingPolicy=CamelCase;Serialization=CBOR";
 
         var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
 
@@ -152,6 +185,7 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().Be("root");
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().Be("CamelCase");
+        options.Serialization.Should().Be("CBOR");
     }
 
     [Fact]
@@ -168,6 +202,7 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().Be("root");
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().BeNull();
+        options.Serialization.Should().BeNull();
     }
 
     [Fact]
@@ -189,5 +224,6 @@ public class SurrealDbOptionsBuilderTests
                 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
             );
         options.NamingPolicy.Should().BeNull();
+        options.Serialization.Should().BeNull();
     }
 }

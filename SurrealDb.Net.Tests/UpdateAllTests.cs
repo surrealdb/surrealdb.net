@@ -5,9 +5,10 @@ namespace SurrealDb.Net.Tests;
 public class UpdateAllTests
 {
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldUpdateAllRecords(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldUpdateAllRecords(string connectionString)
     {
         IEnumerable<Post>? list = null;
         IEnumerable<Post>? results = null;
@@ -27,7 +28,7 @@ public class UpdateAllTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);

@@ -10,14 +10,14 @@ public class LiveTableTests : BaseLiveQueryTests
     [Fact]
     public async Task ShouldNotBeSupportedOnHttpProtocol()
     {
-        const string url = "http://127.0.0.1:8000";
+        const string connectionString = "Endpoint=http://127.0.0.1:8000";
 
         Func<Task> func = async () =>
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -27,11 +27,11 @@ public class LiveTableTests : BaseLiveQueryTests
         await func.Should().ThrowAsync<NotSupportedException>();
     }
 
-    [Fact]
-    public async Task ShouldReceiveData()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldReceiveData(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         var allResults = new List<SurrealDbLiveQueryResponse>();
 
         Func<Task> func = async () =>
@@ -39,7 +39,7 @@ public class LiveTableTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -103,11 +103,11 @@ public class LiveTableTests : BaseLiveQueryTests
         lastResult.Should().BeOfType<SurrealDbLiveQueryCloseResponse>();
     }
 
-    [Fact(Skip = "The DELETE event does not send a JsonPatchDocument at the moment")]
-    public async Task ShouldReceiveDataInJsonPatchFormat()
+    [Theory(Skip = "The DELETE event does not send a JsonPatchDocument at the moment")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldReceiveDataInJsonPatchFormat(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         var allResults = new List<SurrealDbLiveQueryResponse>();
 
         Func<Task> func = async () =>
@@ -115,7 +115,7 @@ public class LiveTableTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 

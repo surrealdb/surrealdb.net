@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using SurrealDb.Net.Internals.Models;
+﻿using SurrealDb.Net.Internals.Models;
 
 namespace SurrealDb.Net.Models;
 
@@ -11,6 +10,7 @@ public partial class Thing
     private readonly bool _isIdEscaped;
     private readonly SpecialRecordPartType _specialTableType = SpecialRecordPartType.None;
     private readonly SpecialRecordPartType _specialRecordIdType = SpecialRecordPartType.None;
+    private readonly ReadOnlyMemory<byte>? _serializedCborId;
 
     private int _startTableIndex => 0;
     private int _endTableIndex => _separatorIndex - 1;
@@ -46,5 +46,19 @@ public partial class Thing
     internal ReadOnlySpan<char> IdSpan => _raw.Span[_startIdIndex..];
 
     public string Table => _raw.Span[.._separatorIndex].ToString();
-    public string Id => _raw.Span[_startIdIndex..].ToString();
+
+    public string Id
+    {
+        get
+        {
+            if (_specialRecordIdType != SpecialRecordPartType.None)
+            {
+                throw new NotSupportedException(
+                    $"Cannot get a serialized id. Please use the {nameof(DeserializeId)} function."
+                );
+            }
+
+            return _raw.Span[_startIdIndex..].ToString();
+        }
+    }
 }
