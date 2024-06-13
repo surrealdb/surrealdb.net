@@ -383,6 +383,11 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.Upsert(data, cancellationToken);
     }
 
+    public Task<T> Upsert<T>(Thing id, T data, CancellationToken cancellationToken = default)
+    {
+        return _engine.Upsert(id, data, cancellationToken);
+    }
+
     public Task Use(string ns, string db, CancellationToken cancellationToken = default)
     {
         return _engine.Use(ns, db, cancellationToken);

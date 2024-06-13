@@ -89,6 +89,7 @@ internal interface ISurrealDbEngine : IDisposable
         where T : class;
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record;
+    Task<T> Upsert<T>(Thing id, T data, CancellationToken cancellationToken);
     Task Use(string ns, string db, CancellationToken cancellationToken);
     Task<string> Version(CancellationToken cancellationToken);
 }
