@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Net.WebSockets;
@@ -804,15 +804,23 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<T>();
     }
 
-    public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
+    public Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record
     {
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
+        return Upsert(data.Id, data, cancellationToken);
+    }
+
+    public async Task<T> Upsert<T>(Thing id, T data, CancellationToken cancellationToken)
+    {
+        if (id is null)
+            throw new SurrealDbException("Cannot create a record without an Id");
+
         var dbResponse = await SendRequestAsync(
                 "update",
-                new() { data.Id.ToWsString(), data },
+                new() { id.ToWsString(), data },
                 true,
                 cancellationToken
             )

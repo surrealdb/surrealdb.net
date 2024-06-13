@@ -512,6 +512,20 @@ public interface ISurrealDbClient : IDisposable
         where T : Record;
 
     /// <summary>
+    /// Updates or creates the specified record in the database.
+    /// </summary>
+    /// <typeparam name="T">The type of the data to create or update.</typeparam>
+    /// <param name="id">The id of the record.</param>
+    /// <param name="data">The date to create or update.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created or updated.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<T> Upsert<T>(Thing id, T data, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Switch to a specific namespace and database.
     /// </summary>
     /// <param name="ns">Name of the namespace</param>

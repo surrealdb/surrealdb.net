@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using System.Dynamic;
 using System.Globalization;
 using System.Net.Http.Headers;
@@ -652,18 +652,26 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return okResult.GetValues<T>();
     }
 
-    public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
+    public Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record
+    {
+        if (data.Id is null)
+            throw new SurrealDbException("Cannot create a record without an Id");
+
+        return Upsert(data.Id, data, cancellationToken);
+    }
+
+    public async Task<T> Upsert<T>(Thing id, T data, CancellationToken cancellationToken)
     {
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(data);
 
-        if (data.Id is null)
+        if (id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
         using var response = await wrapper
             .Instance.PutAsync(
-                $"/key/{data.Id.Table}/{data.Id.UnescapedId}",
+                $"/key/{id.Table}/{id.UnescapedId}",
                 body,
                 cancellationToken
             )
