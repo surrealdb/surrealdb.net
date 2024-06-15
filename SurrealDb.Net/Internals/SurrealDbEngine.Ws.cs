@@ -4,6 +4,7 @@ using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ConcurrentCollections;
 using Dahomey.Cbor;
 using Semver;
 using SurrealDb.Net.Exceptions;
@@ -72,6 +73,10 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     private readonly SemaphoreSlim _semaphoreConnect = new(1, 1);
 
     private bool _isInitialized;
+
+#if DEBUG
+    public string Id => _id;
+#endif
 
     public SurrealDbWsEngine(
         SurrealDbClientParams parameters,
@@ -338,6 +343,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
     {
         await SendRequestAsync("authenticate", [jwt.Token], priority, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task Clear(CancellationToken cancellationToken)
+    {
+        await SendRequestAsync("clear", null, SurrealDbWsRequestPriority.Normal, cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -1067,6 +1078,68 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         _liveQueryChannelSubscriptions.Add(liveQueryChannel);
 
         return liveQueryChannel;
+    }
+
+    public bool TryReset()
+    {
+        try
+        {
+            // Cancel all response tasks
+            foreach (var (key, value) in _responseTaskHandler)
+            {
+                _responseTaskHandler.TryRemove(key, out _);
+                value.TrySetCanceled();
+            }
+
+            // Clear server context
+            Clear(default).ConfigureAwait(false).GetAwaiter().GetResult();
+
+            // Reset configuration
+            _config.Reset(_parameters);
+
+            // Apply configuration for connection reuse (neutral state)
+            ApplyConfigurationAsync(default).ConfigureAwait(false).GetAwaiter().GetResult();
+
+            // Close Live Queries
+            var endChannelsTasks = new List<Task>();
+
+            foreach (var (key, value) in _liveQueryChannelSubscriptionsPerQuery)
+            {
+                if (
+                    value.WsEngineId == _id
+                    && _liveQueryChannelSubscriptionsPerQuery.TryRemove(
+                        key,
+                        out var _liveQueryChannelSubscriptions
+                    )
+                )
+                {
+                    foreach (var liveQueryChannel in _liveQueryChannelSubscriptions)
+                    {
+                        var closeTask = CloseLiveQueryAsync(
+                            liveQueryChannel,
+                            SurrealDbLiveQueryClosureReason.ConnectionTerminated
+                        );
+                        endChannelsTasks.Add(closeTask);
+                    }
+                }
+            }
+
+            if (endChannelsTasks.Count > 0)
+            {
+                try
+                {
+                    Task.WhenAll(endChannelsTasks).ConfigureAwait(false).GetAwaiter().GetResult();
+                }
+                catch (SurrealDbException) { }
+                catch (OperationCanceledException) { }
+            }
+
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     public async Task Unset(string key, CancellationToken cancellationToken)

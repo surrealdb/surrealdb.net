@@ -1,4 +1,5 @@
-﻿using Dahomey.Cbor;
+using Dahomey.Cbor;
+using Microsoft.Extensions.ObjectPool;
 using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Models;
@@ -9,9 +10,14 @@ using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.Internals;
 
-public interface ISurrealDbEngine : IDisposable
+public interface ISurrealDbEngine : IDisposable, IResettable
 {
+#if DEBUG
+    string Id { get; }
+#endif
+
     Task Authenticate(Jwt jwt, CancellationToken cancellationToken);
+    Task Clear(CancellationToken cancellationToken);
     void Configure(string? ns, string? db, string? username, string? password);
     void Configure(string? ns, string? db, string? token = null);
     Task Connect(CancellationToken cancellationToken);

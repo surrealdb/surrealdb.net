@@ -1,6 +1,7 @@
 ﻿using System.Buffers;
 using System.Collections.Immutable;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -62,6 +63,13 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     private HttpClientConfiguration? _singleHttpClientConfiguration;
     private readonly SurrealDbHttpEngineConfig _config = new();
 
+    private int _pendingRequests;
+
+#if DEBUG
+    private string _id = Guid.NewGuid().ToString();
+    public string Id => _id;
+#endif
+
     public SurrealDbHttpEngine(
         SurrealDbClientParams parameters,
         IHttpClientFactory? httpClientFactory,
@@ -92,6 +100,17 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
 
         _config.SetBearerAuth(jwt.Token);
+    }
+
+    public async Task Clear(CancellationToken cancellationToken)
+    {
+        if (_pendingRequests > 0)
+        {
+            throw new SurrealDbException("Cannot clear client while requests are pending.");
+        }
+
+        var request = new SurrealDbHttpRequest { Method = "clear" };
+        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
     public void Configure(string? ns, string? db, string? username, string? password)
@@ -647,6 +666,20 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         throw new NotSupportedException();
     }
 
+    public bool TryReset()
+    {
+        try
+        {
+            Clear(default).ConfigureAwait(false).GetAwaiter().GetResult();
+            _config.Reset(_parameters);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     public Task Unset(string key, CancellationToken _)
     {
         if (key is null)
@@ -932,14 +965,28 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
+        Interlocked.Increment(ref _pendingRequests);
+
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(request);
 
-        using var response = await wrapper
-            .Instance.PostAsync(RPC_ENDPOINT, body, cancellationToken)
-            .ConfigureAwait(false);
+        try
+        {
+            using var response = await wrapper
+                .Instance.PostAsync(RPC_ENDPOINT, body, cancellationToken)
+                .ConfigureAwait(false);
 
-        return await DeserializeDbResponseAsync(response, cancellationToken).ConfigureAwait(false);
+            return await DeserializeDbResponseAsync(response, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch
+        {
+            throw;
+        }
+        finally
+        {
+            Interlocked.Decrement(ref _pendingRequests);
+        }
     }
 
     private async Task<SurrealDbHttpOkResponse> DeserializeDbResponseAsync(
