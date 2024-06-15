@@ -32,32 +32,34 @@ public class ScenarioBench : BaseRemoteBenchmark
                         SurrealDbOptions
                             .Create()
                             .WithEndpoint(HttpUrl)
+                            .WithNamespace(dbInfo.Namespace)
+                            .WithDatabase(dbInfo.Database)
+                            .WithUsername("root")
+                            .WithPassword("root")
                             .WithNamingPolicy(NamingPolicy)
                             .Build()
                     );
-                    InitializeSurrealDbClient(_surrealdbHttpClient, dbInfo);
                     await _surrealdbHttpClient.Connect();
                     break;
                 case 1:
                     _surrealdbHttpClientWithHttpClientFactory = clientGenerator.Create(
-                        $"Endpoint={HttpUrl}"
+                        $"Endpoint={HttpUrl};NS={dbInfo.Namespace};DB={dbInfo.Database};user=root;pass=root"
                     );
-                    InitializeSurrealDbClient(_surrealdbHttpClientWithHttpClientFactory, dbInfo);
                     await _surrealdbHttpClientWithHttpClientFactory.Connect();
                     break;
                 case 2:
-                    if (JsonSerializer.IsReflectionEnabledByDefault)
-                    {
-                        _surrealdbWsBinaryClient = new SurrealDbClient(
-                            SurrealDbOptions
-                                .Create()
-                                .WithEndpoint(WsUrl)
-                                .WithNamingPolicy(NamingPolicy)
-                                .Build()
-                        );
-                        InitializeSurrealDbClient(_surrealdbWsBinaryClient, dbInfo);
-                        await _surrealdbWsBinaryClient.Connect();
-                    }
+                    _surrealdbWsBinaryClient = new SurrealDbClient(
+                        SurrealDbOptions
+                            .Create()
+                            .WithEndpoint(WsUrl)
+                            .WithNamespace(dbInfo.Namespace)
+                            .WithDatabase(dbInfo.Database)
+                            .WithUsername("root")
+                            .WithPassword("root")
+                            .WithNamingPolicy(NamingPolicy)
+                            .Build()
+                    );
+                    await _surrealdbWsBinaryClient.Connect();
                     break;
             }
         }

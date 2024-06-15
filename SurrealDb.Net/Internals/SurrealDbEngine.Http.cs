@@ -35,7 +35,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     private readonly ISurrealDbLoggerFactory? _surrealDbLoggerFactory;
     private readonly Lazy<HttpClient> _singleHttpClient = new(() => new HttpClient(), true);
     private HttpClientConfiguration? _singleHttpClientConfiguration;
-    private readonly SurrealDbHttpEngineConfig _config = new();
+    private readonly SurrealDbHttpEngineConfig _config;
 
     public SurrealDbHttpEngine(
         SurrealDbOptions parameters,
@@ -49,6 +49,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         _httpClientFactory = httpClientFactory;
         _configureCborOptions = configureCborOptions;
         _surrealDbLoggerFactory = surrealDbLoggerFactory;
+        _config = new(_parameters);
     }
 
     public async Task Authenticate(Jwt jwt, CancellationToken cancellationToken)
@@ -62,24 +63,6 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
 
         _config.SetBearerAuth(jwt.Token);
-    }
-
-    public void Configure(string? ns, string? db, string? username, string? password)
-    {
-        if (ns is not null)
-            _config.Use(ns, db);
-
-        if (username is not null)
-            _config.SetBasicAuth(username, password);
-    }
-
-    public void Configure(string? ns, string? db, string? token = null)
-    {
-        if (ns is not null)
-            _config.Use(ns, db);
-
-        if (token is not null)
-            _config.SetBearerAuth(token);
     }
 
     public async Task Connect(CancellationToken cancellationToken)

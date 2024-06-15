@@ -101,16 +101,6 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
                     ),
             _ => throw new NotSupportedException($"The protocol '{protocol}' is not supported."),
         };
-
-        if (configuration.Username is not null)
-            Configure(
-                configuration.Namespace,
-                configuration.Database,
-                configuration.Username,
-                configuration.Password
-            );
-        else
-            Configure(configuration.Namespace, configuration.Database, configuration.Token);
     }
 
     private ISurrealDbInMemoryEngine? ResolveInMemoryProvider(

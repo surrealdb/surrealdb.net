@@ -19,16 +19,6 @@ public abstract partial class BaseSurrealDbClient
         return _engine.Authenticate(jwt, cancellationToken);
     }
 
-    public void Configure(string? ns, string? db, string? username, string? password)
-    {
-        _engine.Configure(ns, db, username, password);
-    }
-
-    public void Configure(string? ns, string? db, string? token = null)
-    {
-        _engine.Configure(ns, db, token);
-    }
-
     public Task Connect(CancellationToken cancellationToken = default)
     {
         return _engine.Connect(cancellationToken);
