@@ -32,6 +32,10 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     private bool _isConnected;
     private bool _isInitialized;
 
+#if DEBUG
+    public string Id => _id.ToString();
+#endif
+
     static SurrealDbInMemoryEngine()
     {
         NativeMethods.create_global_runtime();
@@ -61,6 +65,11 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     public Task Authenticate(Jwt jwt, CancellationToken cancellationToken)
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
+    }
+
+    public Task Clear(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
     }
 
     public void Configure(string? ns, string? db, string? username, string? password)
@@ -490,6 +499,12 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     public SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id)
     {
         throw new NotSupportedException();
+    }
+
+    public bool TryReset()
+    {
+        // 💡 No reuse needed when embedded
+        return false;
     }
 
     public async Task Unset(string key, CancellationToken cancellationToken)

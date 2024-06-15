@@ -1,4 +1,6 @@
-﻿namespace SurrealDb.Embedded.InMemory.Internals;
+﻿using SurrealDb.Net.Internals.Models;
+
+namespace SurrealDb.Embedded.InMemory.Internals;
 
 internal class SurrealDbEmbeddedEngineConfig
 {
@@ -15,5 +17,11 @@ internal class SurrealDbEmbeddedEngineConfig
     {
         Ns = null;
         Db = null;
+    }
+
+    public void Reset(SurrealDbClientParams @params)
+    {
+        Ns = @params.Ns;
+        Db = @params.Db;
     }
 }

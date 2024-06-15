@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Exceptions;
+﻿using Microsoft.Extensions.ObjectPool;
+using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
