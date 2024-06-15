@@ -9,6 +9,11 @@ internal class SurrealDbWsEngineConfig
     public string? Ns { get; private set; }
     public string? Db { get; private set; }
 
+    public SurrealDbWsEngineConfig(SurrealDbClientParams @params)
+    {
+        Reset(@params);
+    }
+
     public void Use(string ns, string? db)
     {
         Ns = ns;

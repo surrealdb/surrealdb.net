@@ -12,6 +12,11 @@ internal class SurrealDbHttpEngineConfig
     private readonly Dictionary<string, object> _parameters = new();
     public IReadOnlyDictionary<string, object> Parameters => _parameters;
 
+    public SurrealDbHttpEngineConfig(SurrealDbClientParams @params)
+    {
+        Reset(@params);
+    }
+
     public void Use(string ns, string? db)
     {
         Ns = ns;
