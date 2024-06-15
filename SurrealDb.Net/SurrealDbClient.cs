@@ -160,11 +160,6 @@ public class SurrealDbClient : ISurrealDbClient
                     ),
             _ => throw new NotSupportedException($"The protocol '{protocol}' is not supported."),
         };
-
-        if (parameters.Username is not null)
-            Configure(parameters.Ns, parameters.Db, parameters.Username, parameters.Password);
-        else
-            Configure(parameters.Ns, parameters.Db, parameters.Token);
     }
 
     internal SurrealDbClient(
@@ -195,16 +190,6 @@ public class SurrealDbClient : ISurrealDbClient
     public Task Authenticate(Jwt jwt, CancellationToken cancellationToken = default)
     {
         return Engine.Authenticate(jwt, cancellationToken);
-    }
-
-    public void Configure(string? ns, string? db, string? username, string? password)
-    {
-        Engine.Configure(ns, db, username, password);
-    }
-
-    public void Configure(string? ns, string? db, string? token = null)
-    {
-        Engine.Configure(ns, db, token);
     }
 
     public Task Connect(CancellationToken cancellationToken = default)
