@@ -35,8 +35,8 @@ public class ObjectPoolTests
             await client2.Use(dbInfo.Namespace, dbInfo.Database);
             engine2 = client2.Engine;
 
-            client1.Dispose();
-            client2.Dispose();
+            await client1.DisposeAsync();
+            await client2.DisposeAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -71,7 +71,7 @@ public class ObjectPoolTests
             await client1.Use(dbInfo.Namespace, dbInfo.Database);
             engine1 = client1.Engine;
 
-            client1.Dispose();
+            await client1.DisposeAsync();
 
             using var scope2 = surrealDbClientGenerator.CreateScope()!;
 
@@ -80,7 +80,7 @@ public class ObjectPoolTests
             await client2.Use(dbInfo.Namespace, dbInfo.Database);
             engine2 = client2.Engine;
 
-            client2.Dispose();
+            await client2.DisposeAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -142,11 +142,11 @@ public class ObjectPoolTests
 
             userSession1 = await client1.Info<User>();
 
-            client1.Dispose();
+            await client1.DisposeAsync();
 
             using var scope2 = surrealDbClientGenerator.CreateScope()!;
 
-            using var client2 = scope2.ServiceProvider.GetRequiredService<SurrealDbClient>();
+            await using var client2 = scope2.ServiceProvider.GetRequiredService<SurrealDbClient>();
             await client2.Use(dbInfo.Namespace, dbInfo.Database);
 
             userSession2 = await client2.Info<User>();
@@ -178,13 +178,13 @@ public class ObjectPoolTests
 
             using var scope1 = surrealDbClientGenerator.CreateScope()!;
 
-            var client1 = scope1.ServiceProvider.GetRequiredService<SurrealDbClient>();
+            await using var client1 = scope1.ServiceProvider.GetRequiredService<SurrealDbClient>();
             await client1.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client1.Use(dbInfo.Namespace, dbInfo.Database);
 
             using var scope2 = surrealDbClientGenerator.CreateScope()!;
 
-            var client2 = scope2.ServiceProvider.GetRequiredService<SurrealDbClient>();
+            await using var client2 = scope2.ServiceProvider.GetRequiredService<SurrealDbClient>();
             await client2.SignIn(new RootAuth { Username = "root", Password = "root" });
 
             var response = await client2.Query($"SELECT * FROM $session;");
