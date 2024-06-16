@@ -1,7 +1,7 @@
-using Dahomey.Cbor;
-using Microsoft.Extensions.ObjectPool;
+﻿using Dahomey.Cbor;
 using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Internals.Models.LiveQuery;
+using SurrealDb.Net.Internals.ObjectPool;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -10,7 +10,7 @@ using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.Internals;
 
-public interface ISurrealDbEngine : IDisposable, IResettable
+public interface ISurrealDbEngine : IDisposable, IAsyncResettable
 {
 #if DEBUG
     string Id { get; }

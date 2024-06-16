@@ -110,6 +110,12 @@ public class SurrealDbMemoryClient : ISurrealDbClient
         _engine.Dispose();
     }
 
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+        return ValueTask.CompletedTask;
+    }
+
     public Task<bool> Health(CancellationToken cancellationToken = default)
     {
         return _engine.Health(cancellationToken);

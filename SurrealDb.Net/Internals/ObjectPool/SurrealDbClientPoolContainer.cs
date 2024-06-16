@@ -1,24 +1,21 @@
-﻿using Microsoft.Extensions.ObjectPool;
+﻿namespace SurrealDb.Net.Internals.ObjectPool;
 
-namespace SurrealDb.Net.Internals.ObjectPool;
-
-internal class SurrealDbClientPoolContainer : IResettable
+internal class SurrealDbClientPoolContainer : IDisposable, IAsyncResettable
 {
     public ISurrealDbEngine? ClientEngine { get; set; }
 
-    public bool TryReset()
+    public Task<bool> TryResetAsync()
     {
         if (ClientEngine is null)
         {
-            return false;
+            return Task.FromResult(false);
         }
 
-        bool isReset = ClientEngine.TryReset();
-        if (!isReset)
-        {
-            ClientEngine.Dispose();
-        }
+        return ClientEngine.TryResetAsync();
+    }
 
-        return isReset;
+    public void Dispose()
+    {
+        ClientEngine?.Dispose();
     }
 }

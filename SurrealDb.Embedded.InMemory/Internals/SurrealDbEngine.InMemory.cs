@@ -1,5 +1,4 @@
-﻿using System.Net;
-using System.Reactive;
+﻿using System.Reactive;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -501,10 +500,10 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         throw new NotSupportedException();
     }
 
-    public bool TryReset()
+    public Task<bool> TryResetAsync()
     {
         // 💡 No reuse needed when embedded
-        return false;
+        return Task.FromResult(false);
     }
 
     public async Task Unset(string key, CancellationToken cancellationToken)

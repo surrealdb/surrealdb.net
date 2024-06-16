@@ -649,11 +649,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         throw new NotSupportedException();
     }
 
-    public bool TryReset()
+    public async Task<bool> TryResetAsync()
     {
         try
         {
-            Clear(default).ConfigureAwait(false).GetAwaiter().GetResult();
+            await Clear(default).ConfigureAwait(false);
             _config.Reset(_parameters);
             return true;
         }
