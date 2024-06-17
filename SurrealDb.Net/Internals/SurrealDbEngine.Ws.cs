@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
@@ -880,6 +880,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
+        using var timeoutCts = new CancellationTokenSource();
+        var timeoutTask = Task.Delay(30_000, cancellationToken);
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        Task.Run(async () => await timeoutTask.ConfigureAwait(false), timeoutCts.Token);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
         await InternalConnectAsync(requireInitialized, cancellationToken).ConfigureAwait(false);
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -949,14 +955,23 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         if (!isMessageSent)
         {
+            timeoutCts.Cancel();
             taskCompletionSource.SetException(new SurrealDbException("Failed to send message"));
             throw new SurrealDbException("Failed to send message");
         }
 
-        var response = await taskCompletionSource.Task.ConfigureAwait(false);
+        var completedTask = await Task.WhenAny(taskCompletionSource.Task, timeoutTask)
+            .ConfigureAwait(false);
+
         cancellationToken.ThrowIfCancellationRequested();
 
-        return response;
+        if (completedTask == taskCompletionSource.Task)
+        {
+            return await taskCompletionSource.Task.ConfigureAwait(false);
+        }
+
+        taskCompletionSource.TrySetCanceled(CancellationToken.None);
+        throw new TimeoutException();
     }
 
     private static async Task CloseLiveQueryAsync(
