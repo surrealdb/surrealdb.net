@@ -599,8 +599,20 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         CancellationToken cancellationToken
     )
     {
+        using var timeoutCts = new CancellationTokenSource();
+        var timeoutTask = Task.Delay(30_000, cancellationToken);
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        Task.Run(async () => await timeoutTask.ConfigureAwait(false), timeoutCts.Token);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
         bool requireInitialized = method != Method.Use;
         await InternalConnectAsync(requireInitialized, cancellationToken).ConfigureAwait(false);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            timeoutCts.Cancel();
+            cancellationToken.ThrowIfCancellationRequested();
+        }
 
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
         await CborSerializer
@@ -610,6 +622,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         bool canGetBuffer = stream.TryGetBuffer(out var bytes);
         if (!canGetBuffer)
         {
+            timeoutCts.Cancel();
             throw new SurrealDbException("Failed to retrieve serialized buffer.");
         }
 
@@ -686,6 +699,23 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             }
         }
 
-        return await taskCompletionSource.Task.ConfigureAwait(false);
+        var completedTask = await Task.WhenAny(taskCompletionSource.Task, timeoutTask)
+            .ConfigureAwait(false);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            timeoutCts.Cancel();
+            taskCompletionSource.TrySetCanceled(CancellationToken.None);
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+
+        if (completedTask == taskCompletionSource.Task)
+        {
+            timeoutCts.Cancel();
+            return await taskCompletionSource.Task.ConfigureAwait(false);
+        }
+
+        taskCompletionSource.TrySetCanceled(CancellationToken.None);
+        throw new TimeoutException();
     }
 }
