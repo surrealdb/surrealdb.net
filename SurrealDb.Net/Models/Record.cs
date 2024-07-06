@@ -4,7 +4,7 @@ using SurrealDb.Net.Internals.Json.Converters;
 namespace SurrealDb.Net.Models;
 
 /// <summary>
-/// The interface for record type.
+/// The abstract class for Record type.
 /// </summary>
 public abstract class Record : IRecord
 {
@@ -17,6 +17,9 @@ public abstract class Record : IRecord
     public Thing? Id { get; set; }
 }
 
+/// <summary>
+/// The interface for Record type.
+/// </summary>
 public interface IRecord
 {
     /// <summary>
