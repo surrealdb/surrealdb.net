@@ -119,7 +119,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     }
 
     public async Task<T> Create<T>(T data, CancellationToken cancellationToken)
-        where T : Record
+        where T : IRecord
     {
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(data);
@@ -277,7 +277,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         TMerge data,
         CancellationToken cancellationToken
     )
-        where TMerge : Record
+        where TMerge : IRecord
     {
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(data);
@@ -653,7 +653,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     }
 
     public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
-        where T : Record
+        where T : IRecord
     {
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(data);
