@@ -12,13 +12,21 @@
 /// This library will never be able to deserialize a <see cref="StringRecordId"/> into a <see cref="Thing"/>.
 /// As such, please consider using <see cref="Thing"/> or one of its inherited types for these scenarii.
 /// </remarks>
-public readonly struct StringRecordId
+public readonly partial struct StringRecordId : IEquatable<StringRecordId>
 {
     /// <summary>
     /// The value representing the Record ID as a single string, e.g.
     /// <example>"person:john"</example>
     /// </summary>
     public string Value { get; }
+
+    /// <summary>
+    /// Instanciate a new <see cref="StringRecordId"/> that will contain a Record ID representation as a single string.
+    /// </summary>
+    public StringRecordId()
+    {
+        throw new InvalidOperationException("A value is required");
+    }
 
     /// <summary>
     /// Instanciate a new <see cref="StringRecordId"/> that will contain a Record ID representation as a single string.
@@ -30,5 +38,20 @@ public readonly struct StringRecordId
     public StringRecordId(string value)
     {
         Value = value;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is StringRecordId recordId && Equals(recordId);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Value);
+    }
+
+    public bool Equals(StringRecordId other)
+    {
+        return Value == other.Value;
     }
 }
