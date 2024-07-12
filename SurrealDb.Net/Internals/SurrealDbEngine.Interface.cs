@@ -75,6 +75,7 @@ internal interface ISurrealDbEngine : IDisposable
     );
     Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken);
     Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken);
+    Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken);
     Task Set(string key, object value, CancellationToken cancellationToken);
     Task SignIn(RootAuth root, CancellationToken cancellationToken);
     Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken);
