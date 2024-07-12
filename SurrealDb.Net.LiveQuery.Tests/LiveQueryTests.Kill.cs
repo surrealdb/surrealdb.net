@@ -48,7 +48,7 @@ public class KillLiveQueryTests
             .Should()
             .ThrowAsync<SurrealDbException>()
             .WithMessage(
-                "There was a problem with the database: Can not execute KILL statement using id '$id'"
+                "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'"
             );
     }
 
@@ -96,7 +96,7 @@ public class KillLiveQueryTests
             .Should()
             .ThrowAsync<SurrealDbException>()
             .WithMessage(
-                "There was a problem with the database: Can not execute KILL statement using id '$id'"
+                "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'"
             );
     }
 }
