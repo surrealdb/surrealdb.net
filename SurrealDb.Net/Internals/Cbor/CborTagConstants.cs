@@ -2,6 +2,7 @@
 
 internal static class CborTagConstants
 {
+    public const ulong TAG_NONE = 6;
     public const ulong TAG_RECORDID = 8;
     public const ulong TAG_STRING_DECIMAL = 10;
     public const ulong TAG_CUSTOM_DATETIME = 12;

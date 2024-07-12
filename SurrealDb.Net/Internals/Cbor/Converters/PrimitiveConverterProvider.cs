@@ -33,6 +33,10 @@ internal class PrimitiveConverterProvider : CborConverterProviderBase
         {
             return new ThingConverter();
         }
+        if (type == typeof(None))
+        {
+            return new NoneConverter();
+        }
 
 #if NET6_0_OR_GREATER
         if (type == typeof(DateOnly))

@@ -49,6 +49,8 @@ public class Vector3Record : Record<Vector3?> { }
 
 public class Vector4Record : Record<Vector4?> { }
 
+public class NoneRecord : Record<None> { }
+
 public class ParserTests
 {
     [Theory]
@@ -1285,6 +1287,44 @@ public class ParserTests
             var vector4Record = await client.Select<Vector4Record>(("vector", "vector4"));
             vector4Record.Should().NotBeNull();
             vector4Record!.Value.Should().Be(new Vector4(2, 3, 4, 5));
+        }
+    }
+
+    [Theory]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON", Skip = "To be removed")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR", Skip = "Wait for HTTP cbor")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON", Skip = "To be removed")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldParseNone(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        string filePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Schemas/string.surql"
+        );
+        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+        string query = fileContent;
+
+        using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        await client.RawQuery(query);
+
+        {
+            var noneRecord = await client.Select<NoneRecord>(("string", "none"));
+            noneRecord.Should().NotBeNull();
+            noneRecord!.Value.Should().Be(new None());
+        }
+
+        {
+            var act = async () => await client.Select<NoneRecord>(("string", "unicode"));
+            await act.Should()
+                .ThrowAsync<CborException>()
+                .WithMessage("Expected a CBOR type of NONE");
         }
     }
 }
