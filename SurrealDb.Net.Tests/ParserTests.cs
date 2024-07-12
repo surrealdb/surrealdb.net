@@ -1307,7 +1307,7 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON", Skip = "To be removed")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR", Skip = "Wait for HTTP cbor")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON", Skip = "To be removed")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldParseNone(string connectionString)
