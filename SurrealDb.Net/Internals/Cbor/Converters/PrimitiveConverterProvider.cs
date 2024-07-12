@@ -37,6 +37,10 @@ internal class PrimitiveConverterProvider : CborConverterProviderBase
         {
             return new NoneConverter();
         }
+        if (type == typeof(StringRecordId))
+        {
+            return new StringRecordIdConverter();
+        }
 
 #if NET6_0_OR_GREATER
         if (type == typeof(DateOnly))

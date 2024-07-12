@@ -724,6 +724,20 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.GetValue<T?>();
     }
 
+    public async Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken)
+    {
+        if (!_useCbor)
+        {
+            throw new NotImplementedException(
+                $"Selecting by {nameof(StringRecordId)} is only available via CBOR serialization."
+            );
+        }
+
+        var dbResponse = await SendRequestAsync("select", [recordId], true, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<T?>();
+    }
+
     public async Task Set(string key, object value, CancellationToken cancellationToken)
     {
         if (key is null)

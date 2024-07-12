@@ -576,6 +576,19 @@ public interface ISurrealDbClient : IDisposable
     Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Selects a single record.
+    /// </summary>
+    /// <typeparam name="T">The type of the record</typeparam>
+    /// <param name="recordId">The record id.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The extracted record</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Assigns a value as a parameter for this connection.
     /// </summary>
     /// <param name="key">The name of the parameter.</param>

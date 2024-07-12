@@ -483,6 +483,14 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.Select<T?>(thing, cancellationToken);
     }
 
+    public Task<T?> Select<T>(
+        StringRecordId recordId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.Select<T?>(recordId, cancellationToken);
+    }
+
     public Task Set(string key, object value, CancellationToken cancellationToken = default)
     {
         return _engine.Set(key, value, cancellationToken);
