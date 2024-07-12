@@ -1,11 +1,31 @@
-﻿#if NET5_0_OR_GREATER
-using Pidgin;
-using SurrealDb.Net.Internals.Constants;
+﻿using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Models;
+#if NET5_0_OR_GREATER
+using Pidgin;
+#else
+using Superpower;
+#endif
 
 namespace SurrealDb.Net.Internals.Parsers;
 
-internal static class TimeSpanParser
+internal static partial class TimeSpanParser
+{
+    public static TimeSpan Convert(long? seconds, int? nanos)
+    {
+        return (seconds, nanos) switch
+        {
+            (null or 0, null or 0) => TimeSpan.Zero,
+            (_, null or 0) => TimeSpan.FromSeconds((double)seconds),
+            _
+                => TimeSpan
+                    .FromSeconds((double)seconds!)
+                    .Add(TimeSpan.FromTicks((long)nanos / TimeConstants.NanosecondsPerTick))
+        };
+    }
+}
+
+#if NET5_0_OR_GREATER
+internal static partial class TimeSpanParser
 {
     private static TimeSpan ToTimeSpan(double value, DurationUnit unit)
     {
@@ -26,7 +46,7 @@ internal static class TimeSpanParser
         };
     }
 
-    public static readonly Parser<char, TimeSpan> DurationAsTimeSpanRaw =
+    private static readonly Parser<char, TimeSpan> DurationAsTimeSpanRaw =
         from pair in DurationParser.DurationRaw
         select ToTimeSpan(pair.value, pair.unit);
 
@@ -40,13 +60,7 @@ internal static class TimeSpanParser
     }
 }
 #else
-using Superpower;
-using SurrealDb.Net.Internals.Constants;
-using SurrealDb.Net.Internals.Models;
-
-namespace SurrealDb.Net.Internals.Parsers;
-
-internal static class TimeSpanParser
+internal static partial class TimeSpanParser
 {
     private static TimeSpan ToTimeSpan(double value, DurationUnit unit)
     {
@@ -67,7 +81,7 @@ internal static class TimeSpanParser
         };
     }
 
-    public static readonly TextParser<TimeSpan> DurationAsTimeSpanRaw =
+    private static readonly TextParser<TimeSpan> DurationAsTimeSpanRaw =
         from pair in DurationParser.DurationRaw
         select ToTimeSpan(pair.value, pair.unit);
 

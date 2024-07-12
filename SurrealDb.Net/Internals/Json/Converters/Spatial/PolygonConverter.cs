@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.Spatial;
 using SurrealDb.Net.Internals.Constants;
 
@@ -35,8 +35,8 @@ internal static class PolygonConverter
 
         foreach (var coordinate in pointsProperty.EnumerateArray())
         {
-            var longitude = coordinate[0].GetDouble();
             var latitude = coordinate[1].GetDouble();
+            var longitude = coordinate[0].GetDouble();
 
             geographyBuilder.LineTo(latitude, longitude);
         }

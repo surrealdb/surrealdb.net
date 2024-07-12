@@ -25,9 +25,10 @@ public class ImplicitThingTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldCreateThingFromTupleOnClientMethodCall(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldCreateThingFromTupleOnClientMethodCall(string connectionString)
     {
         // Test taken from "SelectTests.cs" file
 
@@ -45,7 +46,7 @@ public class ImplicitThingTests
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);

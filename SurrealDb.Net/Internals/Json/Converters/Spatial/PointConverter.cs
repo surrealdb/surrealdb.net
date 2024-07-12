@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.Spatial;
 using SurrealDb.Net.Internals.Constants;
 
@@ -26,8 +26,8 @@ internal class PointConverter
     )
         where T : Geography
     {
-        var longitude = coordinatesProperty[0].GetDouble();
         var latitude = coordinatesProperty[1].GetDouble();
+        var longitude = coordinatesProperty[0].GetDouble();
 
         geographyBuilder.Point(latitude, longitude);
     }

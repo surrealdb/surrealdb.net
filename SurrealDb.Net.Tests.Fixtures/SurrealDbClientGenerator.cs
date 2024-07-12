@@ -29,7 +29,7 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
     private DatabaseInfo? _databaseInfo;
 
     public SurrealDbClient Create(
-        string endpoint,
+        string connectionString,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
         Func<JsonSerializerContext[]>? funcJsonSerializerContexts = null
     )
@@ -38,7 +38,7 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 
         var options = SurrealDbOptions
             .Create()
-            .WithEndpoint(endpoint)
+            .FromConnectionString(connectionString)
             .WithNamingPolicy("SnakeCase")
             .Build();
 

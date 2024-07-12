@@ -9,11 +9,11 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 [CollectionDefinition("Reactive")]
 public class ReactiveOperatorsLiveQueryTests : BaseLiveQueryTests
 {
-    [Fact]
-    public async Task ShouldAggregateRecords()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldAggregateRecords(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         List<TestRecord>? records = null;
         int calls = 0;
 
@@ -22,7 +22,7 @@ public class ReactiveOperatorsLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -98,11 +98,11 @@ public class ReactiveOperatorsLiveQueryTests : BaseLiveQueryTests
         calls.Should().Be(1);
     }
 
-    [Fact]
-    public async Task ShouldScanRecords()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldScanRecords(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         List<TestRecord>? records = null;
         int calls = 0;
 
@@ -111,7 +111,7 @@ public class ReactiveOperatorsLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 

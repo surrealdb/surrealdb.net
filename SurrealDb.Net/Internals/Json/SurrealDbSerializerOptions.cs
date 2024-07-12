@@ -7,6 +7,7 @@ using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Json.Converters;
 using SurrealDb.Net.Internals.Json.Converters.Spatial;
 using SurrealDb.Net.Internals.Models;
+using TupleAsJsonArray;
 
 namespace SurrealDb.Net.Internals.Json;
 
@@ -20,7 +21,10 @@ internal static class SurrealDbSerializerOptions
     > DefaultSerializerOptionsCache = new();
 
     public static JsonSerializerOptions Default =>
-        DefaultSerializerOptionsCache.GetValueOrDefault(DefaultKey)!;
+        DefaultSerializerOptionsCache.GetValueOrDefault(
+            DefaultKey,
+            CreateJsonSerializerOptions(null)
+        )!;
 
     private static JsonSerializerOptions CreateJsonSerializerOptions(
         JsonNamingPolicy? jsonNamingPolicy
@@ -96,10 +100,13 @@ internal static class SurrealDbSerializerOptions
             new SurrealDbWsResponseConverter(),
         };
 
+        var extraConverters = new List<JsonConverter> { new TupleConverterFactory(), };
+
         return defaultConverters
             .Concat(vectorsConverters)
             .Concat(spatialConverters)
-            .Concat(dbResponseConverters);
+            .Concat(dbResponseConverters)
+            .Concat(extraConverters);
     }
 
     private static (string key, JsonNamingPolicy? jsonNamingPolicy) DetectJsonNamingPolicy(
@@ -228,7 +235,7 @@ internal static class SurrealDbSerializerOptions
         return GetDefaultSerializerFromPolicy(key, jsonNamingPolicy);
     }
 
-    public static JsonSerializerOptions GetDefaultSerializerFromPolicy(
+    private static JsonSerializerOptions GetDefaultSerializerFromPolicy(
         string key,
         JsonNamingPolicy? jsonNamingPolicy
     )
