@@ -129,7 +129,7 @@ jobs:
         working-directory: ./rust-embedded
         run: |
           cargo check --all
-          cargo fix
+          cargo fix --allow-no-vcs
 
       - name: Run lint
         working-directory: ./rust-embedded
