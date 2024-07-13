@@ -436,7 +436,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                 && _responseTasks.TryRemove(key, out var responseTaskCompletionSource)
             )
             {
-                responseTaskCompletionSource.SetCanceled();
+                responseTaskCompletionSource.TrySetCanceled();
             }
         }
 
