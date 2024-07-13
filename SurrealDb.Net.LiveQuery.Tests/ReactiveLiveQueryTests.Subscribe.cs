@@ -7,7 +7,6 @@ using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.LiveQuery.Tests;
 
-[CollectionDefinition("Reactive")]
 public class ReactiveLiveQueryTests : BaseLiveQueryTests
 {
     [Theory]

@@ -4,7 +4,6 @@ using SurrealDb.Net.Models.LiveQuery;
 
 namespace SurrealDb.Net.LiveQuery.Tests;
 
-[CollectionDefinition("LiveQuery")]
 public class LiveQueryTests : BaseLiveQueryTests
 {
     [Fact]

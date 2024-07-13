@@ -20,7 +20,7 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
 
     public async ValueTask DisposeAsync()
     {
-        await KillAsync().ConfigureAwait(false);
+        await KillAsync(true).ConfigureAwait(false);
     }
 
     public async IAsyncEnumerator<SurrealDbLiveQueryResponse> GetAsyncEnumerator(
@@ -186,11 +186,35 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
     /// <exception cref="SurrealDbException"></exception>
     public async Task<bool> KillAsync(CancellationToken cancellationToken = default)
     {
+        return await KillAsync(false, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<bool> KillAsync(
+        bool onDispose,
+        CancellationToken cancellationToken = default
+    )
+    {
         if (_surrealDbEngine.TryGetTarget(out var surrealDbEngine))
         {
-            await surrealDbEngine
-                .Kill(Id, SurrealDbLiveQueryClosureReason.QueryKilled, cancellationToken)
-                .ConfigureAwait(false);
+            var task = surrealDbEngine.Kill(
+                Id,
+                SurrealDbLiveQueryClosureReason.QueryKilled,
+                cancellationToken
+            );
+
+            if (onDispose)
+            {
+                try
+                {
+                    await task.ConfigureAwait(false);
+                }
+                catch { }
+            }
+            else
+            {
+                await task.ConfigureAwait(false);
+            }
+
             return true;
         }
 
