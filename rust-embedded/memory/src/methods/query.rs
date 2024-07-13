@@ -20,7 +20,7 @@ pub async fn query_async(
     };
 
     let query = match query {
-        Value::Strand(Strand(v)) => v,
+        Value::Strand(v) => v.as_string(),
         _ => {
             send_failure("Invalid params", failure);
             return;

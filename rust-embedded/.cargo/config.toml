@@ -1,7 +1,3 @@
-[build]
-rustflags = ["--cfg", "surrealdb_unstable"]
-rustdocflags = ["--cfg", "surrealdb_unstable"]
-
 [net]
 git-fetch-with-cli = true
 
