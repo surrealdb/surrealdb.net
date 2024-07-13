@@ -1,38 +1,28 @@
 ﻿using System.Text.Json;
-using Dahomey.Cbor;
-#if NET8_0_OR_GREATER
 using System.Text.Json.Serialization.Metadata;
-#endif
+using Dahomey.Cbor;
 
-namespace SurrealDb.Net.Internals.Ws;
+namespace SurrealDb.Net.Internals.Http;
 
-internal class SurrealDbWsOkResponse : ISurrealDbWsStandardResponse
+internal class SurrealDbHttpOkResponse : ISurrealDbHttpResponse
 {
     private readonly JsonSerializerOptions? _jsonSerializerOptions;
     private readonly ReadOnlyMemory<byte>? _binaryResult;
     private readonly CborOptions? _cborOptions;
 
-    public string Id { get; }
     public JsonElement? Result { get; }
 
-    internal SurrealDbWsOkResponse(
-        string id,
+    internal SurrealDbHttpOkResponse(
         JsonElement result,
         JsonSerializerOptions jsonSerializerOptions
     )
     {
-        Id = id;
         Result = result;
         _jsonSerializerOptions = jsonSerializerOptions;
     }
 
-    internal SurrealDbWsOkResponse(
-        string id,
-        ReadOnlyMemory<byte> binaryResult,
-        CborOptions cborOptions
-    )
+    internal SurrealDbHttpOkResponse(ReadOnlyMemory<byte> binaryResult, CborOptions cborOptions)
     {
-        Id = id;
         _binaryResult = binaryResult;
         _cborOptions = cborOptions;
     }

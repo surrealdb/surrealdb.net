@@ -9,7 +9,8 @@ namespace SurrealDb.Net.Tests;
 public class QueryTests
 {
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldQueryWithoutParam(string connectionString)
@@ -54,7 +55,8 @@ public class QueryTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldQueryWithOneParam(string connectionString)
@@ -102,7 +104,8 @@ public class QueryTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldQueryWithMultipleParams(string connectionString)
@@ -159,17 +162,12 @@ AND created_at >= {threeMonthsAgo};
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
     public async Task ShouldHaveOneProtocolErrorResult(string connectionString)
     {
-        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
-        bool isWebsocket = options.Endpoint!.StartsWith(
-            "ws://",
-            StringComparison.OrdinalIgnoreCase
-        );
-
         SurrealDbResponse? response = null;
 
         Func<Task> func = async () =>
@@ -196,41 +194,14 @@ AND created_at >= {threeMonthsAgo};
             response = await client.Query($"abc def;");
         };
 
-        if (isWebsocket)
-        {
-            await func.Should()
-                .ThrowAsync<SurrealDbException>()
-                .WithMessage(
-                    @"There was a problem with the database: Parse error: Failed to parse query at line 1 column 5 expected query to end
+        await func.Should()
+            .ThrowAsync<SurrealDbException>()
+            .WithMessage(
+                @"There was a problem with the database: Parse error: Failed to parse query at line 1 column 5 expected query to end
   |
 1 | abc def;
   |     ^ perhaps missing a semicolon on the previous statement?
 "
-                );
-        }
-        else
-        {
-            await func.Should().NotThrowAsync();
-
-            response.Should().NotBeNull().And.HaveCount(1);
-
-            var firstResult = response![0];
-            firstResult.Should().BeOfType<SurrealDbProtocolErrorResult>();
-
-            var errorResult = firstResult as SurrealDbProtocolErrorResult;
-
-            errorResult!.Code.Should().Be(HttpStatusCode.BadRequest);
-            errorResult!.Details.Should().Be("Request problems detected");
-            errorResult!
-                .Description.Should()
-                .Be(
-                    "There is a problem with your request. Refer to the documentation for further information."
-                );
-            errorResult!
-                .Information.Should()
-                .Contain(
-                    @"There was a problem with the database: Parse error: Failed to parse query at line 1 column 5 expected query to end"
-                );
-        }
+            );
     }
 }

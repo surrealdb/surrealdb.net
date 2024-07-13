@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
@@ -660,7 +660,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
 
-        var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? new();
+        var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? [];
         return new SurrealDbResponse(list);
     }
 
@@ -704,7 +704,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         var dbResponse = await SendRequestAsync("signin", [nsAuth], false, cancellationToken)
             .ConfigureAwait(false);
-        var token = dbResponse.GetValue<string>()!;
+        var token = dbResponse.GetValue<string>();
 
         return new Jwt { Token = token! };
     }
@@ -713,7 +713,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         var dbResponse = await SendRequestAsync("signin", [dbAuth], false, cancellationToken)
             .ConfigureAwait(false);
-        var token = dbResponse.GetValue<string>()!;
+        var token = dbResponse.GetValue<string>();
 
         return new Jwt { Token = token! };
     }
@@ -723,7 +723,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         var dbResponse = await SendRequestAsync("signin", [scopeAuth], false, cancellationToken)
             .ConfigureAwait(false);
-        var token = dbResponse.GetValue<string>()!;
+        var token = dbResponse.GetValue<string>();
 
         return new Jwt { Token = token! };
     }
@@ -733,7 +733,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         var dbResponse = await SendRequestAsync("signup", [scopeAuth], false, cancellationToken)
             .ConfigureAwait(false);
-        var token = dbResponse.GetValue<string>()!;
+        var token = dbResponse.GetValue<string>();
 
         return new Jwt { Token = token! };
     }

@@ -16,31 +16,26 @@ internal class SurrealDbWsResponseConverter : JsonConverter<ISurrealDbWsResponse
         using var doc = JsonDocument.ParseValue(ref reader);
         var root = doc.RootElement;
 
-        if (
-            !root.TryGetProperty(
-                SurrealDbWsResponseConstants.IdPropertyName,
-                out var rootIdProperty
-            )
-        )
+        if (!root.TryGetProperty(SurrealDbResponseConstants.IdPropertyName, out var rootIdProperty))
         {
             if (
                 root.TryGetProperty(
-                    SurrealDbWsResponseConstants.ResultPropertyName,
+                    SurrealDbResponseConstants.ResultPropertyName,
                     out var liveResultElement
                 )
             )
             {
                 if (
                     liveResultElement.TryGetProperty(
-                        SurrealDbWsResponseConstants.IdPropertyName,
+                        SurrealDbResponseConstants.IdPropertyName,
                         out var liveIdProperty
                     )
                     && liveResultElement.TryGetProperty(
-                        SurrealDbWsResponseConstants.ActionPropertyName,
+                        SurrealDbResponseConstants.ActionPropertyName,
                         out var liveActionProperty
                     )
                     && liveResultElement.TryGetProperty(
-                        SurrealDbWsResponseConstants.ResultPropertyName,
+                        SurrealDbResponseConstants.ResultPropertyName,
                         out var liveResultProperty
                     )
                 )
@@ -59,7 +54,7 @@ internal class SurrealDbWsResponseConverter : JsonConverter<ISurrealDbWsResponse
 
         if (
             root.TryGetProperty(
-                SurrealDbWsResponseConstants.ResultPropertyName,
+                SurrealDbResponseConstants.ResultPropertyName,
                 out var resultProperty
             )
         )
@@ -70,22 +65,19 @@ internal class SurrealDbWsResponseConverter : JsonConverter<ISurrealDbWsResponse
         }
 
         if (
-            root.TryGetProperty(
-                SurrealDbWsResponseConstants.ErrorPropertyName,
-                out var errorProperty
-            )
+            root.TryGetProperty(SurrealDbResponseConstants.ErrorPropertyName, out var errorProperty)
         )
         {
             string id = rootIdProperty.GetString() ?? string.Empty;
 
             long code = errorProperty.TryGetProperty(
-                SurrealDbWsResponseConstants.CodePropertyName,
+                SurrealDbResponseConstants.CodePropertyName,
                 out var codeProperty
             )
                 ? codeProperty.GetInt64()
                 : default;
             var message = errorProperty.TryGetProperty(
-                SurrealDbWsResponseConstants.MessagePropertyName,
+                SurrealDbResponseConstants.MessagePropertyName,
                 out var messageProperty
             )
                 ? messageProperty.GetString()
