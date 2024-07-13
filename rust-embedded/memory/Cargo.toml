@@ -1,5 +1,5 @@
 [package]
-name = "memory"
+name = "surreal_memory"
 publish = false
 version = "1.5.4"
 edition = "2021"
@@ -21,6 +21,3 @@ crate-type = ["cdylib"]
 
 [build-dependencies]
 csbindgen = "1.9.1"
-
-[package.metadata.docs.rs]
-rustc-args = ["--cfg", "surrealdb_unstable"]

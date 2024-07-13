@@ -12,7 +12,7 @@ namespace SurrealDb.Embedded.InMemory.Internals
 {
     internal static unsafe partial class NativeMethods
     {
-        const string __DllName = "surreal-memory";
+        const string __DllName = "surreal_memory";
 
 
 

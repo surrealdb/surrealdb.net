@@ -41,42 +41,42 @@
   
   <!-- https://stackoverflow.com/a/48714896/7847252 -->
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
-    <Content Include="../rust-embedded/target/debug/surreal-memory.dll" TargetPath="surreal-memory.dll" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
-    <Content Include="../rust-embedded/target/debug/surreal-memory.pdb" TargetPath="surreal-memory.pdb" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
+    <Content Include="../rust-embedded/target/debug/surreal_memory.dll" TargetPath="surreal_memory.dll" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
+    <Content Include="../rust-embedded/target/debug/surreal_memory.pdb" TargetPath="surreal_memory.pdb" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
 
-    <Content Include="../rust-embedded/target/debug/libsurreal-memory.so" TargetPath="libsurreal-memory.so" CopyToOutputDirectory="Always" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'" />
+    <Content Include="../rust-embedded/target/debug/libsurreal_memory.so" TargetPath="libsurreal_memory.so" CopyToOutputDirectory="Always" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'" />
 
-    <Content Include="../rust-embedded/target/debug/libsurreal-memory.dylib" TargetPath="libsurreal-memory.dylib" CopyToOutputDirectory="Always" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))'" />
+    <Content Include="../rust-embedded/target/debug/libsurreal_memory.dylib" TargetPath="libsurreal_memory.dylib" CopyToOutputDirectory="Always" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))'" />
   </ItemGroup>
   
   <ItemGroup Condition="$(DefineConstants.Contains('BENCHMARK_MODE'))">
-    <Content Include="../rust-embedded/target/release/surreal-memory.dll" TargetPath="surreal-memory.dll" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
-    <Content Include="../rust-embedded/target/release/surreal-memory.pdb" TargetPath="surreal-memory.pdb" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
+    <Content Include="../rust-embedded/target/release/surreal_memory.dll" TargetPath="surreal_memory.dll" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
+    <Content Include="../rust-embedded/target/release/surreal_memory.pdb" TargetPath="surreal_memory.pdb" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
 
-    <Content Include="../rust-embedded/target/release/libsurreal-memory.so" TargetPath="libsurreal-memory.so" CopyToOutputDirectory="Always" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'" />
+    <Content Include="../rust-embedded/target/release/libsurreal_memory.so" TargetPath="libsurreal_memory.so" CopyToOutputDirectory="Always" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'" />
 
-    <Content Include="../rust-embedded/target/release/libsurreal-memory.dylib" TargetPath="libsurreal-memory.dylib" CopyToOutputDirectory="Always"   Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))'" />
+    <Content Include="../rust-embedded/target/release/libsurreal_memory.dylib" TargetPath="libsurreal_memory.dylib" CopyToOutputDirectory="Always"   Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))'" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Release' And !$(DefineConstants.Contains('BENCHMARK_MODE'))">
-    <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal-memory.dll" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal-memory.dll')" Pack="true" PackagePath="runtimes/win-x64/native/" />
-    <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal-memory.pdb" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal-memory.pdb')" Pack="true" PackagePath="runtimes/win-x64/native/" />
+    <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_memory.dll" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_memory.dll')" Pack="true" PackagePath="runtimes/win-x64/native/" />
+    <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_memory.pdb" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_memory.pdb')" Pack="true" PackagePath="runtimes/win-x64/native/" />
 
-    <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal-memory.dll" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal-memory.dll')" Pack="true" PackagePath="runtimes/win-x86/native/" />
-    <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal-memory.pdb" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal-memory.pdb')" Pack="true" PackagePath="runtimes/win-x86/native/" />
+    <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_memory.dll" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_memory.dll')" Pack="true" PackagePath="runtimes/win-x86/native/" />
+    <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_memory.pdb" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_memory.pdb')" Pack="true" PackagePath="runtimes/win-x86/native/" />
 
-    <Content Include="../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal-memory.so" Condition="Exists('../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal-memory.so')" Pack="true" PackagePath="runtimes/linux-x64/native/" />
-    <Content Include="../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal-memory.so" Condition="Exists('../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal-memory.so')" Pack="true" PackagePath="runtimes/linux-x86/native/" />
-    <Content Include="../rust-embedded/target/arm-unknown-linux-gnueabihf/release/libsurreal-memory.so" Condition="Exists('../rust-embedded/target/arm-unknown-linux-gnueabihf/release/libsurreal-memory.so')" Pack="true" PackagePath="runtimes/linux-arm/native/" />
-    <Content Include="../rust-embedded/target/aarch64-unknown-linux-gnu/release/libsurreal-memory.so" Condition="Exists('user../rust-embedded/target/aarch64-unknown-linux-gnu/release/libsurreal-memory.so')" Pack="true" PackagePath="runtimes/linux-arm64/native/" />
+    <Content Include="../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal_memory.so" Condition="Exists('../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal_memory.so')" Pack="true" PackagePath="runtimes/linux-x64/native/" />
+    <Content Include="../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal_memory.so" Condition="Exists('../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal_memory.so')" Pack="true" PackagePath="runtimes/linux-x86/native/" />
+    <Content Include="../rust-embedded/target/arm-unknown-linux-gnueabihf/release/libsurreal_memory.so" Condition="Exists('../rust-embedded/target/arm-unknown-linux-gnueabihf/release/libsurreal_memory.so')" Pack="true" PackagePath="runtimes/linux-arm/native/" />
+    <Content Include="../rust-embedded/target/aarch64-unknown-linux-gnu/release/libsurreal_memory.so" Condition="Exists('user../rust-embedded/target/aarch64-unknown-linux-gnu/release/libsurreal_memory.so')" Pack="true" PackagePath="runtimes/linux-arm64/native/" />
 
-    <Content Include="../rust-embedded/target/x86_64-apple-darwin/release/libsurreal-memory.dylib" Condition="Exists('../rust-embedded/target/x86_64-apple-darwin/release/libsurreal-memory.dylib')" Pack="true" PackagePath="runtimes/osx-x64/native/" />
-    <Content Include="../rust-embedded/target/x86_64-apple-darwin/release/libsurreal-memory.dylib" Condition="Exists('../rust-embedded/target/x86_64-apple-darwin/release/libsurreal-memory.dylib')" Pack="true" PackagePath="runtimes/osx-x86/native/" />
-    <Content Include="../rust-embedded/target/aarch64-apple-darwin/release/libsurreal-memory.dylib" Condition="Exists('../rust-embedded/target/aarch64-apple-darwin/release/libsurreal-memory.dylib')" Pack="true" PackagePath="runtimes/osx-arm64/native/" />
+    <Content Include="../rust-embedded/target/x86_64-apple-darwin/release/libsurreal_memory.dylib" Condition="Exists('../rust-embedded/target/x86_64-apple-darwin/release/libsurreal_memory.dylib')" Pack="true" PackagePath="runtimes/osx-x64/native/" />
+    <Content Include="../rust-embedded/target/x86_64-apple-darwin/release/libsurreal_memory.dylib" Condition="Exists('../rust-embedded/target/x86_64-apple-darwin/release/libsurreal_memory.dylib')" Pack="true" PackagePath="runtimes/osx-x86/native/" />
+    <Content Include="../rust-embedded/target/aarch64-apple-darwin/release/libsurreal_memory.dylib" Condition="Exists('../rust-embedded/target/aarch64-apple-darwin/release/libsurreal_memory.dylib')" Pack="true" PackagePath="runtimes/osx-arm64/native/" />
 
-    <Content Include="../rust-embedded/target/aarch64-apple-ios/release/libsurreal-memory.dylib" Condition="Exists('../rust-embedded/target/aarch64-apple-ios/release/libsurreal-memory.dylib')" Pack="true" PackagePath="runtimes/ios-arm64/native/" />
+    <Content Include="../rust-embedded/target/aarch64-apple-ios/release/libsurreal_memory.dylib" Condition="Exists('../rust-embedded/target/aarch64-apple-ios/release/libsurreal_memory.dylib')" Pack="true" PackagePath="runtimes/ios-arm64/native/" />
 
-    <Content Include="../rust-embedded/target/aarch64-linux-android/release/libsurreal-memory.so" Condition="Exists('../rust-embedded/target/aarch64-linux-android/release/libsurreal-memory.so')" Pack="true" PackagePath="runtimes/android-arm64/native/" />
+    <Content Include="../rust-embedded/target/aarch64-linux-android/release/libsurreal_memory.so" Condition="Exists('../rust-embedded/target/aarch64-linux-android/release/libsurreal_memory.so')" Pack="true" PackagePath="runtimes/android-arm64/native/" />
   </ItemGroup>
 
 </Project>

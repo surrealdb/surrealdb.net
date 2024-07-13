@@ -76,14 +76,14 @@ jobs:
           # expand matrix configuration to add "libpath" variable
           - os: windows-latest
             libpath: |
-              **/release/surreal-memory.dll
-              **/release/surreal-memory.pdb
+              **/release/surreal_memory.dll
+              **/release/surreal_memory.pdb
           - os: ubuntu-latest
             libpath: |
-              **/release/libsurreal-memory.so
+              **/release/libsurreal_memory.so
           - os: macos-latest
             libpath: |
-              **/release/libsurreal-memory.dylib
+              **/release/libsurreal_memory.dylib
 
     steps:
       - name: Checkout

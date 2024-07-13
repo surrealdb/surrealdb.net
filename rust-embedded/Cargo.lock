@@ -1473,20 +1473,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c8640c5d730cb13ebd907d8d04b52f55ac9a2eec55b440c8892f40d56c76c1d"
 
 [[package]]
-name = "memory"
-version = "1.5.4"
-dependencies = [
- "cargo_metadata",
- "ciborium",
- "csbindgen",
- "num_cpus",
- "once_cell",
- "surrealdb",
- "surrealdb-core 2.0.0-1.5.4",
- "tokio",
-]
-
-[[package]]
 name = "miette"
 version = "5.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2703,6 +2689,20 @@ name = "subtle"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
+
+[[package]]
+name = "surreal_memory"
+version = "1.5.4"
+dependencies = [
+ "cargo_metadata",
+ "ciborium",
+ "csbindgen",
+ "num_cpus",
+ "once_cell",
+ "surrealdb",
+ "surrealdb-core 2.0.0-1.5.4",
+ "tokio",
+]
 
 [[package]]
 name = "surrealdb"
