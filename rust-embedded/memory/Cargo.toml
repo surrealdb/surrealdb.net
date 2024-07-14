@@ -8,7 +8,6 @@ license-file = "../../LICENSE"
 resolver = "2"
 
 [dependencies]
-cargo_metadata = "0.18.1"
 ciborium = "0.2.1"
 num_cpus = "1.16.0"
 once_cell = "1.19.0"
@@ -20,4 +19,5 @@ tokio = { version = "1.37.0" }
 crate-type = ["cdylib"]
 
 [build-dependencies]
+cargo-lock = "9.0.0"
 csbindgen = "1.9.1"

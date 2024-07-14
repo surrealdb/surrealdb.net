@@ -13,7 +13,29 @@ fn main() -> Result<(), Box<dyn Error>> {
         .csharp_namespace("SurrealDb.Embedded.InMemory.Internals")
         .generate_csharp_file("../../SurrealDb.Embedded.InMemory/NativeMethods.g.cs")?;
 
+    write_surreal_version()?;
+
     std::thread::sleep(Duration::from_secs(1));
+
+    Ok(())
+}
+
+fn write_surreal_version() -> Result<(), Box<dyn Error>> {
+    let lock_file = include_str!("../Cargo.lock");
+    let lock: cargo_lock::Lockfile = lock_file.parse().expect("Failed to parse Cargo.lock");
+
+    let package = lock
+        .packages
+        .iter()
+        .find(|p| p.name.as_str() == "surrealdb")
+        .expect("Failed to find surrealdb in Cargo.lock");
+
+    let version = format!(
+        "{}.{}.{}",
+        package.version.major, package.version.minor, package.version.patch
+    );
+
+    std::fs::write("./src/surreal-version.txt", version)?;
 
     Ok(())
 }
