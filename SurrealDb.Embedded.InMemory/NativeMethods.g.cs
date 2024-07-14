@@ -17,16 +17,16 @@ namespace SurrealDb.Embedded.InMemory.Internals
 
 
         [DllImport(__DllName, EntryPoint = "execute", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        public static extern void execute(int id, Method method, byte* bytes, int len, SuccessAction success, FailureAction failure);
+        internal static extern void execute(int id, Method method, byte* bytes, int len, SuccessAction success, FailureAction failure);
 
         [DllImport(__DllName, EntryPoint = "free_u8_buffer", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        public static extern void free_u8_buffer(ByteBuffer* buffer);
+        internal static extern void free_u8_buffer(ByteBuffer* buffer);
 
         [DllImport(__DllName, EntryPoint = "dispose", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        public static extern void dispose(int id);
+        internal static extern void dispose(int id);
 
         [DllImport(__DllName, EntryPoint = "create_global_runtime", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        public static extern void create_global_runtime();
+        internal static extern void create_global_runtime();
 
 
     }
