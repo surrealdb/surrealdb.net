@@ -1,5 +1,6 @@
 ﻿using System.Reactive;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Dahomey.Cbor;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Internals;
@@ -78,8 +79,50 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     {
         if (!_isConnected)
         {
-            await SendRequestAsync<Unit>(Method.Connect, null, cancellationToken)
-                .ConfigureAwait(false);
+            var taskCompletionSource = new TaskCompletionSource<bool>();
+
+            Action<ByteBuffer> success = (byteBuffer) =>
+            {
+                taskCompletionSource.SetResult(true);
+            };
+            Action<ByteBuffer> fail = (byteBuffer) =>
+            {
+                string error = CborSerializer.Deserialize<string>(
+                    byteBuffer.AsReadOnly(),
+                    GetCborOptions()
+                );
+                taskCompletionSource.SetException(new SurrealDbException(error));
+            };
+
+            var successHandle = GCHandle.Alloc(success);
+            var failureHandle = GCHandle.Alloc(fail);
+
+            unsafe
+            {
+                var successAction = new SuccessAction()
+                {
+                    handle = new RustGCHandle()
+                    {
+                        ptr = GCHandle.ToIntPtr(successHandle),
+                        drop_callback = &NativeBindings.DropGcHandle
+                    },
+                    callback = &NativeBindings.SuccessCallback,
+                };
+
+                var failureAction = new FailureAction()
+                {
+                    handle = new RustGCHandle()
+                    {
+                        ptr = GCHandle.ToIntPtr(failureHandle),
+                        drop_callback = &NativeBindings.DropGcHandle
+                    },
+                    callback = &NativeBindings.FailureCallback,
+                };
+
+                NativeMethods.apply_connect(_id, successAction, failureAction);
+            }
+
+            await taskCompletionSource.Task.ConfigureAwait(false);
 
             _isConnected = true;
         }
@@ -421,12 +464,11 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     /// and ensures connection before sending a request.
     /// </summary>
     private async Task InternalConnectAsync(
-        bool requireConnected,
         bool requireInitialized,
         CancellationToken cancellationToken
     )
     {
-        if (requireConnected && !_isConnected)
+        if (!_isConnected)
         {
             await _semaphoreConnect.WaitAsync(cancellationToken).ConfigureAwait(false);
 
@@ -461,10 +503,8 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         CancellationToken cancellationToken
     )
     {
-        bool requireConnected = method != Method.Connect;
-        bool requireInitialized = method != Method.Connect && method != Method.Use;
-        await InternalConnectAsync(requireConnected, requireInitialized, cancellationToken)
-            .ConfigureAwait(false);
+        bool requireInitialized = method != Method.Use;
+        await InternalConnectAsync(requireInitialized, cancellationToken).ConfigureAwait(false);
 
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
         await CborSerializer

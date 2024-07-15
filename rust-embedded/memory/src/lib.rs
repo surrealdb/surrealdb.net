@@ -24,6 +24,23 @@ fn read_params(bytes: *const u8, len: i32) -> Result<Array, ()> {
     cbor::get_params(bytes)
 }
 
+// 💡 "connect" is a reserved keyword
+#[no_mangle]
+pub extern "C" fn apply_connect(
+    id: i32,
+    success: SuccessAction,
+    failure: FailureAction,
+) {
+    // 💡 connect is only used to ensure database can be created (sort of avoiding cold start)
+    get_global_runtime().spawn(async move {
+        let Ok(_) = get_db(id).await else {
+            send_failure("Cannot retrieve db", failure);
+            return;
+        };
+        send_success(Value::None, success, failure);
+    });
+}
+
 #[no_mangle]
 pub extern "C" fn execute(
     id: i32,
@@ -34,16 +51,6 @@ pub extern "C" fn execute(
     failure: FailureAction,
 ) {
     match method {
-        Method::Connect => {
-            // 💡 connect is only used to ensure database can be created (sort of avoiding cold start)
-            get_global_runtime().spawn(async move {
-                let Ok(_) = get_db(id).await else {
-                    send_failure("Cannot retrieve db", failure);
-                    return;
-                };
-                send_success(Value::None, success, failure);
-            });
-        }
         Method::Ping => {
             get_global_runtime().spawn(async move {
                 let Ok(db) = get_db(id).await else {
@@ -187,6 +194,6 @@ pub extern "C" fn execute(
             } else {
                 send_failure("Cannot retrieve params", failure);
             }
-        }
+        },
     }
 }

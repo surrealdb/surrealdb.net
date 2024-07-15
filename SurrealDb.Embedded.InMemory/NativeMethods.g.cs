@@ -16,6 +16,9 @@ namespace SurrealDb.Embedded.InMemory.Internals
 
 
 
+        [DllImport(__DllName, EntryPoint = "apply_connect", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern void apply_connect(int id, SuccessAction success, FailureAction failure);
+
         [DllImport(__DllName, EntryPoint = "execute", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         internal static extern void execute(int id, Method method, byte* bytes, int len, SuccessAction success, FailureAction failure);
 
@@ -63,19 +66,18 @@ namespace SurrealDb.Embedded.InMemory.Internals
 
     internal enum Method : byte
     {
-        Connect = 1,
-        Ping = 2,
-        Use = 3,
-        Set = 4,
-        Unset = 5,
-        Select = 6,
-        Create = 8,
-        Update = 9,
-        Merge = 10,
-        Patch = 11,
-        Delete = 12,
-        Version = 13,
-        Query = 14,
+        Ping = 1,
+        Use = 2,
+        Set = 3,
+        Unset = 4,
+        Select = 5,
+        Create = 7,
+        Update = 8,
+        Merge = 9,
+        Patch = 10,
+        Delete = 11,
+        Version = 12,
+        Query = 13,
     }
 
 
