@@ -76,7 +76,7 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<T> Create<T>(T data, CancellationToken cancellationToken = default)
-        where T : Record;
+        where T : IRecord;
 
     /// <summary>
     /// Creates a record in a table in the database.
@@ -244,7 +244,7 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken = default)
-        where TMerge : Record;
+        where TMerge : IRecord;
 
     /// <summary>
     /// Modifies the specified record in the database.
@@ -509,7 +509,7 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken = default)
-        where T : Record;
+        where T : IRecord;
 
     /// <summary>
     /// Switch to a specific namespace and database.

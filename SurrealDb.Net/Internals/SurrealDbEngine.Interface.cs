@@ -14,7 +14,7 @@ internal interface ISurrealDbEngine : IDisposable
     void Configure(string? ns, string? db, string? token = null);
     Task Connect(CancellationToken cancellationToken);
     Task<T> Create<T>(T data, CancellationToken cancellationToken)
-        where T : Record;
+        where T : IRecord;
     Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken);
     Task Delete(string table, CancellationToken cancellationToken);
     Task<bool> Delete(Thing thing, CancellationToken cancellationToken);
@@ -42,7 +42,7 @@ internal interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     );
     Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken)
-        where TMerge : Record;
+        where TMerge : IRecord;
     Task<T> Merge<T>(
         Thing thing,
         Dictionary<string, object> data,
@@ -88,7 +88,7 @@ internal interface ISurrealDbEngine : IDisposable
     Task<IEnumerable<T>> UpdateAll<T>(string table, T data, CancellationToken cancellationToken)
         where T : class;
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
-        where T : Record;
+        where T : IRecord;
     Task Use(string ns, string db, CancellationToken cancellationToken);
     Task<string> Version(CancellationToken cancellationToken);
 }
