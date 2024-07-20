@@ -808,7 +808,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         var dbResponse = await SendRequestAsync("version", null, false, cancellationToken)
             .ConfigureAwait(false);
-        var version = dbResponse.GetValue<string>()!;
+        string version = dbResponse.GetValue<string>()!;
 
         const string VERSION_PREFIX = "surrealdb-";
         return version.Replace(VERSION_PREFIX, string.Empty);

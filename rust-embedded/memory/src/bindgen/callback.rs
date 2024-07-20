@@ -1,5 +1,5 @@
+use surrealdb::rpc::format::cbor::Cbor;
 use surrealdb::sql::Value;
-use surrealdb_core::rpc::format::cbor::Cbor;
 
 use super::{alloc::alloc_u8_buffer, byte_buffer::ByteBuffer};
 
@@ -50,11 +50,9 @@ fn value_to_buffer(value: Value) -> Result<*mut ByteBuffer, ()> {
     Ok(alloc_u8_buffer(output))
 }
 
-pub fn send_success(value: Value, success: SuccessAction, failure: FailureAction) {
-    match value_to_buffer(value) {
-        Ok(buffer) => success.invoke(buffer),
-        Err(_) => send_failure("Failed to serialize Value", failure),
-    }
+pub fn send_success(bytes: Vec<u8>, success: SuccessAction) {
+    let buffer = alloc_u8_buffer(bytes);
+    success.invoke(buffer);
 }
 
 pub fn send_failure(error: &str, action: FailureAction) {

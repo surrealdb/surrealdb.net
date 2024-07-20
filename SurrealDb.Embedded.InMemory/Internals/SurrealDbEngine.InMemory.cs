@@ -1,4 +1,5 @@
-﻿using System.Reactive;
+﻿using System.Net;
+using System.Reactive;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Dahomey.Cbor;
@@ -165,8 +166,9 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
 
     public async Task<bool> Delete(Thing thing, CancellationToken cancellationToken)
     {
-        return await SendRequestAsync<bool>(Method.Delete, [thing], cancellationToken)
+        var result = await SendRequestAsync<object?>(Method.Delete, [thing], cancellationToken)
             .ConfigureAwait(false);
+        return result is not null;
     }
 
     public void Dispose()
@@ -445,8 +447,11 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
 
     public async Task<string> Version(CancellationToken cancellationToken)
     {
-        return await SendRequestAsync<string>(Method.Version, null, cancellationToken)
+        string version = await SendRequestAsync<string>(Method.Version, null, cancellationToken)
             .ConfigureAwait(false);
+
+        const string VERSION_PREFIX = "surrealdb-";
+        return version.Replace(VERSION_PREFIX, string.Empty);
     }
 
     private CborOptions GetCborOptions()
@@ -508,7 +513,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
 
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
         await CborSerializer
-            .SerializeAsync(parameters, stream, GetCborOptions(), cancellationToken)
+            .SerializeAsync(parameters ?? [], stream, GetCborOptions(), cancellationToken)
             .ConfigureAwait(false);
 
         bool canGetBuffer = stream.TryGetBuffer(out var bytes);

@@ -195,26 +195,12 @@ AND created_at >= {threeMonthsAgo};
             response = await client.Query($"abc def;");
         };
 
-        string errorMessage;
-
-        if (options.IsEmbedded)
-        {
-            errorMessage =
-                @"Parse error: Failed to parse query at line 1 column 5 expected query to end
+        string errorMessage =
+            @"There was a problem with the database: Parse error: Failed to parse query at line 1 column 5 expected query to end
   |
 1 | abc def;
   |     ^ perhaps missing a semicolon on the previous statement?
 ";
-        }
-        else
-        {
-            errorMessage =
-                @"There was a problem with the database: Parse error: Failed to parse query at line 1 column 5 expected query to end
-  |
-1 | abc def;
-  |     ^ perhaps missing a semicolon on the previous statement?
-";
-        }
 
         await func.Should().ThrowAsync<SurrealDbException>().WithMessage(errorMessage);
     }

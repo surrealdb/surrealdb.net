@@ -7,7 +7,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .input_extern_file("src/bindgen/callback.rs")
         .input_extern_file("src/bindgen/free.rs")
         .input_extern_file("src/models/method.rs")
-        .input_extern_file("src/runtime/db.rs")
+        .input_extern_file("src/runtime/engines.rs")
         .input_extern_file("src/runtime/mod.rs")
         .csharp_dll_name("surreal_memory")
         .csharp_namespace("SurrealDb.Embedded.InMemory.Internals")
