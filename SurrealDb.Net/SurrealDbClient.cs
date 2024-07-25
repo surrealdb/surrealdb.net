@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using Dahomey.Cbor;
+﻿using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SurrealDb.Net.Extensions.DependencyInjection;
@@ -20,15 +18,6 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
     /// <param name="endpoint">The endpoint to access a SurrealDB instance.</param>
     /// <param name="namingPolicy">The naming policy to use for serialization.</param>
     /// <param name="httpClientFactory">An IHttpClientFactory instance, or none.</param>
-    /// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
-    /// <param name="prependJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and prepend to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
-    /// <param name="appendJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
     /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <param name="loggerFactory">
     /// An instance of <see cref="ILoggerFactory"/> used to log messages.
@@ -38,19 +27,14 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
         string endpoint,
         string? namingPolicy = null,
         IHttpClientFactory? httpClientFactory = null,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
         Action<CborOptions>? configureCborOptions = null,
         ILoggerFactory? loggerFactory = null
     )
         : this(
             new SurrealDbOptions(endpoint, namingPolicy),
             httpClientFactory,
-            configureJsonSerializerOptions,
-            prependJsonSerializerContexts,
-            appendJsonSerializerContexts,
-            configureCborOptions
+            configureCborOptions,
+            loggerFactory
         ) { }
 
     /// <summary>
@@ -58,15 +42,6 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
     /// </summary>
     /// <param name="configuration">The configuration options for the SurrealDbClient.</param>
     /// <param name="httpClientFactory">An IHttpClientFactory instance, or none.</param>
-    /// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
-    /// <param name="prependJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and prepend to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
-    /// <param name="appendJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
     /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <param name="loggerFactory">
     /// An instance of <see cref="ILoggerFactory"/> used to log messages.
@@ -76,30 +51,15 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
     public SurrealDbClient(
         SurrealDbOptions configuration,
         IHttpClientFactory? httpClientFactory = null,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
         Action<CborOptions>? configureCborOptions = null,
         ILoggerFactory? loggerFactory = null
     )
-        : this(
-            configuration,
-            null,
-            httpClientFactory,
-            configureJsonSerializerOptions,
-            prependJsonSerializerContexts,
-            appendJsonSerializerContexts,
-            configureCborOptions,
-            loggerFactory
-        ) { }
+        : this(configuration, null, httpClientFactory, configureCborOptions, loggerFactory) { }
 
     internal SurrealDbClient(
         SurrealDbOptions configuration,
         IServiceProvider? serviceProvider,
         IHttpClientFactory? httpClientFactory = null,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
         Action<CborOptions>? configureCborOptions = null,
         ILoggerFactory? loggerFactory = null
     )
@@ -119,9 +79,6 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
                 => new SurrealDbHttpEngine(
                     configuration,
                     httpClientFactory,
-                    configureJsonSerializerOptions,
-                    prependJsonSerializerContexts,
-                    appendJsonSerializerContexts,
                     configureCborOptions,
                     loggerFactory is not null ? new SurrealDbLoggerFactory(loggerFactory) : null
                 ),
@@ -129,9 +86,6 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
             or "wss"
                 => new SurrealDbWsEngine(
                     configuration,
-                    configureJsonSerializerOptions,
-                    prependJsonSerializerContexts,
-                    appendJsonSerializerContexts,
                     configureCborOptions,
                     loggerFactory is not null ? new SurrealDbLoggerFactory(loggerFactory) : null
                 ),

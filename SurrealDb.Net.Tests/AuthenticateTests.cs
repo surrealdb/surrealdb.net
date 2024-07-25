@@ -5,10 +5,8 @@ namespace SurrealDb.Net.Tests;
 public class AuthenticateTests
 {
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldAuthenticate(string connectionString)
     {
         Jwt? jwt = null;
@@ -121,10 +119,8 @@ public class AuthenticateTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldFailWhenInvalidate(string connectionString)
     {
         Jwt? jwt = null;

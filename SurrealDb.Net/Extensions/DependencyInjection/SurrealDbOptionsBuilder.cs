@@ -11,7 +11,6 @@ public sealed class SurrealDbOptionsBuilder
     private string? _password;
     private string? _token;
     private string? _namingPolicy;
-    private string? _serialization;
     private bool _sensitiveDataLoggingEnabled;
 
     /// <summary>
@@ -76,9 +75,6 @@ public sealed class SurrealDbOptionsBuilder
                     break;
                 case "namingpolicy":
                     _namingPolicy = value;
-                    break;
-                case "serialization":
-                    _serialization = value;
                     break;
             }
         }
@@ -198,34 +194,6 @@ public sealed class SurrealDbOptionsBuilder
         throw new ArgumentException($"Invalid naming policy: {namingPolicy}", nameof(namingPolicy));
     }
 
-    public SurrealDbOptionsBuilder WithSerialization(string serialization)
-    {
-        EnsuresSerialization(serialization);
-
-        _serialization = serialization;
-        return this;
-    }
-
-    private static void EnsuresSerialization(string serialization)
-    {
-        if (string.IsNullOrWhiteSpace(serialization))
-        {
-            return;
-        }
-
-        string[] validSerializations = [SerializationConstants.JSON, SerializationConstants.CBOR];
-
-        if (validSerializations.Contains(serialization.ToLowerInvariant()))
-        {
-            return;
-        }
-
-        throw new ArgumentException(
-            $"Invalid serialization: {serialization}",
-            nameof(serialization)
-        );
-    }
-
     /// <summary>
     /// Enables application data to be included in logs.
     /// This typically include parameter values set for SURQL queries, and parameters sent via any client methods.
@@ -252,7 +220,6 @@ public sealed class SurrealDbOptionsBuilder
             Password = _password,
             Token = _token,
             NamingPolicy = _namingPolicy,
-            Serialization = _serialization,
             Logging = new() { SensitiveDataLoggingEnabled = _sensitiveDataLoggingEnabled }
         };
     }

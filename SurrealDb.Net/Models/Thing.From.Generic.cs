@@ -1,7 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
-using SurrealDb.Net.Internals.Json;
-using SurrealDb.Net.Internals.Models;
+﻿using SurrealDb.Net.Internals.Models;
+#if NET7_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 
 namespace SurrealDb.Net.Models;
 
@@ -14,7 +14,6 @@ public partial class Thing
     /// <typeparam name="TId">The type of the record id part</typeparam>
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
-    /// <param name="jsonNamingPolicy">The naming policy to use when serializing the record id</param>
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="NotImplementedException"></exception>
 #if NET7_0_OR_GREATER
@@ -25,11 +24,7 @@ public partial class Thing
         "Requires reflection for JSON serialization of potential objects/arrays record id"
     )]
 #endif
-    public static Thing From<TTable, TId>(
-        TTable table,
-        TId id,
-        JsonNamingPolicy? jsonNamingPolicy = null
-    )
+    public static Thing From<TTable, TId>(TTable table, TId id)
     {
         if (table is null)
             throw new ArgumentException("Table should not be null", nameof(table));
@@ -37,8 +32,8 @@ public partial class Thing
         if (id is null)
             throw new ArgumentException("Id should not be null", nameof(id));
 
-        var tablePart = ExtractThingPart(table, jsonNamingPolicy);
-        var idPart = ExtractThingPart(id, jsonNamingPolicy);
+        var tablePart = ExtractThingPart(table);
+        var idPart = ExtractThingPart(id);
 
         return new Thing(tablePart.value, tablePart.type, idPart.value, idPart.type);
     }
@@ -47,10 +42,7 @@ public partial class Thing
     [RequiresDynamicCode("Requires reflection for JSON serialization of objects/arrays part")]
     [RequiresUnreferencedCode("Requires reflection for JSON serialization of objects/arrays part")]
 #endif
-    private static (string value, SpecialRecordPartType type) ExtractThingPart<T>(
-        T part,
-        JsonNamingPolicy? jsonNamingPolicy
-    )
+    private static (string value, SpecialRecordPartType type) ExtractThingPart<T>(T part)
     {
         if (part is string str)
             return ExtractStringPart(str);
@@ -84,22 +76,6 @@ public partial class Thing
 
         if (part is ulong ul)
             return (ul.ToString(), SpecialRecordPartType.None);
-
-        var serializedPart = JsonSerializer.Serialize(
-            part,
-            SurrealDbSerializerOptions.GetDefaultSerializerFromPolicy(jsonNamingPolicy)
-        );
-
-        char start = serializedPart[0];
-        char end = serializedPart[^1];
-
-        bool isJsonObject = start == '{' && end == '}';
-        if (isJsonObject)
-            return (serializedPart, SpecialRecordPartType.JsonObject);
-
-        bool isJsonArray = start == '[' && end == ']';
-        if (isJsonArray)
-            return (serializedPart, SpecialRecordPartType.JsonArray);
 
         throw new NotImplementedException();
     }

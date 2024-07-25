@@ -1,10 +1,18 @@
 ﻿using System.Text;
+using SurrealDb.Net.Benchmarks.Constants;
 
 namespace SurrealDb.Net.Benchmarks;
 
 public class BaseBenchmark
 {
     protected string NamingPolicy { get; } = "SnakeCase";
+
+    protected BaseBenchmark()
+    {
+        bool isNativeAotRuntime = !string.IsNullOrWhiteSpace(
+            Environment.GetEnvironmentVariable(EnvVariablesConstants.NativeAotRuntime)
+        );
+    }
 
     protected void InitializeSurrealDbClient(ISurrealDbClient client, DatabaseInfo databaseInfo)
     {

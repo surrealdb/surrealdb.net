@@ -1,10 +1,7 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using Dahomey.Cbor;
+﻿using Dahomey.Cbor;
 using Microsoft.Extensions.Logging;
 using SurrealDb.Net;
 using SurrealDb.Net.Internals.Helpers;
-using SurrealDb.Net.Internals.Models;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -21,15 +18,6 @@ public static class ServiceCollectionExtensions
     /// <param name="services">Service collection.</param>
     /// <param name="connectionString">Connection string to a SurrealDB instance.</param>
     /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
-    /// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
-    /// <param name="prependJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and prepend to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
-    /// <param name="appendJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
     /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <returns>Service collection</returns>
     /// <exception cref="ArgumentException"></exception>
@@ -39,9 +27,6 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         string connectionString,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
         Action<CborOptions>? configureCborOptions = null
     )
     {
@@ -49,9 +34,6 @@ public static class ServiceCollectionExtensions
             services,
             connectionString,
             lifetime,
-            configureJsonSerializerOptions,
-            prependJsonSerializerContexts,
-            appendJsonSerializerContexts,
             configureCborOptions
         );
     }
@@ -63,15 +45,6 @@ public static class ServiceCollectionExtensions
     /// <param name="services">Service collection.</param>
     /// <param name="connectionString">Connection string to a SurrealDB instance.</param>
     /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
-    /// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
-    /// <param name="prependJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and prepend to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
-    /// <param name="appendJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
     /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <returns>Service collection</returns>
     /// <exception cref="ArgumentException"></exception>
@@ -81,9 +54,6 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         string connectionString,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
         Action<CborOptions>? configureCborOptions = null
     )
         where T : ISurrealDbClient
@@ -93,15 +63,7 @@ public static class ServiceCollectionExtensions
             .FromConnectionString(connectionString)
             .Build();
 
-        return AddSurreal<T>(
-            services,
-            configuration,
-            lifetime,
-            configureJsonSerializerOptions,
-            prependJsonSerializerContexts,
-            appendJsonSerializerContexts,
-            configureCborOptions
-        );
+        return AddSurreal<T>(services, configuration, lifetime, configureCborOptions);
     }
 
     /// <summary>
@@ -130,15 +92,6 @@ public static class ServiceCollectionExtensions
     /// <param name="services">Service collection.</param>
     /// <param name="configuration">Configuration options.</param>
     /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
-    /// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
-    /// <param name="prependJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and prepend to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
-    /// <param name="appendJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
     /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <returns>Service collection</returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
@@ -147,9 +100,6 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         SurrealDbOptions configuration,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
         Action<CborOptions>? configureCborOptions = null
     )
     {
@@ -157,9 +107,6 @@ public static class ServiceCollectionExtensions
             services,
             configuration,
             lifetime,
-            configureJsonSerializerOptions,
-            prependJsonSerializerContexts,
-            appendJsonSerializerContexts,
             configureCborOptions
         );
     }
@@ -171,15 +118,6 @@ public static class ServiceCollectionExtensions
     /// <param name="services">Service collection.</param>
     /// <param name="configuration">Configuration options.</param>
     /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
-    /// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
-    /// <param name="prependJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and prepend to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
-    /// <param name="appendJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
     /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <returns>Service collection</returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
@@ -188,9 +126,6 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         SurrealDbOptions configuration,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
         Action<CborOptions>? configureCborOptions = null
     )
         where T : ISurrealDbClient
@@ -212,32 +147,18 @@ public static class ServiceCollectionExtensions
                 services,
                 configuration,
                 lifetime,
-                configureJsonSerializerOptions,
-                prependJsonSerializerContexts,
-                appendJsonSerializerContexts,
                 configureCborOptions
             );
             RegisterSurrealDbClient<SurrealDbClient>(
                 services,
                 configuration,
                 lifetime,
-                configureJsonSerializerOptions,
-                prependJsonSerializerContexts,
-                appendJsonSerializerContexts,
                 configureCborOptions
             );
         }
         else
         {
-            RegisterSurrealDbClient<T>(
-                services,
-                configuration,
-                lifetime,
-                configureJsonSerializerOptions,
-                prependJsonSerializerContexts,
-                appendJsonSerializerContexts,
-                configureCborOptions
-            );
+            RegisterSurrealDbClient<T>(services, configuration, lifetime, configureCborOptions);
         }
 
         return new SurrealDbBuilder(services);
@@ -261,9 +182,6 @@ public static class ServiceCollectionExtensions
         IServiceCollection services,
         SurrealDbOptions configuration,
         ServiceLifetime lifetime,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
         Action<CborOptions>? configureCborOptions = null
     )
     {
@@ -278,9 +196,6 @@ public static class ServiceCollectionExtensions
                             configuration,
                             serviceProvider,
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
-                            configureJsonSerializerOptions,
-                            prependJsonSerializerContexts,
-                            appendJsonSerializerContexts,
                             configureCborOptions,
                             serviceProvider.GetService<ILoggerFactory>()
                         );
@@ -296,9 +211,6 @@ public static class ServiceCollectionExtensions
                             configuration,
                             serviceProvider,
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
-                            configureJsonSerializerOptions,
-                            prependJsonSerializerContexts,
-                            appendJsonSerializerContexts,
                             configureCborOptions,
                             serviceProvider.GetService<ILoggerFactory>()
                         );
@@ -314,9 +226,6 @@ public static class ServiceCollectionExtensions
                             configuration,
                             serviceProvider,
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
-                            configureJsonSerializerOptions,
-                            prependJsonSerializerContexts,
-                            appendJsonSerializerContexts,
                             configureCborOptions,
                             serviceProvider.GetService<ILoggerFactory>()
                         );

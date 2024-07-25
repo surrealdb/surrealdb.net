@@ -2,12 +2,7 @@
 using Newtonsoft.Json.Linq;
 using SurrealDb.Net.Internals.Cbor;
 using SurrealDb.Net.Internals.Constants;
-using SurrealDb.Net.Internals.Json;
 using SurrealDb.Net.Internals.Models;
-using JsonSerializer = System.Text.Json.JsonSerializer;
-#if NET8_0_OR_GREATER
-using System.Text.Json.Serialization.Metadata;
-#endif
 
 namespace SurrealDb.Net.Models;
 
@@ -31,31 +26,7 @@ public partial class Thing
             );
         }
 
-        string json =
-            _specialRecordIdType == SpecialRecordPartType.JsonObject
-                ? ReconstructJsonFromObject(IdSpan)
-                : ReconstructJsonFromArray(IdSpan);
-
-        // TODO : Pass down JsonSerializerOptions
-#pragma warning disable IL2026, IL3050
-        var options = SurrealDbSerializerOptions.Default;
-#pragma warning restore IL2026, IL3050
-
-#if NET8_0_OR_GREATER
-        if (JsonSerializer.IsReflectionEnabledByDefault)
-        {
-#pragma warning disable IL2026, IL3050
-            return JsonSerializer.Deserialize<T>(json, options);
-#pragma warning restore IL2026, IL3050
-        }
-
-        return JsonSerializer.Deserialize(
-            json,
-            (options.GetTypeInfo(typeof(T)) as JsonTypeInfo<T>)!
-        );
-#else
-        return JsonSerializer.Deserialize<T>(json, options);
-#endif
+        throw new NotSupportedException("JSON deserialization is no longer supported.");
     }
 
     private static string ReconstructJsonFromObject(ReadOnlySpan<char> part)

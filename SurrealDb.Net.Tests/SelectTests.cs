@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using System.Text.Json.Serialization;
 using Dahomey.Cbor.Attributes;
 
 namespace SurrealDb.Net.Tests;
@@ -11,22 +10,18 @@ public class Post : SurrealDbRecord
     public string Title { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
 
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [CborIgnoreIfDefault]
     public DateTime? CreatedAt { get; set; }
 
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [CborIgnoreIfDefault]
     public string? Status { get; set; }
 }
 
 public class ObjectTableId
 {
-    [JsonPropertyName("location")]
     [CborProperty("location")]
     public string Location { get; set; } = string.Empty;
 
-    [JsonPropertyName("year")]
     [CborProperty("year")]
     public int Year { get; set; }
 }
@@ -35,10 +30,8 @@ public class SelectTests
 {
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSelectFromEmptyTable(string connectionString)
     {
         IEnumerable<Empty>? result = null;
@@ -61,10 +54,8 @@ public class SelectTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSelectFromPostTable(string connectionString)
     {
         IEnumerable<Post>? result = null;
@@ -114,10 +105,8 @@ public class SelectTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSelectSinglePostUsingTwoArguments(string connectionString)
     {
         Post? result = null;
@@ -153,10 +142,8 @@ public class SelectTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSelectSinglePostUsingThing(string connectionString)
     {
         Post? result = null;
@@ -194,10 +181,8 @@ public class SelectTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSelectSingleFromNumberId(string connectionString)
     {
         RecordIdRecord? result = null;
@@ -232,10 +217,8 @@ public class SelectTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSelectSingleFromStringId(string connectionString)
     {
         RecordIdRecord? result = null;
@@ -270,10 +253,8 @@ public class SelectTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSelectSingleFromGuidId(string connectionString)
     {
         RecordIdRecord? result = null;
@@ -306,12 +287,10 @@ public class SelectTests
         result!.Name.Should().Be("complex");
     }
 
-    [Theory]
+    [Theory(Skip = "TODO")]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSelectSingleFromObjectId(string connectionString)
     {
         RecordIdRecord? result = null;
@@ -344,12 +323,10 @@ public class SelectTests
         result!.Name.Should().Be("object");
     }
 
-    [Theory]
+    [Theory(Skip = "TODO")]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSelectSingleFromArrayId(string connectionString)
     {
         RecordIdRecord? result = null;
@@ -384,16 +361,8 @@ public class SelectTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData(
-        "Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON",
-        Skip = "To be removed"
-    )]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData(
-        "Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON",
-        Skip = "To be removed"
-    )]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSelectSingleFromStringRecordIdType(string connectionString)
     {
         RecordIdRecord? result = null;

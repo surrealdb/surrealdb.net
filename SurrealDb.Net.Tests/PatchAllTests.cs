@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using System.Text.Json;
-using SurrealDb.Net.Internals.Json;
 using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.Tests;
@@ -9,10 +8,8 @@ public class PatchAllTests
 {
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldPatchAllRecords(string connectionString)
     {
         IEnumerable<Post>? list = null;
@@ -37,9 +34,10 @@ public class PatchAllTests
 
             var jsonPatchDocument = new JsonPatchDocument<Post>
             {
-                Options = SurrealDbSerializerOptions.GetDefaultSerializerFromPolicy(
-                    JsonNamingPolicy.SnakeCaseLower
-                )
+                Options = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+                },
             };
             jsonPatchDocument.Replace(x => x.Content, "[Edit] Oops");
 

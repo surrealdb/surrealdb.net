@@ -3,12 +3,8 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Semver;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Extensions;
@@ -19,9 +15,6 @@ using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Http;
-using SurrealDb.Net.Internals.Json;
-using SurrealDb.Net.Internals.Logging;
-using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
@@ -31,37 +24,13 @@ using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.Internals;
 
-#if NET8_0_OR_GREATER
-[JsonSourceGenerationOptions(
-    AllowTrailingCommas = true,
-    NumberHandling = JsonNumberHandling.AllowReadingFromString
-        | JsonNumberHandling.AllowNamedFloatingPointLiterals,
-    PropertyNameCaseInsensitive = true,
-    ReadCommentHandling = JsonCommentHandling.Skip
-)]
-[JsonSerializable(typeof(ISurrealDbHttpResponse))]
-[JsonSerializable(typeof(SurrealDbHttpRequest))]
-[JsonSerializable(typeof(ISurrealDbResult))]
-[JsonSerializable(typeof(IReadOnlyDictionary<string, object>))]
-[JsonSerializable(typeof(RootAuth))]
-[JsonSerializable(typeof(NamespaceAuth))]
-[JsonSerializable(typeof(DatabaseAuth))]
-[JsonSerializable(typeof(ScopeAuth))]
-[JsonSerializable(typeof(AuthResponse))]
-internal partial class SurrealDbHttpJsonSerializerContext : JsonSerializerContext;
-#endif
-
 internal class SurrealDbHttpEngine : ISurrealDbEngine
 {
     private const string RPC_ENDPOINT = "/rpc";
 
-    private readonly bool _useCbor;
     private readonly Uri _uri;
     private readonly SurrealDbOptions _parameters;
     private readonly IHttpClientFactory? _httpClientFactory;
-    private readonly Action<JsonSerializerOptions>? _configureJsonSerializerOptions;
-    private readonly Func<JsonSerializerContext[]>? _prependJsonSerializerContexts;
-    private readonly Func<JsonSerializerContext[]>? _appendJsonSerializerContexts;
     private readonly Action<CborOptions>? _configureCborOptions;
     private readonly ISurrealDbLoggerFactory? _surrealDbLoggerFactory;
     private readonly Lazy<HttpClient> _singleHttpClient = new(() => new HttpClient(), true);
@@ -71,20 +40,13 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public SurrealDbHttpEngine(
         SurrealDbOptions parameters,
         IHttpClientFactory? httpClientFactory,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts,
         Action<CborOptions>? configureCborOptions,
         ISurrealDbLoggerFactory? surrealDbLoggerFactory
     )
     {
-        _useCbor = SurrealDbEngineHelpers.ShouldUseCbor(parameters);
         _uri = new Uri(parameters.Endpoint!);
         _parameters = parameters;
         _httpClientFactory = httpClientFactory;
-        _configureJsonSerializerOptions = configureJsonSerializerOptions;
-        _prependJsonSerializerContexts = prependJsonSerializerContexts;
-        _appendJsonSerializerContexts = appendJsonSerializerContexts;
         _configureCborOptions = configureCborOptions;
         _surrealDbLoggerFactory = surrealDbLoggerFactory;
     }
@@ -124,13 +86,10 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         _surrealDbLoggerFactory?.Connection?.LogConnectionAttempt(_parameters.Endpoint!);
 
-        if (_useCbor)
+        string version = await Version(cancellationToken).ConfigureAwait(false);
+        if (version.ToSemver().CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
         {
-            string version = await Version(cancellationToken).ConfigureAwait(false);
-            if (version.ToSemver().CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
-            {
-                throw new SurrealDbException("CBOR is only supported on SurrealDB 1.4.0 or later.");
-            }
+            throw new SurrealDbException("CBOR is only supported on SurrealDB 1.4.0 or later.");
         }
 
         var dbResponse = await RawQuery(
@@ -150,8 +109,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        object?[] @params = _useCbor ? [data.Id, data] : [data.Id.ToString(), data];
-        var request = new SurrealDbHttpRequest { Method = "create", Parameters = @params };
+        var request = new SurrealDbHttpRequest { Method = "create", Parameters = [data.Id, data] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
@@ -176,13 +134,6 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where TOutput : Record
     {
-        if (!_useCbor)
-        {
-            throw new NotImplementedException(
-                $"Creating by {nameof(StringRecordId)} is only available via CBOR serialization."
-            );
-        }
-
         var request = new SurrealDbHttpRequest { Method = "create", Parameters = [recordId, data] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -199,41 +150,19 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public async Task<bool> Delete(Thing thing, CancellationToken cancellationToken)
     {
-        object?[] @params = _useCbor ? [thing] : [thing.ToString()];
-        var request = new SurrealDbHttpRequest { Method = "delete", Parameters = @params };
+        var request = new SurrealDbHttpRequest { Method = "delete", Parameters = [thing] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-
-        if (dbResponse.Result.HasValue)
-        {
-            var valueKind = dbResponse.Result.Value.ValueKind;
-            return valueKind != JsonValueKind.Null && valueKind != JsonValueKind.Undefined;
-        }
-
         return !dbResponse.ExpectNone() && !dbResponse.ExpectEmptyArray();
     }
 
     public async Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken)
     {
-        if (!_useCbor)
-        {
-            throw new NotImplementedException(
-                $"Deleting by {nameof(StringRecordId)} is only available via CBOR serialization."
-            );
-        }
-
         var request = new SurrealDbHttpRequest { Method = "delete", Parameters = [recordId] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-
-        if (dbResponse.Result.HasValue)
-        {
-            var valueKind = dbResponse.Result.Value.ValueKind;
-            return valueKind != JsonValueKind.Null && valueKind != JsonValueKind.Undefined;
-        }
-
         return !dbResponse.ExpectNone() && !dbResponse.ExpectEmptyArray();
     }
 
@@ -334,8 +263,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        object?[] @params = _useCbor ? [data.Id, data] : [data.Id.ToWsString(), data];
-        var request = new SurrealDbHttpRequest { Method = "merge", Parameters = @params };
+        var request = new SurrealDbHttpRequest { Method = "merge", Parameters = [data.Id, data] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
@@ -348,8 +276,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        object?[] @params = _useCbor ? [thing, data] : [thing.ToWsString(), data];
-        var request = new SurrealDbHttpRequest { Method = "merge", Parameters = @params };
+        var request = new SurrealDbHttpRequest { Method = "merge", Parameters = [thing, data] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
@@ -362,13 +289,6 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        if (!_useCbor)
-        {
-            throw new NotImplementedException(
-                $"Merging by {nameof(StringRecordId)} is only available via CBOR serialization."
-            );
-        }
-
         var request = new SurrealDbHttpRequest { Method = "merge", Parameters = [recordId, data] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -410,8 +330,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where T : class
     {
-        object?[] @params = _useCbor ? [thing, patches] : [thing.ToWsString(), patches];
-        var request = new SurrealDbHttpRequest { Method = "patch", Parameters = @params };
+        var request = new SurrealDbHttpRequest { Method = "patch", Parameters = [thing, patches] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
@@ -425,13 +344,6 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where T : class
     {
-        if (!_useCbor)
-        {
-            throw new NotImplementedException(
-                $"Patching by {nameof(StringRecordId)} is only available via CBOR serialization."
-            );
-        }
-
         var request = new SurrealDbHttpRequest
         {
             Method = "patch",
@@ -559,8 +471,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public async Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken)
     {
-        object?[] @params = _useCbor ? [thing] : [thing.ToWsString()];
-        var request = new SurrealDbHttpRequest { Method = "select", Parameters = @params };
+        var request = new SurrealDbHttpRequest { Method = "select", Parameters = [thing] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
@@ -569,13 +480,6 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public async Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken)
     {
-        if (!_useCbor)
-        {
-            throw new NotImplementedException(
-                $"Selecting by {nameof(StringRecordId)} is only available via CBOR serialization."
-            );
-        }
-
         var request = new SurrealDbHttpRequest { Method = "select", Parameters = [recordId] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -712,8 +616,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        object?[] @params = _useCbor ? [data.Id, data] : [data.Id.ToWsString(), data];
-        var request = new SurrealDbHttpRequest { Method = "update", Parameters = @params };
+        var request = new SurrealDbHttpRequest { Method = "update", Parameters = [data.Id, data] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
@@ -727,13 +630,6 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where TOutput : Record
     {
-        if (!_useCbor)
-        {
-            throw new NotImplementedException(
-                $"Upserting by {nameof(StringRecordId)} is only available via CBOR serialization."
-            );
-        }
-
         var request = new SurrealDbHttpRequest { Method = "update", Parameters = [recordId, data] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -758,30 +654,6 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         const string VERSION_PREFIX = "surrealdb-";
         return version.Replace(VERSION_PREFIX, string.Empty);
-    }
-
-    private CurrentJsonSerializerOptionsForAot? _currentJsonSerializerOptionsForAot;
-
-    private JsonSerializerOptions GetJsonSerializerOptions()
-    {
-        var jsonSerializerOptions = SurrealDbSerializerOptions.GetJsonSerializerOptions(
-#if NET8_0_OR_GREATER
-            SurrealDbHttpJsonSerializerContext.Default,
-#endif
-            _parameters.NamingPolicy,
-            _configureJsonSerializerOptions,
-            _prependJsonSerializerContexts,
-            _appendJsonSerializerContexts,
-            _currentJsonSerializerOptionsForAot,
-            out var updatedJsonSerializerOptionsForAot
-        );
-
-        if (updatedJsonSerializerOptionsForAot is not null)
-        {
-            _currentJsonSerializerOptionsForAot = updatedJsonSerializerOptionsForAot;
-        }
-
-        return jsonSerializerOptions;
     }
 
     private CborOptions GetCborSerializerOptions()
@@ -855,10 +727,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         client.DefaultRequestHeaders.Remove(HttpConstants.NS_HEADER_NAME);
         client.DefaultRequestHeaders.Remove(HttpConstants.DB_HEADER_NAME);
 
-        client.DefaultRequestHeaders.Add(
-            HttpConstants.ACCEPT_HEADER_NAME,
-            _useCbor ? ["application/cbor"] : ["application/json"]
-        );
+        client.DefaultRequestHeaders.Add(HttpConstants.ACCEPT_HEADER_NAME, ["application/cbor"]);
 
         var ns = useConfiguration is not null ? useConfiguration.Ns : _config.Ns;
         var db = useConfiguration is not null ? useConfiguration.Db : _config.Db;
@@ -925,36 +794,16 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return _singleHttpClient.IsValueCreated && client == _singleHttpClient.Value;
     }
 
-    private static StringContent CreateBodyContent(string data)
-    {
-        return new StringContentWithoutCharset(data, Encoding.UTF8, "application/json");
-    }
-
     private HttpContent CreateBodyContent<T>(T data)
     {
-        if (_useCbor)
-        {
-            var writer = new ArrayBufferWriter<byte>();
-            CborSerializer.Serialize(data, writer, GetCborSerializerOptions());
-            var payload = writer.WrittenSpan.ToArray();
+        var writer = new ArrayBufferWriter<byte>();
+        CborSerializer.Serialize(data, writer, GetCborSerializerOptions());
+        var payload = writer.WrittenSpan.ToArray();
 
-            var content = new ByteArrayContent(payload);
-            content.Headers.ContentType = new MediaTypeHeaderValue("application/cbor");
+        var content = new ByteArrayContent(payload);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/cbor");
 
-            return content;
-        }
-
-        string bodyContent = JsonSerializer.IsReflectionEnabledByDefault
-            ?
-#pragma warning disable IL2026, IL3050
-            JsonSerializer.Serialize(data, GetJsonSerializerOptions())
-#pragma warning restore IL2026, IL3050
-            : JsonSerializer.Serialize(
-                data,
-                (GetJsonSerializerOptions().GetTypeInfo(typeof(T)) as JsonTypeInfo<T>)!
-            );
-
-        return CreateBodyContent(bodyContent);
+        return content;
     }
 
     private async Task<SurrealDbHttpOkResponse> ExecuteRequestAsync(
@@ -1006,54 +855,15 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 #endif
 
-        ISurrealDbHttpResponse? result;
+        var cborSerializerOptions = GetCborSerializerOptions();
 
-        if (_useCbor)
-        {
-            var cborSerializerOptions = GetCborSerializerOptions();
-
-            result = await CborSerializer
-                .DeserializeAsync<ISurrealDbHttpResponse>(
-                    stream,
-                    cborSerializerOptions,
-                    cancellationToken
-                )
-                .ConfigureAwait(false);
-        }
-        else
-        {
-            var jsonSerializerOptions = GetJsonSerializerOptions();
-
-#if NET8_0_OR_GREATER
-            var taskResult = JsonSerializer.IsReflectionEnabledByDefault
-                ?
-#pragma warning disable IL2026, IL3050
-                JsonSerializer.DeserializeAsync<ISurrealDbHttpResponse>(
-                    stream,
-                    jsonSerializerOptions,
-                    cancellationToken
-                )
-#pragma warning restore IL2026, IL3050
-                : JsonSerializer.DeserializeAsync(
-                    stream,
-                    (
-                        jsonSerializerOptions.GetTypeInfo(typeof(ISurrealDbHttpResponse))
-                        as JsonTypeInfo<ISurrealDbHttpResponse>
-                    )!,
-                    cancellationToken
-                );
-
-            result = await taskResult.ConfigureAwait(false);
-#else
-            result = await JsonSerializer
-                .DeserializeAsync<ISurrealDbHttpResponse>(
-                    stream,
-                    jsonSerializerOptions,
-                    cancellationToken
-                )
-                .ConfigureAwait(false);
-#endif
-        }
+        var result = await CborSerializer
+            .DeserializeAsync<ISurrealDbHttpResponse>(
+                stream,
+                cborSerializerOptions,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
 
         return ExtractSurrealDbOkResponse(result);
     }

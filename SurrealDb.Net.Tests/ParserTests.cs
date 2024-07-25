@@ -1,11 +1,7 @@
 ﻿using System.Numerics;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Dahomey.Cbor;
 using FluentAssertions.Extensions;
-using Microsoft.Extensions.DependencyInjection;
-using SurrealDb.Net.Internals.Constants;
 
 namespace SurrealDb.Net.Tests;
 
@@ -16,7 +12,6 @@ public abstract class BaseRecord
 
 public class Record<T> : BaseRecord
 {
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public T? Value { get; set; }
 }
 
@@ -59,17 +54,10 @@ public class ParserTests
 {
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseThing(string connectionString)
     {
-        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
-        bool useCbor =
-            options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR
-            || options.IsEmbedded;
-
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
@@ -179,10 +167,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseString(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -245,10 +231,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseLong(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -296,17 +280,10 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseDecimal(string connectionString)
     {
-        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
-        bool useCbor =
-            options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR
-            || options.IsEmbedded;
-
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
@@ -367,17 +344,15 @@ public class ParserTests
             var floatRecord = records.First(r => r.Name == "float");
             floatRecord.Should().NotBeNull();
 
-            decimal expected = useCbor ? 13.5719384719385m : 13.571938471938472m; // TODO : Inspect difference
+            decimal expected = 13.5719384719385m;
             floatRecord!.Value.Should().Be(expected);
         }
     }
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseFloat(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -445,10 +420,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseDouble(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -516,10 +489,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseDuration(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -627,10 +598,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseDurationAsTimeSpan(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -724,12 +693,10 @@ public class ParserTests
         }
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://", Skip = "Not supported")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR", Skip = "Not supported")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR", Skip = "Not supported")]
+    [Theory(Skip = "Not supported")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseDurationAsString(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -825,10 +792,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseTimeOnly(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -924,10 +889,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseDateAsDateTime(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -1006,10 +969,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseDateOnly(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -1075,17 +1036,10 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseVector2(string connectionString)
     {
-        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
-        bool useCbor =
-            options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR
-            || options.IsEmbedded;
-
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
@@ -1111,18 +1065,9 @@ public class ParserTests
         {
             Func<Task> act = async () => await client.Select<Vector2Record>(("vector", "empty"));
 
-            if (useCbor)
-            {
-                await act.Should()
-                    .ThrowAsync<CborException>()
-                    .WithMessage("Expected a CBOR array with at least 2 elements");
-            }
-            else
-            {
-                await act.Should()
-                    .ThrowAsync<JsonException>()
-                    .WithMessage("Cannot deserialize Vector2");
-            }
+            await act.Should()
+                .ThrowAsync<CborException>()
+                .WithMessage("Expected a CBOR array with at least 2 elements");
         }
 
         {
@@ -1146,17 +1091,10 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseVector3(string connectionString)
     {
-        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
-        bool useCbor =
-            options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR
-            || options.IsEmbedded;
-
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
@@ -1182,35 +1120,17 @@ public class ParserTests
         {
             Func<Task> act = async () => await client.Select<Vector3Record>(("vector", "empty"));
 
-            if (useCbor)
-            {
-                await act.Should()
-                    .ThrowAsync<CborException>()
-                    .WithMessage("Expected a CBOR array with at least 3 elements");
-            }
-            else
-            {
-                await act.Should()
-                    .ThrowAsync<JsonException>()
-                    .WithMessage("Cannot deserialize Vector3");
-            }
+            await act.Should()
+                .ThrowAsync<CborException>()
+                .WithMessage("Expected a CBOR array with at least 3 elements");
         }
 
         {
             Func<Task> act = async () => await client.Select<Vector3Record>(("vector", "vector2"));
 
-            if (useCbor)
-            {
-                await act.Should()
-                    .ThrowAsync<CborException>()
-                    .WithMessage("Expected a CBOR array with at least 3 elements");
-            }
-            else
-            {
-                await act.Should()
-                    .ThrowAsync<JsonException>()
-                    .WithMessage("Cannot deserialize Vector3");
-            }
+            await act.Should()
+                .ThrowAsync<CborException>()
+                .WithMessage("Expected a CBOR array with at least 3 elements");
         }
 
         {
@@ -1228,17 +1148,10 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseVector4(string connectionString)
     {
-        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
-        bool useCbor =
-            options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR
-            || options.IsEmbedded;
-
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
@@ -1264,52 +1177,25 @@ public class ParserTests
         {
             Func<Task> act = async () => await client.Select<Vector4Record>(("vector", "empty"));
 
-            if (useCbor)
-            {
-                await act.Should()
-                    .ThrowAsync<CborException>()
-                    .WithMessage("Expected a CBOR array with at least 4 elements");
-            }
-            else
-            {
-                await act.Should()
-                    .ThrowAsync<JsonException>()
-                    .WithMessage("Cannot deserialize Vector4");
-            }
+            await act.Should()
+                .ThrowAsync<CborException>()
+                .WithMessage("Expected a CBOR array with at least 4 elements");
         }
 
         {
             Func<Task> act = async () => await client.Select<Vector4Record>(("vector", "vector2"));
 
-            if (useCbor)
-            {
-                await act.Should()
-                    .ThrowAsync<CborException>()
-                    .WithMessage("Expected a CBOR array with at least 4 elements");
-            }
-            else
-            {
-                await act.Should()
-                    .ThrowAsync<JsonException>()
-                    .WithMessage("Cannot deserialize Vector4");
-            }
+            await act.Should()
+                .ThrowAsync<CborException>()
+                .WithMessage("Expected a CBOR array with at least 4 elements");
         }
 
         {
             Func<Task> act = async () => await client.Select<Vector4Record>(("vector", "vector3"));
 
-            if (useCbor)
-            {
-                await act.Should()
-                    .ThrowAsync<CborException>()
-                    .WithMessage("Expected a CBOR array with at least 4 elements");
-            }
-            else
-            {
-                await act.Should()
-                    .ThrowAsync<JsonException>()
-                    .WithMessage("Cannot deserialize Vector4");
-            }
+            await act.Should()
+                .ThrowAsync<CborException>()
+                .WithMessage("Expected a CBOR array with at least 4 elements");
         }
 
         {
@@ -1320,10 +1206,9 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON", Skip = "To be removed")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON", Skip = "To be removed")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseNone(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -1338,7 +1223,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);

@@ -3,12 +3,8 @@ using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.IO;
 using Semver;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Extensions;
@@ -18,9 +14,6 @@ using SurrealDb.Net.Internals.Cbor;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Helpers;
-using SurrealDb.Net.Internals.Json;
-using SurrealDb.Net.Internals.Logging;
-using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Internals.Stream;
 using SurrealDb.Net.Internals.Ws;
@@ -30,41 +23,15 @@ using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 using SystemTextJsonPatch;
 using Websocket.Client;
-#if NET8_0_OR_GREATER
-using System.Text.Json.Serialization.Metadata;
-#endif
 
 namespace SurrealDb.Net.Internals;
-
-#if NET8_0_OR_GREATER
-[JsonSourceGenerationOptions(
-    AllowTrailingCommas = true,
-    NumberHandling = JsonNumberHandling.AllowReadingFromString
-        | JsonNumberHandling.AllowNamedFloatingPointLiterals,
-    PropertyNameCaseInsensitive = true,
-    ReadCommentHandling = JsonCommentHandling.Skip
-)]
-[JsonSerializable(typeof(ISurrealDbWsResponse))]
-[JsonSerializable(typeof(SurrealDbWsRequest))]
-[JsonSerializable(typeof(IReadOnlyDictionary<string, object>))]
-[JsonSerializable(typeof(List<ISurrealDbResult>))]
-[JsonSerializable(typeof(RootAuth))]
-[JsonSerializable(typeof(NamespaceAuth))]
-[JsonSerializable(typeof(DatabaseAuth))]
-[JsonSerializable(typeof(ScopeAuth))]
-internal partial class SurrealDbWsJsonSerializerContext : JsonSerializerContext;
-#endif
 
 internal class SurrealDbWsEngine : ISurrealDbEngine
 {
     private static readonly ConcurrentDictionary<string, SurrealDbWsEngine> _wsEngines = new();
 
-    private readonly bool _useCbor;
     private readonly string _id;
     private readonly SurrealDbOptions _parameters;
-    private readonly Action<JsonSerializerOptions>? _configureJsonSerializerOptions;
-    private readonly Func<JsonSerializerContext[]>? _prependJsonSerializerContexts;
-    private readonly Func<JsonSerializerContext[]>? _appendJsonSerializerContexts;
     private readonly Action<CborOptions>? _configureCborOptions;
     private readonly ISurrealDbLoggerFactory? _surrealDbLoggerFactory;
     private readonly SurrealDbWsEngineConfig _config = new();
@@ -82,9 +49,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public SurrealDbWsEngine(
         SurrealDbOptions parameters,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts,
         Action<CborOptions>? configureCborOptions,
         ISurrealDbLoggerFactory? surrealDbLoggerFactory
     )
@@ -97,24 +61,18 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             id = RandomHelper.CreateRandomId();
         } while (!_wsEngines.TryAdd(id, this));
 
-        _useCbor = SurrealDbEngineHelpers.ShouldUseCbor(parameters);
         _id = id;
         _parameters = parameters;
-        _configureJsonSerializerOptions = configureJsonSerializerOptions;
-        _prependJsonSerializerContexts = prependJsonSerializerContexts;
-        _appendJsonSerializerContexts = appendJsonSerializerContexts;
         _configureCborOptions = configureCborOptions;
         _surrealDbLoggerFactory = surrealDbLoggerFactory;
 
-        var clientWebSocketFactory = _useCbor
-            ? new Func<ClientWebSocket>(() =>
-            {
-                var client = new ClientWebSocket();
-                client.Options.AddSubProtocol(SerializationConstants.CBOR);
+        var clientWebSocketFactory = new Func<ClientWebSocket>(() =>
+        {
+            var client = new ClientWebSocket();
+            client.Options.AddSubProtocol(SerializationConstants.CBOR);
 
-                return client;
-            })
-            : null;
+            return client;
+        });
 
         _wsClient = new WebsocketClient(new Uri(parameters.Endpoint!), clientWebSocketFactory)
         {
@@ -133,100 +91,21 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                     {
                         ISurrealDbWsResponse? response = null;
 
-                        switch (message.MessageType)
+                        if (message.MessageType == WebSocketMessageType.Binary)
                         {
-                            case WebSocketMessageType.Text:
-                                if (!_useCbor)
-                                {
-#if NET8_0_OR_GREATER
-                                    if (JsonSerializer.IsReflectionEnabledByDefault)
-                                    {
-#pragma warning disable IL2026, IL3050
-                                        response = JsonSerializer.Deserialize<ISurrealDbWsResponse>(
-                                            message.Text!,
-                                            GetJsonSerializerOptions()
-                                        );
-#pragma warning restore IL2026, IL3050
-                                    }
-                                    else
-                                    {
-                                        response = JsonSerializer.Deserialize(
-                                            message.Text!,
-                                            (
-                                                GetJsonSerializerOptions()
-                                                    .GetTypeInfo(typeof(ISurrealDbWsResponse))
-                                                as JsonTypeInfo<ISurrealDbWsResponse>
-                                            )!
-                                        );
-                                    }
-#else
-                                    response = JsonSerializer.Deserialize<ISurrealDbWsResponse>(
-                                        message.Text!,
-                                        GetJsonSerializerOptions()
-                                    );
-#endif
-                                }
-                                break;
-                            case WebSocketMessageType.Binary:
-                            {
-                                using var stream = message.Stream is not null
-                                    ? message.Stream
-                                    : MemoryStreamProvider.MemoryStreamManager.GetStream(
-                                        message.Binary!
-                                    );
+                            using var stream = message.Stream is not null
+                                ? message.Stream
+                                : MemoryStreamProvider.MemoryStreamManager.GetStream(
+                                    message.Binary!
+                                );
 
-                                if (_useCbor)
-                                {
-                                    response = await CborSerializer
-                                        .DeserializeAsync<ISurrealDbWsResponse>(
-                                            stream,
-                                            GetCborOptions(),
-                                            cancellationToken
-                                        )
-                                        .ConfigureAwait(false);
-                                }
-                                else
-                                {
-#if NET8_0_OR_GREATER
-                                    if (JsonSerializer.IsReflectionEnabledByDefault)
-                                    {
-#pragma warning disable IL2026, IL3050
-                                        response = await JsonSerializer
-                                            .DeserializeAsync<ISurrealDbWsResponse>(
-                                                stream,
-                                                GetJsonSerializerOptions(),
-                                                cancellationToken
-                                            )
-                                            .ConfigureAwait(false);
-#pragma warning restore IL2026, IL3050
-                                    }
-                                    else
-                                    {
-                                        response = await JsonSerializer
-                                            .DeserializeAsync(
-                                                stream,
-                                                (
-                                                    GetJsonSerializerOptions()
-                                                        .GetTypeInfo(typeof(ISurrealDbWsResponse))
-                                                    as JsonTypeInfo<ISurrealDbWsResponse>
-                                                )!,
-                                                cancellationToken
-                                            )
-                                            .ConfigureAwait(false);
-                                    }
-#else
-                                    response = await JsonSerializer
-                                        .DeserializeAsync<ISurrealDbWsResponse>(
-                                            stream,
-                                            GetJsonSerializerOptions(),
-                                            cancellationToken
-                                        )
-                                        .ConfigureAwait(false);
-#endif
-                                }
-
-                                break;
-                            }
+                            response = await CborSerializer
+                                .DeserializeAsync<ISurrealDbWsResponse>(
+                                    stream,
+                                    GetCborOptions(),
+                                    cancellationToken
+                                )
+                                .ConfigureAwait(false);
                         }
 
                         if (response is SurrealDbWsLiveResponse surrealDbWsLiveResponse)
@@ -383,14 +262,11 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         await ApplyConfigurationAsync(cancellationToken).ConfigureAwait(false);
 
-        if (_useCbor)
+        string version = await Version(SurrealDbWsRequestPriority.High, cancellationToken)
+            .ConfigureAwait(false);
+        if (version.ToSemver().CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
         {
-            string version = await Version(SurrealDbWsRequestPriority.High, cancellationToken)
-                .ConfigureAwait(false);
-            if (version.ToSemver().CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
-            {
-                throw new SurrealDbException("CBOR is only supported on SurrealDB 1.4.0 or later.");
-            }
+            throw new SurrealDbException("CBOR is only supported on SurrealDB 1.4.0 or later.");
         }
 
         _pinger.Start();
@@ -405,11 +281,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        object?[] @params = _useCbor ? [data.Id, data] : [data.Id.ToString(), data];
-
         var dbResponse = await SendRequestAsync(
                 "create",
-                @params,
+                [data.Id, data],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -437,13 +311,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
         where TOutput : Record
     {
-        if (!_useCbor)
-        {
-            throw new NotImplementedException(
-                $"Creating by {nameof(StringRecordId)} is only available via CBOR serialization."
-            );
-        }
-
         var dbResponse = await SendRequestAsync(
                 "create",
                 [recordId, data],
@@ -467,34 +334,18 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task<bool> Delete(Thing thing, CancellationToken cancellationToken)
     {
-        object?[] @params = _useCbor ? [thing] : [thing.ToString()];
-
         var dbResponse = await SendRequestAsync(
                 "delete",
-                @params,
+                [thing],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
             .ConfigureAwait(false);
-
-        if (dbResponse.Result.HasValue)
-        {
-            var valueKind = dbResponse.Result.Value.ValueKind;
-            return valueKind != JsonValueKind.Null && valueKind != JsonValueKind.Undefined;
-        }
-
         return !dbResponse.ExpectNone() && !dbResponse.ExpectEmptyArray();
     }
 
     public async Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken)
     {
-        if (!_useCbor)
-        {
-            throw new NotImplementedException(
-                $"Deleting by {nameof(StringRecordId)} is only available via CBOR serialization."
-            );
-        }
-
         var dbResponse = await SendRequestAsync(
                 "delete",
                 [recordId],
@@ -502,13 +353,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
-
-        if (dbResponse.Result.HasValue)
-        {
-            var valueKind = dbResponse.Result.Value.ValueKind;
-            return valueKind != JsonValueKind.Null && valueKind != JsonValueKind.Undefined;
-        }
-
         return !dbResponse.ExpectNone() && !dbResponse.ExpectEmptyArray();
     }
 
@@ -645,11 +489,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             await Task.WhenAll(tasks).ConfigureAwait(false);
         }
 
-        object?[] @params = _useCbor ? [queryUuid] : [queryUuid.ToString()];
-
         await SendRequestAsync(
                 "kill",
-                @params,
+                [queryUuid],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -712,11 +554,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        object?[] @params = _useCbor ? [data.Id, data] : [data.Id.ToWsString(), data];
-
         var dbResponse = await SendRequestAsync(
                 "merge",
-                @params,
+                [data.Id, data],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -730,11 +570,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        object?[] @params = _useCbor ? [thing, data] : [thing.ToWsString(), data];
-
         var dbResponse = await SendRequestAsync(
                 "merge",
-                @params,
+                [thing, data],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -748,13 +586,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        if (!_useCbor)
-        {
-            throw new NotImplementedException(
-                $"Merging by {nameof(StringRecordId)} is only available via CBOR serialization."
-            );
-        }
-
         var dbResponse = await SendRequestAsync(
                 "merge",
                 [recordId, data],
@@ -805,11 +636,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
         where T : class
     {
-        object?[] @params = _useCbor ? [thing, patches] : [thing.ToWsString(), patches];
-
         var dbResponse = await SendRequestAsync(
                 "patch",
-                @params,
+                [thing, patches],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -824,13 +653,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
         where T : class
     {
-        if (!_useCbor)
-        {
-            throw new NotImplementedException(
-                $"Patching by {nameof(StringRecordId)} is only available via CBOR serialization."
-            );
-        }
-
         var dbResponse = await SendRequestAsync(
                 "patch",
                 [recordId, patches],
@@ -948,11 +770,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken)
     {
-        object?[] @params = _useCbor ? [thing] : [thing.ToWsString()];
-
         var dbResponse = await SendRequestAsync(
                 "select",
-                @params,
+                [thing],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -962,13 +782,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken)
     {
-        if (!_useCbor)
-        {
-            throw new NotImplementedException(
-                $"Selecting by {nameof(StringRecordId)} is only available via CBOR serialization."
-            );
-        }
-
         var dbResponse = await SendRequestAsync(
                 "select",
                 [recordId],
@@ -1138,11 +951,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        object?[] @params = _useCbor ? [data.Id, data] : [data.Id.ToWsString(), data];
-
         var dbResponse = await SendRequestAsync(
                 "update",
-                @params,
+                [data.Id, data],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1157,13 +968,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
         where TOutput : Record
     {
-        if (!_useCbor)
-        {
-            throw new NotImplementedException(
-                $"Upserting by {nameof(StringRecordId)} is only available via CBOR serialization."
-            );
-        }
-
         var dbResponse = await SendRequestAsync(
                 "update",
                 [recordId, data],
@@ -1206,30 +1010,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         const string VERSION_PREFIX = "surrealdb-";
         return version.Replace(VERSION_PREFIX, string.Empty);
-    }
-
-    private CurrentJsonSerializerOptionsForAot? _currentJsonSerializerOptionsForAot;
-
-    private JsonSerializerOptions GetJsonSerializerOptions()
-    {
-        var jsonSerializerOptions = SurrealDbSerializerOptions.GetJsonSerializerOptions(
-#if NET8_0_OR_GREATER
-            SurrealDbWsJsonSerializerContext.Default,
-#endif
-            _parameters.NamingPolicy,
-            _configureJsonSerializerOptions,
-            _prependJsonSerializerContexts,
-            _appendJsonSerializerContexts,
-            _currentJsonSerializerOptionsForAot,
-            out var updatedJsonSerializerOptionsForAot
-        );
-
-        if (updatedJsonSerializerOptionsForAot is not null)
-        {
-            _currentJsonSerializerOptionsForAot = updatedJsonSerializerOptionsForAot;
-        }
-
-        return jsonSerializerOptions;
     }
 
     private CborOptions GetCborOptions()
@@ -1391,48 +1171,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
 
-        bool isMessageSent;
+        await CborSerializer
+            .SerializeAsync(request, stream, GetCborOptions(), cancellationToken)
+            .ConfigureAwait(false);
 
-        if (_useCbor)
-        {
-            await CborSerializer
-                .SerializeAsync(request, stream, GetCborOptions(), cancellationToken)
-                .ConfigureAwait(false);
-
-            bool canGetBuffer = stream.TryGetBuffer(out var payload);
-            isMessageSent = canGetBuffer && _wsClient.Send(payload);
-        }
-        else
-        {
-#if NET8_0_OR_GREATER
-            if (JsonSerializer.IsReflectionEnabledByDefault)
-            {
-#pragma warning disable IL2026, IL3050
-                await JsonSerializer
-                    .SerializeAsync(stream, request, GetJsonSerializerOptions(), cancellationToken)
-                    .ConfigureAwait(false);
-#pragma warning restore IL2026, IL3050
-            }
-            else
-            {
-                await JsonSerializer
-                    .SerializeAsync(
-                        stream,
-                        request,
-                        GetJsonSerializerOptions().GetTypeInfo(typeof(SurrealDbWsRequest)),
-                        cancellationToken
-                    )
-                    .ConfigureAwait(false);
-            }
-#else
-            await JsonSerializer
-                .SerializeAsync(stream, request, GetJsonSerializerOptions(), cancellationToken)
-                .ConfigureAwait(false);
-#endif
-
-            bool canGetBuffer = stream.TryGetBuffer(out var payload);
-            isMessageSent = canGetBuffer && _wsClient.SendAsText(payload);
-        }
+        bool canGetBuffer = stream.TryGetBuffer(out var payload);
+        bool isMessageSent = canGetBuffer && _wsClient.Send(payload);
 
         if (!isMessageSent)
         {

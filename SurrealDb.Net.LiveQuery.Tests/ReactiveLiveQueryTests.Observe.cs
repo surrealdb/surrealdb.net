@@ -9,8 +9,7 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
 {
     [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldObserveQuery(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();
@@ -90,8 +89,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
     }
 
     [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldObserveRawQuery(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();
@@ -185,8 +183,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
     }
 
     [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldObserveTable(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();

@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using SurrealDb.Net;
+﻿using SurrealDb.Net;
 using SurrealDb.Net.Extensions.DependencyInjection;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -41,16 +40,10 @@ public sealed class SurrealDbOptions
 
     /// <summary>
     /// Naming policy used to interact with the database.
-    /// It will change the default <see cref="JsonNamingPolicy"/> of the <see cref="ISurrealDbClient"/> used.
+    /// It will change the default NamingPolicy of the <see cref="ISurrealDbClient"/> used.
     /// Valid options are "CamelCase", "SnakeCaseLower", "SnakeCaseUpper", "KebabCaseLower" and "KebabCaseUpper".
     /// </summary>
     public string? NamingPolicy { get; internal set; }
-
-    /// <summary>
-    /// Default serialization method to use when new <see cref="ISurrealDbClient"/> is generated.
-    /// Either JSON or CBOR. Defaults to JSON.
-    /// </summary>
-    public string? Serialization { get; internal set; }
 
     /// <summary>
     /// Indicates if the options are made to use a SurrealDB instance in embedded mode.

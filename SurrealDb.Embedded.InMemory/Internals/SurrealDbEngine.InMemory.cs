@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Reactive;
 using System.Runtime.InteropServices;
 using Dahomey.Cbor;
@@ -7,7 +7,6 @@ using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Cbor;
-using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Internals.Stream;
@@ -52,13 +51,6 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         _parameters = parameters;
         _configureCborOptions = configureCborOptions;
         _surrealDbLoggerFactory = surrealDbLoggerFactory;
-
-        if (_parameters.Serialization?.ToLowerInvariant() == SerializationConstants.JSON)
-        {
-            throw new NotSupportedException(
-                "The JSON serialization is not supported for the in-memory provider."
-            );
-        }
     }
 
     public Task Authenticate(Jwt jwt, CancellationToken cancellationToken)

@@ -18,7 +18,6 @@
 	<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	<PackageReference Include="Semver" Version="2.3.0" />
 	<PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
-	<PackageReference Include="System.Text.Json" Version="8.0.4" />
 	<PackageReference Include="SystemTextJsonPatch" Version="3.2.0" />
 	<PackageReference Include="TupleAsJsonArray" Version="1.0.2" />
 	<PackageReference Include="Websocket.Client" Version="5.1.1" />
@@ -45,28 +44,4 @@
 	</AssemblyAttribute>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
-    <PackageReference Include="Superpower">
-      <Version>3.0.0</Version>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-    <PackageReference Include="Pidgin">
-      <Version>3.2.3</Version>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
-    <PackageReference Include="Pidgin">
-      <Version>3.2.3</Version>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-    <PackageReference Include="Pidgin">
-      <Version>3.2.3</Version>
-    </PackageReference>
-  </ItemGroup>
-  
 </Project>
