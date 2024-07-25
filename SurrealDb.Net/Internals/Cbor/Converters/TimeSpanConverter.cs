@@ -1,4 +1,4 @@
-﻿using Dahomey.Cbor;
+using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
 using SurrealDb.Net.Internals.Formatters;
@@ -32,7 +32,7 @@ internal class TimeSpanConverter : CborConverterBase<TimeSpan>
         var (seconds, nanos) = TimeSpanFormatter.Convert(value);
 
         bool writeNanos = nanos != 0;
-        bool writeSeconds = writeNanos && seconds != 0;
+        bool writeSeconds = writeNanos || seconds != 0;
 
         int size = (writeSeconds ? 1 : 0) + (writeNanos ? 1 : 0);
 

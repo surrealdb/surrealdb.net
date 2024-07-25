@@ -32,7 +32,7 @@ internal class DurationConverter : CborConverterBase<Duration>
         var (seconds, nanos) = DurationFormatter.Convert(value);
 
         bool writeNanos = nanos != 0;
-        bool writeSeconds = writeNanos && seconds != 0;
+        bool writeSeconds = writeNanos || seconds != 0;
 
         int size = (writeSeconds ? 1 : 0) + (writeNanos ? 1 : 0);
 
