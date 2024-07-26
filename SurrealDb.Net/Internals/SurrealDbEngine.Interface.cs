@@ -18,8 +18,15 @@ public interface ISurrealDbEngine : IDisposable
     Task<T> Create<T>(T data, CancellationToken cancellationToken)
         where T : Record;
     Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken);
+    Task<TOutput> Create<TData, TOutput>(
+        StringRecordId recordId,
+        TData? data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record;
     Task Delete(string table, CancellationToken cancellationToken);
     Task<bool> Delete(Thing thing, CancellationToken cancellationToken);
+    Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken);
     Task<bool> Health(CancellationToken cancellationToken);
     Task<T> Info<T>(CancellationToken cancellationToken);
     Task Invalidate(CancellationToken cancellationToken);
@@ -50,6 +57,11 @@ public interface ISurrealDbEngine : IDisposable
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     );
+    Task<T> Merge<T>(
+        StringRecordId recordId,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken
+    );
     Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
         string table,
         TMerge data,
@@ -62,6 +74,12 @@ public interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     );
     Task<T> Patch<T>(Thing thing, JsonPatchDocument<T> patches, CancellationToken cancellationToken)
+        where T : class;
+    Task<T> Patch<T>(
+        StringRecordId recordId,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken
+    )
         where T : class;
     Task<IEnumerable<T>> PatchAll<T>(
         string table,
@@ -108,6 +126,12 @@ public interface ISurrealDbEngine : IDisposable
         where T : class;
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record;
+    Task<TOutput> Upsert<TData, TOutput>(
+        StringRecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record;
     Task Use(string ns, string db, CancellationToken cancellationToken);
     Task<string> Version(CancellationToken cancellationToken);
 }
