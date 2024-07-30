@@ -280,14 +280,6 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         throw new NotSupportedException();
     }
 
-    public Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
-        FormattableString query,
-        CancellationToken cancellationToken
-    )
-    {
-        throw new NotSupportedException();
-    }
-
     public Task<SurrealDbLiveQuery<T>> LiveRawQuery<T>(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
@@ -436,15 +428,6 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
-    }
-
-    public async Task<SurrealDbResponse> Query(
-        FormattableString query,
-        CancellationToken cancellationToken
-    )
-    {
-        var (formattedQuery, parameters) = query.ExtractRawQueryParams();
-        return await RawQuery(formattedQuery, parameters, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<SurrealDbResponse> RawQuery(

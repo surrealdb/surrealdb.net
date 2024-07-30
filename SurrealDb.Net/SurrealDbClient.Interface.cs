@@ -4,6 +4,9 @@ using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 using SystemTextJsonPatch;
+#if NET6_0_OR_GREATER
+using SurrealDb.Net.Handlers;
+#endif
 
 namespace SurrealDb.Net;
 
@@ -218,7 +221,11 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+#if NET6_0_OR_GREATER
+        QueryInterpolatedStringHandler query,
+#else
         FormattableString query,
+#endif
         CancellationToken cancellationToken = default
     );
 
@@ -408,7 +415,11 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<SurrealDbResponse> Query(
+#if NET6_0_OR_GREATER
+        QueryInterpolatedStringHandler query,
+#else
         FormattableString query,
+#endif
         CancellationToken cancellationToken = default
     );
 
