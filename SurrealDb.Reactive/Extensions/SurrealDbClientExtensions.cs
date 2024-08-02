@@ -31,8 +31,8 @@ public static class SurrealDbClientExtensions
     )
     {
 #if NET6_0_OR_GREATER
-        string formattedQuery = query.GetFormattedText();
-        var parameters = query.GetParameters();
+        string formattedQuery = query.FormattedText;
+        var parameters = query.Parameters;
 #else
         var (formattedQuery, parameters) = query.ExtractRawQueryParams();
 #endif

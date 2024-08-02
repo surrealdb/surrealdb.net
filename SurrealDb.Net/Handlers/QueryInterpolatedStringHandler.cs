@@ -15,6 +15,10 @@ public ref struct QueryInterpolatedStringHandler
     private readonly StringBuilder? _builder;
     private readonly Dictionary<string, object?> _parameters = [];
 
+    public string FormattedText =>
+        _builder is null ? _literalQuery ?? string.Empty : _builder.ToString();
+    public IReadOnlyDictionary<string, object?> Parameters => _parameters;
+
     public QueryInterpolatedStringHandler(int literalLength, int formattedCount)
     {
         if (formattedCount > 0)
@@ -85,10 +89,5 @@ public ref struct QueryInterpolatedStringHandler
         _builder.Append('$');
         _builder.Append(parameterName);
     }
-
-    public string GetFormattedText() =>
-        _builder is null ? _literalQuery ?? string.Empty : _builder.ToString();
-
-    public IReadOnlyDictionary<string, object?> GetParameters() => _parameters;
 }
 #endif

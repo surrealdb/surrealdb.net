@@ -173,11 +173,7 @@ public class SurrealDbMemoryClient : ISurrealDbClient
         CancellationToken cancellationToken = default
     )
     {
-        return _engine.LiveRawQuery<T>(
-            query.GetFormattedText(),
-            query.GetParameters(),
-            cancellationToken
-        );
+        return _engine.LiveRawQuery<T>(query.FormattedText, query.Parameters, cancellationToken);
     }
 #else
     public Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
@@ -281,7 +277,7 @@ public class SurrealDbMemoryClient : ISurrealDbClient
         CancellationToken cancellationToken = default
     )
     {
-        return _engine.RawQuery(query.GetFormattedText(), query.GetParameters(), cancellationToken);
+        return _engine.RawQuery(query.FormattedText, query.Parameters, cancellationToken);
     }
 #else
     public Task<SurrealDbResponse> Query(

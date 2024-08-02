@@ -128,6 +128,6 @@ public class QueryFormatterBenchmark
         QueryInterpolatedStringHandler handler
     )
     {
-        return (handler.GetFormattedText(), handler.GetParameters());
+        return (handler.FormattedText, handler.Parameters);
     }
 }

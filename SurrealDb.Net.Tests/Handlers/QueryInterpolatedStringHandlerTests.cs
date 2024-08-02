@@ -8,7 +8,7 @@ public class QueryInterpolatedStringHandlerTests
         QueryInterpolatedStringHandler handler
     )
     {
-        return (handler.GetFormattedText(), handler.GetParameters());
+        return (handler.FormattedText, handler.Parameters);
     }
 
     [Fact]
