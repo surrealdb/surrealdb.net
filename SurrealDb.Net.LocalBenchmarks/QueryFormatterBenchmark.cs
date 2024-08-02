@@ -38,6 +38,31 @@ public class QueryFormatterBenchmark
     }
 
     [Benchmark]
+    public List<(string, IReadOnlyDictionary<string, object?>)> FormattableStringNoInterpolation()
+    {
+        var list = new List<(string, IReadOnlyDictionary<string, object?>)>(Param);
+
+        for (int index = 0; index < Param; index++)
+        {
+            list.Add(
+                ExtractRawQueryParams(
+                    $"""
+                    DEFINE TABLE test;
+
+                    CREATE test SET value = 5;
+                    UPDATE test SET value = 10;
+                    DELETE test;
+
+                    SELECT * FROM test;
+                    """
+                )
+            );
+        }
+
+        return list;
+    }
+
+    [Benchmark]
     public List<(string, IReadOnlyDictionary<string, object?>)> QueryInterpolatedStringHandler()
     {
         var list = new List<(string, IReadOnlyDictionary<string, object?>)>(Param);
@@ -54,6 +79,34 @@ public class QueryFormatterBenchmark
                     DELETE {TABLE};
 
                     SELECT * FROM {TABLE};
+                    """
+                )
+            );
+        }
+
+        return list;
+    }
+
+    [Benchmark]
+    public List<(
+        string,
+        IReadOnlyDictionary<string, object?>
+    )> QueryInterpolatedStringHandlerNoInterpolation()
+    {
+        var list = new List<(string, IReadOnlyDictionary<string, object?>)>(Param);
+
+        for (int index = 0; index < Param; index++)
+        {
+            list.Add(
+                HandleQuery(
+                    $"""
+                    DEFINE TABLE test;
+
+                    CREATE test SET value = 5;
+                    UPDATE test SET value = 10;
+                    DELETE test;
+
+                    SELECT * FROM test;
                     """
                 )
             );
