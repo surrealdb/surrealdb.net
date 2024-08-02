@@ -4,6 +4,9 @@ using SurrealDb.Examples.WeatherApi.Controllers;
 using SurrealDb.Examples.WeatherApi.Models;
 using SurrealDb.Net;
 
+// 💡 Be careful, you should only enable this flag if you have the appropriate security measures in place based on the sensitivity of this data
+const bool sensitiveDataLoggingEnabled = true;
+
 var builder = WebApplication.CreateBuilder(args);
 
 var services = builder.Services;
@@ -19,7 +22,13 @@ services.AddSwaggerGen(c =>
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);
 });
-services.AddSurreal(configuration.GetConnectionString("SurrealDB")!);
+services.AddSurreal(
+    SurrealDbOptions
+        .Create()
+        .FromConnectionString(configuration.GetConnectionString("SurrealDB")!)
+        .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled)
+        .Build()
+);
 
 var app = builder.Build();
 
@@ -46,7 +55,12 @@ async Task InitializeDbAsync()
         SurrealDbOptions
             .Create()
             .FromConnectionString(configuration.GetConnectionString("SurrealDB")!)
-            .Build()
+            .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled)
+            .Build(),
+        loggerFactory: LoggerFactory.Create(builder =>
+        {
+            builder.AddConsole();
+        })
     );
 
     var tasks = weatherForecasts.Select(weatherForecast =>

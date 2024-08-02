@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 using SurrealDb.Net;
 using SurrealDb.Net.Internals.Helpers;
 
@@ -261,7 +262,8 @@ public static class ServiceCollectionExtensions
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
                             configureJsonSerializerOptions,
                             prependJsonSerializerContexts,
-                            appendJsonSerializerContexts
+                            appendJsonSerializerContexts,
+                            serviceProvider.GetService<ILoggerFactory>()
                         );
                     }
                 );
@@ -276,7 +278,8 @@ public static class ServiceCollectionExtensions
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
                             configureJsonSerializerOptions,
                             prependJsonSerializerContexts,
-                            appendJsonSerializerContexts
+                            appendJsonSerializerContexts,
+                            serviceProvider.GetService<ILoggerFactory>()
                         );
                     }
                 );
@@ -291,7 +294,8 @@ public static class ServiceCollectionExtensions
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
                             configureJsonSerializerOptions,
                             prependJsonSerializerContexts,
-                            appendJsonSerializerContexts
+                            appendJsonSerializerContexts,
+                            serviceProvider.GetService<ILoggerFactory>()
                         );
                     }
                 );
