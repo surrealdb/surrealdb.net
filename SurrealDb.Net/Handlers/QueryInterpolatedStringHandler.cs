@@ -9,24 +9,44 @@ namespace SurrealDb.Net.Handlers;
 /// passed down to <see cref="SurrealDbClient.Query(QueryInterpolatedStringHandler, CancellationToken)"/>.
 /// </summary>
 [InterpolatedStringHandler]
-public readonly ref struct QueryInterpolatedStringHandler
+public ref struct QueryInterpolatedStringHandler
 {
-    private readonly StringBuilder _builder;
+    private string? _literalQuery;
+    private readonly StringBuilder? _builder;
     private readonly Dictionary<string, object?> _parameters = [];
 
     public QueryInterpolatedStringHandler(int literalLength, int formattedCount)
     {
+        if (formattedCount > 0)
+        {
+            _builder = new(literalLength + CalculateParameterNamesExpectedLength(formattedCount));
+        }
+    }
+
+    private static int CalculateParameterNamesExpectedLength(int formattedCount)
+    {
         const int parameterNameExpectedLength = 3;
-        _builder = new(literalLength + parameterNameExpectedLength * formattedCount);
+        return parameterNameExpectedLength * formattedCount;
     }
 
     public void AppendLiteral(string s)
     {
+        if (_builder is null)
+        {
+            _literalQuery = s;
+            return;
+        }
+
         _builder.Append(s);
     }
 
     public void AppendFormatted<T>(T t)
     {
+        if (_builder is null)
+        {
+            return;
+        }
+
         string? parameterName = null;
 
         foreach (var parameter in _parameters)
@@ -48,7 +68,8 @@ public readonly ref struct QueryInterpolatedStringHandler
         _builder.Append(parameterName);
     }
 
-    public string GetFormattedText() => _builder.ToString();
+    public string GetFormattedText() =>
+        _builder is null ? _literalQuery ?? string.Empty : _builder.ToString();
 
     public IReadOnlyDictionary<string, object?> GetParameters() => _parameters;
 }
