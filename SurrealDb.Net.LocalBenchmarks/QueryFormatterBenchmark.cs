@@ -10,53 +10,50 @@ public class QueryFormatterBenchmark
     private const string TABLE = "test";
 
     [Params(1, 100)]
-    public int Param;
+    public int Count;
+
+    [Params("Interpolation", "NoInterpolation")]
+    public string Mode = string.Empty;
 
     [Benchmark]
     public List<(string, IReadOnlyDictionary<string, object?>)> FormattableString()
     {
-        var list = new List<(string, IReadOnlyDictionary<string, object?>)>(Param);
+        var list = new List<(string, IReadOnlyDictionary<string, object?>)>(Count);
 
-        for (int index = 0; index < Param; index++)
+        for (int index = 0; index < Count; index++)
         {
-            list.Add(
-                ExtractRawQueryParams(
-                    $"""
-                    DEFINE TABLE {TABLE};
+            if (Mode == "NoInterpolation")
+            {
+                list.Add(
+                    ExtractRawQueryParams(
+                        $"""
+                        DEFINE TABLE test;
 
-                    CREATE {TABLE} SET value = {5};
-                    UPDATE {TABLE} SET value = {10};
-                    DELETE {TABLE};
+                        CREATE test SET value = 5;
+                        UPDATE test SET value = 10;
+                        DELETE test;
 
-                    SELECT * FROM {TABLE};
-                    """
-                )
-            );
-        }
+                        SELECT * FROM test;
+                        """
+                    )
+                );
+            }
+            else
+            {
+                list.Add(
+                    ExtractRawQueryParams(
+                        $"""
+                        DEFINE TABLE {TABLE};
 
-        return list;
-    }
+                        CREATE {TABLE} SET value = {5};
+                        UPDATE {TABLE} SET value = {10};
+                        DELETE {TABLE};
 
-    [Benchmark]
-    public List<(string, IReadOnlyDictionary<string, object?>)> FormattableStringNoInterpolation()
-    {
-        var list = new List<(string, IReadOnlyDictionary<string, object?>)>(Param);
-
-        for (int index = 0; index < Param; index++)
-        {
-            list.Add(
-                ExtractRawQueryParams(
-                    $"""
-                    DEFINE TABLE test;
-
-                    CREATE test SET value = 5;
-                    UPDATE test SET value = 10;
-                    DELETE test;
-
-                    SELECT * FROM test;
-                    """
-                )
-            );
+                        SELECT * FROM {TABLE};
+                        """
+                    )
+                );
+            }
         }
 
         return list;
@@ -65,51 +62,42 @@ public class QueryFormatterBenchmark
     [Benchmark]
     public List<(string, IReadOnlyDictionary<string, object?>)> QueryInterpolatedStringHandler()
     {
-        var list = new List<(string, IReadOnlyDictionary<string, object?>)>(Param);
+        var list = new List<(string, IReadOnlyDictionary<string, object?>)>(Count);
 
-        for (int index = 0; index < Param; index++)
+        for (int index = 0; index < Count; index++)
         {
-            list.Add(
-                HandleQuery(
-                    $"""
-                    DEFINE TABLE {TABLE};
+            if (Mode == "NoInterpolation")
+            {
+                list.Add(
+                    HandleQuery(
+                        $"""
+                        DEFINE TABLE test;
 
-                    CREATE {TABLE} SET value = {5};
-                    UPDATE {TABLE} SET value = {10};
-                    DELETE {TABLE};
+                        CREATE test SET value = 5;
+                        UPDATE test SET value = 10;
+                        DELETE test;
 
-                    SELECT * FROM {TABLE};
-                    """
-                )
-            );
-        }
+                        SELECT * FROM test;
+                        """
+                    )
+                );
+            }
+            else
+            {
+                list.Add(
+                    HandleQuery(
+                        $"""
+                        DEFINE TABLE {TABLE};
 
-        return list;
-    }
+                        CREATE {TABLE} SET value = {5};
+                        UPDATE {TABLE} SET value = {10};
+                        DELETE {TABLE};
 
-    [Benchmark]
-    public List<(
-        string,
-        IReadOnlyDictionary<string, object?>
-    )> QueryInterpolatedStringHandlerNoInterpolation()
-    {
-        var list = new List<(string, IReadOnlyDictionary<string, object?>)>(Param);
-
-        for (int index = 0; index < Param; index++)
-        {
-            list.Add(
-                HandleQuery(
-                    $"""
-                    DEFINE TABLE test;
-
-                    CREATE test SET value = 5;
-                    UPDATE test SET value = 10;
-                    DELETE test;
-
-                    SELECT * FROM test;
-                    """
-                )
-            );
+                        SELECT * FROM {TABLE};
+                        """
+                    )
+                );
+            }
         }
 
         return list;
