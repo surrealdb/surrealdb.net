@@ -25,8 +25,26 @@ public ref struct QueryInterpolatedStringHandler
 
     private static int CalculateParameterNamesExpectedLength(int formattedCount)
     {
-        const int parameterNameExpectedLength = 3;
-        return parameterNameExpectedLength * formattedCount;
+        int totalExpectedLength = 0;
+        int parameterNameExpectedLength = 3;
+
+        int previousMaxNumeralUnits = 0;
+        int currentMaxNumeralUnits = 10;
+
+        while (formattedCount > currentMaxNumeralUnits)
+        {
+            totalExpectedLength +=
+                parameterNameExpectedLength * (currentMaxNumeralUnits - previousMaxNumeralUnits);
+            parameterNameExpectedLength++;
+
+            previousMaxNumeralUnits = currentMaxNumeralUnits;
+            currentMaxNumeralUnits *= 10;
+        }
+
+        totalExpectedLength +=
+            parameterNameExpectedLength * (formattedCount - previousMaxNumeralUnits);
+
+        return totalExpectedLength;
     }
 
     public void AppendLiteral(string s)
