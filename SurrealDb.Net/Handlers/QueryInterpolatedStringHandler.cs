@@ -6,7 +6,7 @@ namespace SurrealDb.Net.Handlers;
 
 /// <summary>
 /// A custom-tailored <see cref="InterpolatedStringHandlerAttribute"/> to interpret query strings
-/// passed down to <see cref="SurrealDbClient.Query(QueryInterpolatedStringHandler, CancellationToken)"/>.
+/// passed down to <see cref="ISurrealDbClient.Query(QueryInterpolatedStringHandler, CancellationToken)"/>.
 /// </summary>
 [InterpolatedStringHandler]
 public ref struct QueryInterpolatedStringHandler

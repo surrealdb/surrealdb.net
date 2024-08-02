@@ -56,7 +56,7 @@ public class AuthenticateTests
 
             jwt = await client.SignUp(authParams);
 
-            await client.Authenticate(jwt);
+            await client.Authenticate(jwt.Value);
 
             list = await client.Select<Post>("post");
         };

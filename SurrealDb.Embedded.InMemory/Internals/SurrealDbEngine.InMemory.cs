@@ -1,15 +1,14 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
 using System.Reactive;
 using System.Runtime.InteropServices;
-using System.Text.Json;
-using System.Threading.Tasks;
 using Dahomey.Cbor;
+using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Cbor;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
-using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Internals.Stream;
 using SurrealDb.Net.Models;
@@ -24,8 +23,10 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
 {
     private static int _globalId;
 
-    private SurrealDbClientParams? _parameters;
+    private SurrealDbOptions? _parameters;
     private Action<CborOptions>? _configureCborOptions;
+    private ISurrealDbLoggerFactory? _surrealDbLoggerFactory;
+
     private readonly int _id;
     private readonly SurrealDbEmbeddedEngineConfig _config = new();
 
@@ -43,12 +44,14 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     }
 
     public void Initialize(
-        SurrealDbClientParams parameters,
-        Action<CborOptions>? configureCborOptions
+        SurrealDbOptions parameters,
+        Action<CborOptions>? configureCborOptions,
+        ISurrealDbLoggerFactory? surrealDbLoggerFactory
     )
     {
         _parameters = parameters;
         _configureCborOptions = configureCborOptions;
+        _surrealDbLoggerFactory = surrealDbLoggerFactory;
 
         if (_parameters.Serialization?.ToLowerInvariant() == SerializationConstants.JSON)
         {
@@ -81,6 +84,8 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     {
         if (!_isConnected)
         {
+            _surrealDbLoggerFactory?.Connection?.LogConnectionAttempt(_parameters!.Endpoint!);
+
             var taskCompletionSource = new TaskCompletionSource<bool>();
 
             Action<ByteBuffer> success = (byteBuffer) =>
@@ -132,6 +137,18 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         if (_config.Ns is not null)
         {
             await Use(_config.Ns, _config.Db!, cancellationToken).ConfigureAwait(false);
+
+            if (_config.Db is not null)
+            {
+                _surrealDbLoggerFactory?.Connection?.LogConnectionNamespaceAndDatabaseSet(
+                    _config.Ns,
+                    _config.Db
+                );
+            }
+            else
+            {
+                _surrealDbLoggerFactory?.Connection?.LogConnectionNamespaceSet(_config.Ns);
+            }
         }
 
         _isInitialized = true;
@@ -384,12 +401,31 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         CancellationToken cancellationToken
     )
     {
+        long executionStartTime = Stopwatch.GetTimestamp();
+
         var list = await SendRequestAsync<List<ISurrealDbResult>>(
                 Method.Query,
                 [query, parameters],
                 cancellationToken
             )
             .ConfigureAwait(false);
+
+#if NET7_0_OR_GREATER
+        var executionTime = Stopwatch.GetElapsedTime(executionStartTime);
+#else
+        long executionEndTime = Stopwatch.GetTimestamp();
+        var executionTime = TimeSpan.FromTicks(executionEndTime - executionStartTime);
+#endif
+
+        _surrealDbLoggerFactory?.Query?.LogQuerySuccess(
+            query,
+            SurrealDbLoggerExtensions.FormatQueryParameters(
+                parameters,
+                _parameters!.Logging.SensitiveDataLoggingEnabled
+            ),
+            SurrealDbLoggerExtensions.FormatExecutionTime(executionTime)
+        );
+
         return new SurrealDbResponse(list);
     }
 
@@ -610,6 +646,8 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         CancellationToken cancellationToken
     )
     {
+        long executionStartTime = Stopwatch.GetTimestamp();
+
         using var timeoutCts = new CancellationTokenSource();
         var timeoutTask = Task.Delay(30_000, cancellationToken);
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
@@ -634,6 +672,10 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         if (!canGetBuffer)
         {
             timeoutCts.Cancel();
+            _surrealDbLoggerFactory?.Method?.LogMethodFailed(
+                method.ToString(),
+                "Failed to retrieve serialized buffer."
+            ); // TODO : Avoid ToString()
             throw new SurrealDbException("Failed to retrieve serialized buffer.");
         }
 
@@ -722,11 +764,27 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
 
         if (completedTask == taskCompletionSource.Task)
         {
+#if NET7_0_OR_GREATER
+            var executionTime = Stopwatch.GetElapsedTime(executionStartTime);
+#else
+            long executionEndTime = Stopwatch.GetTimestamp();
+            var executionTime = TimeSpan.FromTicks(executionEndTime - executionStartTime);
+#endif
+
             timeoutCts.Cancel();
+            _surrealDbLoggerFactory?.Method?.LogMethodSuccess(
+                method.ToString(), // TODO : Avoid ToString()
+                SurrealDbLoggerExtensions.FormatRequestParameters(
+                    parameters!,
+                    _parameters!.Logging.SensitiveDataLoggingEnabled
+                ),
+                SurrealDbLoggerExtensions.FormatExecutionTime(executionTime)
+            );
             return await taskCompletionSource.Task.ConfigureAwait(false);
         }
 
         taskCompletionSource.TrySetCanceled(CancellationToken.None);
+        _surrealDbLoggerFactory?.Method?.LogMethodFailed(method.ToString(), "Timeout"); // TODO : Avoid ToString()
         throw new TimeoutException();
     }
 }

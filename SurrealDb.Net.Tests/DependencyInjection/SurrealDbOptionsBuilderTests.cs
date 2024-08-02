@@ -288,4 +288,23 @@ public class SurrealDbOptionsBuilderTests
             .WithParameterName("connectionString")
             .WithMessage($"Invalid client endpoint: {client} (Parameter 'connectionString')");
     }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public void ShouldSetSensitiveDataLoggingEnabled(bool value, bool expected)
+    {
+        var options = new SurrealDbOptionsBuilder().EnableSensitiveDataLogging(value).Build();
+
+        options.Endpoint.Should().BeNull();
+        options.Namespace.Should().BeNull();
+        options.Database.Should().BeNull();
+        options.Username.Should().BeNull();
+        options.Password.Should().BeNull();
+        options.Token.Should().BeNull();
+        options.NamingPolicy.Should().BeNull();
+        options.Serialization.Should().BeNull();
+        options.Logging.Should().NotBeNull();
+        options.Logging.SensitiveDataLoggingEnabled.Should().Be(expected);
+    }
 }

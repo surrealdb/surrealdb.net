@@ -1,12 +1,13 @@
-﻿using SurrealDb.Net.Internals.Constants;
+﻿using Microsoft.Extensions.DependencyInjection;
+using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Models;
 
 namespace SurrealDb.Net.Internals;
 
 internal static class SurrealDbEngineHelpers
 {
-    public static bool ShouldUseCbor(SurrealDbClientParams parameters)
+    public static bool ShouldUseCbor(SurrealDbOptions configuration)
     {
-        return parameters.Serialization?.ToLowerInvariant() != SerializationConstants.JSON;
+        return configuration.Serialization?.ToLowerInvariant() != SerializationConstants.JSON;
     }
 }
