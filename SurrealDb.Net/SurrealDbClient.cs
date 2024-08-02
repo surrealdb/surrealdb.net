@@ -9,6 +9,11 @@ using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 using SystemTextJsonPatch;
+#if NET6_0_OR_GREATER
+using SurrealDb.Net.Handlers;
+#else
+using SurrealDb.Net.Internals.Extensions;
+#endif
 
 namespace SurrealDb.Net;
 
@@ -209,6 +214,25 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.ListenLive<T>(queryUuid);
     }
 
+#if NET6_0_OR_GREATER
+    public Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+        QueryInterpolatedStringHandler query,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.LiveRawQuery<T>(query.FormattedText, query.Parameters, cancellationToken);
+    }
+#else
+    public Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
+        FormattableString query,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var (formattedQuery, parameters) = query.ExtractRawQueryParams();
+        return _engine.LiveRawQuery<T>(formattedQuery, parameters, cancellationToken);
+    }
+#endif
+
     public Task<SurrealDbLiveQuery<T>> LiveRawQuery<T>(
         string query,
         IReadOnlyDictionary<string, object?>? parameters = null,
@@ -220,14 +244,6 @@ public class SurrealDbClient : ISurrealDbClient
             parameters ?? ImmutableDictionary<string, object?>.Empty,
             cancellationToken
         );
-    }
-
-    public Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
-        FormattableString query,
-        CancellationToken cancellationToken = default
-    )
-    {
-        return _engine.LiveQuery<T>(query, cancellationToken);
     }
 
     public Task<SurrealDbLiveQuery<T>> LiveTable<T>(
@@ -296,13 +312,24 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.PatchAll(table, patches, cancellationToken);
     }
 
+#if NET6_0_OR_GREATER
+    public Task<SurrealDbResponse> Query(
+        QueryInterpolatedStringHandler query,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.RawQuery(query.FormattedText, query.Parameters, cancellationToken);
+    }
+#else
     public Task<SurrealDbResponse> Query(
         FormattableString query,
         CancellationToken cancellationToken = default
     )
     {
-        return _engine.Query(query, cancellationToken);
+        var (formattedQuery, parameters) = query.ExtractRawQueryParams();
+        return _engine.RawQuery(formattedQuery, parameters, cancellationToken);
     }
+#endif
 
     public Task<SurrealDbResponse> RawQuery(
         string query,
