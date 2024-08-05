@@ -2,8 +2,11 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
-using SurrealDb.Net.Internals.Models;
+using SurrealDb.Net.Internals.Extensions;
+using SurrealDb.Net.Internals.Logging;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -38,6 +41,9 @@ public class SurrealDbClient : ISurrealDbClient
     /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
     /// in AoT mode.
     /// </param>
+    /// <param name="loggerFactory">
+    /// An instance of <see cref="ILoggerFactory"/> used to log messages.
+    /// </param>
     /// <exception cref="ArgumentException"></exception>
     public SurrealDbClient(
         string endpoint,
@@ -45,10 +51,11 @@ public class SurrealDbClient : ISurrealDbClient
         IHttpClientFactory? httpClientFactory = null,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
+        ILoggerFactory? loggerFactory = null
     )
         : this(
-            new SurrealDbClientParams(endpoint, namingPolicy),
+            new SurrealDbOptions(endpoint, namingPolicy),
             httpClientFactory,
             configureJsonSerializerOptions,
             prependJsonSerializerContexts,
@@ -69,6 +76,9 @@ public class SurrealDbClient : ISurrealDbClient
     /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
     /// in AoT mode.
     /// </param>
+    /// <param name="loggerFactory">
+    /// An instance of <see cref="ILoggerFactory"/> used to log messages.
+    /// </param>
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
     public SurrealDbClient(
@@ -76,29 +86,15 @@ public class SurrealDbClient : ISurrealDbClient
         IHttpClientFactory? httpClientFactory = null,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null
-    )
-        : this(
-            new SurrealDbClientParams(configuration),
-            httpClientFactory,
-            configureJsonSerializerOptions,
-            prependJsonSerializerContexts,
-            appendJsonSerializerContexts
-        ) { }
-
-    internal SurrealDbClient(
-        SurrealDbClientParams parameters,
-        IHttpClientFactory? httpClientFactory = null,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
+        ILoggerFactory? loggerFactory = null
     )
     {
-        if (parameters.Endpoint is null)
-            throw new ArgumentNullException(nameof(parameters), "The endpoint is required.");
+        if (configuration.Endpoint is null)
+            throw new ArgumentNullException(nameof(configuration), "The endpoint is required.");
 
-        Uri = new Uri(parameters.Endpoint);
-        NamingPolicy = parameters.NamingPolicy;
+        Uri = new Uri(configuration.Endpoint);
+        NamingPolicy = configuration.NamingPolicy;
 
         var protocol = Uri.Scheme;
 
@@ -107,27 +103,34 @@ public class SurrealDbClient : ISurrealDbClient
             "http"
             or "https"
                 => new SurrealDbHttpEngine(
-                    parameters,
+                    configuration,
                     httpClientFactory,
                     configureJsonSerializerOptions,
                     prependJsonSerializerContexts,
-                    appendJsonSerializerContexts
+                    appendJsonSerializerContexts,
+                    loggerFactory
                 ),
             "ws"
             or "wss"
                 => new SurrealDbWsEngine(
-                    parameters,
+                    configuration,
                     configureJsonSerializerOptions,
                     prependJsonSerializerContexts,
-                    appendJsonSerializerContexts
+                    appendJsonSerializerContexts,
+                    loggerFactory
                 ),
             _ => throw new ArgumentException("This protocol is not supported."),
         };
 
-        if (parameters.Username is not null)
-            Configure(parameters.Ns, parameters.Db, parameters.Username, parameters.Password);
+        if (configuration.Username is not null)
+            Configure(
+                configuration.Namespace,
+                configuration.Database,
+                configuration.Username,
+                configuration.Password
+            );
         else
-            Configure(parameters.Ns, parameters.Db, parameters.Token);
+            Configure(configuration.Namespace, configuration.Database, configuration.Token);
     }
 
     public Task Authenticate(Jwt jwt, CancellationToken cancellationToken = default)

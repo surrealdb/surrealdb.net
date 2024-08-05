@@ -1,9 +1,8 @@
-﻿using System.Text.Json;
-using SurrealDb.Net.Internals.Constants;
+﻿using SurrealDb.Net.Internals.Constants;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
-public class SurrealDbOptionsBuilder
+public sealed class SurrealDbOptionsBuilder
 {
     private string? _endpoint;
     private string? _namespace;
@@ -13,6 +12,7 @@ public class SurrealDbOptionsBuilder
     private string? _token;
     private string? _namingPolicy;
     private string? _serialization;
+    private bool _sensitiveDataLoggingEnabled;
 
     /// <summary>
     /// Parses the connection string and set the configuration accordingly.
@@ -174,6 +174,21 @@ public class SurrealDbOptionsBuilder
         );
     }
 
+    /// <summary>
+    /// Enables application data to be included in logs.
+    /// This typically include parameter values set for SURQL queries, and parameters sent via any client methods.
+    /// You should only enable this flag if you have the appropriate security measures in place based on the sensitivity of this data.
+    /// </summary>
+    /// <param name="sensitiveDataLoggingEnabled">If <c>true</c>, then sensitive data is logged.</param>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public SurrealDbOptionsBuilder EnableSensitiveDataLogging(
+        bool sensitiveDataLoggingEnabled = true
+    )
+    {
+        _sensitiveDataLoggingEnabled = sensitiveDataLoggingEnabled;
+        return this;
+    }
+
     public SurrealDbOptions Build()
     {
         return new SurrealDbOptions
@@ -185,7 +200,8 @@ public class SurrealDbOptionsBuilder
             Password = _password,
             Token = _token,
             NamingPolicy = _namingPolicy,
-            Serialization = _serialization
+            Serialization = _serialization,
+            Logging = new() { SensitiveDataLoggingEnabled = _sensitiveDataLoggingEnabled }
         };
     }
 }

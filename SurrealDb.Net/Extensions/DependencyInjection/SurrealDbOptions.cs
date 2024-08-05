@@ -1,9 +1,10 @@
 ﻿using System.Text.Json;
 using SurrealDb.Net;
+using SurrealDb.Net.Extensions.DependencyInjection;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
-public class SurrealDbOptions
+public sealed class SurrealDbOptions
 {
     /// <summary>
     /// Endpoint of the SurrealDB instance.<br /><br />
@@ -50,6 +51,19 @@ public class SurrealDbOptions
     /// Either JSON or CBOR. Defaults to JSON.
     /// </summary>
     public string? Serialization { get; internal set; }
+
+    /// <summary>
+    /// Logging options used for the SurrealDB client.
+    /// </summary>
+    public SurrealDbLoggingOptions Logging { get; internal set; } = new();
+
+    internal SurrealDbOptions() { }
+
+    internal SurrealDbOptions(string endpoint, string? namingPolicy = null)
+    {
+        Endpoint = endpoint;
+        NamingPolicy = namingPolicy;
+    }
 
     public static SurrealDbOptionsBuilder Create()
     {

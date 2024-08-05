@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace SurrealDb.Net.Tests;
 
@@ -47,6 +47,6 @@ public class SignUpTests
         await func.Should().NotThrowAsync();
 
         jwt.Should().NotBeNull();
-        jwt!.Token.Should().BeValidJwt();
+        jwt!.Value.Token.Should().BeValidJwt();
     }
 }
