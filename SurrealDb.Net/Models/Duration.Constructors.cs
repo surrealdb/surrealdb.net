@@ -1,16 +1,22 @@
 ﻿using System.Globalization;
+using System.Text;
 using SurrealDb.Net.Internals.Constants;
 
 namespace SurrealDb.Net.Models;
 
 public readonly partial struct Duration
 {
+    private const byte FLOATING_POINT_BYTE = 46;
+
     /// <summary>
     /// Creates a default <see cref="Duration"/>, equivalent to "0ns".
     /// </summary>
     public Duration() { }
 
-    internal Duration(string input)
+    internal Duration(string input, bool allowFloatingValue = false)
+        : this(Encoding.UTF8.GetBytes(input), allowFloatingValue) { }
+
+    internal Duration(ReadOnlySpan<byte> input, bool allowFloatingValue = false)
     {
         // 💡 Contains the current unit value, by iterating over the "input" (cannot exceed input length minus at least one unit char)
         Span<byte> valueBuffer =
@@ -30,13 +36,20 @@ public readonly partial struct Duration
         {
             bool isBeyondInput = index >= input.Length;
 
-            if (isBeyondInput || char.IsDigit(input[index]))
+            if (isBeyondInput || IsValidValue(input[index], allowFloatingValue))
             {
                 if (isBeyondInput || isLastCharUnit)
                 {
                     if (isBeyondInput || valueIndex > 0)
                     {
-                        Span<byte> currentValueSpan = valueBuffer[..valueIndex];
+                        ReadOnlySpan<byte> currentValueSpan = valueBuffer[..valueIndex];
+
+                        int pointSeparatorIndex = currentValueSpan.IndexOf(FLOATING_POINT_BYTE);
+                        if (pointSeparatorIndex > 0)
+                        {
+                            currentValueSpan = currentValueSpan[..pointSeparatorIndex];
+                        }
+
 #if NET8_0_OR_GREATER
                         int value = int.Parse(currentValueSpan, CultureInfo.InvariantCulture);
 #else
@@ -104,12 +117,12 @@ public readonly partial struct Duration
                     isLastCharUnit = false;
                     valueIndex = 0;
 
-                    valueBuffer[valueIndex++] = (byte)input[index];
+                    valueBuffer[valueIndex++] = input[index];
                 }
                 else
                 {
                     // 💡 Equivalent to concat current value (keep reading)
-                    valueBuffer[valueIndex++] = (byte)input[index];
+                    valueBuffer[valueIndex++] = input[index];
                 }
             }
             else
@@ -120,22 +133,42 @@ public readonly partial struct Duration
                     throw new Exception("Expected integer value");
                 }
 
-                if (isLastCharUnit)
+                const byte SPECIAL_UTF8_BYTE_1 = 194;
+                const byte SPECIAL_UTF8_BYTE_2 = 195;
+
+                if (input[index] == SPECIAL_UTF8_BYTE_1) // 💡 2 bytes char
+                {
+                    // 💡 Skip as it can be the 'µ' sign
+                }
+                else if (input[index] == SPECIAL_UTF8_BYTE_2) // 💡 2 bytes char
+                {
+                    throw new Exception("Invalid unit");
+                }
+                else if (isLastCharUnit)
                 {
                     // 💡 Equivalent to concat current unit value (keep reading)
-                    unitBuffer[unitIndex++] = (byte)input[index];
+                    unitBuffer[unitIndex++] = input[index];
                 }
                 else
                 {
                     // 💡 The first char after the numeric value (start reading current unit value)
                     isLastCharUnit = true;
                     unitIndex = 0;
-                    unitBuffer[unitIndex++] = (byte)input[index];
+                    unitBuffer[unitIndex++] = input[index];
                 }
             }
 
             index++;
         }
+    }
+
+    private static bool IsValidValue(byte b, bool allowFloatingValue)
+    {
+        const byte ZERO_DIGIT_BYTE = 48;
+        const byte NINE_DIGIT_BYTE = 57;
+
+        return (allowFloatingValue && b == FLOATING_POINT_BYTE)
+            || (b >= ZERO_DIGIT_BYTE && b <= NINE_DIGIT_BYTE);
     }
 
     /// <summary>
