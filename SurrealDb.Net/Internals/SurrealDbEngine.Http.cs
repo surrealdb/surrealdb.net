@@ -57,6 +57,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     private readonly Action<JsonSerializerOptions>? _configureJsonSerializerOptions;
     private readonly Func<JsonSerializerContext[]>? _prependJsonSerializerContexts;
     private readonly Func<JsonSerializerContext[]>? _appendJsonSerializerContexts;
+    private readonly Action<CborOptions>? _configureCborOptions;
     private readonly Lazy<HttpClient> _singleHttpClient = new(() => new HttpClient(), true);
     private HttpClientConfiguration? _singleHttpClientConfiguration;
     private readonly SurrealDbHttpEngineConfig _config = new();
@@ -66,16 +67,18 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         IHttpClientFactory? httpClientFactory,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts,
+        Action<CborOptions>? configureCborOptions = null
     )
     {
-        _useCbor = parameters.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR;
+        _useCbor = SurrealDbEngineHelpers.ShouldUseCbor(parameters);
         _uri = new Uri(parameters.Endpoint!);
         _parameters = parameters;
         _httpClientFactory = httpClientFactory;
         _configureJsonSerializerOptions = configureJsonSerializerOptions;
         _prependJsonSerializerContexts = prependJsonSerializerContexts;
         _appendJsonSerializerContexts = appendJsonSerializerContexts;
+        _configureCborOptions = configureCborOptions;
     }
 
     public async Task Authenticate(Jwt jwt, CancellationToken cancellationToken)
@@ -587,7 +590,10 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     private CborOptions GetCborSerializerOptions()
     {
-        return SurrealDbCborOptions.GetCborSerializerOptions(_parameters.NamingPolicy);
+        return SurrealDbCborOptions.GetCborSerializerOptions(
+            _parameters.NamingPolicy,
+            _configureCborOptions
+        );
     }
 
     private HttpClientWrapper CreateHttpClientWrapper(
