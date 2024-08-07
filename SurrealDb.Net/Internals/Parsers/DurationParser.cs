@@ -1,5 +1,4 @@
-﻿using SurrealDb.Net.Internals.Constants;
-using SurrealDb.Net.Internals.Models;
+﻿using SurrealDb.Net.Internals.Models;
 #if NET5_0_OR_GREATER
 using Pidgin;
 using static Pidgin.Parser;
@@ -10,87 +9,8 @@ using Superpower.Parsers;
 
 namespace SurrealDb.Net.Internals.Parsers;
 
-internal static partial class DurationParser
-{
-    public static Dictionary<DurationUnit, int> Convert(long? seconds, int? nanos)
-    {
-        var value = new Dictionary<DurationUnit, int>();
-
-        if (seconds.HasValue)
-        {
-            long remainingSeconds = seconds.Value;
-
-            int years = (int)(remainingSeconds / TimeConstants.SECONDS_PER_YEAR);
-            if (years != 0)
-            {
-                remainingSeconds -= years * TimeConstants.SECONDS_PER_YEAR;
-                value.Add(DurationUnit.Year, years);
-            }
-
-            int weeks = (int)(remainingSeconds / TimeConstants.SECONDS_PER_WEEK);
-            if (weeks != 0)
-            {
-                remainingSeconds -= weeks * TimeConstants.SECONDS_PER_WEEK;
-                value.Add(DurationUnit.Week, weeks);
-            }
-
-            int days = (int)(remainingSeconds / TimeConstants.SECONDS_PER_DAY);
-            if (days != 0)
-            {
-                remainingSeconds -= days * TimeConstants.SECONDS_PER_DAY;
-                value.Add(DurationUnit.Day, days);
-            }
-
-            int hours = (int)(remainingSeconds / TimeConstants.SECONDS_PER_HOUR);
-            if (hours != 0)
-            {
-                remainingSeconds -= hours * TimeConstants.SECONDS_PER_HOUR;
-                value.Add(DurationUnit.Hour, hours);
-            }
-
-            int minutes = (int)(remainingSeconds / TimeConstants.SECONDS_PER_MINUTE);
-            if (minutes != 0)
-            {
-                remainingSeconds -= minutes * TimeConstants.SECONDS_PER_MINUTE;
-                value.Add(DurationUnit.Minute, minutes);
-            }
-
-            if (remainingSeconds != 0)
-            {
-                value.Add(DurationUnit.Second, (int)remainingSeconds);
-            }
-        }
-
-        if (nanos.HasValue)
-        {
-            int remainingNanos = nanos.Value;
-
-            int millis = remainingNanos / TimeConstants.NANOS_PER_MILLISECOND;
-            if (millis != 0)
-            {
-                remainingNanos -= millis * TimeConstants.NANOS_PER_MILLISECOND;
-                value.Add(DurationUnit.MilliSecond, millis);
-            }
-
-            int micros = remainingNanos / TimeConstants.NANOS_PER_MICROSECOND;
-            if (micros != 0)
-            {
-                remainingNanos -= micros * TimeConstants.NANOS_PER_MICROSECOND;
-                value.Add(DurationUnit.MicroSecond, micros);
-            }
-
-            if (remainingNanos != 0)
-            {
-                value.Add(DurationUnit.NanoSecond, remainingNanos);
-            }
-        }
-
-        return value;
-    }
-}
-
 #if NET5_0_OR_GREATER
-internal static partial class DurationParser
+internal static class DurationParser
 {
     private static readonly Parser<char, DurationUnit> DurationUnitParser = Try(
             String("ns").Map(_ => DurationUnit.NanoSecond)
@@ -118,7 +38,7 @@ internal static partial class DurationParser
     }
 }
 #else
-internal static partial class DurationParser
+internal static class DurationParser
 {
     private static readonly TextParser<DurationUnit> DurationUnitParser = Span.EqualTo("ns")
         .Value(DurationUnit.NanoSecond)

@@ -5,7 +5,7 @@ using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
-using SurrealDb.Net.Internals.Parsers;
+using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
@@ -28,7 +28,7 @@ internal class SurrealDbResultConverter : CborConverterBase<ISurrealDbResult>
         string? id = null;
         string? status = null;
         string? errorDetails = null;
-        string? timeString = null;
+        TimeSpan time = TimeSpan.Zero;
         string? details = null;
         string? description = null;
         string? information = null;
@@ -59,7 +59,7 @@ internal class SurrealDbResultConverter : CborConverterBase<ISurrealDbResult>
 
             if (key.SequenceEqual("time"u8))
             {
-                timeString = reader.ReadString();
+                time = new Duration(reader.ReadRawString(), true).ToTimeSpan();
                 continue;
             }
 
@@ -100,17 +100,12 @@ internal class SurrealDbResultConverter : CborConverterBase<ISurrealDbResult>
 
         if (status is not null)
         {
-            var time = timeString is not null ? TimeSpanParser.Parse(timeString) : TimeSpan.Zero;
-
             if (status == SurrealDbResultConstants.OkStatus && result.HasValue)
             {
                 return new SurrealDbOkResult(time, status, result.Value, _options);
             }
 
-            if (status is not null)
-            {
-                return new SurrealDbErrorResult(time, status, errorDetails!);
-            }
+            return new SurrealDbErrorResult(time, status, errorDetails!);
         }
 
         if (
