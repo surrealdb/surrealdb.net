@@ -122,8 +122,8 @@ else
         var moveTask = new MoveTask
             {
                 Task = task.Id!,
-                From = Thing.From(ColumnRecord.Table, fromColumn.Id!.Id),
-                To = Thing.From(ColumnRecord.Table, toColumn.Id!.Id),
+                From = RecordId.From(ColumnRecord.Table, fromColumn.Id!.Id),
+                To = RecordId.From(ColumnRecord.Table, toColumn.Id!.Id),
                 NewIndex = newIndex
             };
         return Client.Create(MoveTask.Table, moveTask);
@@ -144,7 +144,7 @@ else
 
     private Task CreateTaskAsync(DisplayableColumn column, AddTaskForm formData)
     {
-        var columnId = Thing.From(ColumnRecord.Table, column.Id!.Id);
+        var columnId = RecordId.From(ColumnRecord.Table, column.Id!.Id);
 
         var @event = new CreateTask
             {

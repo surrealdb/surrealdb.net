@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace SurrealDb.Net.Models;
 
-public partial class Thing
+public partial class RecordId
 {
     /// <summary>
     /// Creates a new record ID from a generically typed table and a generically typed id.
@@ -24,7 +24,7 @@ public partial class Thing
         "Requires reflection for JSON serialization of potential objects/arrays record id"
     )]
 #endif
-    public static Thing From<TTable, TId>(TTable table, TId id)
+    public static RecordId From<TTable, TId>(TTable table, TId id)
     {
         if (table is null)
             throw new ArgumentException("Table should not be null", nameof(table));
@@ -32,17 +32,17 @@ public partial class Thing
         if (id is null)
             throw new ArgumentException("Id should not be null", nameof(id));
 
-        var tablePart = ExtractThingPart(table);
-        var idPart = ExtractThingPart(id);
+        var tablePart = ExtractIdPart(table);
+        var idPart = ExtractIdPart(id);
 
-        return new Thing(tablePart.value, tablePart.type, idPart.value, idPart.type);
+        return new RecordId(tablePart.value, tablePart.type, idPart.value, idPart.type);
     }
 
 #if NET7_0_OR_GREATER
     [RequiresDynamicCode("Requires reflection for JSON serialization of objects/arrays part")]
     [RequiresUnreferencedCode("Requires reflection for JSON serialization of objects/arrays part")]
 #endif
-    private static (string value, SpecialRecordPartType type) ExtractThingPart<T>(T part)
+    private static (string value, SpecialRecordPartType type) ExtractIdPart<T>(T part)
     {
         if (part is string str)
             return ExtractStringPart(str);

@@ -12,12 +12,12 @@ public abstract class RelationRecord : Record
     /// </summary>
     [CborProperty("in")]
     [CborIgnoreIfDefault]
-    public Thing? In { get; set; }
+    public RecordId? In { get; set; }
 
     /// <summary>
     /// The id of the record the relation ends at
     /// </summary>
     [CborProperty("out")]
     [CborIgnoreIfDefault]
-    public Thing? Out { get; set; }
+    public RecordId? Out { get; set; }
 }

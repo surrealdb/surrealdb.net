@@ -1,8 +1,8 @@
 ﻿namespace SurrealDb.Net.Models;
 
-public partial class Thing
+public partial class RecordId
 {
-    public static bool operator ==(Thing left, Thing right)
+    public static bool operator ==(RecordId left, RecordId right)
     {
         if (ReferenceEquals(left, right))
             return true;
@@ -13,7 +13,7 @@ public partial class Thing
         return left.Equals(right);
     }
 
-    public static bool operator !=(Thing left, Thing right)
+    public static bool operator !=(RecordId left, RecordId right)
     {
         return !(left == right);
     }

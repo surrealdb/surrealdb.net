@@ -6,7 +6,7 @@ using SurrealDb.Net.Internals.Models;
 
 namespace SurrealDb.Net.Models;
 
-public partial class Thing
+public partial class RecordId
 {
     public T? DeserializeId<T>()
     {
@@ -86,9 +86,9 @@ public partial class Thing
     internal static string CreateEscaped(string part)
     {
         var stringBuilder = new StringBuilder(part.Length + 2);
-        stringBuilder.Append(ThingConstants.PREFIX);
+        stringBuilder.Append(RecordIdConstants.PREFIX);
         stringBuilder.Append(part.AsSpan());
-        stringBuilder.Append(ThingConstants.SUFFIX);
+        stringBuilder.Append(RecordIdConstants.SUFFIX);
 
         return stringBuilder.ToString();
     }
@@ -108,7 +108,7 @@ public partial class Thing
 
         var stringBuilder = new StringBuilder(tablePart.Length + 1 + idPart.Length);
         stringBuilder.Append(tablePart);
-        stringBuilder.Append(ThingConstants.SEPARATOR);
+        stringBuilder.Append(RecordIdConstants.SEPARATOR);
         stringBuilder.Append(idPart);
 
         return stringBuilder.ToString();
@@ -155,10 +155,10 @@ public partial class Thing
     private static bool IsStringEscaped(ReadOnlySpan<char> span)
     {
         bool isDefaultEscaped =
-            span[0] == ThingConstants.PREFIX && span[^1] == ThingConstants.SUFFIX;
+            span[0] == RecordIdConstants.PREFIX && span[^1] == RecordIdConstants.SUFFIX;
         bool isAlternativeEscaped =
-            span[0] == ThingConstants.ALTERNATE_ESCAPE
-            && span[^1] == ThingConstants.ALTERNATE_ESCAPE;
+            span[0] == RecordIdConstants.ALTERNATE_ESCAPE
+            && span[^1] == RecordIdConstants.ALTERNATE_ESCAPE;
 
         return isDefaultEscaped || isAlternativeEscaped;
     }

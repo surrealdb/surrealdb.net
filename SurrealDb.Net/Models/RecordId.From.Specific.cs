@@ -2,11 +2,11 @@
 
 namespace SurrealDb.Net.Models;
 
-// 💡 Non-generic "Thing.From" methods that are AOT compatible
-// 💡 Consider Source Generator to generate all possible "Thing.From" variants (string, int, short, Guid, etc...)
+// 💡 Non-generic "RecordId.From" methods that are AOT compatible
+// 💡 Consider Source Generator to generate all possible "RecordId.From" variants (string, int, short, Guid, etc...)
 // 💡 Consider client Source Generator to generate custom variants (from objects and arrays)
 
-public partial class Thing
+public partial class RecordId
 {
     /// <summary>
     /// Creates a new record ID from a <see cref="string"/> typed table and a <see cref="string"/> typed id.
@@ -14,7 +14,7 @@ public partial class Thing
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public static Thing From(string table, string id)
+    public static RecordId From(string table, string id)
     {
         if (table is null)
             throw new ArgumentNullException(nameof(table), "Table should not be null");
@@ -25,7 +25,7 @@ public partial class Thing
         var tablePart = ExtractStringPart(table);
         var idPart = ExtractStringPart(id);
 
-        return new Thing(tablePart.value, tablePart.type, idPart.value, idPart.type);
+        return new RecordId(tablePart.value, tablePart.type, idPart.value, idPart.type);
     }
 
     /// <summary>
@@ -34,7 +34,7 @@ public partial class Thing
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public static Thing From(string table, int id)
+    public static RecordId From(string table, int id)
     {
         if (table is null)
             throw new ArgumentNullException(nameof(table), "Table should not be null");
@@ -42,7 +42,7 @@ public partial class Thing
         var tablePart = ExtractStringPart(table);
         var idPart = (value: id.ToString(), type: SpecialRecordPartType.None);
 
-        return new Thing(tablePart.value, tablePart.type, idPart.value, idPart.type);
+        return new RecordId(tablePart.value, tablePart.type, idPart.value, idPart.type);
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ public partial class Thing
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public static Thing From(string table, long id)
+    public static RecordId From(string table, long id)
     {
         if (table is null)
             throw new ArgumentNullException(nameof(table), "Table should not be null");
@@ -59,7 +59,7 @@ public partial class Thing
         var tablePart = ExtractStringPart(table);
         var idPart = (value: id.ToString(), type: SpecialRecordPartType.None);
 
-        return new Thing(tablePart.value, tablePart.type, idPart.value, idPart.type);
+        return new RecordId(tablePart.value, tablePart.type, idPart.value, idPart.type);
     }
 
     /// <summary>
@@ -68,7 +68,7 @@ public partial class Thing
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public static Thing From(string table, short id)
+    public static RecordId From(string table, short id)
     {
         if (table is null)
             throw new ArgumentNullException(nameof(table), "Table should not be null");
@@ -76,7 +76,7 @@ public partial class Thing
         var tablePart = ExtractStringPart(table);
         var idPart = (value: id.ToString(), type: SpecialRecordPartType.None);
 
-        return new Thing(tablePart.value, tablePart.type, idPart.value, idPart.type);
+        return new RecordId(tablePart.value, tablePart.type, idPart.value, idPart.type);
     }
 
     /// <summary>
@@ -85,7 +85,7 @@ public partial class Thing
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public static Thing From(string table, byte id)
+    public static RecordId From(string table, byte id)
     {
         if (table is null)
             throw new ArgumentNullException(nameof(table), "Table should not be null");
@@ -93,7 +93,7 @@ public partial class Thing
         var tablePart = ExtractStringPart(table);
         var idPart = (value: id.ToString(), type: SpecialRecordPartType.None);
 
-        return new Thing(tablePart.value, tablePart.type, idPart.value, idPart.type);
+        return new RecordId(tablePart.value, tablePart.type, idPart.value, idPart.type);
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ public partial class Thing
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public static Thing From(string table, Guid id)
+    public static RecordId From(string table, Guid id)
     {
         if (table is null)
             throw new ArgumentNullException(nameof(table), "Table should not be null");
@@ -110,7 +110,7 @@ public partial class Thing
         var tablePart = ExtractStringPart(table);
         var idPart = (value: CreateEscaped(id.ToString()), type: SpecialRecordPartType.None);
 
-        return new Thing(tablePart.value, tablePart.type, idPart.value, idPart.type);
+        return new RecordId(tablePart.value, tablePart.type, idPart.value, idPart.type);
     }
 
     /// <summary>
@@ -119,13 +119,13 @@ public partial class Thing
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public static Thing From(string table, ReadOnlyMemory<byte> id)
+    public static RecordId From(string table, ReadOnlyMemory<byte> id)
     {
         if (table is null)
             throw new ArgumentNullException(nameof(table), "Table should not be null");
 
         var tablePart = ExtractStringPart(table);
 
-        return new Thing(tablePart.value, tablePart.type, id);
+        return new RecordId(tablePart.value, tablePart.type, id);
     }
 }

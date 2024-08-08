@@ -29,9 +29,9 @@ internal class PrimitiveConverterProvider : CborConverterProviderBase
         {
             return new DurationConverter();
         }
-        if (type == typeof(Thing))
+        if (type == typeof(RecordId))
         {
-            return new ThingConverter();
+            return new RecordIdConverter();
         }
         if (type == typeof(None))
         {

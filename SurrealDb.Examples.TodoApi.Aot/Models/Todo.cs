@@ -14,7 +14,7 @@ public class Todo : Record
 
     public Todo(int id, string title, DateOnly? dueBy = null, bool isComplete = false)
     {
-        Id = Thing.From(Table, id);
+        Id = RecordId.From(Table, id);
         Title = title;
         DueBy = dueBy;
         IsComplete = isComplete;

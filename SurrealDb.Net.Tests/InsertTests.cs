@@ -120,7 +120,7 @@ public class InsertTests
 
             var post = new Post
             {
-                Id = new Thing("post", "another"),
+                Id = ("post", "another"),
                 Title = "A new article",
                 Content = "This is a new article created using the .NET SDK"
             };
@@ -181,19 +181,19 @@ public class InsertTests
             {
                 new Post
                 {
-                    Id = new Thing("post", "A"),
+                    Id = ("post", "A"),
                     Title = "An article",
                     Content = "This is a new article"
                 },
                 new Post
                 {
-                    Id = new Thing("post", "B"),
+                    Id = ("post", "B"),
                     Title = "An article",
                     Content = "This is a new article"
                 },
                 new Post
                 {
-                    Id = new Thing("post", "C"),
+                    Id = ("post", "C"),
                     Title = "An article",
                     Content = "This is a new article"
                 }

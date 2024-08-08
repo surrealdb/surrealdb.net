@@ -136,14 +136,14 @@ public interface ISurrealDbClient : IDisposable
     /// <summary>
     /// Deletes the specified record from the database.
     /// </summary>
-    /// <param name="thing">The record id.</param>
+    /// <param name="recordId">The record id.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>Returns true if the record was removed successfully.</returns>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<bool> Delete(Thing thing, CancellationToken cancellationToken = default);
+    Task<bool> Delete(RecordId recordId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes the specified record from the database.
@@ -315,7 +315,7 @@ public interface ISurrealDbClient : IDisposable
     /// Modifies the specified record in the database.
     /// </summary>
     /// <typeparam name="T">The type of the record updated.</typeparam>
-    /// <param name="thing">The record id.</param>
+    /// <param name="recordId">The record id.</param>
     /// <param name="data">A list of key-value pairs that contains properties to change.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>The record updated.</returns>
@@ -324,7 +324,7 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<T> Merge<T>(
-        Thing thing,
+        RecordId recordId,
         Dictionary<string, object> data,
         CancellationToken cancellationToken = default
     );
@@ -389,12 +389,12 @@ public interface ISurrealDbClient : IDisposable
     /// Modifies the specified record in the database, using JSON Patch specification (https://jsonpatch.com/).
     /// </summary>
     /// <typeparam name="T">The type of the record updated.</typeparam>
-    /// <param name="thing">The record id.</param>
+    /// <param name="recordId">The record id.</param>
     /// <param name="patches">A list of JSON Patch operations.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>The record updated.</returns>
     Task<T> Patch<T>(
-        Thing thing,
+        RecordId recordId,
         JsonPatchDocument<T> patches,
         CancellationToken cancellationToken = default
     )
@@ -477,8 +477,8 @@ public interface ISurrealDbClient : IDisposable
     /// <returns>The record created.</returns>
     Task<TOutput> Relate<TOutput>(
         string table,
-        Thing @in,
-        Thing @out,
+        RecordId @in,
+        RecordId @out,
         CancellationToken cancellationToken = default
     )
         where TOutput : class;
@@ -496,8 +496,8 @@ public interface ISurrealDbClient : IDisposable
     /// <returns>The record created.</returns>
     Task<TOutput> Relate<TOutput, TData>(
         string table,
-        Thing @in,
-        Thing @out,
+        RecordId @in,
+        RecordId @out,
         TData? data,
         CancellationToken cancellationToken = default
     )
@@ -514,8 +514,8 @@ public interface ISurrealDbClient : IDisposable
     /// <returns>The record created.</returns>
     Task<IEnumerable<TOutput>> Relate<TOutput>(
         string table,
-        IEnumerable<Thing> ins,
-        Thing @out,
+        IEnumerable<RecordId> ins,
+        RecordId @out,
         CancellationToken cancellationToken = default
     )
         where TOutput : class;
@@ -533,8 +533,8 @@ public interface ISurrealDbClient : IDisposable
     /// <returns>The record created.</returns>
     Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
         string table,
-        IEnumerable<Thing> ins,
-        Thing @out,
+        IEnumerable<RecordId> ins,
+        RecordId @out,
         TData? data,
         CancellationToken cancellationToken = default
     )
@@ -551,8 +551,8 @@ public interface ISurrealDbClient : IDisposable
     /// <returns>The record created.</returns>
     Task<IEnumerable<TOutput>> Relate<TOutput>(
         string table,
-        Thing @in,
-        IEnumerable<Thing> outs,
+        RecordId @in,
+        IEnumerable<RecordId> outs,
         CancellationToken cancellationToken = default
     )
         where TOutput : class;
@@ -570,8 +570,8 @@ public interface ISurrealDbClient : IDisposable
     /// <returns>The record created.</returns>
     Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
         string table,
-        Thing @in,
-        IEnumerable<Thing> outs,
+        RecordId @in,
+        IEnumerable<RecordId> outs,
         TData? data,
         CancellationToken cancellationToken = default
     )
@@ -588,8 +588,8 @@ public interface ISurrealDbClient : IDisposable
     /// <returns>The record created.</returns>
     Task<IEnumerable<TOutput>> Relate<TOutput>(
         string table,
-        IEnumerable<Thing> ins,
-        IEnumerable<Thing> outs,
+        IEnumerable<RecordId> ins,
+        IEnumerable<RecordId> outs,
         CancellationToken cancellationToken = default
     )
         where TOutput : class;
@@ -607,8 +607,8 @@ public interface ISurrealDbClient : IDisposable
     /// <returns>The record created.</returns>
     Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
         string table,
-        IEnumerable<Thing> ins,
-        IEnumerable<Thing> outs,
+        IEnumerable<RecordId> ins,
+        IEnumerable<RecordId> outs,
         TData? data,
         CancellationToken cancellationToken = default
     )
@@ -618,15 +618,15 @@ public interface ISurrealDbClient : IDisposable
     /// Creates a relation between two records.
     /// </summary>
     /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
-    /// <param name="thing">The record id.</param>
+    /// <param name="recordId">The record id.</param>
     /// <param name="in">The record from where the relation starts.</param>
     /// <param name="out">The record to where the relation ends.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>The record created.</returns>
     Task<TOutput> Relate<TOutput>(
-        Thing thing,
-        Thing @in,
-        Thing @out,
+        RecordId recordId,
+        RecordId @in,
+        RecordId @out,
         CancellationToken cancellationToken = default
     )
         where TOutput : class;
@@ -636,16 +636,16 @@ public interface ISurrealDbClient : IDisposable
     /// </summary>
     /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
     /// <typeparam name="TData">The type of the additional data to add to the relation record.</typeparam>
-    /// <param name="thing">The record id.</param>
+    /// <param name="recordId">The record id.</param>
     /// <param name="in">The record from where the relation starts.</param>
     /// <param name="out">The record to where the relation ends.</param>
     /// <param name="data">Additional data to store in the relation record.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>The record created.</returns>
     Task<TOutput> Relate<TOutput, TData>(
-        Thing thing,
-        Thing @in,
-        Thing @out,
+        RecordId recordId,
+        RecordId @in,
+        RecordId @out,
         TData? data,
         CancellationToken cancellationToken = default
     )
@@ -668,14 +668,14 @@ public interface ISurrealDbClient : IDisposable
     /// Selects a single record.
     /// </summary>
     /// <typeparam name="T">The type of the record</typeparam>
-    /// <param name="thing">The record id.</param>
+    /// <param name="recordId">The record id.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>The extracted record</returns>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken = default);
+    Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Selects a single record.

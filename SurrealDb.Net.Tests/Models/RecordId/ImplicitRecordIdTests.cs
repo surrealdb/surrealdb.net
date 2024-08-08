@@ -2,33 +2,33 @@
 
 namespace SurrealDb.Net.Tests.Models;
 
-public class ImplicitThingTests
+public class ImplicitRecordIdTests
 {
     [Fact]
-    public void ShouldCreateThingFromTupleImplicitly()
+    public void ShouldCreateRecordIdFromTupleImplicitly()
     {
-        Thing thing = ("table", "id");
+        RecordId recordId = ("table", "id");
 
-        thing.Table.ToString().Should().Be("table");
-        thing.Id.ToString().Should().Be("id");
-        thing.ToString().Should().Be("table:id");
+        recordId.Table.ToString().Should().Be("table");
+        recordId.Id.ToString().Should().Be("id");
+        recordId.ToString().Should().Be("table:id");
     }
 
     [Fact]
-    public void ShouldCreateThingFromTupleWithIntegerIdImplicitly()
+    public void ShouldCreateRecordIdFromTupleWithIntegerIdImplicitly()
     {
-        Thing thing = ("table", 42);
+        RecordId recordId = ("table", 42);
 
-        thing.Table.ToString().Should().Be("table");
-        thing.Id.ToString().Should().Be("42");
-        thing.ToString().Should().Be("table:42");
+        recordId.Table.ToString().Should().Be("table");
+        recordId.Id.ToString().Should().Be("42");
+        recordId.ToString().Should().Be("table:42");
     }
 
     [Theory]
     [InlineData("Endpoint=mem://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
-    public async Task ShouldCreateThingFromTupleOnClientMethodCall(string connectionString)
+    public async Task ShouldCreateRecordIdFromTupleOnClientMethodCall(string connectionString)
     {
         // Test taken from "SelectTests.cs" file
 
@@ -41,7 +41,7 @@ public class ImplicitThingTests
 
             string filePath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/thing.surql"
+                "Schemas/recordId.surql"
             );
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
             string query = fileContent;
@@ -50,7 +50,7 @@ public class ImplicitThingTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
 
-            result = await client.Select<RecordIdRecord>(("thing", 17493));
+            result = await client.Select<RecordIdRecord>(("recordId", 17493));
         };
 
         await func.Should().NotThrowAsync();

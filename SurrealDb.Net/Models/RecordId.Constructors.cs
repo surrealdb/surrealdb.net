@@ -4,12 +4,12 @@ using SurrealDb.Net.Internals.Models;
 
 namespace SurrealDb.Net.Models;
 
-public partial class Thing
+public partial class RecordId
 {
     /// <summary>
     /// Creates a new record ID.
     /// </summary>
-    /// <param name="thing">
+    /// <param name="recordId">
     /// The record ID.<br /><br />
     ///
     /// <remarks>
@@ -17,16 +17,16 @@ public partial class Thing
     /// </remarks>
     /// </param>
     /// <exception cref="ArgumentException"></exception>
-    public Thing(string thing)
+    public RecordId(string recordId)
     {
-        _raw = thing.AsMemory();
+        _raw = recordId.AsMemory();
 
         char firstChar = _raw.Span[0];
 
         char? expectedTableSuffix = firstChar switch
         {
-            ThingConstants.PREFIX => ThingConstants.SUFFIX,
-            ThingConstants.ALTERNATE_ESCAPE => ThingConstants.ALTERNATE_ESCAPE,
+            RecordIdConstants.PREFIX => RecordIdConstants.SUFFIX,
+            RecordIdConstants.ALTERNATE_ESCAPE => RecordIdConstants.ALTERNATE_ESCAPE,
             _ => null
         };
 
@@ -36,24 +36,30 @@ public partial class Thing
             if (suffixIndex > 0)
             {
                 _separatorIndex =
-                    _raw.Span[suffixIndex..].IndexOf(ThingConstants.SEPARATOR) + suffixIndex;
+                    _raw.Span[suffixIndex..].IndexOf(RecordIdConstants.SEPARATOR) + suffixIndex;
 
                 if (_separatorIndex <= suffixIndex)
-                    throw new ArgumentException("Cannot detect separator on Thing", nameof(thing));
+                    throw new ArgumentException(
+                        $"Cannot detect separator on {nameof(RecordId)}",
+                        nameof(recordId)
+                    );
 
                 _isTableEscaped = true;
-                _isIdEscaped = IsStringEscaped(thing.AsSpan(_separatorIndex + 1));
+                _isIdEscaped = IsStringEscaped(recordId.AsSpan(_separatorIndex + 1));
                 return;
             }
         }
 
-        _separatorIndex = _raw.Span.IndexOf(ThingConstants.SEPARATOR);
+        _separatorIndex = _raw.Span.IndexOf(RecordIdConstants.SEPARATOR);
 
         if (_separatorIndex <= 0)
-            throw new ArgumentException("Cannot detect separator on Thing", nameof(thing));
+            throw new ArgumentException(
+                $"Cannot detect separator on {nameof(RecordId)}",
+                nameof(recordId)
+            );
 
-        _isTableEscaped = IsStringEscaped(thing.AsSpan(0, _separatorIndex));
-        _isIdEscaped = IsStringEscaped(thing.AsSpan(_separatorIndex + 1));
+        _isTableEscaped = IsStringEscaped(recordId.AsSpan(0, _separatorIndex));
+        _isIdEscaped = IsStringEscaped(recordId.AsSpan(_separatorIndex + 1));
 
         if (!_isIdEscaped && IdSpan.Length >= 2)
         {
@@ -79,13 +85,13 @@ public partial class Thing
     /// </summary>
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
-    public Thing(ReadOnlySpan<char> table, ReadOnlySpan<char> id)
+    public RecordId(ReadOnlySpan<char> table, ReadOnlySpan<char> id)
     {
         int capacity = table.Length + 1 + id.Length;
 
         var stringBuilder = new StringBuilder(capacity);
         stringBuilder.Append(table);
-        stringBuilder.Append(ThingConstants.SEPARATOR);
+        stringBuilder.Append(RecordIdConstants.SEPARATOR);
         stringBuilder.Append(id);
 
         _raw = stringBuilder.ToString().AsMemory();
@@ -94,7 +100,7 @@ public partial class Thing
         _isIdEscaped = IsStringEscaped(id);
     }
 
-    internal Thing(
+    internal RecordId(
         ReadOnlySpan<char> table,
         SpecialRecordPartType specialTableType,
         ReadOnlySpan<char> id,
@@ -106,7 +112,7 @@ public partial class Thing
         _specialRecordIdType = specialRecordIdType;
     }
 
-    internal Thing(
+    internal RecordId(
         ReadOnlySpan<char> table,
         SpecialRecordPartType specialTableType,
         ReadOnlyMemory<byte> id

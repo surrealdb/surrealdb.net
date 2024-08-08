@@ -9,8 +9,8 @@
 /// as that would require to parse any SurrealQL value in the provided <see cref="string"/>.
 /// And for this reason, this type is only used for one-way communication,
 /// sending a <see cref="StringRecordId"/> from the client to a SurrealDB instance.
-/// This library will never be able to deserialize a <see cref="StringRecordId"/> into a <see cref="Thing"/>.
-/// As such, please consider using <see cref="Thing"/> or one of its inherited types for these scenarii.
+/// This library will never be able to deserialize a <see cref="StringRecordId"/> into a <see cref="RecordId"/>.
+/// As such, please consider using <see cref="RecordId"/> or one of its inherited types for these scenarii.
 /// </remarks>
 public readonly partial struct StringRecordId
     : IEquatable<StringRecordId>,

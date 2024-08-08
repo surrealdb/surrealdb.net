@@ -952,7 +952,7 @@ public class TypesTests
 
         await client.Create(
             "thing",
-            new ThingRecord { Name = "custom", Value = new Thing("person", "tobie") }
+            new ThingRecord { Name = "custom", Value = ("person", "tobie") }
         );
 
         var records = (await client.Select<ThingRecord>("thing")).ToList();

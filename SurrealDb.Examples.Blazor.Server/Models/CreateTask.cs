@@ -8,5 +8,5 @@ public class CreateTask : Record
 
     public string Title { get; set; } = string.Empty;
     public DateTime DueDate { get; set; }
-    public Thing Column { get; set; } = null!;
+    public RecordId Column { get; set; } = null!;
 }

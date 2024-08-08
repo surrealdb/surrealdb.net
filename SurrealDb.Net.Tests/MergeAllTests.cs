@@ -79,7 +79,7 @@ public class MergeAllTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
 
-            var thing = new Thing("post", "first");
+            var recordId = new RecordId("post", "first");
             var data = new Dictionary<string, object> { { "content", "[Edit] Oops" } };
 
             list = await client.Select<Post>("post");

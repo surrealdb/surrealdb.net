@@ -12,5 +12,5 @@ public abstract class Record
     /// </summary>
     [CborProperty("id")]
     [CborIgnoreIfDefault]
-    public Thing? Id { get; set; }
+    public RecordId? Id { get; set; }
 }

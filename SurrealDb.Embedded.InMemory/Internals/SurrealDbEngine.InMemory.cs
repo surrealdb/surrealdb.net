@@ -185,9 +185,9 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             .ConfigureAwait(false);
     }
 
-    public async Task<bool> Delete(Thing thing, CancellationToken cancellationToken)
+    public async Task<bool> Delete(RecordId recordId, CancellationToken cancellationToken)
     {
-        var result = await SendRequestAsync<object?>(Method.Delete, [thing], cancellationToken)
+        var result = await SendRequestAsync<object?>(Method.Delete, [recordId], cancellationToken)
             .ConfigureAwait(false);
         return result is not null;
     }
@@ -293,12 +293,12 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     }
 
     public async Task<T> Merge<T>(
-        Thing thing,
+        RecordId recordId,
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     )
     {
-        return await SendRequestAsync<T>(Method.Merge, [thing, data], cancellationToken)
+        return await SendRequestAsync<T>(Method.Merge, [recordId, data], cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -342,13 +342,13 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     }
 
     public async Task<T> Patch<T>(
-        Thing thing,
+        RecordId recordId,
         JsonPatchDocument<T> patches,
         CancellationToken cancellationToken
     )
         where T : class
     {
-        return await SendRequestAsync<T>(Method.Patch, [thing, patches], cancellationToken)
+        return await SendRequestAsync<T>(Method.Patch, [recordId, patches], cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -423,8 +423,8 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
 
     public async Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
         string table,
-        IEnumerable<Thing> ins,
-        IEnumerable<Thing> outs,
+        IEnumerable<RecordId> ins,
+        IEnumerable<RecordId> outs,
         TData? data,
         CancellationToken cancellationToken
     )
@@ -439,9 +439,9 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     }
 
     public async Task<TOutput> Relate<TOutput, TData>(
-        Thing thing,
-        Thing @in,
-        Thing @out,
+        RecordId recordId,
+        RecordId @in,
+        RecordId @out,
         TData? data,
         CancellationToken cancellationToken
     )
@@ -449,7 +449,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     {
         return await SendRequestAsync<TOutput>(
                 Method.Relate,
-                [@in, thing, @out, data],
+                [@in, recordId, @out, data],
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -461,9 +461,9 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             .ConfigureAwait(false);
     }
 
-    public async Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken)
+    public async Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken)
     {
-        return await SendRequestAsync<T?>(Method.Select, [thing], cancellationToken)
+        return await SendRequestAsync<T?>(Method.Select, [recordId], cancellationToken)
             .ConfigureAwait(false);
     }
 

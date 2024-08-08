@@ -6,15 +6,15 @@ using SurrealDb.Net.Models;
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
 
-internal class ThingConverter : CborConverterBase<Thing>
+internal class RecordIdConverter : CborConverterBase<RecordId>
 {
-    public override Thing Read(ref CborReader reader)
+    public override RecordId Read(ref CborReader reader)
     {
         return reader.GetCurrentDataItemType() switch
         {
             CborDataItemType.Null => default!,
-            CborDataItemType.String => new Thing(reader.ReadString()!),
-            CborDataItemType.Array => ReadThingFromArray(ref reader),
+            CborDataItemType.String => new RecordId(reader.ReadString()!),
+            CborDataItemType.Array => ReadRecordIdFromArray(ref reader),
             _
                 => throw new CborException(
                     "Expected a CBOR text data type, or a CBOR array with 2 elements"
@@ -22,7 +22,7 @@ internal class ThingConverter : CborConverterBase<Thing>
         };
     }
 
-    private static Thing ReadThingFromArray(ref CborReader reader)
+    private static RecordId ReadRecordIdFromArray(ref CborReader reader)
     {
         reader.ReadBeginArray();
 
@@ -35,23 +35,20 @@ internal class ThingConverter : CborConverterBase<Thing>
             );
         }
 
-        var table = reader.ReadString();
-
-        if (table is null)
-        {
-            throw new CborException("Expected a string as the first element of the array");
-        }
+        string table =
+            reader.ReadString()
+            ?? throw new CborException("Expected a string as the first element of the array");
 
         var idItemType = reader.GetCurrentDataItemType();
 
         return idItemType switch
         {
-            CborDataItemType.String => Thing.From(table, reader.ReadString()!),
+            CborDataItemType.String => RecordId.From(table, reader.ReadString()!),
             CborDataItemType.Signed
             or CborDataItemType.Unsigned
-                => Thing.From(table, reader.ReadInt32()),
-            CborDataItemType.Array => Thing.From(table, reader.ReadDataItemAsMemory()),
-            CborDataItemType.Map => Thing.From(table, reader.ReadDataItemAsMemory()),
+                => RecordId.From(table, reader.ReadInt32()),
+            CborDataItemType.Array => RecordId.From(table, reader.ReadDataItemAsMemory()),
+            CborDataItemType.Map => RecordId.From(table, reader.ReadDataItemAsMemory()),
             _
                 => throw new CborException(
                     "Expected the id of a Record Id to be a String, Integer, Array or Object value"
@@ -59,7 +56,7 @@ internal class ThingConverter : CborConverterBase<Thing>
         };
     }
 
-    public override void Write(ref CborWriter writer, Thing value)
+    public override void Write(ref CborWriter writer, RecordId value)
     {
         writer.WriteSemanticTag(CborTagConstants.TAG_RECORDID);
 

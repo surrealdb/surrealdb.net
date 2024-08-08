@@ -118,7 +118,7 @@ public class CreateTests
 
             var post = new Post
             {
-                Id = new Thing("post", "another"),
+                Id = new RecordId("post", "another"),
                 Title = "A new article",
                 Content = "This is a new article created using the .NET SDK"
             };
@@ -176,19 +176,19 @@ public class CreateTests
             {
                 new Post
                 {
-                    Id = new Thing("post", "A"),
+                    Id = new RecordId("post", "A"),
                     Title = "An article",
                     Content = "This is a new article"
                 },
                 new Post
                 {
-                    Id = new Thing("post", "B"),
+                    Id = new RecordId("post", "B"),
                     Title = "An article",
                     Content = "This is a new article"
                 },
                 new Post
                 {
-                    Id = new Thing("post", "C"),
+                    Id = new RecordId("post", "C"),
                     Title = "An article",
                     Content = "This is a new article"
                 }

@@ -332,11 +332,11 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             .ConfigureAwait(false);
     }
 
-    public async Task<bool> Delete(Thing thing, CancellationToken cancellationToken)
+    public async Task<bool> Delete(RecordId recordId, CancellationToken cancellationToken)
     {
         var dbResponse = await SendRequestAsync(
                 "delete",
-                [thing],
+                [recordId],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -565,14 +565,14 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     }
 
     public async Task<T> Merge<T>(
-        Thing thing,
+        RecordId recordId,
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     )
     {
         var dbResponse = await SendRequestAsync(
                 "merge",
-                [thing, data],
+                [recordId, data],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -630,7 +630,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     }
 
     public async Task<T> Patch<T>(
-        Thing thing,
+        RecordId recordId,
         JsonPatchDocument<T> patches,
         CancellationToken cancellationToken
     )
@@ -638,7 +638,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         var dbResponse = await SendRequestAsync(
                 "patch",
-                [thing, patches],
+                [recordId, patches],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -718,8 +718,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
         string table,
-        IEnumerable<Thing> ins,
-        IEnumerable<Thing> outs,
+        IEnumerable<RecordId> ins,
+        IEnumerable<RecordId> outs,
         TData? data,
         CancellationToken cancellationToken
     )
@@ -737,9 +737,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     }
 
     public async Task<TOutput> Relate<TOutput, TData>(
-        Thing thing,
-        Thing @in,
-        Thing @out,
+        RecordId recordId,
+        RecordId @in,
+        RecordId @out,
         TData? data,
         CancellationToken cancellationToken
     )
@@ -747,7 +747,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         var dbResponse = await SendRequestAsync(
                 "relate",
-                [@in, thing, @out, data],
+                [@in, recordId, @out, data],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -768,11 +768,11 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<T>()!;
     }
 
-    public async Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken)
+    public async Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken)
     {
         var dbResponse = await SendRequestAsync(
                 "select",
-                [thing],
+                [recordId],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )

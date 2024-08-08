@@ -9,7 +9,7 @@ public class ColumnRecord : Record
 
     public string Name { get; set; } = string.Empty;
     public int Order { get; set; }
-    public IEnumerable<Thing> Tasks { get; set; } = Array.Empty<Thing>();
+    public IEnumerable<RecordId> Tasks { get; set; } = Array.Empty<RecordId>();
 
     [CborIgnoreIfDefault]
     public DateTime CreatedAt { get; set; }

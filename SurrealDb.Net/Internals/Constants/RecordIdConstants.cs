@@ -1,6 +1,6 @@
-namespace SurrealDb.Net.Internals.Constants;
+﻿namespace SurrealDb.Net.Internals.Constants;
 
-internal class ThingConstants
+internal class RecordIdConstants
 {
     public const char SEPARATOR = ':';
     public const char PREFIX = '⟨';

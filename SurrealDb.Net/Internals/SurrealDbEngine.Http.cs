@@ -148,9 +148,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<bool> Delete(Thing thing, CancellationToken cancellationToken)
+    public async Task<bool> Delete(RecordId recordId, CancellationToken cancellationToken)
     {
-        var request = new SurrealDbHttpRequest { Method = "delete", Parameters = [thing] };
+        var request = new SurrealDbHttpRequest { Method = "delete", Parameters = [recordId] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
@@ -271,12 +271,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     }
 
     public async Task<T> Merge<T>(
-        Thing thing,
+        RecordId recordId,
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     )
     {
-        var request = new SurrealDbHttpRequest { Method = "merge", Parameters = [thing, data] };
+        var request = new SurrealDbHttpRequest { Method = "merge", Parameters = [recordId, data] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
@@ -324,13 +324,17 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     }
 
     public async Task<T> Patch<T>(
-        Thing thing,
+        RecordId recordId,
         JsonPatchDocument<T> patches,
         CancellationToken cancellationToken
     )
         where T : class
     {
-        var request = new SurrealDbHttpRequest { Method = "patch", Parameters = [thing, patches] };
+        var request = new SurrealDbHttpRequest
+        {
+            Method = "patch",
+            Parameters = [recordId, patches]
+        };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
@@ -422,8 +426,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public async Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
         string table,
-        IEnumerable<Thing> ins,
-        IEnumerable<Thing> outs,
+        IEnumerable<RecordId> ins,
+        IEnumerable<RecordId> outs,
         TData? data,
         CancellationToken cancellationToken
     )
@@ -441,9 +445,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     }
 
     public async Task<TOutput> Relate<TOutput, TData>(
-        Thing thing,
-        Thing @in,
-        Thing @out,
+        RecordId recordId,
+        RecordId @in,
+        RecordId @out,
         TData? data,
         CancellationToken cancellationToken
     )
@@ -452,7 +456,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var request = new SurrealDbHttpRequest
         {
             Method = "relate",
-            Parameters = [@in, thing, @out, data]
+            Parameters = [@in, recordId, @out, data]
         };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -469,9 +473,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<T>();
     }
 
-    public async Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken)
+    public async Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken)
     {
-        var request = new SurrealDbHttpRequest { Method = "select", Parameters = [thing] };
+        var request = new SurrealDbHttpRequest { Method = "select", Parameters = [recordId] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
@@ -498,8 +502,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             throw new ArgumentException("Variable name is not valid.", nameof(key));
         }
 
-        bool shouldEscapeKey = Thing.ShouldEscapeString(key);
-        string escapedKey = shouldEscapeKey ? Thing.CreateEscaped(key) : key;
+        bool shouldEscapeKey = RecordId.ShouldEscapeString(key);
+        string escapedKey = shouldEscapeKey ? RecordId.CreateEscaped(key) : key;
 
         var dbResponse = await RawQuery(
                 $"RETURN ${escapedKey}",

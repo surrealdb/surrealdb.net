@@ -2,7 +2,7 @@
 
 namespace SurrealDb.Net.Models;
 
-public partial class Thing
+public partial class RecordId
 {
     private readonly ReadOnlyMemory<char> _raw;
     private readonly int _separatorIndex;

@@ -6,9 +6,9 @@
 /// <remarks>
 /// Example: `table_name:record_id`
 /// </remarks>
-public partial class Thing : IEquatable<Thing>
+public partial class RecordId : IEquatable<RecordId>
 {
-    public bool Equals(Thing? other)
+    public bool Equals(RecordId? other)
     {
         if (other is null)
             return false;
@@ -32,7 +32,7 @@ public partial class Thing : IEquatable<Thing>
 
     public override bool Equals(object? obj)
     {
-        if (obj is Thing other)
+        if (obj is RecordId other)
             return Equals(other);
 
         return base.Equals(obj);

@@ -144,7 +144,7 @@ public class SelectTests
     [InlineData("Endpoint=mem://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
-    public async Task ShouldSelectSinglePostUsingThing(string connectionString)
+    public async Task ShouldSelectSinglePostUsingRecordId(string connectionString)
     {
         Post? result = null;
 
@@ -165,9 +165,9 @@ public class SelectTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
 
-            var thing = new Thing("post", "first");
+            var recordId = new RecordId("post", "first");
 
-            result = await client.Select<Post>(thing);
+            result = await client.Select<Post>(recordId);
         };
 
         await func.Should().NotThrowAsync();
@@ -194,7 +194,7 @@ public class SelectTests
 
             string filePath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/thing.surql"
+                "Schemas/recordId.surql"
             );
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
@@ -204,9 +204,9 @@ public class SelectTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
 
-            var thing = Thing.From("thing", 17493);
+            var recordId = RecordId.From("recordId", 17493);
 
-            result = await client.Select<RecordIdRecord>(thing);
+            result = await client.Select<RecordIdRecord>(recordId);
         };
 
         await func.Should().NotThrowAsync();
@@ -230,7 +230,7 @@ public class SelectTests
 
             string filePath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/thing.surql"
+                "Schemas/recordId.surql"
             );
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
@@ -240,9 +240,9 @@ public class SelectTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
 
-            var thing = Thing.From("thing", "surrealdb");
+            var recordId = RecordId.From("recordId", "surrealdb");
 
-            result = await client.Select<RecordIdRecord>(thing);
+            result = await client.Select<RecordIdRecord>(recordId);
         };
 
         await func.Should().NotThrowAsync();
@@ -266,7 +266,7 @@ public class SelectTests
 
             string filePath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/thing.surql"
+                "Schemas/recordId.surql"
             );
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
@@ -276,9 +276,12 @@ public class SelectTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
 
-            var thing = Thing.From("thing", new Guid("8424486b-85b3-4448-ac8d-5d51083391c7"));
+            var recordId = RecordId.From(
+                "recordId",
+                new Guid("8424486b-85b3-4448-ac8d-5d51083391c7")
+            );
 
-            result = await client.Select<RecordIdRecord>(thing);
+            result = await client.Select<RecordIdRecord>(recordId);
         };
 
         await func.Should().NotThrowAsync();
@@ -302,7 +305,7 @@ public class SelectTests
 
             string filePath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/thing.surql"
+                "Schemas/recordId.surql"
             );
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
@@ -312,9 +315,12 @@ public class SelectTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
 
-            var thing = Thing.From("thing", new ObjectTableId { Location = "London", Year = 2023 });
+            var recordId = RecordId.From(
+                "recordId",
+                new ObjectTableId { Location = "London", Year = 2023 }
+            );
 
-            result = await client.Select<RecordIdRecord>(thing);
+            result = await client.Select<RecordIdRecord>(recordId);
         };
 
         await func.Should().NotThrowAsync();
@@ -338,7 +344,7 @@ public class SelectTests
 
             string filePath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/thing.surql"
+                "Schemas/recordId.surql"
             );
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
@@ -348,9 +354,9 @@ public class SelectTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
 
-            var thing = Thing.From("thing", new object[] { "London", 2023 });
+            var recordId = RecordId.From("recordId", new object[] { "London", 2023 });
 
-            result = await client.Select<RecordIdRecord>(thing);
+            result = await client.Select<RecordIdRecord>(recordId);
         };
 
         await func.Should().NotThrowAsync();
@@ -374,7 +380,7 @@ public class SelectTests
 
             string filePath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/thing.surql"
+                "Schemas/recordId.surql"
             );
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
@@ -384,7 +390,7 @@ public class SelectTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
 
-            var recordId = new StringRecordId("thing:surrealdb");
+            var recordId = new StringRecordId("recordId:surrealdb");
 
             result = await client.Select<RecordIdRecord>(recordId);
         };
