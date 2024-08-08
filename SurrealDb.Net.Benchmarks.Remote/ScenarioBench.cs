@@ -1,12 +1,13 @@
-﻿using System.Runtime.CompilerServices;
-using System.Text.Json;
+﻿using System.Text.Json;
 using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
+using SurrealDb.Net.Benchmarks.Models;
 using SurrealDb.Net.Internals.Constants;
+using SurrealDb.Net.Tests.Fixtures;
 
-namespace SurrealDb.Net.Benchmarks;
+namespace SurrealDb.Net.Benchmarks.Remote;
 
-public class SelectBench : BaseBenchmark
+public class ScenarioBench : BaseRemoteBenchmark
 {
     private readonly SurrealDbClientGenerator[] _surrealDbClientGenerators =
         new SurrealDbClientGenerator[4];
@@ -23,6 +24,8 @@ public class SelectBench : BaseBenchmark
         {
             var clientGenerator = new SurrealDbClientGenerator();
             var dbInfo = clientGenerator.GenerateDatabaseInfo();
+
+            await CreateEcommerceTables(WsUrl, dbInfo);
 
             switch (index)
             {
@@ -74,8 +77,6 @@ public class SelectBench : BaseBenchmark
                     }
                     break;
             }
-
-            await SeedData(WsUrl, dbInfo);
         }
     }
 
@@ -95,33 +96,26 @@ public class SelectBench : BaseBenchmark
     }
 
     [Benchmark]
-    public Task<List<Post>> Http()
+    public Task<List<ProductAlsoPurchased>> Http()
     {
-        return Run(_surrealdbHttpClient!);
+        return BenchmarkRuns.Scenario(_surrealdbHttpClient!);
     }
 
     [Benchmark]
-    public Task<List<Post>> HttpWithClientFactory()
+    public Task<List<ProductAlsoPurchased>> HttpWithClientFactory()
     {
-        return Run(_surrealdbHttpClientWithHttpClientFactory!);
+        return BenchmarkRuns.Scenario(_surrealdbHttpClientWithHttpClientFactory!);
     }
 
     [Benchmark]
-    public Task<List<Post>> WsText()
+    public Task<List<ProductAlsoPurchased>> WsText()
     {
-        return Run(_surrealdbWsTextClient!);
+        return BenchmarkRuns.Scenario(_surrealdbWsTextClient!);
     }
 
     [Benchmark]
-    public Task<List<Post>> WsBinary()
+    public Task<List<ProductAlsoPurchased>> WsBinary()
     {
-        return Run(_surrealdbWsBinaryClient!);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private static async Task<List<Post>> Run(ISurrealDbClient surrealDbClient)
-    {
-        var result = await surrealDbClient.Select<Post>("post");
-        return result.ToList();
+        return BenchmarkRuns.Scenario(_surrealdbWsBinaryClient!);
     }
 }

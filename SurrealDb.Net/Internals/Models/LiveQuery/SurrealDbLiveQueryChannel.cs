@@ -3,28 +3,28 @@ using SurrealDb.Net.Internals.Ws;
 
 namespace SurrealDb.Net.Internals.Models.LiveQuery;
 
-internal class SurrealDbLiveQueryChannel
+public sealed class SurrealDbLiveQueryChannel
 {
     private readonly Channel<ISurrealDbWsLiveResponse> _channel;
 
-    public SurrealDbLiveQueryChannel()
+    internal SurrealDbLiveQueryChannel()
     {
         _channel = Channel.CreateUnbounded<ISurrealDbWsLiveResponse>();
     }
 
-    public async Task WriteAsync(ISurrealDbWsLiveResponse item)
+    internal async Task WriteAsync(ISurrealDbWsLiveResponse item)
     {
         await _channel.Writer.WriteAsync(item).ConfigureAwait(false);
     }
 
-    public IAsyncEnumerable<ISurrealDbWsLiveResponse> ReadAllAsync(
+    internal IAsyncEnumerable<ISurrealDbWsLiveResponse> ReadAllAsync(
         CancellationToken cancellationToken = default
     )
     {
         return _channel.Reader.ReadAllAsync(cancellationToken);
     }
 
-    public void Complete()
+    internal void Complete()
     {
         _channel.Writer.Complete();
     }

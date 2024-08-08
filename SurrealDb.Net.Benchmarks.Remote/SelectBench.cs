@@ -1,18 +1,17 @@
-﻿using System.Runtime.CompilerServices;
-using System.Text.Json;
+﻿using System.Text.Json;
 using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
+using SurrealDb.Net.Benchmarks.Models;
 using SurrealDb.Net.Internals.Constants;
+using SurrealDb.Net.Tests.Fixtures;
 
-namespace SurrealDb.Net.Benchmarks;
+namespace SurrealDb.Net.Benchmarks.Remote;
 
-// TODO : Create a SurrealDbBenchmarkContext class
-
-public class CreateBench : BaseBenchmark
+public class SelectBench : BaseRemoteBenchmark
 {
     private readonly SurrealDbClientGenerator[] _surrealDbClientGenerators =
         new SurrealDbClientGenerator[4];
-    private readonly PostFaker _postFaker = new();
+    private readonly IEnumerable<GeneratedPost> _generatedPosts = new PostFaker().Generate(1000);
 
     private ISurrealDbClient? _surrealdbHttpClient;
     private ISurrealDbClient? _surrealdbHttpClientWithHttpClientFactory;
@@ -26,8 +25,6 @@ public class CreateBench : BaseBenchmark
         {
             var clientGenerator = new SurrealDbClientGenerator();
             var dbInfo = clientGenerator.GenerateDatabaseInfo();
-
-            await CreatePostTable(WsUrl, dbInfo);
 
             switch (index)
             {
@@ -79,6 +76,8 @@ public class CreateBench : BaseBenchmark
                     }
                     break;
             }
+
+            await SeedData(WsUrl, dbInfo, _generatedPosts);
         }
     }
 
@@ -98,35 +97,26 @@ public class CreateBench : BaseBenchmark
     }
 
     [Benchmark]
-    public Task<Post> Http()
+    public Task<List<Post>> Http()
     {
-        return Run(_surrealdbHttpClient!);
+        return BenchmarkRuns.Select(_surrealdbHttpClient!);
     }
 
     [Benchmark]
-    public Task<Post> HttpWithClientFactory()
+    public Task<List<Post>> HttpWithClientFactory()
     {
-        return Run(_surrealdbHttpClientWithHttpClientFactory!);
+        return BenchmarkRuns.Select(_surrealdbHttpClientWithHttpClientFactory!);
     }
 
     [Benchmark]
-    public Task<Post> WsText()
+    public Task<List<Post>> WsText()
     {
-        return Run(_surrealdbWsTextClient!);
+        return BenchmarkRuns.Select(_surrealdbWsTextClient!);
     }
 
     [Benchmark]
-    public Task<Post> WsBinary()
+    public Task<List<Post>> WsBinary()
     {
-        return Run(_surrealdbWsBinaryClient!);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private Task<Post> Run(ISurrealDbClient surrealDbClient)
-    {
-        var generatedPost = _postFaker!.Generate();
-        var post = new Post { Title = generatedPost.Title, Content = generatedPost.Content };
-
-        return surrealDbClient.Create("post", post);
+        return BenchmarkRuns.Select(_surrealdbWsBinaryClient!);
     }
 }

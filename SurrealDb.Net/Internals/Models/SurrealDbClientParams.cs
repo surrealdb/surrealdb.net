@@ -2,7 +2,7 @@
 
 namespace SurrealDb.Net.Internals.Models;
 
-internal class SurrealDbClientParams
+public class SurrealDbClientParams
 {
     public string? Endpoint { get; }
     public string? Ns { get; }

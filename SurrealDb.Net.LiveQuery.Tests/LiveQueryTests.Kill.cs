@@ -7,8 +7,8 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 public class KillLiveQueryTests
 {
     [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldAutomaticallyKillLiveQueryWhenDisposed(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -52,8 +52,8 @@ public class KillLiveQueryTests
     }
 
     [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldManuallyKillLiveQuery(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();

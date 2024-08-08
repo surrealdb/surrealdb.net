@@ -560,8 +560,10 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var request = new SurrealDbHttpRequest { Method = "version" };
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
+        var version = dbResponse.GetValue<string>()!;
 
-        return dbResponse.GetValue<string>()!;
+        const string VERSION_PREFIX = "surrealdb-";
+        return version.Replace(VERSION_PREFIX, string.Empty);
     }
 
     private CurrentJsonSerializerOptionsForAot? _currentJsonSerializerOptionsForAot;

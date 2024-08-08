@@ -30,8 +30,8 @@ public class ListenLiveTests : BaseLiveQueryTests
     }
 
     [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldReceiveData(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();

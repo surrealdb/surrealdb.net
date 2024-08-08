@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Dahomey.Cbor;
+using SurrealDb.Net.Internals.Extensions;
 
 namespace SurrealDb.Net.Internals.Http;
 
@@ -84,16 +85,13 @@ internal class SurrealDbHttpOkResponse : ISurrealDbHttpResponse
         }
     }
 
-    private static readonly byte[] _cborNone = [0xc6, 0xf6];
-    private static readonly byte[] _cborEmptyArray = [0x80];
-
     internal bool ExpectNone()
     {
-        return _binaryResult.HasValue && _binaryResult.Value.Span.SequenceEqual(_cborNone);
+        return _binaryResult.HasValue && _binaryResult.Value.Span.ExpectNone();
     }
 
     internal bool ExpectEmptyArray()
     {
-        return _binaryResult.HasValue && _binaryResult.Value.Span.SequenceEqual(_cborEmptyArray);
+        return _binaryResult.HasValue && _binaryResult.Value.Span.ExpectEmptyArray();
     }
 }

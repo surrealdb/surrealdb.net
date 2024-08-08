@@ -12,7 +12,7 @@ using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Internals.Cbor;
 
-internal static class SurrealDbCborOptions
+public static class SurrealDbCborOptions
 {
     private static readonly string DefaultKey = string.Empty;
 
@@ -21,7 +21,7 @@ internal static class SurrealDbCborOptions
         CborOptions
     > DefaultSerializerOptionsCache = new();
 
-    public static CborOptions Default =>
+    internal static CborOptions Default =>
         DefaultSerializerOptionsCache.GetValueOrDefault(
             DefaultKey,
             CreateCborSerializerOptions(null)
@@ -98,7 +98,7 @@ internal static class SurrealDbCborOptions
         return GetDefaultSerializerFromPolicy(key, jsonNamingPolicy);
     }
 
-    public static CborOptions GetDefaultSerializerFromPolicy(INamingConvention? namingConvention)
+    private static CborOptions GetDefaultSerializerFromPolicy(INamingConvention? namingConvention)
     {
         string key = namingConvention?.GetType().FullName ?? DefaultKey;
         return GetDefaultSerializerFromPolicy(key, namingConvention);
