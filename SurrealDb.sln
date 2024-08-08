@@ -49,7 +49,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.MinimalApis.Exten
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Examples.MinimalApis", "SurrealDb.Examples.MinimalApis\SurrealDb.Examples.MinimalApis.csproj", "{15FC7474-5CB5-4EAA-91B0-796DD5DE3BD6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.MinimalApis.Extensions.Reference", "SurrealDb.MinimalApis.Extensions.Reference\SurrealDb.MinimalApis.Extensions.Reference.csproj", "{15C6F284-FAAA-4794-9FD9-9B500A1B15FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.MinimalApis.Extensions.Reference", "SurrealDb.MinimalApis.Extensions.Reference\SurrealDb.MinimalApis.Extensions.Reference.csproj", "{15C6F284-FAAA-4794-9FD9-9B500A1B15FF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -5,9 +5,11 @@ namespace SurrealDb.Net.Tests;
 public class MergeAllTests
 {
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldMergeAllRecords(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldMergeAllRecords(string connectionString)
     {
         IEnumerable<Post>? list = null;
         IEnumerable<Post>? results = null;
@@ -25,7 +27,7 @@ public class MergeAllTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
@@ -54,9 +56,11 @@ public class MergeAllTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldMergeAllRecordsUsingDictionary(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldMergeAllRecordsUsingDictionary(string connectionString)
     {
         IEnumerable<Post>? list = null;
         IEnumerable<Post>? results = null;
@@ -74,7 +78,7 @@ public class MergeAllTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);

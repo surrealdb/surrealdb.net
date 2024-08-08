@@ -13,14 +13,14 @@ public partial class Thing
     /// </summary>
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
-    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
     public static Thing From(string table, string id)
     {
         if (table is null)
-            throw new ArgumentException("Table should not be null", nameof(table));
+            throw new ArgumentNullException(nameof(table), "Table should not be null");
 
         if (id is null)
-            throw new ArgumentException("Id should not be null", nameof(id));
+            throw new ArgumentNullException(nameof(id), "Id should not be null");
 
         var tablePart = ExtractStringPart(table);
         var idPart = ExtractStringPart(id);
@@ -33,11 +33,11 @@ public partial class Thing
     /// </summary>
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
-    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
     public static Thing From(string table, int id)
     {
         if (table is null)
-            throw new ArgumentException("Table should not be null", nameof(table));
+            throw new ArgumentNullException(nameof(table), "Table should not be null");
 
         var tablePart = ExtractStringPart(table);
         var idPart = (value: id.ToString(), type: SpecialRecordPartType.None);
@@ -50,11 +50,11 @@ public partial class Thing
     /// </summary>
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
-    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
     public static Thing From(string table, long id)
     {
         if (table is null)
-            throw new ArgumentException("Table should not be null", nameof(table));
+            throw new ArgumentNullException(nameof(table), "Table should not be null");
 
         var tablePart = ExtractStringPart(table);
         var idPart = (value: id.ToString(), type: SpecialRecordPartType.None);
@@ -67,11 +67,11 @@ public partial class Thing
     /// </summary>
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
-    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
     public static Thing From(string table, short id)
     {
         if (table is null)
-            throw new ArgumentException("Table should not be null", nameof(table));
+            throw new ArgumentNullException(nameof(table), "Table should not be null");
 
         var tablePart = ExtractStringPart(table);
         var idPart = (value: id.ToString(), type: SpecialRecordPartType.None);
@@ -84,11 +84,11 @@ public partial class Thing
     /// </summary>
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
-    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
     public static Thing From(string table, byte id)
     {
         if (table is null)
-            throw new ArgumentException("Table should not be null", nameof(table));
+            throw new ArgumentNullException(nameof(table), "Table should not be null");
 
         var tablePart = ExtractStringPart(table);
         var idPart = (value: id.ToString(), type: SpecialRecordPartType.None);
@@ -101,15 +101,31 @@ public partial class Thing
     /// </summary>
     /// <param name="table">Table name</param>
     /// <param name="id">Table id</param>
-    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
     public static Thing From(string table, Guid id)
     {
         if (table is null)
-            throw new ArgumentException("Table should not be null", nameof(table));
+            throw new ArgumentNullException(nameof(table), "Table should not be null");
 
         var tablePart = ExtractStringPart(table);
         var idPart = (value: CreateEscaped(id.ToString()), type: SpecialRecordPartType.None);
 
         return new Thing(tablePart.value, tablePart.type, idPart.value, idPart.type);
+    }
+
+    /// <summary>
+    /// Creates a new record ID from a <see cref="string"/> typed table and a <see cref="ReadOnlyMemory{T}"/> typed id.
+    /// </summary>
+    /// <param name="table">Table name</param>
+    /// <param name="id">Table id</param>
+    /// <exception cref="ArgumentNullException"></exception>
+    public static Thing From(string table, ReadOnlyMemory<byte> id)
+    {
+        if (table is null)
+            throw new ArgumentNullException(nameof(table), "Table should not be null");
+
+        var tablePart = ExtractStringPart(table);
+
+        return new Thing(tablePart.value, tablePart.type, id);
     }
 }

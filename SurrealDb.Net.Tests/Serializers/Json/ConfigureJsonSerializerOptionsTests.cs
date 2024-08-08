@@ -11,9 +11,11 @@ public class DeviceInput : SurrealDbRecord
 public class ConfigureJsonSerializerOptionsTests
 {
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldUseCamelCasePolicyOnSelect(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR", Skip = "Not supported")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR", Skip = "Not supported")]
+    public async Task ShouldUseCamelCasePolicyOnSelect(string connectionString)
     {
         IEnumerable<DeviceInput>? result = null;
 
@@ -23,7 +25,7 @@ public class ConfigureJsonSerializerOptionsTests
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
             using var client = surrealDbClientGenerator.Create(
-                url,
+                connectionString,
                 configureJsonSerializerOptions: (options) =>
                 {
                     options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -57,9 +59,11 @@ public class ConfigureJsonSerializerOptionsTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldUseCamelCasePolicyOnQuery(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR", Skip = "Not supported")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR", Skip = "Not supported")]
+    public async Task ShouldUseCamelCasePolicyOnQuery(string connectionString)
     {
         IEnumerable<DeviceInput>? result = null;
         string? rawValue = null;
@@ -70,7 +74,7 @@ public class ConfigureJsonSerializerOptionsTests
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
             using var client = surrealDbClientGenerator.Create(
-                url,
+                connectionString,
                 configureJsonSerializerOptions: (options) =>
                 {
                     options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -111,9 +115,11 @@ public class ConfigureJsonSerializerOptionsTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldUseKebabCasePolicyOnSelect(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR", Skip = "Not supported")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR", Skip = "Not supported")]
+    public async Task ShouldUseKebabCasePolicyOnSelect(string connectionString)
     {
         IEnumerable<DeviceInput>? result = null;
 
@@ -123,7 +129,7 @@ public class ConfigureJsonSerializerOptionsTests
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
             using var client = surrealDbClientGenerator.Create(
-                url,
+                connectionString,
                 configureJsonSerializerOptions: (options) =>
                 {
                     options.PropertyNamingPolicy = JsonNamingPolicy.KebabCaseLower;
@@ -157,9 +163,11 @@ public class ConfigureJsonSerializerOptionsTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldUseKebabCasePolicyOnQuery(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR", Skip = "Not supported")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR", Skip = "Not supported")]
+    public async Task ShouldUseKebabCasePolicyOnQuery(string connectionString)
     {
         IEnumerable<DeviceInput>? result = null;
         string? rawValue = null;
@@ -170,7 +178,7 @@ public class ConfigureJsonSerializerOptionsTests
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
             using var client = surrealDbClientGenerator.Create(
-                url,
+                connectionString,
                 configureJsonSerializerOptions: (options) =>
                 {
                     options.PropertyNamingPolicy = JsonNamingPolicy.KebabCaseLower;

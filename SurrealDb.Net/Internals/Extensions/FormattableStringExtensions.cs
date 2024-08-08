@@ -14,23 +14,42 @@ internal static class FormattableStringExtensions
             return (query.Format, ImmutableDictionary<string, object?>.Empty);
         }
 
-        var parameters = new Dictionary<string, object?>(capacity: query.ArgumentCount);
+        var formatArgs = new string[query.ArgumentCount];
+        var parameters = new Dictionary<string, object?>();
 
         var arguments = query.GetArguments();
-        int index = 0;
+        int currentParameterIndex = 0;
 
-        foreach (var argument in arguments)
+        for (int index = 0; index < arguments.Length; index++)
         {
-            string parameterName = $"p{index}";
-            parameters.Add(parameterName, argument);
+            ReadOnlySpan<char> parameterName = default;
 
-            index++;
+            foreach (var parameter in parameters)
+            {
+                if (parameter.Value == arguments[index])
+                {
+                    parameterName = parameter.Key;
+                    break;
+                }
+            }
+
+            if (parameterName.IsEmpty)
+            {
+                parameterName = $"p{currentParameterIndex++}";
+                parameters.Add(parameterName.ToString(), arguments[index]);
+            }
+
+#if NET6_0_OR_GREATER
+            formatArgs[index] = $"${parameterName}";
+#else
+            formatArgs[index] = $"${parameterName.ToString()}";
+#endif
         }
 
         string formattedQuery = string.Format(
             CultureInfo.InvariantCulture,
             query.Format,
-            parameters.Select(p => $"${p.Key}").ToArray()
+            formatArgs
         );
 
         return (formattedQuery, parameters);

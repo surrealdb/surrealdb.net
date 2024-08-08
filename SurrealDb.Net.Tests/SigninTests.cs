@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace SurrealDb.Net.Tests;
 
@@ -12,15 +12,17 @@ public class AuthParams : ScopeAuth
 public class SignInTests
 {
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldSignInAsRootUser(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldSignInAsRootUser(string connectionString)
     {
         Func<Task> func = async () =>
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         };
 
@@ -28,9 +30,11 @@ public class SignInTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldSignInUsingNamespaceAuth(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldSignInUsingNamespaceAuth(string connectionString)
     {
         Jwt? jwt = null;
 
@@ -39,7 +43,7 @@ public class SignInTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -63,9 +67,11 @@ public class SignInTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldSignInUsingDatabaseAuth(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldSignInUsingDatabaseAuth(string connectionString)
     {
         Jwt? jwt = null;
 
@@ -74,7 +80,7 @@ public class SignInTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -99,9 +105,11 @@ public class SignInTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldSignInUsingScopeAuth(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    public async Task ShouldSignInUsingScopeAuth(string connectionString)
     {
         Jwt? jwt = null;
 
@@ -110,7 +118,7 @@ public class SignInTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
