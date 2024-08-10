@@ -74,7 +74,7 @@ public class DeleteTests
 
         list.Should().NotBeNull().And.HaveCount(1);
 
-        var firstPost = list!.FirstOrDefault(p => p.Id!.Id == "first");
+        var firstPost = list!.FirstOrDefault(p => p.Id! == ("post", "first"));
 
         firstPost.Should().BeNull();
 
@@ -116,7 +116,7 @@ public class DeleteTests
 
         list.Should().NotBeNull().And.HaveCount(1);
 
-        var firstPost = list!.FirstOrDefault(p => p.Id!.Id == "first");
+        var firstPost = list!.FirstOrDefault(p => p.Id! == ("post", "first"));
 
         firstPost.Should().BeNull();
 
@@ -195,7 +195,7 @@ public class DeleteTests
 
         list.Should().NotBeNull().And.HaveCount(1);
 
-        var firstPost = list!.FirstOrDefault(p => p.Id!.Id == "first");
+        var firstPost = list!.FirstOrDefault(p => p.Id!.DeserializeId<string>() == "first");
 
         firstPost.Should().BeNull();
 

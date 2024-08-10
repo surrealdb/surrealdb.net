@@ -962,7 +962,7 @@ public class TypesTests
             customRecord.Should().NotBeNull();
             customRecord!.Value.Should().NotBeNull();
             customRecord!.Value!.Table.Should().Be("person");
-            customRecord!.Value!.Id.Should().Be("tobie");
+            customRecord!.Value!.DeserializeId<string>().Should().Be("tobie");
         }
     }
 }

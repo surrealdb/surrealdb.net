@@ -502,8 +502,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             throw new ArgumentException("Variable name is not valid.", nameof(key));
         }
 
-        bool shouldEscapeKey = RecordId.ShouldEscapeString(key);
-        string escapedKey = shouldEscapeKey ? RecordId.CreateEscaped(key) : key;
+        bool shouldEscapeKey = ShouldEscapeString(key);
+        string escapedKey = shouldEscapeKey ? CreateEscaped(key) : key;
 
         var dbResponse = await RawQuery(
                 $"RETURN ${escapedKey}",
@@ -515,6 +515,43 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         EnsuresFirstResultOk(dbResponse);
 
         _config.SetParam(key, value);
+
+        static bool ShouldEscapeString(string str)
+        {
+            if (long.TryParse(str, out _))
+            {
+                return true;
+            }
+
+            return !IsValidTextRecordId(str);
+        }
+
+        static bool IsValidTextRecordId(string str)
+        {
+            foreach (char c in str)
+            {
+                if (!(char.IsLetterOrDigit(c) || c == '_'))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        static string CreateEscaped(string part)
+        {
+            return string.Create(
+                part.Length + 2,
+                part,
+                (buffer, self) =>
+                {
+                    buffer.Write(RecordIdConstants.PREFIX);
+                    buffer.Write(part);
+                    buffer.Write(RecordIdConstants.SUFFIX);
+                }
+            );
+        }
     }
 
     public async Task SignIn(RootAuth rootAuth, CancellationToken cancellationToken)

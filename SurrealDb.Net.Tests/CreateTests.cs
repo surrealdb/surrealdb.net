@@ -118,7 +118,7 @@ public class CreateTests
 
             var post = new Post
             {
-                Id = new RecordId("post", "another"),
+                Id = new RecordIdOfString("post", "another"),
                 Title = "A new article",
                 Content = "This is a new article created using the .NET SDK"
             };
@@ -138,7 +138,7 @@ public class CreateTests
         result!.CreatedAt.Should().NotBeNull();
         result!.Status.Should().Be("DRAFT");
 
-        var anotherPost = list!.First(r => r.Id!.Id == "another");
+        var anotherPost = list!.First(p => p.Id! == ("post", "another"));
 
         anotherPost.Should().NotBeNull();
         anotherPost!.Title.Should().Be("A new article");
@@ -176,19 +176,19 @@ public class CreateTests
             {
                 new Post
                 {
-                    Id = new RecordId("post", "A"),
+                    Id = new RecordIdOfString("post", "A"),
                     Title = "An article",
                     Content = "This is a new article"
                 },
                 new Post
                 {
-                    Id = new RecordId("post", "B"),
+                    Id = new RecordIdOfString("post", "B"),
                     Title = "An article",
                     Content = "This is a new article"
                 },
                 new Post
                 {
-                    Id = new RecordId("post", "C"),
+                    Id = new RecordIdOfString("post", "C"),
                     Title = "An article",
                     Content = "This is a new article"
                 }

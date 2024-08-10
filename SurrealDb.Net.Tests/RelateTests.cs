@@ -48,8 +48,8 @@ public class RelateTests
         list.Should().NotBeNull().And.HaveCount(1);
 
         result.Should().NotBeNull();
-        result!.In.Should().Be(new RecordId("in", "one"));
-        result!.Out.Should().Be(new RecordId("out", "one"));
+        result!.In.Should().Be(new RecordIdOfString("in", "one"));
+        result!.Out.Should().Be(new RecordIdOfString("out", "one"));
     }
 
     [Theory]
@@ -95,8 +95,8 @@ public class RelateTests
         list.Should().NotBeNull().And.HaveCount(1);
 
         result.Should().NotBeNull();
-        result!.In.Should().Be(new RecordId("user", "one"));
-        result!.Out.Should().Be(new RecordId("post", "one"));
+        result!.In.Should().Be(new RecordIdOfString("user", "one"));
+        result!.Out.Should().Be(new RecordIdOfString("post", "one"));
         result!.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
         result!.NumberOfPages.Should().Be(14);
     }
@@ -147,11 +147,11 @@ public class RelateTests
         result!.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
         result!.NumberOfPages.Should().Be(14);
 
-        var relationInList = list!.First(r => r.Id!.Id == "one");
+        var relationInList = list!.First(r => r.Id!.DeserializeId<string>() == "one");
 
         relationInList.Should().NotBeNull();
-        relationInList!.In.Should().Be(new RecordId("user", "one"));
-        relationInList!.Out.Should().Be(new RecordId("post", "one"));
+        relationInList!.In.Should().Be(new RecordIdOfString("user", "one"));
+        relationInList!.Out.Should().Be(new RecordIdOfString("post", "one"));
         relationInList!.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
         relationInList!.NumberOfPages.Should().Be(14);
     }

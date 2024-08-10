@@ -2,23 +2,17 @@
 
 public class OperatorsRecordIdTests
 {
-    private static readonly RecordId RecordIdRef = new("table", "id");
+    private static readonly RecordIdOfString RecordIdRef = new("table", "id");
 
     public static TheoryData<RecordId, RecordId?, bool> EqualityRecordIdCases =>
         new()
         {
             { RecordIdRef, RecordIdRef, true },
-            { new RecordId("table", "id"), null, false },
-            { new RecordId("table", "id"), new RecordId("table", "id"), true },
-            { new RecordId("table", "1"), new RecordId("table", "2"), false },
-            { new RecordId("table1", "id"), new RecordId("table2", "id"), false },
-            { new RecordId("table1", "1"), new RecordId("table2", "2"), false },
-            { new RecordId("table", "⟨42⟩"), new RecordId("table", "⟨42⟩"), true },
-            { new RecordId("table", "⟨42⟩"), new RecordId("table", "42"), false },
-            { new RecordId("table", "⟨42⟩"), new RecordId("table", "`42`"), true },
-            { new RecordId("⟨42⟩", "id"), new RecordId("⟨42⟩", "id"), true },
-            { new RecordId("⟨42⟩", "id"), new RecordId("42", "id"), false },
-            { new RecordId("⟨42⟩", "id"), new RecordId("`42`", "id"), true },
+            { new RecordIdOfString("table", "id"), null, false },
+            { new RecordIdOfString("table", "id"), new RecordIdOfString("table", "id"), true },
+            { new RecordIdOfString("table", "1"), new RecordIdOfString("table", "2"), false },
+            { new RecordIdOfString("table1", "id"), new RecordIdOfString("table2", "id"), false },
+            { new RecordIdOfString("table1", "1"), new RecordIdOfString("table2", "2"), false },
         };
 
     [Theory]

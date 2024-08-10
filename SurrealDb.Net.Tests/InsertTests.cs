@@ -142,7 +142,7 @@ public class InsertTests
         post!.CreatedAt.Should().NotBeNull();
         post!.Status.Should().Be("DRAFT");
 
-        var anotherPost = list!.First(r => r.Id!.Id == "another");
+        var anotherPost = list!.First(r => r.Id!.DeserializeId<string>() == "another");
 
         anotherPost.Should().NotBeNull();
         anotherPost!.Title.Should().Be("A new article");

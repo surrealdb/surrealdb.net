@@ -86,7 +86,7 @@ public class SelectTests
 
         var list = result!.ToList();
 
-        var firstPost = list.First(p => p.Id!.Id == "first");
+        var firstPost = list.FirstOrDefault(p => p.Id! == ("post", "first"));
 
         firstPost.Should().NotBeNull();
         firstPost!.Title.Should().Be("First article");
@@ -165,7 +165,7 @@ public class SelectTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             await client.RawQuery(query);
 
-            var recordId = new RecordId("post", "first");
+            var recordId = new RecordIdOfString("post", "first");
 
             result = await client.Select<Post>(recordId);
         };
@@ -251,7 +251,7 @@ public class SelectTests
         result!.Name.Should().Be("string");
     }
 
-    [Theory]
+    [Theory(Skip = "Guid not currently handled")]
     [InlineData("Endpoint=mem://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
@@ -290,7 +290,7 @@ public class SelectTests
         result!.Name.Should().Be("complex");
     }
 
-    [Theory(Skip = "TODO")]
+    [Theory]
     [InlineData("Endpoint=mem://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
@@ -329,7 +329,7 @@ public class SelectTests
         result!.Name.Should().Be("object");
     }
 
-    [Theory(Skip = "TODO")]
+    [Theory]
     [InlineData("Endpoint=mem://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]

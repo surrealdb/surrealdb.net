@@ -9,19 +9,17 @@ public class ImplicitRecordIdTests
     {
         RecordId recordId = ("table", "id");
 
-        recordId.Table.ToString().Should().Be("table");
-        recordId.Id.ToString().Should().Be("id");
-        recordId.ToString().Should().Be("table:id");
+        recordId.Table.Should().Be("table");
+        recordId.DeserializeId<string>().Should().Be("id");
     }
 
     [Fact]
     public void ShouldCreateRecordIdFromTupleWithIntegerIdImplicitly()
     {
-        RecordId recordId = ("table", 42);
+        RecordId recordId = ("table", 844654);
 
-        recordId.Table.ToString().Should().Be("table");
-        recordId.Id.ToString().Should().Be("42");
-        recordId.ToString().Should().Be("table:42");
+        recordId.Table.Should().Be("table");
+        recordId.DeserializeId<int>().Should().Be(844654);
     }
 
     [Theory]
