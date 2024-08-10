@@ -752,14 +752,23 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         if (logIt)
         {
-            Log.Debug("Parameters: {parameters}", parameters);
-            Log.Debug("Query: {query}", query);
-            if (dbResponse.Result.HasValue)
-                Log.Debug("dbResponse: {dbResponse}", dbResponse.Result?.ToString() ?? "");
-        }
+            var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? [];
+            var ret = new SurrealDbResponse(list);
+            if (ret.HasErrors)
+            {
+                Log.Debug("Parameters: {parameters}", parameters);
+                Log.Debug("Query: {query}", query);
+                if (dbResponse.Result.HasValue)
+                    Log.Debug("dbResponse: {dbResponse}", dbResponse.Result?.ToString() ?? "");
+            }
 
-        var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? [];
-        return new SurrealDbResponse(list);
+            return ret;
+        }
+        else
+        {
+            var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? [];
+            return new SurrealDbResponse(list);
+        }
     }
 
     public async Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
