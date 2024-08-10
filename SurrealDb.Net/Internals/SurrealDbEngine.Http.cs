@@ -440,17 +440,20 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public async Task<SurrealDbResponse> Query(
         FormattableString query,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        bool logIt = false
     )
     {
         var (formattedQuery, parameters) = query.ExtractRawQueryParams();
-        return await RawQuery(formattedQuery, parameters, cancellationToken).ConfigureAwait(false);
+        return await RawQuery(formattedQuery, parameters, cancellationToken, logIt)
+            .ConfigureAwait(false);
     }
 
     public async Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        bool logIt = false
     )
     {
         var allParameters = new Dictionary<string, object?>(

@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Dahomey.Cbor;
 using Semver;
+using Serilog;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Extensions;
 using SurrealDb.Net.Internals.Auth;
@@ -725,17 +726,20 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task<SurrealDbResponse> Query(
         FormattableString query,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        bool logIt = false
     )
     {
         var (formattedQuery, parameters) = query.ExtractRawQueryParams();
-        return await RawQuery(formattedQuery, parameters, cancellationToken).ConfigureAwait(false);
+        return await RawQuery(formattedQuery, parameters, cancellationToken, logIt)
+            .ConfigureAwait(false);
     }
 
     public async Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        bool logIt = false
     )
     {
         var dbResponse = await SendRequestAsync(
@@ -745,6 +749,14 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
+
+        if (logIt)
+        {
+            Log.Debug("Parameters: {parameters}", parameters);
+            Log.Debug("Query: {query}", query);
+            if (dbResponse.Result.HasValue)
+                Log.Debug("dbResponse: {dbResponse}", dbResponse.Result?.ToString() ?? "");
+        }
 
         var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? [];
         return new SurrealDbResponse(list);

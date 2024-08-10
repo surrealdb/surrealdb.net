@@ -87,11 +87,16 @@ public interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     )
         where T : class;
-    Task<SurrealDbResponse> Query(FormattableString query, CancellationToken cancellationToken);
+    Task<SurrealDbResponse> Query(
+        FormattableString query,
+        CancellationToken cancellationToken,
+        bool logIt
+    );
     Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        bool logIt
     );
     Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
         string table,
