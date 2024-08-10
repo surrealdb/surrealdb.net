@@ -17,6 +17,10 @@ internal class PrimitiveConverterProvider : CborConverterProviderBase
         {
             return new DateTimeConverter();
         }
+        if (type == typeof(DateTimeOffset))
+        {
+            return new DateTimeOffsetConverter();
+        }
         if (type == typeof(TimeSpan))
         {
             return new TimeSpanConverter();
