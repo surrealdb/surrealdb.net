@@ -15,4 +15,5 @@ internal static class CborTagConstants
     public const ulong TAG_GEOMETRY_MULTILINE = 92;
     public const ulong TAG_GEOMETRY_MULTIPOLYGON = 93;
     public const ulong TAG_GEOMETRY_COLLECTION = 94;
+    public const ulong TAG_CUSTOM_DATETIMEOFFSET = 95;
 }

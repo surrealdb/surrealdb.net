@@ -67,11 +67,16 @@ internal interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     )
         where T : class;
-    Task<SurrealDbResponse> Query(FormattableString query, CancellationToken cancellationToken);
+    Task<SurrealDbResponse> Query(
+        FormattableString query,
+        CancellationToken cancellationToken,
+        bool logIt
+    );
     Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        bool logIt
     );
     Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken);
     Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken);

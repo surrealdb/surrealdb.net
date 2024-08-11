@@ -17,6 +17,13 @@ internal static partial class DateTimeParser
             .UnixEpoch.AddSeconds(seconds)
             .AddTicks((long)Math.Round((double)nanos / TimeConstants.NanosecondsPerTick));
     }
+
+    public static DateTimeOffset ConvertOffset(long seconds, int nanos)
+    {
+        return DateTimeOffset
+            .UnixEpoch.AddSeconds(seconds)
+            .AddTicks((long)Math.Round((double)nanos / TimeConstants.NanosecondsPerTick));
+    }
 }
 
 #if NET5_0_OR_GREATER

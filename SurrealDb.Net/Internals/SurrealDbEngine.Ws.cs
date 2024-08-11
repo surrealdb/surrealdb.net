@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using Dahomey.Cbor;
 using Microsoft.IO;
 using Semver;
+using Serilog;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Extensions;
 using SurrealDb.Net.Internals.Auth;
@@ -642,17 +643,20 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task<SurrealDbResponse> Query(
         FormattableString query,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        bool logIt = false
     )
     {
         var (formattedQuery, parameters) = query.ExtractRawQueryParams();
-        return await RawQuery(formattedQuery, parameters, cancellationToken).ConfigureAwait(false);
+        return await RawQuery(formattedQuery, parameters, cancellationToken, logIt)
+            .ConfigureAwait(false);
     }
 
     public async Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        bool logIt = false
     )
     {
         var dbResponse = await SendRequestAsync(
@@ -663,8 +667,25 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
 
-        var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? [];
-        return new SurrealDbResponse(list);
+        if (logIt)
+        {
+            var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? [];
+            var ret = new SurrealDbResponse(list);
+            if (ret.HasErrors)
+            {
+                Log.Debug("Parameters: {parameters}", parameters);
+                Log.Debug("Query: {query}", query);
+                if (dbResponse.Result.HasValue)
+                    Log.Debug("dbResponse: {dbResponse}", dbResponse.Result?.ToString() ?? "");
+            }
+
+            return ret;
+        }
+        else
+        {
+            var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? [];
+            return new SurrealDbResponse(list);
+        }
     }
 
     public async Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken)

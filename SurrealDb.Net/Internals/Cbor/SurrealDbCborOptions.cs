@@ -90,6 +90,7 @@ internal static class SurrealDbCborOptions
         if (configureCborOptions is not null)
         {
             var cborOptions = CreateCborSerializerOptions(jsonNamingPolicy);
+            cborOptions.EnumFormat = ValueFormat.WriteToString;
             configureCborOptions(cborOptions);
 
             return cborOptions;

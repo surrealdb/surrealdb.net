@@ -3,6 +3,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using Serilog.Events;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Models;
@@ -109,6 +111,11 @@ public class SurrealDbClient : ISurrealDbClient
         NamingPolicy = parameters.NamingPolicy;
 
         var protocol = Uri.Scheme;
+
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Debug) // restricted... is Optional
+            .CreateLogger();
 
         _engine = protocol switch
         {
@@ -308,22 +315,25 @@ public class SurrealDbClient : ISurrealDbClient
 
     public Task<SurrealDbResponse> Query(
         FormattableString query,
-        CancellationToken cancellationToken = default
+        CancellationToken cancellationToken = default,
+        bool logIt = false
     )
     {
-        return _engine.Query(query, cancellationToken);
+        return _engine.Query(query, cancellationToken, logIt);
     }
 
     public Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?>? parameters = null,
-        CancellationToken cancellationToken = default
+        CancellationToken cancellationToken = default,
+        bool logIt = false
     )
     {
         return _engine.RawQuery(
             query,
             parameters ?? ImmutableDictionary<string, object?>.Empty,
-            cancellationToken
+            cancellationToken,
+            logIt
         );
     }
 
