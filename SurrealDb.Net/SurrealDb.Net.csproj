@@ -65,7 +65,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Dahomey.Cbor\src\Dahomey.Cbor\Dahomey.Cbor.csproj" />
+    <ProjectReference Condition="'$(ContinuousIntegrationBuild)' == ''" Include="..\..\Dahomey.Cbor\src\Dahomey.Cbor\Dahomey.Cbor.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Condition="'$(ContinuousIntegrationBuild)' != ''" Include="Dahomey.Cbor" Version="*" />
   </ItemGroup>
   
 </Project>
