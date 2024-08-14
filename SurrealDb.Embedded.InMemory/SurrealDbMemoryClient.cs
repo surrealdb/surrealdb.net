@@ -90,6 +90,16 @@ public class SurrealDbMemoryClient : ISurrealDbClient
         return _engine.Create(table, data, cancellationToken);
     }
 
+    public Task<TOutput> Create<TData, TOutput>(
+        StringRecordId recordId,
+        TData? data = default,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : Record
+    {
+        return _engine.Create<TData, TOutput>(recordId, data, cancellationToken);
+    }
+
     public Task Delete(string table, CancellationToken cancellationToken = default)
     {
         return _engine.Delete(table, cancellationToken);
@@ -98,6 +108,11 @@ public class SurrealDbMemoryClient : ISurrealDbClient
     public Task<bool> Delete(Thing thing, CancellationToken cancellationToken = default)
     {
         return _engine.Delete(thing, cancellationToken);
+    }
+
+    public Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken = default)
+    {
+        return _engine.Delete(recordId, cancellationToken);
     }
 
     public void Dispose()
@@ -182,6 +197,15 @@ public class SurrealDbMemoryClient : ISurrealDbClient
         return _engine.Merge<T>(thing, data, cancellationToken);
     }
 
+    public Task<T> Merge<T>(
+        StringRecordId recordId,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.Merge<T>(recordId, data, cancellationToken);
+    }
+
     public Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
         string table,
         TMerge data,
@@ -209,6 +233,16 @@ public class SurrealDbMemoryClient : ISurrealDbClient
         where T : class
     {
         return _engine.Patch(thing, patches, cancellationToken);
+    }
+
+    public Task<T> Patch<T>(
+        StringRecordId recordId,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken = default
+    )
+        where T : class
+    {
+        return _engine.Patch(recordId, patches, cancellationToken);
     }
 
     public Task<IEnumerable<T>> PatchAll<T>(
@@ -378,6 +412,14 @@ public class SurrealDbMemoryClient : ISurrealDbClient
         return _engine.Select<T?>(thing, cancellationToken);
     }
 
+    public Task<T?> Select<T>(
+        StringRecordId recordId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.Select<T?>(recordId, cancellationToken);
+    }
+
     public Task Set(string key, object value, CancellationToken cancellationToken = default)
     {
         return _engine.Set(key, value, cancellationToken);
@@ -429,6 +471,16 @@ public class SurrealDbMemoryClient : ISurrealDbClient
         where T : Record
     {
         return _engine.Upsert(data, cancellationToken);
+    }
+
+    public Task<TOutput> Upsert<TData, TOutput>(
+        StringRecordId recordId,
+        TData data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : Record
+    {
+        return _engine.Upsert<TData, TOutput>(recordId, data, cancellationToken);
     }
 
     public Task Use(string ns, string db, CancellationToken cancellationToken = default)
