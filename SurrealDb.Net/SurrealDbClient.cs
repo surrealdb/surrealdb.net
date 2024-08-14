@@ -347,6 +347,129 @@ public class SurrealDbClient : ISurrealDbClient
         );
     }
 
+    public async Task<TOutput> Relate<TOutput>(
+        string table,
+        Thing @in,
+        Thing @out,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        var outputs = await _engine
+            .Relate<TOutput, object>(table, new[] { @in }, new[] { @out }, null, cancellationToken)
+            .ConfigureAwait(false);
+
+        return outputs.Single();
+    }
+
+    public async Task<TOutput> Relate<TOutput, TData>(
+        string table,
+        Thing @in,
+        Thing @out,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        var outputs = await _engine
+            .Relate<TOutput, TData>(table, new[] { @in }, new[] { @out }, data, cancellationToken)
+            .ConfigureAwait(false);
+
+        return outputs.Single();
+    }
+
+    public Task<IEnumerable<TOutput>> Relate<TOutput>(
+        string table,
+        IEnumerable<Thing> ins,
+        Thing @out,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, object>(table, ins, new[] { @out }, null, cancellationToken);
+    }
+
+    public Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
+        string table,
+        IEnumerable<Thing> ins,
+        Thing @out,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, TData>(table, ins, new[] { @out }, data, cancellationToken);
+    }
+
+    public Task<IEnumerable<TOutput>> Relate<TOutput>(
+        string table,
+        Thing @in,
+        IEnumerable<Thing> outs,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, object>(table, new[] { @in }, outs, null, cancellationToken);
+    }
+
+    public Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
+        string table,
+        Thing @in,
+        IEnumerable<Thing> outs,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, TData>(table, new[] { @in }, outs, data, cancellationToken);
+    }
+
+    public Task<IEnumerable<TOutput>> Relate<TOutput>(
+        string table,
+        IEnumerable<Thing> ins,
+        IEnumerable<Thing> outs,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, object>(table, ins, outs, null, cancellationToken);
+    }
+
+    public Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
+        string table,
+        IEnumerable<Thing> ins,
+        IEnumerable<Thing> outs,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, TData>(table, ins, outs, data, cancellationToken);
+    }
+
+    public Task<TOutput> Relate<TOutput>(
+        Thing thing,
+        Thing @in,
+        Thing @out,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, object>(thing, @in, @out, null, cancellationToken);
+    }
+
+    public Task<TOutput> Relate<TOutput, TData>(
+        Thing thing,
+        Thing @in,
+        Thing @out,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, TData>(thing, @in, @out, data, cancellationToken);
+    }
+
     public Task<IEnumerable<T>> Select<T>(
         string table,
         CancellationToken cancellationToken = default
