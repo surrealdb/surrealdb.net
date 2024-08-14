@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Reactive;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Dahomey.Cbor;
 using SurrealDb.Net.Exceptions;
@@ -158,6 +159,17 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         return list.First();
     }
 
+    public async Task<TOutput> Create<TData, TOutput>(
+        StringRecordId recordId,
+        TData? data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record
+    {
+        return await SendRequestAsync<TOutput>(Method.Create, [recordId, data], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public async Task Delete(string table, CancellationToken cancellationToken)
     {
         await SendRequestAsync<Unit>(Method.Delete, [table], cancellationToken)
@@ -167,6 +179,13 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     public async Task<bool> Delete(Thing thing, CancellationToken cancellationToken)
     {
         var result = await SendRequestAsync<object?>(Method.Delete, [thing], cancellationToken)
+            .ConfigureAwait(false);
+        return result is not null;
+    }
+
+    public async Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken)
+    {
+        var result = await SendRequestAsync<object?>(Method.Delete, [recordId], cancellationToken)
             .ConfigureAwait(false);
         return result is not null;
     }
@@ -263,6 +282,16 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             .ConfigureAwait(false);
     }
 
+    public async Task<T> Merge<T>(
+        StringRecordId recordId,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken
+    )
+    {
+        return await SendRequestAsync<T>(Method.Merge, [recordId, data], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public async Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
         string table,
         TMerge data,
@@ -300,6 +329,17 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         where T : class
     {
         return await SendRequestAsync<T>(Method.Patch, [thing, patches], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<T> Patch<T>(
+        StringRecordId recordId,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        return await SendRequestAsync<T>(Method.Patch, [recordId, patches], cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -388,6 +428,12 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             .ConfigureAwait(false);
     }
 
+    public async Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken)
+    {
+        return await SendRequestAsync<T?>(Method.Select, [recordId], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public async Task Set(string key, object value, CancellationToken cancellationToken)
     {
         if (key is null)
@@ -471,6 +517,17 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             throw new SurrealDbException("Cannot create a record without an Id");
 
         return await SendRequestAsync<T>(Method.Update, [data.Id, data], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<TOutput> Upsert<TData, TOutput>(
+        StringRecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record
+    {
+        return await SendRequestAsync<TOutput>(Method.Update, [recordId, data], cancellationToken)
             .ConfigureAwait(false);
     }
 

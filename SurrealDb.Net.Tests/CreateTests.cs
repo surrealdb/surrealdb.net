@@ -212,4 +212,60 @@ public class CreateTests
 
         list.Should().NotBeNull().And.HaveCount(5);
     }
+
+    [Theory]
+    [InlineData("Endpoint=mem://")]
+    [InlineData(
+        "Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON",
+        Skip = "To be removed"
+    )]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData(
+        "Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON",
+        Skip = "To be removed"
+    )]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    public async Task ShouldCreatePostUsingStringRecordId(string connectionString)
+    {
+        IEnumerable<Post>? list = null;
+        Post? result = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            string filePath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "Schemas/post.surql"
+            );
+            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+            string query = fileContent;
+
+            using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+            await client.RawQuery(query);
+
+            var post = new Post
+            {
+                Title = "A new article",
+                Content = "This is a new article created using the .NET SDK"
+            };
+
+            result = await client.Create<Post, Post>(new StringRecordId("post:new"), post, default);
+
+            list = await client.Select<Post>("post");
+        };
+
+        await func.Should().NotThrowAsync();
+
+        list.Should().NotBeNull().And.HaveCount(3);
+
+        result.Should().NotBeNull();
+        result!.Title.Should().Be("A new article");
+        result!.Content.Should().Be("This is a new article created using the .NET SDK");
+        result!.CreatedAt.Should().NotBeNull();
+        result!.Status.Should().Be("DRAFT");
+    }
 }

@@ -381,4 +381,48 @@ public class SelectTests
         result.Should().NotBeNull();
         result!.Name.Should().Be("array");
     }
+
+    [Theory]
+    [InlineData("Endpoint=mem://")]
+    [InlineData(
+        "Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON",
+        Skip = "To be removed"
+    )]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData(
+        "Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON",
+        Skip = "To be removed"
+    )]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    public async Task ShouldSelectSingleFromStringRecordIdType(string connectionString)
+    {
+        RecordIdRecord? result = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            string filePath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "Schemas/thing.surql"
+            );
+            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+            string query = fileContent;
+
+            using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+            await client.RawQuery(query);
+
+            var recordId = new StringRecordId("thing:surrealdb");
+
+            result = await client.Select<RecordIdRecord>(recordId);
+        };
+
+        await func.Should().NotThrowAsync();
+
+        result.Should().NotBeNull();
+        result!.Name.Should().Be("string");
+    }
 }

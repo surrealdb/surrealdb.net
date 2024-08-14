@@ -365,6 +365,25 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<T>().First();
     }
 
+    public async Task<TOutput> Create<TData, TOutput>(
+        StringRecordId recordId,
+        TData? data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record
+    {
+        if (!_useCbor)
+        {
+            throw new NotImplementedException(
+                $"Creating by {nameof(StringRecordId)} is only available via CBOR serialization."
+            );
+        }
+
+        var dbResponse = await SendRequestAsync("create", [recordId, data], true, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<TOutput>()!;
+    }
+
     public async Task Delete(string table, CancellationToken cancellationToken)
     {
         await SendRequestAsync("delete", [table], true, cancellationToken).ConfigureAwait(false);
@@ -375,6 +394,27 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         object?[] @params = _useCbor ? [thing] : [thing.ToString()];
 
         var dbResponse = await SendRequestAsync("delete", @params, true, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (dbResponse.Result.HasValue)
+        {
+            var valueKind = dbResponse.Result.Value.ValueKind;
+            return valueKind != JsonValueKind.Null && valueKind != JsonValueKind.Undefined;
+        }
+
+        return !dbResponse.ExpectNone() && !dbResponse.ExpectEmptyArray();
+    }
+
+    public async Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken)
+    {
+        if (!_useCbor)
+        {
+            throw new NotImplementedException(
+                $"Deleting by {nameof(StringRecordId)} is only available via CBOR serialization."
+            );
+        }
+
+        var dbResponse = await SendRequestAsync("delete", [recordId], true, cancellationToken)
             .ConfigureAwait(false);
 
         if (dbResponse.Result.HasValue)
@@ -592,6 +632,24 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.GetValue<T>()!;
     }
 
+    public async Task<T> Merge<T>(
+        StringRecordId recordId,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken
+    )
+    {
+        if (!_useCbor)
+        {
+            throw new NotImplementedException(
+                $"Merging by {nameof(StringRecordId)} is only available via CBOR serialization."
+            );
+        }
+
+        var dbResponse = await SendRequestAsync("merge", [recordId, data], true, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<T>()!;
+    }
+
     public async Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
         string table,
         TMerge data,
@@ -625,6 +683,30 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         object?[] @params = _useCbor ? [thing, patches] : [thing.ToWsString(), patches];
 
         var dbResponse = await SendRequestAsync("patch", @params, true, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<T>()!;
+    }
+
+    public async Task<T> Patch<T>(
+        StringRecordId recordId,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        if (!_useCbor)
+        {
+            throw new NotImplementedException(
+                $"Patching by {nameof(StringRecordId)} is only available via CBOR serialization."
+            );
+        }
+
+        var dbResponse = await SendRequestAsync(
+                "patch",
+                [recordId, patches],
+                true,
+                cancellationToken
+            )
             .ConfigureAwait(false);
         return dbResponse.GetValue<T>()!;
     }
@@ -720,6 +802,20 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         object?[] @params = _useCbor ? [thing] : [thing.ToWsString()];
 
         var dbResponse = await SendRequestAsync("select", @params, true, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<T?>();
+    }
+
+    public async Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken)
+    {
+        if (!_useCbor)
+        {
+            throw new NotImplementedException(
+                $"Selecting by {nameof(StringRecordId)} is only available via CBOR serialization."
+            );
+        }
+
+        var dbResponse = await SendRequestAsync("select", [recordId], true, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<T?>();
     }
@@ -837,6 +933,25 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         var dbResponse = await SendRequestAsync("update", @params, true, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<T>()!;
+    }
+
+    public async Task<TOutput> Upsert<TData, TOutput>(
+        StringRecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record
+    {
+        if (!_useCbor)
+        {
+            throw new NotImplementedException(
+                $"Upserting by {nameof(StringRecordId)} is only available via CBOR serialization."
+            );
+        }
+
+        var dbResponse = await SendRequestAsync("update", [recordId, data], true, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<TOutput>()!;
     }
 
     public async Task Use(string ns, string db, CancellationToken cancellationToken)
