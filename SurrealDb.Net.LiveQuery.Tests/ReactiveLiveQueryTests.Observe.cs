@@ -42,6 +42,8 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
 
             using var _ = coldObservable.SubscribeOn(testScheduler).Subscribe(allResults.Add);
 
+            await Task.Yield();
+
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
                 .Take(1)
@@ -128,6 +130,8 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                         e.Should().BeNull();
                     }
                 );
+
+            await Task.Yield();
 
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
@@ -218,6 +222,8 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                         e.Should().BeNull();
                     }
                 );
+
+            await Task.Yield();
 
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
