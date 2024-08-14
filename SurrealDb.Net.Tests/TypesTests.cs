@@ -7,8 +7,9 @@ namespace SurrealDb.Net.Tests;
 public class TypesTests
 {
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportString(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -23,7 +24,6 @@ public class TypesTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -98,8 +98,9 @@ public class TypesTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportLong(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -114,7 +115,6 @@ public class TypesTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -157,8 +157,9 @@ public class TypesTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShoulSupportDecimal(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -173,7 +174,6 @@ public class TypesTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -256,8 +256,9 @@ public class TypesTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportFloat(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -272,7 +273,6 @@ public class TypesTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -355,8 +355,9 @@ public class TypesTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportDouble(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -371,7 +372,6 @@ public class TypesTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -454,8 +454,9 @@ public class TypesTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportDuration(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -470,7 +471,6 @@ public class TypesTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -611,8 +611,9 @@ public class TypesTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportTimeSpan(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -627,7 +628,6 @@ public class TypesTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -758,8 +758,9 @@ public class TypesTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportDateTime(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -774,7 +775,6 @@ public class TypesTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -894,8 +894,9 @@ public class TypesTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportVector2(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -910,7 +911,6 @@ public class TypesTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -939,15 +939,15 @@ public class TypesTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportThing(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.Create(
