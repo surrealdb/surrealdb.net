@@ -71,6 +71,7 @@ namespace SurrealDb.Embedded.InMemory.Internals
         Set = 3,
         Unset = 4,
         Select = 5,
+        Insert = 6,
         Create = 7,
         Update = 8,
         Merge = 9,

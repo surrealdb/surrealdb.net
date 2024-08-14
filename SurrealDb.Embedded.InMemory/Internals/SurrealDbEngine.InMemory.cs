@@ -214,6 +214,17 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
 
+    public async Task<IEnumerable<T>> Insert<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken
+    )
+        where T : Record
+    {
+        return await SendRequestAsync<List<T>>(Method.Insert, [table, data], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public Task Invalidate(CancellationToken cancellationToken)
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
