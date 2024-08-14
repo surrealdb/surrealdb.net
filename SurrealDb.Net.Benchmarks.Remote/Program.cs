@@ -8,6 +8,7 @@ using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
 using SurrealDb.Net.Benchmarks.Constants;
 using SurrealDb.Net.Benchmarks.Helpers;
+using SurrealDb.Net.Benchmarks.Models;
 
 var config = DefaultConfig
     .Instance.AddJob(Job.Default.WithRuntime(CoreRuntime.Core80))

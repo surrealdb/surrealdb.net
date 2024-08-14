@@ -33,9 +33,9 @@
 	<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
 	  <_Parameter1>SurrealDb.Net.Benchmarks</_Parameter1>
 	</AssemblyAttribute>
-	<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-	  <_Parameter1>SurrealDb.Reactive</_Parameter1>
-	</AssemblyAttribute>
+  <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+    <_Parameter1>SurrealDb.Net.Benchmarks.Remote</_Parameter1>
+  </AssemblyAttribute>
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">

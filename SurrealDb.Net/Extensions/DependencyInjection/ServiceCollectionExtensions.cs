@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Dahomey.Cbor;
 using SurrealDb.Net;
 using SurrealDb.Net.Internals.Helpers;
+using SurrealDb.Net.Internals.Models;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -33,7 +34,7 @@ public static class ServiceCollectionExtensions
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
-    public static IServiceCollection AddSurreal(
+    public static SurrealDbBuilder AddSurreal(
         this IServiceCollection services,
         string connectionString,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
@@ -75,7 +76,7 @@ public static class ServiceCollectionExtensions
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
-    public static IServiceCollection AddSurreal<T>(
+    public static SurrealDbBuilder AddSurreal<T>(
         this IServiceCollection services,
         string connectionString,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
@@ -111,7 +112,7 @@ public static class ServiceCollectionExtensions
     /// <returns>Service collection</returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
-    public static IServiceCollection AddSurreal(
+    public static SurrealDbBuilder AddSurreal(
         this IServiceCollection services,
         Action<SurrealDbOptionsBuilder> configureOptions,
         ServiceLifetime lifetime = ServiceLifetime.Singleton
@@ -141,7 +142,7 @@ public static class ServiceCollectionExtensions
     /// <returns>Service collection</returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
-    public static IServiceCollection AddSurreal(
+    public static SurrealDbBuilder AddSurreal(
         this IServiceCollection services,
         SurrealDbOptions configuration,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
@@ -182,7 +183,7 @@ public static class ServiceCollectionExtensions
     /// <returns>Service collection</returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
-    public static IServiceCollection AddSurreal<T>(
+    public static SurrealDbBuilder AddSurreal<T>(
         this IServiceCollection services,
         SurrealDbOptions configuration,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
@@ -238,7 +239,7 @@ public static class ServiceCollectionExtensions
             );
         }
 
-        return services;
+        return new SurrealDbBuilder(services);
     }
 
     private static void RegisterHttpClient(IServiceCollection services, string endpoint)
@@ -265,6 +266,8 @@ public static class ServiceCollectionExtensions
         Action<CborOptions>? configureCborOptions = null
     )
     {
+        var parameters = new SurrealDbClientParams(configuration);
+
         switch (lifetime)
         {
             case ServiceLifetime.Singleton:
@@ -273,7 +276,8 @@ public static class ServiceCollectionExtensions
                     serviceProvider =>
                     {
                         return new SurrealDbClient(
-                            configuration,
+                            parameters,
+                            serviceProvider,
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
                             configureJsonSerializerOptions,
                             prependJsonSerializerContexts,
@@ -289,7 +293,8 @@ public static class ServiceCollectionExtensions
                     serviceProvider =>
                     {
                         return new SurrealDbClient(
-                            configuration,
+                            parameters,
+                            serviceProvider,
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
                             configureJsonSerializerOptions,
                             prependJsonSerializerContexts,
@@ -305,7 +310,8 @@ public static class ServiceCollectionExtensions
                     serviceProvider =>
                     {
                         return new SurrealDbClient(
-                            configuration,
+                            parameters,
+                            serviceProvider,
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
                             configureJsonSerializerOptions,
                             prependJsonSerializerContexts,

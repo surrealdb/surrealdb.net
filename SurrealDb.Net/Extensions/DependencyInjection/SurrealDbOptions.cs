@@ -51,6 +51,12 @@ public class SurrealDbOptions
     /// </summary>
     public string? Serialization { get; internal set; }
 
+    /// <summary>
+    /// Indicates if the options are made to use a SurrealDB instance in embedded mode.
+    /// Supported embedded modes are <c>mem://</c>.
+    /// </summary>
+    public bool IsEmbedded => Endpoint!.StartsWith("mem://");
+
     public static SurrealDbOptionsBuilder Create()
     {
         return new SurrealDbOptionsBuilder();

@@ -5,7 +5,6 @@ using System.Reactive.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Dahomey.Cbor;
-using Microsoft.IO;
 using Semver;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Extensions;
@@ -17,6 +16,7 @@ using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Json;
 using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Internals.Models.LiveQuery;
+using SurrealDb.Net.Internals.Stream;
 using SurrealDb.Net.Internals.Ws;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
@@ -56,7 +56,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         string,
         SurrealWsTaskCompletionSource
     > _responseTasks = new();
-    private static readonly RecyclableMemoryStreamManager _memoryStreamManager = new();
 
     private readonly bool _useCbor;
     private readonly string _id;
@@ -163,7 +162,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                             {
                                 using var stream = message.Stream is not null
                                     ? message.Stream
-                                    : _memoryStreamManager.GetStream(message.Binary!);
+                                    : MemoryStreamProvider.MemoryStreamManager.GetStream(
+                                        message.Binary!
+                                    );
 
                                 if (_useCbor)
                                 {
@@ -435,7 +436,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                 && _responseTasks.TryRemove(key, out var responseTaskCompletionSource)
             )
             {
-                responseTaskCompletionSource.SetCanceled();
+                responseTaskCompletionSource.TrySetCanceled();
             }
         }
 
@@ -807,7 +808,10 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         var dbResponse = await SendRequestAsync("version", null, false, cancellationToken)
             .ConfigureAwait(false);
-        return dbResponse.GetValue<string>()!;
+        string version = dbResponse.GetValue<string>()!;
+
+        const string VERSION_PREFIX = "surrealdb-";
+        return version.Replace(VERSION_PREFIX, string.Empty);
     }
 
     private CurrentJsonSerializerOptionsForAot? _currentJsonSerializerOptionsForAot;
@@ -909,7 +913,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             Parameters = shouldSendParamsInRequest ? parameters : null,
         };
 
-        await using var stream = _memoryStreamManager.GetStream();
+        await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
         bool isMessageSent;
 
         if (_useCbor)

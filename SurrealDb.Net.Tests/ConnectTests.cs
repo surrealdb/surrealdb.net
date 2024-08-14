@@ -17,10 +17,11 @@ public class SessionInfo
 public class ConnectTests
 {
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldConnect(string connectionString)
     {
         Func<Task> func = async () =>

@@ -54,14 +54,17 @@ public class NoneRecord : Record<None> { }
 public class ParserTests
 {
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldParseThing(string connectionString)
     {
         var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
-        bool useCbor = options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR;
+        bool useCbor =
+            options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR
+            || options.IsEmbedded;
 
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -75,7 +78,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -172,10 +174,11 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldParseString(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -190,7 +193,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -238,10 +240,11 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldParseLong(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -256,7 +259,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -289,14 +291,17 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldParseDecimal(string connectionString)
     {
         var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
-        bool useCbor = options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR;
+        bool useCbor =
+            options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR
+            || options.IsEmbedded;
 
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -310,7 +315,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -365,10 +369,11 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldParseFloat(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -383,7 +388,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -436,10 +440,11 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldParseDouble(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -454,7 +459,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -507,10 +511,11 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldParseDuration(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -525,7 +530,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -618,10 +622,11 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldParseDurationAsTimeSpan(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -636,7 +641,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -717,9 +721,10 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
+    [InlineData("Endpoint=mem://", Skip = "Not supported")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
     [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR", Skip = "Not supported")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR", Skip = "Not supported")]
     public async Task ShouldParseDurationAsString(string connectionString)
     {
@@ -735,7 +740,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -816,10 +820,11 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldParseTimeOnly(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -834,7 +839,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -915,10 +919,11 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldParseDateAsDateTime(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -933,7 +938,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -997,10 +1001,11 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldParseDateOnly(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -1015,7 +1020,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -1066,14 +1070,17 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldParseVector2(string connectionString)
     {
         var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
-        bool useCbor = options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR;
+        bool useCbor =
+            options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR
+            || options.IsEmbedded;
 
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -1087,7 +1094,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -1135,14 +1141,17 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldParseVector3(string connectionString)
     {
         var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
-        bool useCbor = options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR;
+        bool useCbor =
+            options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR
+            || options.IsEmbedded;
 
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -1156,7 +1165,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
@@ -1215,14 +1223,17 @@ public class ParserTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;Serialization=CBOR")]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
     public async Task ShouldParseVector4(string connectionString)
     {
         var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
-        bool useCbor = options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR;
+        bool useCbor =
+            options.Serialization?.ToLowerInvariant() == SerializationConstants.CBOR
+            || options.IsEmbedded;
 
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
@@ -1236,7 +1247,6 @@ public class ParserTests
         string query = fileContent;
 
         using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.RawQuery(query);
