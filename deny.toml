@@ -66,6 +66,10 @@ ignore = [
 	# of "jsonwebtoken", is replaced by the upstream version which no
 	# longer uses the affected "rsa" crate.
 	"RUSTSEC-2023-0071",
+	# TODO(Odonno)
+	# Will be resolved when migrating to SurrealDB v2.0.0.
+	# By updating "object_store" crate version
+	"RUSTSEC-2024-0358",
 ]
 
 # --------------------------------------------------
