@@ -45,6 +45,18 @@ public class SurrealDbOptions
     /// </summary>
     public string? NamingPolicy { get; internal set; }
 
+    /// <summary>
+    /// Default serialization method to use when new <see cref="ISurrealDbClient"/> is generated.
+    /// Either JSON or CBOR. Defaults to JSON.
+    /// </summary>
+    public string? Serialization { get; internal set; }
+
+    /// <summary>
+    /// Indicates if the options are made to use a SurrealDB instance in embedded mode.
+    /// Supported embedded modes are <c>mem://</c>.
+    /// </summary>
+    public bool IsEmbedded => Endpoint!.StartsWith("mem://");
+
     public static SurrealDbOptionsBuilder Create()
     {
         return new SurrealDbOptionsBuilder();

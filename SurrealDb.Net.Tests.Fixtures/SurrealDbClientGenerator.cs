@@ -27,28 +27,28 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 
     private ServiceProvider? _serviceProvider;
     private DatabaseInfo? _databaseInfo;
+    private SurrealDbOptions? _options;
 
     public SurrealDbClient Create(
-        string endpoint,
+        string connectionString,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
         Func<JsonSerializerContext[]>? funcJsonSerializerContexts = null
     )
     {
-        var services = new ServiceCollection();
-
-        var options = SurrealDbOptions
+        _options = SurrealDbOptions
             .Create()
-            .WithEndpoint(endpoint)
+            .FromConnectionString(connectionString)
             .WithNamingPolicy("SnakeCase")
             .Build();
 
-        services.AddSurreal(
-            options,
-            configureJsonSerializerOptions: configureJsonSerializerOptions,
-            appendJsonSerializerContexts: funcJsonSerializerContexts
-        );
-
-        _serviceProvider = services.BuildServiceProvider(validateScopes: true);
+        _serviceProvider = new ServiceCollection()
+            .AddSurreal(
+                _options,
+                configureJsonSerializerOptions: configureJsonSerializerOptions,
+                appendJsonSerializerContexts: funcJsonSerializerContexts
+            )
+            .AddInMemoryProvider()
+            .And.BuildServiceProvider(validateScopes: true);
 
         return _serviceProvider.GetRequiredService<SurrealDbClient>();
     }
@@ -66,9 +66,9 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if (_databaseInfo is not null)
+        if (_options is not null && !_options.IsEmbedded && _databaseInfo is not null)
         {
-            using var client = new SurrealDbClient("http://127.0.0.1:8000/rpc", "SnakeCase");
+            using var client = new SurrealDbClient("ws://127.0.0.1:8000/rpc", "SnakeCase");
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(_databaseInfo.Namespace, _databaseInfo.Database);
 

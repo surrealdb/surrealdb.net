@@ -5,10 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Bogus" Version="34.0.2" />
+    <PackageReference Include="Bogus" Version="35.5.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SurrealDb.Embedded.InMemory\SurrealDb.Embedded.InMemory.csproj" />
     <ProjectReference Include="..\SurrealDb.Net\SurrealDb.Net.csproj" />
   </ItemGroup>
 

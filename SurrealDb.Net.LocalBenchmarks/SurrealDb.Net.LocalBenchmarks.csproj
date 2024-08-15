@@ -9,6 +9,7 @@
     <PackageReference Include="BenchmarkDotNet" Version="0.13.10" />
     <PackageReference Include="Pidgin" Version="3.2.3" />
     <PackageReference Include="Superpower" Version="3.0.0" />
+    <PackageReference Include="Ulid" Version="1.3.3" />
   </ItemGroup>
 
   <ItemGroup>

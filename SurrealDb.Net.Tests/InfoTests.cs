@@ -14,9 +14,11 @@ public class User : SurrealDbRecord
 public class InfoTests
 {
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldNotRetrieveInfoForRootUser(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    public async Task ShouldNotRetrieveInfoForRootUser(string connectionString)
     {
         User? currentUser = null;
 
@@ -25,8 +27,7 @@ public class InfoTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             currentUser = await client.Info<User>();
@@ -38,9 +39,11 @@ public class InfoTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldRetrieveInfoForScopedUser(string url)
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    public async Task ShouldRetrieveInfoForScopedUser(string connectionString)
     {
         User? currentUser = null;
 
@@ -49,8 +52,7 @@ public class InfoTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             {
@@ -96,5 +98,25 @@ public class InfoTests
 
         currentUser.Should().BeEquivalentTo(expected);
         currentUser?.Id.Should().NotBeNull();
+    }
+
+    [Theory]
+    [InlineData("Endpoint=mem://")]
+    public async Task InfoIsNotSupportedInEmbeddedMode(string connectionString)
+    {
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.Info<User>();
+        };
+
+        await func.Should()
+            .ThrowAsync<NotSupportedException>()
+            .WithMessage("Authentication is not enabled in embedded mode.");
     }
 }

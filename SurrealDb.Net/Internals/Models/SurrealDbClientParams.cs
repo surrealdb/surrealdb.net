@@ -2,7 +2,7 @@
 
 namespace SurrealDb.Net.Internals.Models;
 
-internal class SurrealDbClientParams
+public class SurrealDbClientParams
 {
     public string? Endpoint { get; }
     public string? Ns { get; }
@@ -11,6 +11,7 @@ internal class SurrealDbClientParams
     public string? Password { get; }
     public string? Token { get; }
     public string? NamingPolicy { get; }
+    public string? Serialization { get; }
 
     public SurrealDbClientParams(string endpoint, string? namingPolicy = null)
     {
@@ -27,5 +28,6 @@ internal class SurrealDbClientParams
         Password = configuration.Password;
         Token = configuration.Token;
         NamingPolicy = configuration.NamingPolicy;
+        Serialization = configuration.Serialization;
     }
 }

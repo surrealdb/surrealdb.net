@@ -1,4 +1,4 @@
-using SurrealDb.Net.Models.Response;
+﻿using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Exceptions;
 
@@ -7,10 +7,10 @@ namespace SurrealDb.Net.Exceptions;
 /// </summary>
 public class SurrealDbErrorResultException : Exception
 {
-    internal SurrealDbErrorResultException()
+    public SurrealDbErrorResultException()
         : base(GetErrorMessage()) { }
 
-    internal SurrealDbErrorResultException(ISurrealDbErrorResult errorResult)
+    public SurrealDbErrorResultException(ISurrealDbErrorResult errorResult)
         : base(GetErrorMessage(errorResult)) { }
 
     private static string GetErrorMessage(ISurrealDbErrorResult? errorResult = null)

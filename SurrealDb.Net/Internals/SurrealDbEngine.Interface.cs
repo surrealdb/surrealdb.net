@@ -1,4 +1,6 @@
-﻿using SurrealDb.Net.Internals.Models.LiveQuery;
+﻿using Dahomey.Cbor;
+using SurrealDb.Net.Internals.Models;
+using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -7,7 +9,7 @@ using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.Internals;
 
-internal interface ISurrealDbEngine : IDisposable
+public interface ISurrealDbEngine : IDisposable
 {
     Task Authenticate(Jwt jwt, CancellationToken cancellationToken);
     void Configure(string? ns, string? db, string? username, string? password);
@@ -16,8 +18,15 @@ internal interface ISurrealDbEngine : IDisposable
     Task<T> Create<T>(T data, CancellationToken cancellationToken)
         where T : IRecord;
     Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken);
+    Task<TOutput> Create<TData, TOutput>(
+        StringRecordId recordId,
+        TData? data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : IRecord;
     Task Delete(string table, CancellationToken cancellationToken);
     Task<bool> Delete(Thing thing, CancellationToken cancellationToken);
+    Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken);
     Task<bool> Health(CancellationToken cancellationToken);
     Task<T> Info<T>(CancellationToken cancellationToken);
     Task Invalidate(CancellationToken cancellationToken);
@@ -48,6 +57,11 @@ internal interface ISurrealDbEngine : IDisposable
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     );
+    Task<T> Merge<T>(
+        StringRecordId recordId,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken
+    );
     Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
         string table,
         TMerge data,
@@ -61,6 +75,12 @@ internal interface ISurrealDbEngine : IDisposable
     );
     Task<T> Patch<T>(Thing thing, JsonPatchDocument<T> patches, CancellationToken cancellationToken)
         where T : class;
+    Task<T> Patch<T>(
+        StringRecordId recordId,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken
+    )
+        where T : class;
     Task<IEnumerable<T>> PatchAll<T>(
         string table,
         JsonPatchDocument<T> patches,
@@ -73,8 +93,25 @@ internal interface ISurrealDbEngine : IDisposable
         IReadOnlyDictionary<string, object?> parameters,
         CancellationToken cancellationToken
     );
+    Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
+        string table,
+        IEnumerable<Thing> ins,
+        IEnumerable<Thing> outs,
+        TData? data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : class;
+    Task<TOutput> Relate<TOutput, TData>(
+        Thing thing,
+        Thing @in,
+        Thing @out,
+        TData? data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : class;
     Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken);
     Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken);
+    Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken);
     Task Set(string key, object value, CancellationToken cancellationToken);
     Task SignIn(RootAuth root, CancellationToken cancellationToken);
     Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken);
@@ -89,6 +126,22 @@ internal interface ISurrealDbEngine : IDisposable
         where T : class;
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : IRecord;
+    Task<TOutput> Upsert<TData, TOutput>(
+        StringRecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : IRecord;
     Task Use(string ns, string db, CancellationToken cancellationToken);
     Task<string> Version(CancellationToken cancellationToken);
 }
+
+public interface ISurrealDbProviderEngine : ISurrealDbEngine
+{
+    /// <summary>
+    /// Initializes engine dynamically, due to DependencyInjection interop.
+    /// </summary>
+    void Initialize(SurrealDbClientParams parameters, Action<CborOptions>? configureCborOptions);
+}
+
+public interface ISurrealDbInMemoryEngine : ISurrealDbProviderEngine { }

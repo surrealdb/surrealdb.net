@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using SurrealDb.Net.Internals.Constants;
+﻿using SurrealDb.Net.Internals.Constants;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +11,7 @@ public class SurrealDbOptionsBuilder
     private string? _password;
     private string? _token;
     private string? _namingPolicy;
+    private string? _serialization;
 
     /// <summary>
     /// Parses the connection string and set the configuration accordingly.
@@ -28,7 +28,10 @@ public class SurrealDbOptionsBuilder
                 int separatorIndex = str.IndexOf("=", StringComparison.Ordinal);
 
                 if (separatorIndex <= 0)
-                    throw new ArgumentException($"Invalid connection string: {connectionString}");
+                    throw new ArgumentException(
+                        $"Invalid connection string: {connectionString}",
+                        nameof(connectionString)
+                    );
 
                 return new KeyValuePair<string, string>(
                     str[..separatorIndex],
@@ -41,7 +44,14 @@ public class SurrealDbOptionsBuilder
             switch (key.ToLowerInvariant())
             {
                 case "endpoint":
+                    _endpoint = value;
+                    break;
                 case "server":
+                    EnsuresCorrectServerEndpoint(value, nameof(connectionString));
+                    _endpoint = value;
+                    break;
+                case "client":
+                    EnsuresCorrectClientEndpoint(value, nameof(connectionString));
                     _endpoint = value;
                     break;
                 case "namespace":
@@ -66,10 +76,55 @@ public class SurrealDbOptionsBuilder
                 case "namingpolicy":
                     _namingPolicy = value;
                     break;
+                case "serialization":
+                    _serialization = value;
+                    break;
             }
         }
 
         return this;
+    }
+
+    private static void EnsuresCorrectServerEndpoint(string? endpoint, string argumentName)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint))
+        {
+            return;
+        }
+
+        string[] validServerEndpoints =
+        [
+            EndpointConstants.Server.HTTP,
+            EndpointConstants.Server.HTTPS,
+            EndpointConstants.Server.WS,
+            EndpointConstants.Server.WSS
+        ];
+        string lowerEndpoint = endpoint.ToLowerInvariant();
+
+        if (validServerEndpoints.Any(lowerEndpoint.StartsWith))
+        {
+            return;
+        }
+
+        throw new ArgumentException($"Invalid server endpoint: {endpoint}", argumentName);
+    }
+
+    private static void EnsuresCorrectClientEndpoint(string? endpoint, string argumentName)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint))
+        {
+            return;
+        }
+
+        string[] validClientEndpoints = [EndpointConstants.Client.MEMORY];
+        string lowerEndpoint = endpoint.ToLowerInvariant();
+
+        if (validClientEndpoints.Any(lowerEndpoint.StartsWith))
+        {
+            return;
+        }
+
+        throw new ArgumentException($"Invalid client endpoint: {endpoint}", argumentName);
     }
 
     public SurrealDbOptionsBuilder WithEndpoint(string? endpoint)
@@ -142,6 +197,34 @@ public class SurrealDbOptionsBuilder
         throw new ArgumentException($"Invalid naming policy: {namingPolicy}", nameof(namingPolicy));
     }
 
+    public SurrealDbOptionsBuilder WithSerialization(string serialization)
+    {
+        EnsuresSerialization(serialization);
+
+        _serialization = serialization;
+        return this;
+    }
+
+    private static void EnsuresSerialization(string serialization)
+    {
+        if (string.IsNullOrWhiteSpace(serialization))
+        {
+            return;
+        }
+
+        string[] validSerializations = [SerializationConstants.JSON, SerializationConstants.CBOR];
+
+        if (validSerializations.Contains(serialization.ToLowerInvariant()))
+        {
+            return;
+        }
+
+        throw new ArgumentException(
+            $"Invalid serialization: {serialization}",
+            nameof(serialization)
+        );
+    }
+
     public SurrealDbOptions Build()
     {
         return new SurrealDbOptions
@@ -152,7 +235,8 @@ public class SurrealDbOptionsBuilder
             Username = _username,
             Password = _password,
             Token = _token,
-            NamingPolicy = _namingPolicy
+            NamingPolicy = _namingPolicy,
+            Serialization = _serialization
         };
     }
 }

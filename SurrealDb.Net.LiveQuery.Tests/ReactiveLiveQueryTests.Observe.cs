@@ -6,14 +6,13 @@ using SurrealDb.Net.Models.LiveQuery;
 
 namespace SurrealDb.Net.LiveQuery.Tests;
 
-[CollectionDefinition("Reactive")]
 public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
 {
-    [Fact]
-    public async Task ShouldObserveQuery()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    public async Task ShouldObserveQuery(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         var allResults = new List<SurrealDbLiveQueryResponse>();
 
         Func<Task> func = async () =>
@@ -21,7 +20,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -42,6 +41,8 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                 .RefCount();
 
             using var _ = coldObservable.SubscribeOn(testScheduler).Subscribe(allResults.Add);
+
+            await Task.Yield();
 
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
@@ -88,11 +89,11 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
         lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse<TestRecord>>();
     }
 
-    [Fact]
-    public async Task ShouldObserveRawQuery()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    public async Task ShouldObserveRawQuery(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         var allResults = new List<SurrealDbLiveQueryResponse>();
 
         Func<Task> func = async () =>
@@ -100,7 +101,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -129,6 +130,8 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                         e.Should().BeNull();
                     }
                 );
+
+            await Task.Yield();
 
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
@@ -181,11 +184,11 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
         lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse<TestRecord>>();
     }
 
-    [Fact]
-    public async Task ShouldObserveTable()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    public async Task ShouldObserveTable(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
-
         var allResults = new List<SurrealDbLiveQueryResponse>();
 
         Func<Task> func = async () =>
@@ -193,7 +196,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -219,6 +222,8 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                         e.Should().BeNull();
                     }
                 );
+
+            await Task.Yield();
 
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Models;
@@ -38,6 +39,7 @@ public class SurrealDbClient : ISurrealDbClient
     /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
     /// in AoT mode.
     /// </param>
+    /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <exception cref="ArgumentException"></exception>
     public SurrealDbClient(
         string endpoint,
@@ -45,14 +47,17 @@ public class SurrealDbClient : ISurrealDbClient
         IHttpClientFactory? httpClientFactory = null,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
+        Action<CborOptions>? configureCborOptions = null
     )
         : this(
             new SurrealDbClientParams(endpoint, namingPolicy),
+            null,
             httpClientFactory,
             configureJsonSerializerOptions,
             prependJsonSerializerContexts,
-            appendJsonSerializerContexts
+            appendJsonSerializerContexts,
+            configureCborOptions
         ) { }
 
     /// <summary>
@@ -69,6 +74,7 @@ public class SurrealDbClient : ISurrealDbClient
     /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
     /// in AoT mode.
     /// </param>
+    /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
     public SurrealDbClient(
@@ -76,22 +82,27 @@ public class SurrealDbClient : ISurrealDbClient
         IHttpClientFactory? httpClientFactory = null,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
+        Action<CborOptions>? configureCborOptions = null
     )
         : this(
             new SurrealDbClientParams(configuration),
+            null,
             httpClientFactory,
             configureJsonSerializerOptions,
             prependJsonSerializerContexts,
-            appendJsonSerializerContexts
+            appendJsonSerializerContexts,
+            configureCborOptions
         ) { }
 
     internal SurrealDbClient(
         SurrealDbClientParams parameters,
+        IServiceProvider? serviceProvider = null,
         IHttpClientFactory? httpClientFactory = null,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
         Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null
+        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
+        Action<CborOptions>? configureCborOptions = null
     )
     {
         if (parameters.Endpoint is null)
@@ -111,7 +122,8 @@ public class SurrealDbClient : ISurrealDbClient
                     httpClientFactory,
                     configureJsonSerializerOptions,
                     prependJsonSerializerContexts,
-                    appendJsonSerializerContexts
+                    appendJsonSerializerContexts,
+                    configureCborOptions
                 ),
             "ws"
             or "wss"
@@ -119,15 +131,33 @@ public class SurrealDbClient : ISurrealDbClient
                     parameters,
                     configureJsonSerializerOptions,
                     prependJsonSerializerContexts,
-                    appendJsonSerializerContexts
+                    appendJsonSerializerContexts,
+                    configureCborOptions
                 ),
-            _ => throw new ArgumentException("This protocol is not supported."),
+            "mem"
+                => ResolveInMemoryProvider(serviceProvider, parameters, configureCborOptions)
+                    ?? throw new Exception(
+                        "Impossible to create a new in-memory SurrealDB client. Make sure to use `AddInMemoryProvider`."
+                    ),
+            _ => throw new NotSupportedException($"The protocol '{protocol}' is not supported."),
         };
 
         if (parameters.Username is not null)
             Configure(parameters.Ns, parameters.Db, parameters.Username, parameters.Password);
         else
             Configure(parameters.Ns, parameters.Db, parameters.Token);
+    }
+
+    private static ISurrealDbInMemoryEngine? ResolveInMemoryProvider(
+        IServiceProvider? serviceProvider,
+        SurrealDbClientParams parameters,
+        Action<CborOptions>? configureCborOptions
+    )
+    {
+        var engine = serviceProvider?.GetService<ISurrealDbInMemoryEngine>();
+        engine?.Initialize(parameters, configureCborOptions);
+
+        return engine;
     }
 
     public Task Authenticate(Jwt jwt, CancellationToken cancellationToken = default)
@@ -165,6 +195,16 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.Create(table, data, cancellationToken);
     }
 
+    public Task<TOutput> Create<TData, TOutput>(
+        StringRecordId recordId,
+        TData? data = default,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : Record
+    {
+        return _engine.Create<TData, TOutput>(recordId, data, cancellationToken);
+    }
+
     public Task Delete(string table, CancellationToken cancellationToken = default)
     {
         return _engine.Delete(table, cancellationToken);
@@ -173,6 +213,11 @@ public class SurrealDbClient : ISurrealDbClient
     public Task<bool> Delete(Thing thing, CancellationToken cancellationToken = default)
     {
         return _engine.Delete(thing, cancellationToken);
+    }
+
+    public Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken = default)
+    {
+        return _engine.Delete(recordId, cancellationToken);
     }
 
     public void Dispose()
@@ -257,6 +302,15 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.Merge<T>(thing, data, cancellationToken);
     }
 
+    public Task<T> Merge<T>(
+        StringRecordId recordId,
+        Dictionary<string, object> data,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.Merge<T>(recordId, data, cancellationToken);
+    }
+
     public Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
         string table,
         TMerge data,
@@ -284,6 +338,16 @@ public class SurrealDbClient : ISurrealDbClient
         where T : class
     {
         return _engine.Patch(thing, patches, cancellationToken);
+    }
+
+    public Task<T> Patch<T>(
+        StringRecordId recordId,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken = default
+    )
+        where T : class
+    {
+        return _engine.Patch(recordId, patches, cancellationToken);
     }
 
     public Task<IEnumerable<T>> PatchAll<T>(
@@ -317,6 +381,129 @@ public class SurrealDbClient : ISurrealDbClient
         );
     }
 
+    public async Task<TOutput> Relate<TOutput>(
+        string table,
+        Thing @in,
+        Thing @out,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        var outputs = await _engine
+            .Relate<TOutput, object>(table, new[] { @in }, new[] { @out }, null, cancellationToken)
+            .ConfigureAwait(false);
+
+        return outputs.Single();
+    }
+
+    public async Task<TOutput> Relate<TOutput, TData>(
+        string table,
+        Thing @in,
+        Thing @out,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        var outputs = await _engine
+            .Relate<TOutput, TData>(table, new[] { @in }, new[] { @out }, data, cancellationToken)
+            .ConfigureAwait(false);
+
+        return outputs.Single();
+    }
+
+    public Task<IEnumerable<TOutput>> Relate<TOutput>(
+        string table,
+        IEnumerable<Thing> ins,
+        Thing @out,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, object>(table, ins, new[] { @out }, null, cancellationToken);
+    }
+
+    public Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
+        string table,
+        IEnumerable<Thing> ins,
+        Thing @out,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, TData>(table, ins, new[] { @out }, data, cancellationToken);
+    }
+
+    public Task<IEnumerable<TOutput>> Relate<TOutput>(
+        string table,
+        Thing @in,
+        IEnumerable<Thing> outs,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, object>(table, new[] { @in }, outs, null, cancellationToken);
+    }
+
+    public Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
+        string table,
+        Thing @in,
+        IEnumerable<Thing> outs,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, TData>(table, new[] { @in }, outs, data, cancellationToken);
+    }
+
+    public Task<IEnumerable<TOutput>> Relate<TOutput>(
+        string table,
+        IEnumerable<Thing> ins,
+        IEnumerable<Thing> outs,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, object>(table, ins, outs, null, cancellationToken);
+    }
+
+    public Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
+        string table,
+        IEnumerable<Thing> ins,
+        IEnumerable<Thing> outs,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, TData>(table, ins, outs, data, cancellationToken);
+    }
+
+    public Task<TOutput> Relate<TOutput>(
+        Thing thing,
+        Thing @in,
+        Thing @out,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, object>(thing, @in, @out, null, cancellationToken);
+    }
+
+    public Task<TOutput> Relate<TOutput, TData>(
+        Thing thing,
+        Thing @in,
+        Thing @out,
+        TData? data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : class
+    {
+        return _engine.Relate<TOutput, TData>(thing, @in, @out, data, cancellationToken);
+    }
+
     public Task<IEnumerable<T>> Select<T>(
         string table,
         CancellationToken cancellationToken = default
@@ -328,6 +515,14 @@ public class SurrealDbClient : ISurrealDbClient
     public Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken = default)
     {
         return _engine.Select<T?>(thing, cancellationToken);
+    }
+
+    public Task<T?> Select<T>(
+        StringRecordId recordId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.Select<T?>(recordId, cancellationToken);
     }
 
     public Task Set(string key, object value, CancellationToken cancellationToken = default)
@@ -381,6 +576,16 @@ public class SurrealDbClient : ISurrealDbClient
         where T : IRecord
     {
         return _engine.Upsert(data, cancellationToken);
+    }
+
+    public Task<TOutput> Upsert<TData, TOutput>(
+        StringRecordId recordId,
+        TData data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : Record
+    {
+        return _engine.Upsert<TData, TOutput>(recordId, data, cancellationToken);
     }
 
     public Task Use(string ns, string db, CancellationToken cancellationToken = default)

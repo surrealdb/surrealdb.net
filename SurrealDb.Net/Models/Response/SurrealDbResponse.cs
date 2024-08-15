@@ -53,12 +53,7 @@ public sealed class SurrealDbResponse : IReadOnlyList<ISurrealDbResult>
     /// </summary>
     public bool IsSingle => _results.Count == 1;
 
-    internal SurrealDbResponse(ISurrealDbResult result)
-    {
-        _results = new() { result };
-    }
-
-    internal SurrealDbResponse(List<ISurrealDbResult> results)
+    public SurrealDbResponse(List<ISurrealDbResult> results)
     {
         _results = results;
     }

@@ -1,13 +1,18 @@
-﻿#if NET5_0_OR_GREATER
+﻿using SurrealDb.Net.Internals.Models;
+#if NET5_0_OR_GREATER
 using Pidgin;
-using SurrealDb.Net.Internals.Models;
 using static Pidgin.Parser;
+#else
+using Superpower;
+using Superpower.Parsers;
+#endif
 
 namespace SurrealDb.Net.Internals.Parsers;
 
+#if NET5_0_OR_GREATER
 internal static class DurationParser
 {
-    public static readonly Parser<char, DurationUnit> DurationUnitParser = Try(
+    private static readonly Parser<char, DurationUnit> DurationUnitParser = Try(
             String("ns").Map(_ => DurationUnit.NanoSecond)
         )
         .Or(Try(String("µs").Or(String("us")).Map(_ => DurationUnit.MicroSecond)))
@@ -24,7 +29,7 @@ internal static class DurationParser
         from u in DurationUnitParser!
         select (v, u);
 
-    public static readonly Parser<char, IEnumerable<(double value, DurationUnit unit)>> Parser =
+    private static readonly Parser<char, IEnumerable<(double value, DurationUnit unit)>> Parser =
         DurationRaw.AtLeastOnce();
 
     public static IEnumerable<(double value, DurationUnit unit)> Parse(string input)
@@ -33,15 +38,9 @@ internal static class DurationParser
     }
 }
 #else
-using Superpower;
-using Superpower.Parsers;
-using SurrealDb.Net.Internals.Models;
-
-namespace SurrealDb.Net.Internals.Parsers;
-
 internal static class DurationParser
 {
-    public static readonly TextParser<DurationUnit> DurationUnitParser = Span.EqualTo("ns")
+    private static readonly TextParser<DurationUnit> DurationUnitParser = Span.EqualTo("ns")
         .Value(DurationUnit.NanoSecond)
         .Try()
         .Or(Span.EqualTo("µs").Value(DurationUnit.MicroSecond))
@@ -67,7 +66,7 @@ internal static class DurationParser
         from u in DurationUnitParser!
         select (v, u);
 
-    public static readonly TextParser<(double value, DurationUnit unit)[]> Parser =
+    private static readonly TextParser<(double value, DurationUnit unit)[]> Parser =
         DurationRaw.AtLeastOnce();
 
     public static (double value, DurationUnit unit)[] Parse(string input)
