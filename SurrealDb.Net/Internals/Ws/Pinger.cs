@@ -60,7 +60,11 @@ internal class Pinger : IDisposable
                     .ConfigureAwait(false)
             )
             {
-                await _pingCallback(default).ConfigureAwait(false);
+                try
+                {
+                    await _pingCallback(default).ConfigureAwait(false);
+                }
+                catch { }
             }
         }
         catch (OperationCanceledException) { }
