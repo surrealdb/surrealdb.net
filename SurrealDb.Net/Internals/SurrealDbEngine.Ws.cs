@@ -545,28 +545,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return new SurrealDbLiveQuery<T>(queryUuid, this);
     }
 
-    public async Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
-        FormattableString query,
-        CancellationToken cancellationToken
-    )
-    {
-        var dbResponse = await Query(query, cancellationToken).ConfigureAwait(false);
-
-        if (dbResponse.HasErrors)
-        {
-            throw new SurrealDbErrorResultException(dbResponse.FirstError!);
-        }
-
-        if (dbResponse.FirstOk is null)
-        {
-            throw new SurrealDbErrorResultException();
-        }
-
-        var queryUuid = dbResponse.FirstOk.GetValue<Guid>()!;
-
-        return ListenLive<T>(queryUuid);
-    }
-
     public async Task<SurrealDbLiveQuery<T>> LiveRawQuery<T>(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
@@ -721,15 +699,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         var dbResponse = await SendRequestAsync("patch", [table, patches], true, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
-    }
-
-    public async Task<SurrealDbResponse> Query(
-        FormattableString query,
-        CancellationToken cancellationToken
-    )
-    {
-        var (formattedQuery, parameters) = query.ExtractRawQueryParams();
-        return await RawQuery(formattedQuery, parameters, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<SurrealDbResponse> RawQuery(
