@@ -162,7 +162,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         TData? data,
         CancellationToken cancellationToken
     )
-        where TOutput : Record
+        where TOutput : IRecord
     {
         if (!_useCbor)
         {
@@ -700,7 +700,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         TData data,
         CancellationToken cancellationToken
     )
-        where TOutput : Record
+        where TOutput : IRecord
     {
         if (!_useCbor)
         {

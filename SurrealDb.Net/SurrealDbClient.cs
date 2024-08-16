@@ -207,7 +207,7 @@ public class SurrealDbClient : ISurrealDbClient
         TData? data = default,
         CancellationToken cancellationToken = default
     )
-        where TOutput : Record
+        where TOutput : IRecord
     {
         return _engine.Create<TData, TOutput>(recordId, data, cancellationToken);
     }
@@ -593,7 +593,7 @@ public class SurrealDbClient : ISurrealDbClient
         TData data,
         CancellationToken cancellationToken = default
     )
-        where TOutput : Record
+        where TOutput : IRecord
     {
         return _engine.Upsert<TData, TOutput>(recordId, data, cancellationToken);
     }

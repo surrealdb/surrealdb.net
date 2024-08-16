@@ -76,7 +76,7 @@ public class SurrealDbMemoryClient : ISurrealDbClient
     }
 
     public Task<T> Create<T>(T data, CancellationToken cancellationToken = default)
-        where T : Record
+        where T : IRecord
     {
         return _engine.Create(data, cancellationToken);
     }
@@ -95,7 +95,7 @@ public class SurrealDbMemoryClient : ISurrealDbClient
         TData? data = default,
         CancellationToken cancellationToken = default
     )
-        where TOutput : Record
+        where TOutput : IRecord
     {
         return _engine.Create<TData, TOutput>(recordId, data, cancellationToken);
     }
@@ -183,7 +183,7 @@ public class SurrealDbMemoryClient : ISurrealDbClient
         TMerge data,
         CancellationToken cancellationToken = default
     )
-        where TMerge : Record
+        where TMerge : IRecord
     {
         return _engine.Merge<TMerge, TOutput>(data, cancellationToken);
     }
@@ -257,22 +257,25 @@ public class SurrealDbMemoryClient : ISurrealDbClient
 
     public Task<SurrealDbResponse> Query(
         FormattableString query,
-        CancellationToken cancellationToken = default
+        CancellationToken cancellationToken = default,
+        bool LogIt = false
     )
     {
-        return _engine.Query(query, cancellationToken);
+        return _engine.Query(query, cancellationToken, LogIt);
     }
 
     public Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?>? parameters = null,
-        CancellationToken cancellationToken = default
+        CancellationToken cancellationToken = default,
+        bool LogIt = false
     )
     {
         return _engine.RawQuery(
             query,
             parameters ?? ImmutableDictionary<string, object?>.Empty,
-            cancellationToken
+            cancellationToken,
+            LogIt
         );
     }
 
@@ -468,7 +471,7 @@ public class SurrealDbMemoryClient : ISurrealDbClient
     }
 
     public Task<T> Upsert<T>(T data, CancellationToken cancellationToken = default)
-        where T : Record
+        where T : IRecord
     {
         return _engine.Upsert(data, cancellationToken);
     }
@@ -478,7 +481,7 @@ public class SurrealDbMemoryClient : ISurrealDbClient
         TData data,
         CancellationToken cancellationToken = default
     )
-        where TOutput : Record
+        where TOutput : IRecord
     {
         return _engine.Upsert<TData, TOutput>(recordId, data, cancellationToken);
     }

@@ -13,7 +13,9 @@ public abstract class Record : IRecord
     /// The id of the record
     /// </summary>
     [JsonConverter(typeof(ThingConverter))]
+    [CborProperty("id")]
     [JsonPropertyName("id")]
+    [CborIgnoreIfDefault]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] // 💡 ignore null value to prevent failure on Create operation
     public Thing? Id { get; set; }
 }

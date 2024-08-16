@@ -59,6 +59,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Net.Benchmarks.Em
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Net.Benchmarks.Remote", "SurrealDb.Net.Benchmarks.Remote\SurrealDb.Net.Benchmarks.Remote.csproj", "{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dahomey.Cbor", "..\Dahomey.Cbor\src\Dahomey.Cbor\Dahomey.Cbor.csproj", "{FF0177EE-8912-4122-826C-506D37AEB530}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -137,6 +139,10 @@ Global
 		{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF0177EE-8912-4122-826C-506D37AEB530}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF0177EE-8912-4122-826C-506D37AEB530}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF0177EE-8912-4122-826C-506D37AEB530}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF0177EE-8912-4122-826C-506D37AEB530}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -160,6 +166,7 @@ Global
 		{DF431D96-ED87-4A2B-959E-D345E337F110} = {ED80259F-C52A-4936-9345-E8E3ABE19FBF}
 		{ABB406DB-023C-4B7C-891F-0B75454D0205} = {2AA621E5-D78A-4710-9C77-48B305A67928}
 		{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2} = {2AA621E5-D78A-4710-9C77-48B305A67928}
+		{FF0177EE-8912-4122-826C-506D37AEB530} = {C96942BD-CC4A-48C1-BC4D-54FB6EC5C168}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {70C100EF-E131-45C0-9515-02FC4823BA20}

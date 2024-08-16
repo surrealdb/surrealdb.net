@@ -371,7 +371,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         TData? data,
         CancellationToken cancellationToken
     )
-        where TOutput : Record
+        where TOutput : IRecord
     {
         if (!_useCbor)
         {
@@ -951,7 +951,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         object?[] @params = _useCbor ? [data.Id, data] : [data.Id.ToWsString(), data];
 
-        var dbResponse = await SendRequestAsync("update", @params, true, cancellationToken)
+        var dbResponse = await SendRequestAsync("upsert", @params, true, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<T>()!;
     }
@@ -961,7 +961,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         TData data,
         CancellationToken cancellationToken
     )
-        where TOutput : Record
+        where TOutput : IRecord
     {
         if (!_useCbor)
         {

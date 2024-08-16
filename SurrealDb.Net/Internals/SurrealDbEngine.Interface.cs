@@ -23,7 +23,7 @@ public interface ISurrealDbEngine : IDisposable
         TData? data,
         CancellationToken cancellationToken
     )
-        where TOutput : Record;
+        where TOutput : IRecord;
     Task Delete(string table, CancellationToken cancellationToken);
     Task<bool> Delete(Thing thing, CancellationToken cancellationToken);
     Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken);

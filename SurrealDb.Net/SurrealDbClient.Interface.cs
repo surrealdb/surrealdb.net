@@ -114,7 +114,7 @@ public interface ISurrealDbClient : IDisposable
         TData? data = default,
         CancellationToken cancellationToken = default
     )
-        where TOutput : Record;
+        where TOutput : IRecord;
 
     /// <summary>
     /// Deletes all records in a table from the database.
@@ -796,7 +796,7 @@ public interface ISurrealDbClient : IDisposable
         TData data,
         CancellationToken cancellationToken = default
     )
-        where TOutput : Record;
+        where TOutput : IRecord;
 
     /// <summary>
     /// Switch to a specific namespace and database.

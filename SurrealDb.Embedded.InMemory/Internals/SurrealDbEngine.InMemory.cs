@@ -138,7 +138,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     }
 
     public async Task<T> Create<T>(T data, CancellationToken cancellationToken)
-        where T : Record
+        where T : IRecord
     {
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
@@ -164,7 +164,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         TData? data,
         CancellationToken cancellationToken
     )
-        where TOutput : Record
+        where TOutput : IRecord
     {
         return await SendRequestAsync<TOutput>(Method.Create, [recordId, data], cancellationToken)
             .ConfigureAwait(false);
@@ -263,7 +263,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         TMerge data,
         CancellationToken cancellationToken
     )
-        where TMerge : Record
+        where TMerge : IRecord
     {
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
@@ -360,17 +360,20 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
 
     public async Task<SurrealDbResponse> Query(
         FormattableString query,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        bool logIt = false
     )
     {
         var (formattedQuery, parameters) = query.ExtractRawQueryParams();
-        return await RawQuery(formattedQuery, parameters, cancellationToken).ConfigureAwait(false);
+        return await RawQuery(formattedQuery, parameters, cancellationToken, logIt)
+            .ConfigureAwait(false);
     }
 
     public async Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        bool logIt = false
     )
     {
         var list = await SendRequestAsync<List<ISurrealDbResult>>(
@@ -511,7 +514,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     }
 
     public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
-        where T : Record
+        where T : IRecord
     {
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
@@ -525,7 +528,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         TData data,
         CancellationToken cancellationToken
     )
-        where TOutput : Record
+        where TOutput : IRecord
     {
         return await SendRequestAsync<TOutput>(Method.Update, [recordId, data], cancellationToken)
             .ConfigureAwait(false);
