@@ -589,7 +589,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
         where T : Record
     {
-        var dbResponse = await SendRequestAsync("insert", [table, data], true, cancellationToken)
+        var dbResponse = await SendRequestAsync(
+                "insert",
+                [table, data],
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
             .ConfigureAwait(false);
 
         return dbResponse.DeserializeEnumerable<T>();
