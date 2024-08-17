@@ -36,10 +36,6 @@ public interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     );
     SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid);
-    Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
-        FormattableString query,
-        CancellationToken cancellationToken
-    );
     Task<SurrealDbLiveQuery<T>> LiveRawQuery<T>(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
@@ -87,11 +83,6 @@ public interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     )
         where T : class;
-    Task<SurrealDbResponse> Query(
-        FormattableString query,
-        CancellationToken cancellationToken,
-        bool logIt
-    );
     Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
