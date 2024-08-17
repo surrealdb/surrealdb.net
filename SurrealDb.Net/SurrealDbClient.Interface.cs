@@ -409,7 +409,6 @@ public interface ISurrealDbClient : IDisposable
     /// </summary>
     /// <param name="query">The SurrealQL query.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-    /// <param name="logIt">If the query and params should be output to the console.</param>
     /// <returns>The list of results from the SurrealQL queries.</returns>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="HttpRequestException"></exception>
@@ -421,8 +420,7 @@ public interface ISurrealDbClient : IDisposable
 #else
         FormattableString query,
 #endif
-        CancellationToken cancellationToken = default,
-        bool logIt = false
+        CancellationToken cancellationToken = default
     );
 
     /// <summary>
@@ -431,7 +429,6 @@ public interface ISurrealDbClient : IDisposable
     /// <param name="query">The SurrealQL query.</param>
     /// <param name="parameters">A list of parameters to be used inside the SurrealQL query.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-    /// <param name="logIt">If the query and params should be output to the console.</param>
     /// <returns>The list of results from the SurrealQL queries.</returns>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="HttpRequestException"></exception>
@@ -440,8 +437,7 @@ public interface ISurrealDbClient : IDisposable
     Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?>? parameters = null,
-        CancellationToken cancellationToken = default,
-        bool logIt = false
+        CancellationToken cancellationToken = default
     );
 
     /// <summary>

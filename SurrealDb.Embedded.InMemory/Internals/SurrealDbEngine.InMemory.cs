@@ -360,20 +360,17 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
 
     public async Task<SurrealDbResponse> Query(
         FormattableString query,
-        CancellationToken cancellationToken,
-        bool logIt = false
+        CancellationToken cancellationToken
     )
     {
         var (formattedQuery, parameters) = query.ExtractRawQueryParams();
-        return await RawQuery(formattedQuery, parameters, cancellationToken, logIt)
-            .ConfigureAwait(false);
+        return await RawQuery(formattedQuery, parameters, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
-        CancellationToken cancellationToken,
-        bool logIt = false
+        CancellationToken cancellationToken
     )
     {
         var list = await SendRequestAsync<List<ISurrealDbResult>>(

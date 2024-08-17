@@ -433,8 +433,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
-        CancellationToken cancellationToken,
-        bool logIt = false
+        CancellationToken cancellationToken
     )
     {
         var allParameters = new Dictionary<string, object?>(

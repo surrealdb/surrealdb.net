@@ -394,8 +394,7 @@ public class SurrealDbClient : ISurrealDbClient
 #else
     public Task<SurrealDbResponse> Query(
         FormattableString query,
-        CancellationToken cancellationToken = default,
-        bool logIt = false
+        CancellationToken cancellationToken = default
     )
     {
         var (formattedQuery, parameters) = query.ExtractRawQueryParams();
@@ -406,15 +405,13 @@ public class SurrealDbClient : ISurrealDbClient
     public Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?>? parameters = null,
-        CancellationToken cancellationToken = default,
-        bool logIt = false
+        CancellationToken cancellationToken = default
     )
     {
         return _engine.RawQuery(
             query,
             parameters ?? ImmutableDictionary<string, object?>.Empty,
-            cancellationToken,
-            logIt
+            cancellationToken
         );
     }
 

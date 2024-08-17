@@ -831,8 +831,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
-        CancellationToken cancellationToken,
-        bool logIt = false
+        CancellationToken cancellationToken
     )
     {
         var dbResponse = await SendRequestAsync(
@@ -843,25 +842,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
 
-        if (logIt)
-        {
-            var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? [];
-            var ret = new SurrealDbResponse(list);
-            if (ret.HasErrors)
-            {
-                Log.Debug("Parameters: {parameters}", parameters);
-                Log.Debug("Query: {query}", query);
-                if (dbResponse.Result.HasValue)
-                    Log.Debug("dbResponse: {dbResponse}", dbResponse.Result?.ToString() ?? "");
-            }
-
-            return ret;
-        }
-        else
-        {
-            var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? [];
-            return new SurrealDbResponse(list);
-        }
+        var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? [];
+        return new SurrealDbResponse(list);
     }
 
     public async Task<IEnumerable<TOutput>> Relate<TOutput, TData>(

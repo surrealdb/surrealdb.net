@@ -86,8 +86,7 @@ public interface ISurrealDbEngine : IDisposable
     Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
-        CancellationToken cancellationToken,
-        bool logIt
+        CancellationToken cancellationToken
     );
     Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
         string table,

@@ -282,27 +282,24 @@ public class SurrealDbMemoryClient : ISurrealDbClient
 #else
     public Task<SurrealDbResponse> Query(
         FormattableString query,
-        CancellationToken cancellationToken = default,
-        bool LogIt = false
+        CancellationToken cancellationToken = default
     )
     {
         var (formattedQuery, parameters) = query.ExtractRawQueryParams();
-        return _engine.RawQuery(formattedQuery, parameters, cancellationToken, LogIt);
+        return _engine.RawQuery(formattedQuery, parameters, cancellationToken);
     }
 #endif
 
     public Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?>? parameters = null,
-        CancellationToken cancellationToken = default,
-        bool LogIt = false
+        CancellationToken cancellationToken = default
     )
     {
         return _engine.RawQuery(
             query,
             parameters ?? ImmutableDictionary<string, object?>.Empty,
-            cancellationToken,
-            LogIt
+            cancellationToken
         );
     }
 
