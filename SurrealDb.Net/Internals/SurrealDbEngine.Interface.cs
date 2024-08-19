@@ -29,6 +29,12 @@ public interface ISurrealDbEngine : IDisposable
     Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken);
     Task<bool> Health(CancellationToken cancellationToken);
     Task<T> Info<T>(CancellationToken cancellationToken);
+    Task<IEnumerable<T>> Insert<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken
+    )
+        where T : Record;
     Task Invalidate(CancellationToken cancellationToken);
     Task Kill(
         Guid queryUuid,

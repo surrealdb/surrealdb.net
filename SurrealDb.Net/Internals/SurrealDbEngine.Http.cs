@@ -260,6 +260,21 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return dbResponse.GetValue<T>()!;
     }
 
+    public async Task<IEnumerable<T>> Insert<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken
+    )
+        where T : Record
+    {
+        var request = new SurrealDbHttpRequest { Method = "insert", Parameters = [table, data] };
+
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+            .ConfigureAwait(false);
+
+        return dbResponse.DeserializeEnumerable<T>();
+    }
+
     public Task Invalidate(CancellationToken _)
     {
         _config.ResetAuth();
