@@ -267,13 +267,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where T : IRecord
     {
-        object?[] @params = [data];
-        var request = new SurrealDbHttpRequest { Method = "insert", Parameters = @params };
+        var request = new SurrealDbHttpRequest { Method = "insert", Parameters = [table, data] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
 
-        return dbResponse.GetValue<IEnumerable<T>>()!;
+        return dbResponse.DeserializeEnumerable<T>();
     }
 
     public Task Invalidate(CancellationToken _)

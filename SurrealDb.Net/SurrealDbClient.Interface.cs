@@ -70,6 +70,9 @@ public interface ISurrealDbClient : IDisposable
     /// <summary>
     /// Creates the specific record in the database.
     /// </summary>
+    /// <remarks>
+    /// Note: This method creates only a single record. If the record already exist, it will throw an error.
+    /// </remarks>
     /// <typeparam name="T">The type of the record to create.</typeparam>
     /// <param name="data">The record to create.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -174,11 +177,15 @@ public interface ISurrealDbClient : IDisposable
     Task<T> Info<T>(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Inserts a set of records in a table in the database.
+    /// Inserts a collection of records in the database.
     /// </summary>
-    /// <typeparam name="T">The type of the records to insert.</typeparam>
-    /// <param name="table">The table name where the record will be stored.</param>
-    /// <param name="data">The records to insert.</param>
+    /// <remarks>
+    /// Note: This method allows you to create multiple records at once.
+    /// In case a record already exist, it will not throw error and it will not update the existing record.
+    /// </remarks>
+    /// <typeparam name="T">The type of the record to create.</typeparam>
+    /// <param name="table">The table name where the records will be stored.</param>
+    /// <param name="data">The records to create.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>The records created.</returns>
     /// <exception cref="OperationCanceledException"></exception>
