@@ -30,6 +30,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 {
     private static readonly ConcurrentDictionary<string, SurrealDbWsEngine> _wsEngines = new();
 
+    private SemVersion? _version;
     private readonly string _id;
     private readonly SurrealDbOptions _parameters;
     private readonly Action<CborOptions>? _configureCborOptions;
@@ -245,7 +246,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         string version = await Version(SurrealDbWsRequestPriority.High, cancellationToken)
             .ConfigureAwait(false);
-        if (version.ToSemver().CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
+        _version = version.ToSemver();
+
+        if (_version.CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
         {
             throw new SurrealDbException("CBOR is only supported on SurrealDB 1.4.0 or later.");
         }
@@ -934,8 +937,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
+        string method = _version?.Major > 1 ? "upsert" : "update";
         var dbResponse = await SendRequestAsync(
-                "update",
+                method,
                 [data.Id, data],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
@@ -951,8 +955,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
         where TOutput : Record
     {
+        string method = _version?.Major > 1 ? "upsert" : "update";
         var dbResponse = await SendRequestAsync(
-                "update",
+                method,
                 [recordId, data],
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken

@@ -28,6 +28,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 {
     private const string RPC_ENDPOINT = "/rpc";
 
+    private SemVersion? _version;
     private readonly Uri _uri;
     private readonly SurrealDbOptions _parameters;
     private readonly IHttpClientFactory? _httpClientFactory;
@@ -70,7 +71,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         _surrealDbLoggerFactory?.Connection?.LogConnectionAttempt(_parameters.Endpoint!);
 
         string version = await Version(cancellationToken).ConfigureAwait(false);
-        if (version.ToSemver().CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
+        _version = version.ToSemver();
+
+        if (_version.CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
         {
             throw new SurrealDbException("CBOR is only supported on SurrealDB 1.4.0 or later.");
         }
@@ -640,7 +643,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        var request = new SurrealDbHttpRequest { Method = "update", Parameters = [data.Id, data] };
+        string method = _version?.Major > 1 ? "upsert" : "update";
+        var request = new SurrealDbHttpRequest { Method = method, Parameters = [data.Id, data] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
@@ -654,7 +658,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where TOutput : Record
     {
-        var request = new SurrealDbHttpRequest { Method = "update", Parameters = [recordId, data] };
+        string method = _version?.Major > 1 ? "upsert" : "update";
+        var request = new SurrealDbHttpRequest { Method = method, Parameters = [recordId, data] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
@@ -748,16 +753,33 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         client.BaseAddress = _uri;
 
         client.DefaultRequestHeaders.Remove(HttpConstants.ACCEPT_HEADER_NAME);
-        client.DefaultRequestHeaders.Remove(HttpConstants.NS_HEADER_NAME);
-        client.DefaultRequestHeaders.Remove(HttpConstants.DB_HEADER_NAME);
+
+        if (_version?.Major > 1)
+        {
+            client.DefaultRequestHeaders.Remove(HttpConstants.NS_HEADER_NAME_V2);
+            client.DefaultRequestHeaders.Remove(HttpConstants.DB_HEADER_NAME_V2);
+        }
+        else
+        {
+            client.DefaultRequestHeaders.Remove(HttpConstants.NS_HEADER_NAME);
+            client.DefaultRequestHeaders.Remove(HttpConstants.DB_HEADER_NAME);
+        }
 
         client.DefaultRequestHeaders.Add(HttpConstants.ACCEPT_HEADER_NAME, ["application/cbor"]);
 
         var ns = useConfiguration is not null ? useConfiguration.Ns : _config.Ns;
         var db = useConfiguration is not null ? useConfiguration.Db : _config.Db;
 
-        client.DefaultRequestHeaders.Add(HttpConstants.NS_HEADER_NAME, ns);
-        client.DefaultRequestHeaders.Add(HttpConstants.DB_HEADER_NAME, db);
+        if (_version?.Major > 1)
+        {
+            client.DefaultRequestHeaders.Add(HttpConstants.NS_HEADER_NAME_V2, ns);
+            client.DefaultRequestHeaders.Add(HttpConstants.DB_HEADER_NAME_V2, db);
+        }
+        else
+        {
+            client.DefaultRequestHeaders.Add(HttpConstants.NS_HEADER_NAME, ns);
+            client.DefaultRequestHeaders.Add(HttpConstants.DB_HEADER_NAME, db);
+        }
 
         var auth = overridedAuth ?? _config.Auth;
 
@@ -836,6 +858,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
     {
         long executionStartTime = Stopwatch.GetTimestamp();
+        
+        if (_version == null && request.Method != "version")
+        {
+            await Connect(cancellationToken).ConfigureAwait(false);
+        }
 
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(request);

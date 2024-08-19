@@ -113,7 +113,7 @@ jobs:
           path: ./rust-embedded/target/debug
 
       - name: Download SurrealDB
-        run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh -s -- --alpha
+        run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh -s
 
       - name: Run SurrealDB root
         run: surreal start --user root --pass root memory --allow-guests &
