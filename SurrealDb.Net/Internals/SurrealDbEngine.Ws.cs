@@ -1289,7 +1289,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             id = RandomHelper.CreateRandomId();
         } while (!_responseTaskHandler.TryAdd(id, priority, taskCompletionSource));
 
-        var waitUntilTask = _responseTaskHandler.WaitUntilAsync(priority, cancellationToken);
+        /*var waitUntilTask = _responseTaskHandler.WaitUntilAsync(priority, cancellationToken);
 
         var initialTask = await Task.WhenAny(waitUntilTask, timeoutTask).ConfigureAwait(false);
 
@@ -1298,7 +1298,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             _responseTaskHandler.TryRemove(id, out _);
             taskCompletionSource.TrySetCanceled(CancellationToken.None);
             throw new TimeoutException();
-        }
+        }*/
 
         bool shouldSendParamsInRequest = parameters is not null && parameters.Length > 0;
 
