@@ -668,7 +668,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             throw new SurrealDbException("Cannot create a record without an Id");
 
         object?[] @params = _useCbor ? [data.Id, data] : [data.Id.ToWsString(), data];
-        var request = new SurrealDbHttpRequest { Method = "update", Parameters = @params };
+        var request = new SurrealDbHttpRequest { Method = "upsert", Parameters = @params };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
