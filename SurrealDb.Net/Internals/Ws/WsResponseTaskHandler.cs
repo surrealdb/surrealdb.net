@@ -81,7 +81,11 @@ internal class WsResponseTaskHandler
             }
             if (_currentPriority.HasValue)
             {
-                _queueSources.TryRemove(_currentPriority.Value, out _);
+                _queueSources.TryRemove(
+                    _currentPriority.Value,
+                    out var previousTaskCompletionSource
+                );
+                previousTaskCompletionSource?.TrySetResult(true);
                 _queueSources.TryAdd(_currentPriority.Value, new());
             }
 
