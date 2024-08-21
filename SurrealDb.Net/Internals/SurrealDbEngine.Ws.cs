@@ -1237,22 +1237,28 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         long executionStartTime = Stopwatch.GetTimestamp();
 
-        using var timeoutCts = new CancellationTokenSource();
-        var timeoutTask = Task.Delay(30_000, cancellationToken);
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-        Task.Run(async () => await timeoutTask.ConfigureAwait(false), timeoutCts.Token);
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        cancellationToken.Register(timeoutCts.Cancel);
 
         bool requireInitialized = priority == SurrealDbWsRequestPriority.Normal;
-        await InternalConnectAsync(requireInitialized, cancellationToken).ConfigureAwait(false);
 
-        if (cancellationToken.IsCancellationRequested)
+        try
         {
-            timeoutCts.Cancel();
-            cancellationToken.ThrowIfCancellationRequested();
+            await InternalConnectAsync(requireInitialized, timeoutCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            if (!cancellationToken.IsCancellationRequested)
+                throw new TimeoutException();
+
+            throw;
         }
 
         var taskCompletionSource = new SurrealWsTaskCompletionSource(priority);
+        timeoutCts.Token.Register(() =>
+        {
+            taskCompletionSource.TrySetCanceled();
+        });
 
         string id;
 
@@ -1262,16 +1268,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             id = RandomHelper.CreateRandomId();
         } while (!_responseTaskHandler.TryAdd(id, priority, taskCompletionSource));
 
-        var waitUntilTask = _responseTaskHandler.WaitUntilAsync(priority, cancellationToken);
-
-        var initialTask = await Task.WhenAny(waitUntilTask, timeoutTask).ConfigureAwait(false);
-
-        if (initialTask != waitUntilTask)
-        {
-            _responseTaskHandler.TryRemove(id, out _);
-            taskCompletionSource.TrySetCanceled(CancellationToken.None);
-            throw new TimeoutException();
-        }
+        await _responseTaskHandler.WaitUntilAsync(priority).ConfigureAwait(false);
 
         bool shouldSendParamsInRequest = parameters is not null && parameters.Length > 0;
 
@@ -1284,34 +1281,41 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
 
-        await CborSerializer
-            .SerializeAsync(request, stream, GetCborOptions(), cancellationToken)
-            .ConfigureAwait(false);
+        try
+        {
+            await CborSerializer
+                .SerializeAsync(request, stream, GetCborOptions(), timeoutCts.Token)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            _responseTaskHandler.TryRemove(id, out _);
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _surrealDbLoggerFactory?.Method?.LogRequestFailed(id, "Timeout");
+                throw new TimeoutException();
+            }
+
+            throw;
+        }
+        catch
+        {
+            _responseTaskHandler.TryRemove(id, out _);
+            throw;
+        }
 
         bool canGetBuffer = stream.TryGetBuffer(out var payload);
         bool isMessageSent = canGetBuffer && _wsClient.Send(payload);
 
         if (!isMessageSent)
         {
-            timeoutCts.Cancel();
             _responseTaskHandler.TryRemove(id, out _);
             taskCompletionSource.TrySetCanceled(CancellationToken.None);
             _surrealDbLoggerFactory?.Method?.LogRequestFailed(id, "Failed to send message");
             throw new SurrealDbException("Failed to send message");
         }
 
-        var completedTask = await Task.WhenAny(taskCompletionSource.Task, timeoutTask)
-            .ConfigureAwait(false);
-
-        if (cancellationToken.IsCancellationRequested)
-        {
-            timeoutCts.Cancel();
-            _responseTaskHandler.TryRemove(id, out _);
-            taskCompletionSource.TrySetCanceled(CancellationToken.None);
-            cancellationToken.ThrowIfCancellationRequested();
-        }
-
-        if (completedTask == taskCompletionSource.Task)
+        try
         {
 #if NET7_0_OR_GREATER
             var executionTime = Stopwatch.GetElapsedTime(executionStartTime);
@@ -1320,7 +1324,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             var executionTime = TimeSpan.FromTicks(executionEndTime - executionStartTime);
 #endif
 
-            timeoutCts.Cancel();
             _surrealDbLoggerFactory?.Method?.LogRequestSuccess(
                 id,
                 method,
@@ -1330,13 +1333,25 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                 ),
                 SurrealDbLoggerExtensions.FormatExecutionTime(executionTime)
             );
+
             return await taskCompletionSource.Task.ConfigureAwait(false);
         }
+        catch (OperationCanceledException)
+        {
+            _responseTaskHandler.TryRemove(id, out _);
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _surrealDbLoggerFactory?.Method?.LogRequestFailed(id, "Timeout");
+                throw new TimeoutException();
+            }
 
-        _responseTaskHandler.TryRemove(id, out _);
-        taskCompletionSource.TrySetCanceled(CancellationToken.None);
-        _surrealDbLoggerFactory?.Method?.LogRequestFailed(id, "Timeout");
-        throw new TimeoutException();
+            throw;
+        }
+        catch
+        {
+            _responseTaskHandler.TryRemove(id, out _);
+            throw;
+        }
     }
 
     private static async Task CloseLiveQueryAsync(

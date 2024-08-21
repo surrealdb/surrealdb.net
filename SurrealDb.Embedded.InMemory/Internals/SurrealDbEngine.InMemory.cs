@@ -719,30 +719,48 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     {
         long executionStartTime = Stopwatch.GetTimestamp();
 
-        using var timeoutCts = new CancellationTokenSource();
-        var timeoutTask = Task.Delay(30_000, cancellationToken);
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-        Task.Run(async () => await timeoutTask.ConfigureAwait(false), timeoutCts.Token);
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        cancellationToken.Register(timeoutCts.Cancel);
 
         bool requireInitialized = method != Method.Use;
-        await InternalConnectAsync(requireInitialized, cancellationToken).ConfigureAwait(false);
 
-        if (cancellationToken.IsCancellationRequested)
+        try
         {
-            timeoutCts.Cancel();
-            cancellationToken.ThrowIfCancellationRequested();
+            await InternalConnectAsync(requireInitialized, timeoutCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _surrealDbLoggerFactory?.Method?.LogMethodFailed(method.ToString(), "Timeout"); // TODO : Avoid ToString()
+                throw new TimeoutException();
+            }
+
+            throw;
         }
 
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
-        await CborSerializer
-            .SerializeAsync(parameters ?? [], stream, GetCborOptions(), cancellationToken)
-            .ConfigureAwait(false);
+
+        try
+        {
+            await CborSerializer
+                .SerializeAsync(parameters ?? [], stream, GetCborOptions(), timeoutCts.Token)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _surrealDbLoggerFactory?.Method?.LogMethodFailed(method.ToString(), "Timeout"); // TODO : Avoid ToString()
+                throw new TimeoutException();
+            }
+
+            throw;
+        }
 
         bool canGetBuffer = stream.TryGetBuffer(out var bytes);
         if (!canGetBuffer)
         {
-            timeoutCts.Cancel();
             _surrealDbLoggerFactory?.Method?.LogMethodFailed(
                 method.ToString(),
                 "Failed to retrieve serialized buffer."
@@ -751,6 +769,10 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         }
 
         var taskCompletionSource = new TaskCompletionSource<T>();
+        timeoutCts.Token.Register(() =>
+        {
+            taskCompletionSource.TrySetCanceled();
+        });
 
         bool expectOutput = typeof(T) != typeof(Unit);
 
@@ -823,17 +845,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             }
         }
 
-        var completedTask = await Task.WhenAny(taskCompletionSource.Task, timeoutTask)
-            .ConfigureAwait(false);
-
-        if (cancellationToken.IsCancellationRequested)
-        {
-            timeoutCts.Cancel();
-            taskCompletionSource.TrySetCanceled(CancellationToken.None);
-            cancellationToken.ThrowIfCancellationRequested();
-        }
-
-        if (completedTask == taskCompletionSource.Task)
+        try
         {
 #if NET7_0_OR_GREATER
             var executionTime = Stopwatch.GetElapsedTime(executionStartTime);
@@ -842,7 +854,6 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             var executionTime = TimeSpan.FromTicks(executionEndTime - executionStartTime);
 #endif
 
-            timeoutCts.Cancel();
             _surrealDbLoggerFactory?.Method?.LogMethodSuccess(
                 method.ToString(), // TODO : Avoid ToString()
                 SurrealDbLoggerExtensions.FormatRequestParameters(
@@ -851,11 +862,18 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
                 ),
                 SurrealDbLoggerExtensions.FormatExecutionTime(executionTime)
             );
+
             return await taskCompletionSource.Task.ConfigureAwait(false);
         }
+        catch (OperationCanceledException)
+        {
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _surrealDbLoggerFactory?.Method?.LogMethodFailed(method.ToString(), "Timeout"); // TODO : Avoid ToString()
+                throw new TimeoutException();
+            }
 
-        taskCompletionSource.TrySetCanceled(CancellationToken.None);
-        _surrealDbLoggerFactory?.Method?.LogMethodFailed(method.ToString(), "Timeout"); // TODO : Avoid ToString()
-        throw new TimeoutException();
+            throw;
+        }
     }
 }

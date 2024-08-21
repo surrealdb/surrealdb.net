@@ -136,10 +136,7 @@ internal class WsResponseTaskHandler
         return result;
     }
 
-    public async Task WaitUntilAsync(
-        SurrealDbWsRequestPriority priority,
-        CancellationToken cancellationToken
-    )
+    public async Task WaitUntilAsync(SurrealDbWsRequestPriority priority)
     {
         TaskCompletionSource<bool> completionTokenSource;
 
