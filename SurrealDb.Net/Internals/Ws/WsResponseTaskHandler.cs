@@ -18,7 +18,9 @@ internal class WsResponseTaskHandler
         string,
         SurrealWsTaskCompletionSource
     > _normalResponseTasks = new();
-    private readonly ConcurrentDictionary<
+
+    private readonly object _queueSourcesLock = new();
+    private readonly Dictionary<
         SurrealDbWsRequestPriority,
         TaskCompletionSource<bool>
     > _queueSources =
@@ -75,18 +77,20 @@ internal class WsResponseTaskHandler
 
         if (nextPriority != _currentPriority)
         {
-            if (nextPriority.HasValue)
+            lock (_queueSourcesLock)
             {
-                _queueSources.GetValueOrDefault(nextPriority.Value)?.TrySetResult(true);
-            }
-            if (_currentPriority.HasValue)
-            {
-                _queueSources.TryRemove(
-                    _currentPriority.Value,
-                    out var previousTaskCompletionSource
-                );
-                previousTaskCompletionSource?.TrySetResult(true);
-                _queueSources.TryAdd(_currentPriority.Value, new());
+                if (nextPriority.HasValue)
+                {
+                    _queueSources.GetValueOrDefault(nextPriority.Value)?.TrySetResult(true);
+                }
+                if (_currentPriority.HasValue)
+                {
+                    var previousTaskCompletionSource = _queueSources.GetValueOrDefault(
+                        _currentPriority.Value
+                    );
+                    previousTaskCompletionSource?.TrySetResult(true);
+                    _queueSources[_currentPriority.Value] = new();
+                }
             }
 
             _currentPriority = nextPriority;
@@ -137,10 +141,20 @@ internal class WsResponseTaskHandler
         CancellationToken cancellationToken
     )
     {
-        var completionTokenSource = _queueSources.GetOrAdd(
-            priority,
-            _ => new TaskCompletionSource<bool>()
-        );
+        TaskCompletionSource<bool> completionTokenSource;
+
+        lock (_queueSourcesLock)
+        {
+            if (_queueSources.TryGetValue(priority, out var cts))
+            {
+                completionTokenSource = cts;
+            }
+            else
+            {
+                completionTokenSource = new();
+                _queueSources.Add(priority, completionTokenSource);
+            }
+        }
 
         await completionTokenSource.Task.ConfigureAwait(false);
     }
