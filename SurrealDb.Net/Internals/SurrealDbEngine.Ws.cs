@@ -415,7 +415,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
 
-        return dbResponse.DeserializeEnumerable<T>().First();
+        //return dbResponse.DeserializeEnumerable<T>().First();
+        return dbResponse.GetValue<T>()!;
     }
 
     public async Task<TOutput> Create<TData, TOutput>(
