@@ -387,7 +387,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     }
 
     public async Task<T> Create<T>(T data, CancellationToken cancellationToken)
-        where T : Record
+        where T : IRecord
     {
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
@@ -694,7 +694,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         TMerge data,
         CancellationToken cancellationToken
     )
-        where TMerge : Record
+        where TMerge : IRecord
     {
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
@@ -1102,7 +1102,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     }
 
     public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
-        where T : Record
+        where T : IRecord
     {
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
