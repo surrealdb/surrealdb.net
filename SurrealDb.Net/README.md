@@ -1,37 +1,3 @@
-<br>
-
-<p align="center">
-    <img width=120 src="https://raw.githubusercontent.com/surrealdb/icons/main/surreal.svg" />
-    &nbsp;
-    <img width=120 src="https://raw.githubusercontent.com/surrealdb/icons/main/dotnet.svg" />
-</p>
-
-<h3 align="center">The official SurrealDB SDK for .NET.</h3>
-
-<br>
-
-<p align="center">
-    <a href="https://github.com/surrealdb/surrealdb.net"><img src="https://img.shields.io/badge/status-beta-ff00bb.svg?style=flat-square"></a>
-    &nbsp;
-    <a href="https://surrealdb.com/docs/integration/libraries/dotnet"><img src="https://img.shields.io/badge/docs-view-44cc11.svg?style=flat-square"></a>
-    &nbsp;
-    <a href="https://www.nuget.org/packages/SurrealDb.Net"><img src="https://img.shields.io/nuget/v/surrealdb.net?style=flat-square"></a>
-    &nbsp;
-    <a href="https://www.nuget.org/packages/SurrealDb.Net"><img src="https://img.shields.io/nuget/dt/surrealdb?style=flat-square"></a>
-    &nbsp;
-    <a href="https://codecov.io/github/surrealdb/surrealdb.net"><img src="https://img.shields.io/codecov/c/github/surrealdb/surrealdb.net?style=flat-square"></a>
-</p>
-
-<p align="center">
-    <a href="https://surrealdb.com/discord"><img src="https://img.shields.io/discord/902568124350599239?label=discord&style=flat-square&color=5a66f6"></a>
-    &nbsp;
-    <a href="https://twitter.com/surrealdb"><img src="https://img.shields.io/badge/twitter-follow_us-1d9bf0.svg?style=flat-square"></a>
-    &nbsp;
-    <a href="https://www.linkedin.com/company/surrealdb/"><img src="https://img.shields.io/badge/linkedin-connect_with_us-0a66c2.svg?style=flat-square"></a>
-    &nbsp;
-    <a href="https://www.youtube.com/channel/UCjf2teVEuYVvvVC-gFZNq6w"><img src="https://img.shields.io/badge/youtube-subscribe-fc1c1c.svg?style=flat-square"></a>
-</p>
-
 # surrealdb.net
 
 The official SurrealDB SDK for .NET.
@@ -211,7 +177,7 @@ public class WeatherForecastController : ControllerBase
     CancellationToken cancellationToken
   )
   {
-    return _surrealDbClient.Patch(Table, patches, cancellationToken);
+    return _surrealDbClient.PatchAll(Table, patches, cancellationToken);
   }
 
   [HttpPatch("{id}")]
@@ -287,68 +253,3 @@ The list of command-line options is available here: https://csharpier.com/docs/C
 #### IDE integration
 
 CSharpier supports [multiple code editors](https://csharpier.com/docs/Editors), including Visual Studio, Jetbrains Rider, VSCode and Neovim. You will be able to run format on file save after configuring the settings in your IDE. 
-
-### Testing
-
-This project was written following testing best practices:
-
-- TDD, leveraging:
-  - clean code/architecture
-  - regression testing
-  - adding new features and tests easily
-- a vast majority of tests are integration tests, ensuring compatibility with a concrete SurrealDB version
-- each integration test is using a separate SurrealDB namespace/database
-
-Unit/Integration tests are written using [xUnit](https://xunit.net/) and [FluentAssertions](https://fluentassertions.com/).
-
-You will need a local SurrealDB instance alongside the tests. Start one using the following command:
-
-```sh
-surreal start --log debug --user root --pass root memory --allow-guests
-```
-
-Once ready, go to the root directory of the project and run the following command:
-
-```sh
-dotnet watch test --project SurrealDb.Net.Tests
-```
-
-Due to the asynchronous nature of Live Queries, they are tested against a separate project named `SurrealDb.Net.LiveQuery.Tests`. Where the default test project allow full parallelization, this project completely disable test parallelization. To execute tests on Live Queries, run the following command:
-
-```sh
-dotnet watch test --project SurrealDb.Net.LiveQuery.Tests
-```
-
-Note 1: Because Live Query tests are not run in parallel, it can take quite some time to run all tests.
-
-Note 2: You can run the two test projects in parallel.
-
-### Benchmarking
-
-This project also contains [benchmarks](https://benchmarkdotnet.org/) in order to detect possible performance regressions.
-
-You will need a local SurrealDB instance alongside the tests. Start one using the following command:
-
-```sh
-surreal start --user root --pass root memory --allow-guests
-```
-
-Once ready, go to the root directory of the project and run the following command:
-
-```sh
-dotnet run -c Release --project SurrealDb.Net.Benchmarks.Remote --filter '*'
-```
-
-```sh
-./prepare_embedded_benchmarks.sh -s
-dotnet run -c Release --project SurrealDb.Net.Benchmarks.Embedded --filter '*'
-./prepare_embedded_benchmarks.sh -e
-```
-
-For Windows:
-
-```sh
-./prepare_embedded_benchmarks.ps1 -s
-dotnet run -c Release --project SurrealDb.Net.Benchmarks.Embedded --filter '*'
-./prepare_embedded_benchmarks.ps1 -e
-```
