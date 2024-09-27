@@ -174,6 +174,25 @@ public interface ISurrealDbClient : IDisposable
     Task<T> Info<T>(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Inserts a set of records in a table in the database.
+    /// </summary>
+    /// <typeparam name="T">The type of the records to insert.</typeparam>
+    /// <param name="table">The table name where the record will be stored.</param>
+    /// <param name="data">The records to insert.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The records created.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<IEnumerable<T>> Insert<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken = default
+    )
+        where T : IRecord;
+
+    /// <summary>
     /// Invalidates the authentication for the current connection.
     /// </summary>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -753,9 +772,28 @@ public interface ISurrealDbClient : IDisposable
     Task Unset(string key, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Updates the provided records.
+    /// </summary>
+    /// <typeparam name="T">The type of the record to update.</typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="data">The records to update.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The list of updated records.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<IEnumerable<T>> Update<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken = default
+    )
+        where T : IRecord;
+
+    /// <summary>
     /// Updates all records in the database.
     /// </summary>
-    /// <typeparam name="T">The type of the record to create.</typeparam>
+    /// <typeparam name="T">The type of the record to update.</typeparam>
     /// <param name="table">The name of the database table.</param>
     /// <param name="data">The record to create or update.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>

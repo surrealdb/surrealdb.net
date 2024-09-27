@@ -29,6 +29,12 @@ public interface ISurrealDbEngine : IDisposable
     Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken);
     Task<bool> Health(CancellationToken cancellationToken);
     Task<T> Info<T>(CancellationToken cancellationToken);
+    Task<IEnumerable<T>> Insert<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken
+    )
+        where T : IRecord;
     Task Invalidate(CancellationToken cancellationToken);
     Task Kill(
         Guid queryUuid,
@@ -117,6 +123,12 @@ public interface ISurrealDbEngine : IDisposable
         where T : ScopeAuth;
     SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id);
     Task Unset(string key, CancellationToken cancellationToken);
+    Task<IEnumerable<T>> Update<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken
+    )
+        where T : IRecord;
     Task<IEnumerable<T>> UpdateAll<T>(string table, T data, CancellationToken cancellationToken)
         where T : class;
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken)

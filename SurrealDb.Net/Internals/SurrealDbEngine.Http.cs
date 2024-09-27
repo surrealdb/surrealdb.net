@@ -260,6 +260,22 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return dbResponse.GetValue<T>()!;
     }
 
+    public async Task<IEnumerable<T>> Insert<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken
+    )
+        where T : IRecord
+    {
+        object?[] @params = [data];
+        var request = new SurrealDbHttpRequest { Method = "insert", Parameters = @params };
+
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+            .ConfigureAwait(false);
+
+        return dbResponse.GetValue<IEnumerable<T>>()!;
+    }
+
     public Task Invalidate(CancellationToken _)
     {
         _config.ResetAuth();
@@ -645,6 +661,22 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         _config.RemoveParam(key);
         return Task.CompletedTask;
+    }
+
+    public async Task<IEnumerable<T>> Update<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken
+    )
+        where T : IRecord
+    {
+        object?[] @params = [data];
+        var request = new SurrealDbHttpRequest { Method = "update", Parameters = @params };
+
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+            .ConfigureAwait(false);
+
+        return dbResponse.GetValue<IEnumerable<T>>()!;
     }
 
     public async Task<IEnumerable<T>> UpdateAll<T>(
