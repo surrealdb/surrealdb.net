@@ -584,6 +584,24 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.GetValue<T>()!;
     }
 
+    public async Task<IEnumerable<T>> Insert<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken
+    )
+        where T : IRecord
+    {
+        var dbResponse = await SendRequestAsync(
+                "insert",
+                [table, data],
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        return dbResponse.DeserializeEnumerable<T>();
+    }
+
     public async Task Invalidate(CancellationToken cancellationToken)
     {
         await SendRequestAsync(
@@ -1066,6 +1084,24 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         await SendRequestAsync("unset", [key], SurrealDbWsRequestPriority.Normal, cancellationToken)
             .ConfigureAwait(false);
+    }
+
+    public async Task<IEnumerable<T>> Update<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken
+    )
+        where T : IRecord
+    {
+        var dbResponse = await SendRequestAsync(
+                "update",
+                [table, data],
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        return dbResponse.DeserializeEnumerable<T>();
     }
 
     public async Task<IEnumerable<T>> UpdateAll<T>(

@@ -247,6 +247,16 @@ public class SurrealDbClient : ISurrealDbClient
         return _engine.Info<T>(cancellationToken);
     }
 
+    public Task<IEnumerable<T>> Insert<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken = default
+    )
+        where T : IRecord
+    {
+        return _engine.Insert<T>(table, data, cancellationToken);
+    }
+
     public Task Invalidate(CancellationToken cancellationToken = default)
     {
         return _engine.Invalidate(cancellationToken);
@@ -594,6 +604,18 @@ public class SurrealDbClient : ISurrealDbClient
     public Task Unset(string key, CancellationToken cancellationToken = default)
     {
         return _engine.Unset(key, cancellationToken);
+    }
+
+    public Task<IEnumerable<T>> Update<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken = default
+    )
+        where T : IRecord
+    {
+        throw new NotImplementedException(
+            "Bulk update is on the way. The documentation was merged but the code wasn't in surreal db 2.0. Leaving this here for later."
+        );
     }
 
     public Task<IEnumerable<T>> UpdateAll<T>(
