@@ -26,6 +26,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configurat
 		.editorconfig = .editorconfig
 		Directory.Build.props = Directory.Build.props
 		Directory.Packages.props = Directory.Packages.props
+		global.json = global.json
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Net.LiveQuery.Tests", "SurrealDb.Net.LiveQuery.Tests\SurrealDb.Net.LiveQuery.Tests.csproj", "{8A61723E-3341-4F38-9D93-13777E8D5566}"
