@@ -34,19 +34,21 @@ public class ScenarioBench : BaseRemoteBenchmark
                         SurrealDbOptions
                             .Create()
                             .WithEndpoint(HttpUrl)
+                            .WithNamespace(dbInfo.Namespace)
+                            .WithDatabase(dbInfo.Database)
+                            .WithUsername("root")
+                            .WithPassword("root")
                             .WithNamingPolicy(NamingPolicy)
                             .Build(),
                         appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
                     );
-                    InitializeSurrealDbClient(_surrealdbHttpClient, dbInfo);
                     await _surrealdbHttpClient.Connect();
                     break;
                 case 1:
                     _surrealdbHttpClientWithHttpClientFactory = clientGenerator.Create(
-                        $"Endpoint={HttpUrl}",
+                        $"Endpoint={HttpUrl};NS={dbInfo.Namespace};DB={dbInfo.Database};user=root;pass=root",
                         funcJsonSerializerContexts: GetFuncJsonSerializerContexts()
                     );
-                    InitializeSurrealDbClient(_surrealdbHttpClientWithHttpClientFactory, dbInfo);
                     await _surrealdbHttpClientWithHttpClientFactory.Connect();
                     break;
                 case 2:
@@ -54,11 +56,14 @@ public class ScenarioBench : BaseRemoteBenchmark
                         SurrealDbOptions
                             .Create()
                             .WithEndpoint(WsUrl)
+                            .WithNamespace(dbInfo.Namespace)
+                            .WithDatabase(dbInfo.Database)
+                            .WithUsername("root")
+                            .WithPassword("root")
                             .WithNamingPolicy(NamingPolicy)
                             .Build(),
                         appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
                     );
-                    InitializeSurrealDbClient(_surrealdbWsTextClient, dbInfo);
                     await _surrealdbWsTextClient.Connect();
                     break;
                 case 3:
@@ -68,11 +73,14 @@ public class ScenarioBench : BaseRemoteBenchmark
                             SurrealDbOptions
                                 .Create()
                                 .WithEndpoint(WsUrl)
+                                .WithNamespace(dbInfo.Namespace)
+                                .WithDatabase(dbInfo.Database)
+                                .WithUsername("root")
+                                .WithPassword("root")
                                 .WithNamingPolicy(NamingPolicy)
                                 .WithSerialization(SerializationConstants.CBOR)
                                 .Build()
                         );
-                        InitializeSurrealDbClient(_surrealdbWsBinaryClient, dbInfo);
                         await _surrealdbWsBinaryClient.Connect();
                     }
                     break;

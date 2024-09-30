@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using Dahomey.Cbor.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SurrealDb.Net.Tests;
 
@@ -47,8 +48,14 @@ public class ConnectTests
             using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
-            client.Configure(dbInfo.Namespace, dbInfo.Database);
+            using var client = new SurrealDbClient(
+                new SurrealDbOptions
+                {
+                    Endpoint = "ws://127.0.0.1:8000/rpc",
+                    Namespace = dbInfo.Namespace,
+                    Database = dbInfo.Database
+                }
+            );
 
             await client.Connect();
 

@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Exceptions;
+﻿using Microsoft.Extensions.ObjectPool;
+using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -14,7 +15,7 @@ namespace SurrealDb.Net;
 /// The entry point to communicate with a SurrealDB instance.
 /// Authenticate, use namespace/database, execute queries, etc...
 /// </summary>
-public interface ISurrealDbClient : IDisposable
+public interface ISurrealDbClient : IDisposable, IAsyncDisposable
 {
     /// <summary>
     /// The uri linked to the SurrealDB instance target.
@@ -37,23 +38,6 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task Authenticate(Jwt jwt, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Configures the client to use a specific namespace and database, with a user-defined root access.
-    /// </summary>
-    /// <param name="ns">The table namespace to use.</param>
-    /// <param name="db">The table database to use.</param>
-    /// <param name="username">The username with root access.</param>
-    /// <param name="password">The password with root access.</param>
-    void Configure(string? ns, string? db, string? username, string? password);
-
-    /// <summary>
-    /// Configures the client to use a specific namespace and database, with a JWT token identifier.
-    /// </summary>
-    /// <param name="ns">The table namespace to use.</param>
-    /// <param name="db">The table database to use.</param>
-    /// <param name="token">The value of the JWT token.</param>
-    void Configure(string? ns, string? db, string? token = null);
 
     /// <summary>
     /// Connects to the SurrealDB instance. This can improve performance to avoid cold starts.<br /><br />

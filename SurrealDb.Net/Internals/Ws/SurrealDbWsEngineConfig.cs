@@ -1,4 +1,5 @@
-using SurrealDb.Net.Internals.Auth;
+﻿using SurrealDb.Net.Internals.Auth;
+using SurrealDb.Net.Internals.Models;
 
 namespace SurrealDb.Net.Internals.Ws;
 
@@ -7,6 +8,11 @@ internal class SurrealDbWsEngineConfig
     public IAuth Auth { get; private set; } = new NoAuth();
     public string? Ns { get; private set; }
     public string? Db { get; private set; }
+
+    public SurrealDbWsEngineConfig(SurrealDbClientParams @params)
+    {
+        Reset(@params);
+    }
 
     public void Use(string ns, string? db)
     {
@@ -24,10 +30,27 @@ internal class SurrealDbWsEngineConfig
         Auth = new BearerAuth(token);
     }
 
-    public void Reset()
+    public void ResetAuth()
     {
-        Ns = null;
-        Db = null;
         Auth = new NoAuth();
+    }
+
+    public void Reset(SurrealDbClientParams @params)
+    {
+        Ns = @params.Ns;
+        Db = @params.Db;
+
+        if (@params.Username is not null)
+        {
+            SetBasicAuth(@params.Username, @params.Password);
+        }
+        else if (@params.Token is not null)
+        {
+            SetBearerAuth(@params.Token);
+        }
+        else
+        {
+            ResetAuth();
+        }
     }
 }

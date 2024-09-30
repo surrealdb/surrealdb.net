@@ -40,29 +40,43 @@ public class ColdStartBench : BaseRemoteBenchmark
     [Benchmark]
     public async Task HttpConstructor()
     {
+        var options = new SurrealDbOptionsBuilder()
+            .WithEndpoint(HttpUrl)
+            .WithNamespace(_databaseInfo!.Namespace)
+            .WithDatabase(_databaseInfo!.Database)
+            .WithUsername("root")
+            .WithPassword("root")
+            .WithNamingPolicy(NamingPolicy)
+            .Build();
+
         var client = new SurrealDbClient(
-            HttpUrl,
-            NamingPolicy,
+            options,
             _serviceProvider!.GetRequiredService<IHttpClientFactory>(),
             appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
         );
         _clients.Add(client);
 
-        InitializeSurrealDbClient(client, _databaseInfo!);
         await client.Connect();
     }
 
     [Benchmark]
     public async Task WsConstructor()
     {
+        var options = new SurrealDbOptionsBuilder()
+            .WithEndpoint(HttpUrl)
+            .WithNamespace(_databaseInfo!.Namespace)
+            .WithDatabase(_databaseInfo!.Database)
+            .WithUsername("root")
+            .WithPassword("root")
+            .WithNamingPolicy(NamingPolicy)
+            .Build();
+
         var client = new SurrealDbClient(
-            WsUrl,
-            NamingPolicy,
+            options,
             appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
         );
         _clients.Add(client);
 
-        InitializeSurrealDbClient(client, _databaseInfo!);
         await client.Connect();
     }
 }

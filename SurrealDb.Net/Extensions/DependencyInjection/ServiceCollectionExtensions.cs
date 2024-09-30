@@ -1,9 +1,12 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Dahomey.Cbor;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.ObjectPool;
 using SurrealDb.Net;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Models;
+using SurrealDb.Net.Internals.ObjectPool;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -288,36 +291,84 @@ public static class ServiceCollectionExtensions
                 );
                 break;
             case ServiceLifetime.Scoped:
+                services.TryAddSingleton(serviceProvider =>
+                {
+                    var policy = new AsyncPooledObjectPolicy<SurrealDbClientPoolContainer>();
+                    return new SurrealDbClientPool(policy);
+                });
+
                 services.AddScoped(
                     typeof(T),
                     serviceProvider =>
                     {
-                        return new SurrealDbClient(
+                        var pool = serviceProvider.GetRequiredService<SurrealDbClientPool>();
+                        var container = pool.Get();
+
+                        var poolTask = new Func<Task>(() => pool.ReturnAsync(container));
+
+                        if (container.ClientEngine is not null)
+                        {
+                            return new SurrealDbClient(
+                                parameters,
+                                container.ClientEngine,
+                                poolTask
+                            );
+                        }
+
+                        var client = new SurrealDbClient(
                             parameters,
                             serviceProvider,
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
                             configureJsonSerializerOptions,
                             prependJsonSerializerContexts,
                             appendJsonSerializerContexts,
-                            configureCborOptions
+                            configureCborOptions,
+                            poolTask
                         );
+                        container.ClientEngine = client.Engine;
+
+                        return client;
                     }
                 );
                 break;
             case ServiceLifetime.Transient:
+                services.TryAddSingleton(serviceProvider =>
+                {
+                    var policy = new AsyncPooledObjectPolicy<SurrealDbClientPoolContainer>();
+                    return new SurrealDbClientPool(policy);
+                });
+
                 services.AddTransient(
                     typeof(T),
                     serviceProvider =>
                     {
-                        return new SurrealDbClient(
+                        var pool = serviceProvider.GetRequiredService<SurrealDbClientPool>();
+                        var container = pool.Get();
+
+                        var poolTask = new Func<Task>(() => pool.ReturnAsync(container));
+
+                        if (container.ClientEngine is not null)
+                        {
+                            return new SurrealDbClient(
+                                parameters,
+                                container.ClientEngine,
+                                poolTask
+                            );
+                        }
+
+                        var client = new SurrealDbClient(
                             parameters,
                             serviceProvider,
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
                             configureJsonSerializerOptions,
                             prependJsonSerializerContexts,
                             appendJsonSerializerContexts,
-                            configureCborOptions
+                            configureCborOptions,
+                            poolTask
                         );
+                        container.ClientEngine = client.Engine;
+
+                        return client;
                     }
                 );
                 break;

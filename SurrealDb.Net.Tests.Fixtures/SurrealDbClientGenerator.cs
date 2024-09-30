@@ -21,7 +21,7 @@ public class DatabaseInfoFaker : Faker<DatabaseInfo>
     }
 }
 
-public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
+internal class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 {
     private static readonly DatabaseInfoFaker _databaseInfoFaker = new();
 
@@ -29,8 +29,25 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
     private DatabaseInfo? _databaseInfo;
     private SurrealDbOptions? _options;
 
+    // TODO : Remove to simplify with Configure()/ctor + GetSingleton()
     public SurrealDbClient Create(
         string connectionString,
+        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
+        Func<JsonSerializerContext[]>? funcJsonSerializerContexts = null
+    )
+    {
+        Configure(
+            connectionString,
+            ServiceLifetime.Singleton,
+            configureJsonSerializerOptions,
+            funcJsonSerializerContexts
+        );
+        return _serviceProvider!.GetRequiredService<SurrealDbClient>();
+    }
+
+    public SurrealDbClientGenerator Configure(
+        string connectionString,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
         Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
         Func<JsonSerializerContext[]>? funcJsonSerializerContexts = null
     )
@@ -44,13 +61,19 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
         _serviceProvider = new ServiceCollection()
             .AddSurreal(
                 _options,
+                lifetime,
                 configureJsonSerializerOptions: configureJsonSerializerOptions,
                 appendJsonSerializerContexts: funcJsonSerializerContexts
             )
             .AddInMemoryProvider()
             .And.BuildServiceProvider(validateScopes: true);
 
-        return _serviceProvider.GetRequiredService<SurrealDbClient>();
+        return this;
+    }
+
+    public IServiceScope? CreateScope()
+    {
+        return _serviceProvider?.CreateScope();
     }
 
     public DatabaseInfo GenerateDatabaseInfo()

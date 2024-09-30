@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;net6.0;net8.0</TargetFrameworks>
     
     <IsPackable>true</IsPackable>
     <PackageId>SurrealDb.Net</PackageId>
@@ -13,6 +13,7 @@
 	<PackageReference Include="ConcurrentHashSet" Version="1.3.0" />
 	<PackageReference Include="Dahomey.Cbor" Version="1.24.3" />
 	<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+	<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.6" />
 	<PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
 	<PackageReference Include="Microsoft.Spatial" Version="7.18.0" />
 	<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
@@ -31,6 +32,9 @@
 	<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
 	  <_Parameter1>SurrealDb.Net.LiveQuery.Tests</_Parameter1>
 	</AssemblyAttribute>
+  <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+    <_Parameter1>SurrealDb.Net.Tests.Fixtures</_Parameter1>
+  </AssemblyAttribute>
 	<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
 	  <_Parameter1>SurrealDb.Net.Benchmarks</_Parameter1>
 	</AssemblyAttribute>

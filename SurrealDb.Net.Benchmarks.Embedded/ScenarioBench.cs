@@ -12,7 +12,10 @@ public class ScenarioBench : BaseEmbeddedBenchmark
     public void Setup()
     {
         _memoryClient = new SurrealDbMemoryClient(NamingPolicy);
-        InitializeSurrealDbClient(_memoryClient, DefaultDatabaseInfo);
+        _memoryClient
+            .Use(DefaultDatabaseInfo.Namespace, DefaultDatabaseInfo.Database)
+            .GetAwaiter()
+            .GetResult();
         CreateEcommerceTables(_memoryClient, DefaultDatabaseInfo).GetAwaiter().GetResult();
     }
 
@@ -26,7 +29,7 @@ public class ScenarioBench : BaseEmbeddedBenchmark
     public async Task<List<ProductAlsoPurchased>> Memory()
     {
         using var client = new SurrealDbMemoryClient(NamingPolicy);
-        InitializeSurrealDbClient(client, DefaultDatabaseInfo);
+        await client.Use(DefaultDatabaseInfo.Namespace, DefaultDatabaseInfo.Database);
 
         return await BenchmarkRuns.Scenario(_memoryClient!);
     }

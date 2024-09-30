@@ -9,8 +9,6 @@ public class ColdStartBench : BaseEmbeddedBenchmark
     public async Task MemoryConstructor()
     {
         using var client = new SurrealDbMemoryClient(NamingPolicy);
-
-        InitializeSurrealDbClient(client, DefaultDatabaseInfo);
         await client.Connect();
     }
 }

@@ -15,7 +15,10 @@ public class UpsertBench : BaseEmbeddedBenchmark
     public void Setup()
     {
         _memoryClient = new SurrealDbMemoryClient(NamingPolicy);
-        InitializeSurrealDbClient(_memoryClient, DefaultDatabaseInfo);
+        _memoryClient
+            .Use(DefaultDatabaseInfo.Namespace, DefaultDatabaseInfo.Database)
+            .GetAwaiter()
+            .GetResult();
         SeedData(_memoryClient, DefaultDatabaseInfo, _generatedPosts).GetAwaiter().GetResult();
     }
 
