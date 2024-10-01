@@ -1,4 +1,5 @@
-using SurrealDb.Net.Internals.Auth;
+﻿using SurrealDb.Net.Internals.Auth;
+using SurrealDb.Net.Internals.Models;
 
 namespace SurrealDb.Net.Internals.Http;
 
@@ -10,6 +11,11 @@ internal class SurrealDbHttpEngineConfig
 
     private readonly Dictionary<string, object> _parameters = new();
     public IReadOnlyDictionary<string, object> Parameters => _parameters;
+
+    public SurrealDbHttpEngineConfig(SurrealDbClientParams @params)
+    {
+        Reset(@params);
+    }
 
     public void Use(string ns, string? db)
     {
@@ -40,5 +46,25 @@ internal class SurrealDbHttpEngineConfig
     public void RemoveParam(string key)
     {
         _parameters.Remove(key);
+    }
+
+    public void Reset(SurrealDbClientParams @params)
+    {
+        _parameters.Clear();
+        Ns = @params.Ns;
+        Db = @params.Db;
+
+        if (@params.Username is not null)
+        {
+            SetBasicAuth(@params.Username, @params.Password);
+        }
+        else if (@params.Token is not null)
+        {
+            SetBearerAuth(@params.Token);
+        }
+        else
+        {
+            ResetAuth();
+        }
     }
 }

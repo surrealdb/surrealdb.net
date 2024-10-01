@@ -5,7 +5,7 @@ pub enum Method {
     Set = 3,
     Unset = 4,
     Select = 5,
-    //Insert = 6, // TODO
+    Insert = 6,
     Create = 7,
     Update = 8,
     Merge = 9,
@@ -24,6 +24,7 @@ impl From<Method> for surrealdb::rpc::method::Method {
             Method::Set => surrealdb::rpc::method::Method::Set,
             Method::Unset => surrealdb::rpc::method::Method::Unset,
             Method::Select => surrealdb::rpc::method::Method::Select,
+            Method::Insert => surrealdb::rpc::method::Method::Insert,
             Method::Create => surrealdb::rpc::method::Method::Create,
             Method::Update => surrealdb::rpc::method::Method::Update,
             Method::Merge => surrealdb::rpc::method::Method::Merge,

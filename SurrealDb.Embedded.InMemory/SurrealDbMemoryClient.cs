@@ -53,26 +53,11 @@ public class SurrealDbMemoryClient : ISurrealDbClient
 
         _engine = new SurrealDbInMemoryEngine();
         _engine.Initialize(parameters, configureCborOptions);
-
-        if (parameters.Username is not null)
-            Configure(parameters.Ns, parameters.Db, parameters.Username, parameters.Password);
-        else
-            Configure(parameters.Ns, parameters.Db, parameters.Token);
     }
 
     public Task Authenticate(Jwt jwt, CancellationToken cancellationToken = default)
     {
         return _engine.Authenticate(jwt, cancellationToken);
-    }
-
-    public void Configure(string? ns, string? db, string? username, string? password)
-    {
-        _engine.Configure(ns, db, username, password);
-    }
-
-    public void Configure(string? ns, string? db, string? token = null)
-    {
-        _engine.Configure(ns, db, token);
     }
 
     public Task Connect(CancellationToken cancellationToken = default)
@@ -125,6 +110,12 @@ public class SurrealDbMemoryClient : ISurrealDbClient
         _engine.Dispose();
     }
 
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+        return ValueTask.CompletedTask;
+    }
+
     public Task<bool> Health(CancellationToken cancellationToken = default)
     {
         return _engine.Health(cancellationToken);
@@ -133,6 +124,16 @@ public class SurrealDbMemoryClient : ISurrealDbClient
     public Task<T> Info<T>(CancellationToken cancellationToken = default)
     {
         return _engine.Info<T>(cancellationToken);
+    }
+
+    public Task<IEnumerable<T>> Insert<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken = default
+    )
+        where T : Record
+    {
+        return _engine.Insert(table, data, cancellationToken);
     }
 
     public Task Invalidate(CancellationToken cancellationToken = default)

@@ -14,7 +14,10 @@ public class CreateBench : BaseEmbeddedBenchmark
     public void Setup()
     {
         _memoryClient = new SurrealDbMemoryClient(NamingPolicy);
-        InitializeSurrealDbClient(_memoryClient, DefaultDatabaseInfo);
+        _memoryClient
+            .Use(DefaultDatabaseInfo.Namespace, DefaultDatabaseInfo.Database)
+            .GetAwaiter()
+            .GetResult();
         CreatePostTable(_memoryClient, DefaultDatabaseInfo).GetAwaiter().GetResult();
     }
 

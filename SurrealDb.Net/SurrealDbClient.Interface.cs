@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Exceptions;
+﻿using Microsoft.Extensions.ObjectPool;
+using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -14,7 +15,7 @@ namespace SurrealDb.Net;
 /// The entry point to communicate with a SurrealDB instance.
 /// Authenticate, use namespace/database, execute queries, etc...
 /// </summary>
-public interface ISurrealDbClient : IDisposable
+public interface ISurrealDbClient : IDisposable, IAsyncDisposable
 {
     /// <summary>
     /// The uri linked to the SurrealDB instance target.
@@ -39,23 +40,6 @@ public interface ISurrealDbClient : IDisposable
     Task Authenticate(Jwt jwt, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Configures the client to use a specific namespace and database, with a user-defined root access.
-    /// </summary>
-    /// <param name="ns">The table namespace to use.</param>
-    /// <param name="db">The table database to use.</param>
-    /// <param name="username">The username with root access.</param>
-    /// <param name="password">The password with root access.</param>
-    void Configure(string? ns, string? db, string? username, string? password);
-
-    /// <summary>
-    /// Configures the client to use a specific namespace and database, with a JWT token identifier.
-    /// </summary>
-    /// <param name="ns">The table namespace to use.</param>
-    /// <param name="db">The table database to use.</param>
-    /// <param name="token">The value of the JWT token.</param>
-    void Configure(string? ns, string? db, string? token = null);
-
-    /// <summary>
     /// Connects to the SurrealDB instance. This can improve performance to avoid cold starts.<br /><br />
     ///
     /// * Using HTTP(S) protocol: initializes a new HTTP connection<br />
@@ -70,6 +54,9 @@ public interface ISurrealDbClient : IDisposable
     /// <summary>
     /// Creates the specific record in the database.
     /// </summary>
+    /// <remarks>
+    /// Note: This method creates only a single record. If the record already exist, it will throw an error.
+    /// </remarks>
     /// <typeparam name="T">The type of the record to create.</typeparam>
     /// <param name="data">The record to create.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -174,11 +161,15 @@ public interface ISurrealDbClient : IDisposable
     Task<T> Info<T>(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Inserts a set of records in a table in the database.
+    /// Inserts a collection of records in the database.
     /// </summary>
-    /// <typeparam name="T">The type of the records to insert.</typeparam>
-    /// <param name="table">The table name where the record will be stored.</param>
-    /// <param name="data">The records to insert.</param>
+    /// <remarks>
+    /// Note: This method allows you to create multiple records at once.
+    /// In case a record already exist, it will not throw error and it will not update the existing record.
+    /// </remarks>
+    /// <typeparam name="T">The type of the record to create.</typeparam>
+    /// <param name="table">The table name where the records will be stored.</param>
+    /// <param name="data">The records to create.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>The records created.</returns>
     /// <exception cref="OperationCanceledException"></exception>

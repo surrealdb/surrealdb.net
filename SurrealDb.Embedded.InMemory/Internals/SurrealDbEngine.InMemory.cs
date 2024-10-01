@@ -1,5 +1,4 @@
-﻿using System.Net;
-using System.Reactive;
+﻿using System.Reactive;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -32,6 +31,10 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     private bool _isConnected;
     private bool _isInitialized;
 
+#if DEBUG
+    public string Id => _id.ToString();
+#endif
+
     static SurrealDbInMemoryEngine()
     {
         NativeMethods.create_global_runtime();
@@ -61,6 +64,11 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     public Task Authenticate(Jwt jwt, CancellationToken cancellationToken)
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
+    }
+
+    public Task Clear(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
     }
 
     public void Configure(string? ns, string? db, string? username, string? password)
@@ -212,6 +220,17 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     public Task<T> Info<T>(CancellationToken cancellationToken)
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
+    }
+
+    public async Task<IEnumerable<T>> Insert<T>(
+        string table,
+        IEnumerable<T> data,
+        CancellationToken cancellationToken
+    )
+        where T : Record
+    {
+        return await SendRequestAsync<List<T>>(Method.Insert, [table, data], cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public Task Invalidate(CancellationToken cancellationToken)
@@ -479,6 +498,12 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     public SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id)
     {
         throw new NotSupportedException();
+    }
+
+    public Task<bool> TryResetAsync()
+    {
+        // 💡 No reuse needed when embedded
+        return Task.FromResult(false);
     }
 
     public async Task Unset(string key, CancellationToken cancellationToken)
