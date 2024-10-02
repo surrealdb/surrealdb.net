@@ -79,7 +79,7 @@ public class SignInTests
         await func.Should().NotThrowAsync();
 
         jwt.Should().NotBeNull();
-        jwt!.Token.Should().BeValidJwt();
+        jwt!.Value.Token.Should().BeValidJwt();
     }
 
     [Theory]
@@ -146,7 +146,7 @@ public class SignInTests
         await func.Should().NotThrowAsync();
 
         jwt.Should().NotBeNull();
-        jwt!.Token.Should().BeValidJwt();
+        jwt!.Value.Token.Should().BeValidJwt();
     }
 
     [Theory]
@@ -224,7 +224,7 @@ public class SignInTests
         await func.Should().NotThrowAsync();
 
         jwt.Should().NotBeNull();
-        jwt!.Token.Should().BeValidJwt();
+        jwt!.Value.Token.Should().BeValidJwt();
     }
 
     [Theory]

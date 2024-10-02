@@ -20,13 +20,13 @@ jobs:
         uses: actions/checkout@v3
       
       - name: Download embedded artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: embedded
           path: ./rust-embedded/target/debug
 
       - name: Download SurrealDB
-        run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh
+        run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh -s -- --version v1.5.5
 
       - name: Run SurrealDB root
         run: surreal start --user root --pass root memory --auth --allow-guests &
@@ -95,7 +95,7 @@ jobs:
         run: cargo build
       
       - name: Publish embedded artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: embedded
           path: ./rust-embedded/target/debug/libsurreal_memory.so

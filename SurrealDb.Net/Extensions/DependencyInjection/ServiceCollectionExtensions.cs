@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Dahomey.Cbor;
+using Microsoft.Extensions.Logging;
 using SurrealDb.Net;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Models;
@@ -266,8 +267,6 @@ public static class ServiceCollectionExtensions
         Action<CborOptions>? configureCborOptions = null
     )
     {
-        var parameters = new SurrealDbClientParams(configuration);
-
         switch (lifetime)
         {
             case ServiceLifetime.Singleton:
@@ -276,13 +275,14 @@ public static class ServiceCollectionExtensions
                     serviceProvider =>
                     {
                         return new SurrealDbClient(
-                            parameters,
+                            configuration,
                             serviceProvider,
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
                             configureJsonSerializerOptions,
                             prependJsonSerializerContexts,
                             appendJsonSerializerContexts,
-                            configureCborOptions
+                            configureCborOptions,
+                            serviceProvider.GetService<ILoggerFactory>()
                         );
                     }
                 );
@@ -293,13 +293,14 @@ public static class ServiceCollectionExtensions
                     serviceProvider =>
                     {
                         return new SurrealDbClient(
-                            parameters,
+                            configuration,
                             serviceProvider,
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
                             configureJsonSerializerOptions,
                             prependJsonSerializerContexts,
                             appendJsonSerializerContexts,
-                            configureCborOptions
+                            configureCborOptions,
+                            serviceProvider.GetService<ILoggerFactory>()
                         );
                     }
                 );
@@ -310,13 +311,14 @@ public static class ServiceCollectionExtensions
                     serviceProvider =>
                     {
                         return new SurrealDbClient(
-                            parameters,
+                            configuration,
                             serviceProvider,
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
                             configureJsonSerializerOptions,
                             prependJsonSerializerContexts,
                             appendJsonSerializerContexts,
-                            configureCborOptions
+                            configureCborOptions,
+                            serviceProvider.GetService<ILoggerFactory>()
                         );
                     }
                 );

@@ -1,4 +1,7 @@
 ﻿using Dahomey.Cbor;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Models;
@@ -142,7 +145,11 @@ public interface ISurrealDbProviderEngine : ISurrealDbEngine
     /// <summary>
     /// Initializes engine dynamically, due to DependencyInjection interop.
     /// </summary>
-    void Initialize(SurrealDbClientParams parameters, Action<CborOptions>? configureCborOptions);
+    void Initialize(
+        SurrealDbOptions configuration,
+        Action<CborOptions>? configureCborOptions,
+        ISurrealDbLoggerFactory? surrealDbLoggerFactory
+    );
 }
 
 public interface ISurrealDbInMemoryEngine : ISurrealDbProviderEngine { }

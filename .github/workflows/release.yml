@@ -114,7 +114,7 @@ jobs:
         run: cargo build --release --target ${{ matrix.target }}
       
       - name: Publish embedded artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: embedded-${{ matrix.target }}
           path: ${{ matrix.libpath }}
@@ -142,7 +142,7 @@ jobs:
       - name: Create Package
         run: dotnet pack --configuration Release --output ${{ env.NuGetDirectory }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: nuget
           if-no-files-found: error
@@ -159,7 +159,7 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: nuget
           path: ${{ env.NuGetDirectory }}
@@ -170,23 +170,23 @@ jobs:
       - name: Validate package
         run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg")
 
-  # publish-package:
-  #   needs: [validate-package]
-  #   runs-on: ubuntu-latest
+  publish-package:
+    needs: [validate-package]
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Setup dotnet 8.0
-  #       uses: actions/setup-dotnet@v3
-  #       with:
-  #         dotnet-version: "8.0.x"
+    steps:
+      - name: Setup dotnet 8.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.x"
 
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: nuget
-  #         path: ${{ env.NuGetDirectory }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: nuget
+          path: ${{ env.NuGetDirectory }}
 
-  #     - name: Publish NuGet package
-  #       run: |
-  #         foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
-  #             dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
-  #         }
+      - name: Publish NuGet package
+        run: |
+          foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
+              dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+          }

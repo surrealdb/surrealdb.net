@@ -1,9 +1,10 @@
 ﻿using System.Text.Json;
 using SurrealDb.Net;
+using SurrealDb.Net.Extensions.DependencyInjection;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
-public class SurrealDbOptions
+public sealed class SurrealDbOptions
 {
     /// <summary>
     /// Endpoint of the SurrealDB instance.<br /><br />
@@ -56,6 +57,19 @@ public class SurrealDbOptions
     /// Supported embedded modes are <c>mem://</c>.
     /// </summary>
     public bool IsEmbedded => Endpoint!.StartsWith("mem://");
+
+    /// <summary>
+    /// Logging options used for the SurrealDB client.
+    /// </summary>
+    public SurrealDbLoggingOptions Logging { get; internal set; } = new();
+
+    public SurrealDbOptions() { }
+
+    public SurrealDbOptions(string endpoint, string? namingPolicy = null)
+    {
+        Endpoint = endpoint;
+        NamingPolicy = namingPolicy;
+    }
 
     public static SurrealDbOptionsBuilder Create()
     {
