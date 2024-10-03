@@ -56,6 +56,10 @@ internal class PrimitiveConverterProvider : CborConverterProviderBase
             return new TimeOnlyConverter();
         }
 #endif
+        if (type == typeof(Future))
+        {
+            return new FutureConverter();
+        }
 
         return null;
     }
