@@ -635,6 +635,36 @@ public interface ISurrealDbClient : IDisposable
         where TOutput : class;
 
     /// <summary>
+    /// Runs a SurrealQL function.
+    /// </summary>
+    /// <typeparam name="T">The type of the output of the function called.</typeparam>
+    /// <param name="name">The full name of the function.</param>
+    /// <param name="args">The arguments supplied to the function.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The output of the function called.</returns>
+    Task<T> Run<T>(
+        string name,
+        object[]? args = null,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Runs a versioned SurrealQL function.
+    /// </summary>
+    /// <typeparam name="T">The type of the output of the function called.</typeparam>
+    /// <param name="name">The full name of the function.</param>
+    /// <param name="version">The version of the function.</param>
+    /// <param name="args">The arguments supplied to the function.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The output of the function called.</returns>
+    Task<T> Run<T>(
+        string name,
+        string version,
+        object[]? args = null,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
     /// Selects all records in a table.
     /// </summary>
     /// <typeparam name="T">The type of record to extract</typeparam>

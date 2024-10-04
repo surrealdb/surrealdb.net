@@ -742,6 +742,24 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.GetValue<TOutput>()!;
     }
 
+    public async Task<T> Run<T>(
+        string name,
+        string? version,
+        object[]? args,
+        CancellationToken cancellationToken
+    )
+    {
+        var dbResponse = await SendRequestAsync(
+                "run",
+                [name, version, args],
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        return dbResponse.GetValue<T>()!;
+    }
+
     public async Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken)
     {
         var dbResponse = await SendRequestAsync(

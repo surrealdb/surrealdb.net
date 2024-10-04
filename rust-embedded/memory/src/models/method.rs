@@ -14,6 +14,7 @@ pub enum Method {
     Version = 12,
     Query = 13,
     Relate = 14,
+    Run = 15,
 }
 
 impl From<Method> for surrealdb::rpc::method::Method {
@@ -33,6 +34,7 @@ impl From<Method> for surrealdb::rpc::method::Method {
             Method::Version => surrealdb::rpc::method::Method::Version,
             Method::Query => surrealdb::rpc::method::Method::Query,
             Method::Relate => surrealdb::rpc::method::Method::Relate,
+            Method::Run => surrealdb::rpc::method::Method::Run,
         }
     }
 }

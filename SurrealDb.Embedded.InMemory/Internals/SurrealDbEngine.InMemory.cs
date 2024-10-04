@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reactive;
 using System.Runtime.InteropServices;
 using Dahomey.Cbor;
@@ -452,6 +452,17 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
                 [@in, recordId, @out, data],
                 cancellationToken
             )
+            .ConfigureAwait(false);
+    }
+
+    public async Task<T> Run<T>(
+        string name,
+        string? version,
+        object[]? args,
+        CancellationToken cancellationToken
+    )
+    {
+        return await SendRequestAsync<T>(Method.Run, [name, version, args], cancellationToken)
             .ConfigureAwait(false);
     }
 

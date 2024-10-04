@@ -380,6 +380,25 @@ public abstract partial class BaseSurrealDbClient
         return _engine.Relate<TOutput, TData>(recordId, @in, @out, data, cancellationToken);
     }
 
+    public Task<T> Run<T>(
+        string name,
+        object[]? args = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.Run<T>(name, null, args, cancellationToken);
+    }
+
+    public Task<T> Run<T>(
+        string name,
+        string version,
+        object[]? args = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.Run<T>(name, version, args, cancellationToken);
+    }
+
     public Task<IEnumerable<T>> Select<T>(
         string table,
         CancellationToken cancellationToken = default

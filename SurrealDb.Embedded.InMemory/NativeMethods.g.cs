@@ -80,6 +80,7 @@ namespace SurrealDb.Embedded.InMemory.Internals
         Version = 12,
         Query = 13,
         Relate = 14,
+        Run = 15,
     }
 
 

@@ -450,6 +450,24 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return dbResponse.GetValue<TOutput>()!;
     }
 
+    public async Task<T> Run<T>(
+        string name,
+        string? version,
+        object[]? args,
+        CancellationToken cancellationToken
+    )
+    {
+        var request = new SurrealDbHttpRequest
+        {
+            Method = "run",
+            Parameters = [name, version, args]
+        };
+
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<T>()!;
+    }
+
     public async Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken)
     {
         var request = new SurrealDbHttpRequest { Method = "select", Parameters = [table] };
