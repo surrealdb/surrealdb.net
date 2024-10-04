@@ -952,7 +952,7 @@ public class TypesTests
 
         await client.Create(
             "thing",
-            new ThingRecord { Name = "custom", Value = new Thing("person", "tobie") }
+            new ThingRecord { Name = "custom", Value = ("person", "tobie") }
         );
 
         var records = (await client.Select<ThingRecord>("thing")).ToList();
@@ -962,7 +962,7 @@ public class TypesTests
             customRecord.Should().NotBeNull();
             customRecord!.Value.Should().NotBeNull();
             customRecord!.Value!.Table.Should().Be("person");
-            customRecord!.Value!.Id.Should().Be("tobie");
+            customRecord!.Value!.DeserializeId<string>().Should().Be("tobie");
         }
     }
 }

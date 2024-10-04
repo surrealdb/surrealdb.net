@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using Bogus;
+﻿using Bogus;
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Models.Auth;
 
@@ -29,11 +27,7 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
     private DatabaseInfo? _databaseInfo;
     private SurrealDbOptions? _options;
 
-    public SurrealDbClient Create(
-        string connectionString,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? funcJsonSerializerContexts = null
-    )
+    public SurrealDbClient Create(string connectionString)
     {
         _options = SurrealDbOptions
             .Create()
@@ -42,11 +36,7 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
             .Build();
 
         _serviceProvider = new ServiceCollection()
-            .AddSurreal(
-                _options,
-                configureJsonSerializerOptions: configureJsonSerializerOptions,
-                appendJsonSerializerContexts: funcJsonSerializerContexts
-            )
+            .AddSurreal(_options)
             .AddInMemoryProvider()
             .And.BuildServiceProvider(validateScopes: true);
 

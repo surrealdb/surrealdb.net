@@ -1,6 +1,4 @@
 ﻿using System.Net;
-using System.Text.Json;
-using SurrealDb.Net.Internals.Json;
 using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Tests.Models;
@@ -10,15 +8,7 @@ public class SurrealDbResultTests
     public static TheoryData<ISurrealDbResult, bool> IsOkResultCases =>
         new()
         {
-            {
-                new SurrealDbOkResult(
-                    TimeSpan.Zero,
-                    "OK",
-                    new JsonElement(),
-                    SurrealDbSerializerOptions.Default
-                ),
-                true
-            },
+            { new SurrealDbOkResult(TimeSpan.Zero, "OK", new ReadOnlyMemory<byte>(), null!), true },
             { new SurrealDbErrorResult(TimeSpan.Zero, "KO", "Something went wrong..."), false },
             {
                 new SurrealDbProtocolErrorResult(HttpStatusCode.UnprocessableContent, "", "", ""),

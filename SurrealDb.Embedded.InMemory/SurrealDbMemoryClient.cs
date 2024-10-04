@@ -40,15 +40,5 @@ public class SurrealDbMemoryClient : BaseSurrealDbClient, ISurrealDbClient
         InitializeProviderEngine(engine, parameters, configureCborOptions, loggerFactory);
 
         _engine = engine;
-
-        if (parameters.Username is not null)
-            Configure(
-                parameters.Namespace,
-                parameters.Database,
-                parameters.Username,
-                parameters.Password
-            );
-        else
-            Configure(parameters.Namespace, parameters.Database, parameters.Token);
     }
 }

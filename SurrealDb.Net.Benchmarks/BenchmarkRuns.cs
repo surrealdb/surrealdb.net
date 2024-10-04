@@ -49,9 +49,9 @@ public static class BenchmarkRuns
         await surrealDbClient.Delete("purchased");
 
         // Create records
-        var pratimHomeId = new Thing("address", "pratim_home");
-        var tobieHomeId = new Thing("address", "tobie_home");
-        var alexHomeId = new Thing("address", "alex_home");
+        var pratimHomeId = new RecordIdOfString("address", "pratim_home");
+        var tobieHomeId = new RecordIdOfString("address", "tobie_home");
+        var alexHomeId = new RecordIdOfString("address", "alex_home");
 
         var addresses = new List<Address>
         {
@@ -90,21 +90,21 @@ public static class BenchmarkRuns
         {
             new Customer
             {
-                Id = new Thing("customer", "pratim"),
+                Id = ("customer", "pratim"),
                 Name = "pratim",
                 Email = "abc@gmail.com",
                 Address = pratimHomeId
             },
             new Customer
             {
-                Id = new Thing("customer", "tobie"),
+                Id = ("customer", "tobie"),
                 Name = "Tobie",
                 Email = "tobie@gmail.com",
                 Address = tobieHomeId
             },
             new Customer
             {
-                Id = new Thing("customer", "alex"),
+                Id = ("customer", "alex"),
                 Name = "Alex",
                 Email = "alex@gmail.com",
                 Address = alexHomeId
@@ -120,7 +120,7 @@ public static class BenchmarkRuns
         {
             new Product
             {
-                Id = new Thing("product", "shirt"),
+                Id = ("product", "shirt"),
                 Name = "Shirt",
                 Description = "Slim fit",
                 Price = 6,
@@ -129,7 +129,7 @@ public static class BenchmarkRuns
             },
             new Product
             {
-                Id = new Thing("product", "trousers"),
+                Id = ("product", "trousers"),
                 Name = "Trousers",
                 Description = "Pants",
                 Price = 10,
@@ -138,7 +138,7 @@ public static class BenchmarkRuns
             },
             new Product
             {
-                Id = new Thing("product", "iphone"),
+                Id = ("product", "iphone"),
                 Name = "Iphone",
                 Description = "Mobile phone",
                 Price = 600,

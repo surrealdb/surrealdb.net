@@ -19,16 +19,6 @@ public abstract partial class BaseSurrealDbClient
         return _engine.Authenticate(jwt, cancellationToken);
     }
 
-    public void Configure(string? ns, string? db, string? username, string? password)
-    {
-        _engine.Configure(ns, db, username, password);
-    }
-
-    public void Configure(string? ns, string? db, string? token = null)
-    {
-        _engine.Configure(ns, db, token);
-    }
-
     public Task Connect(CancellationToken cancellationToken = default)
     {
         return _engine.Connect(cancellationToken);
@@ -64,9 +54,9 @@ public abstract partial class BaseSurrealDbClient
         return _engine.Delete(table, cancellationToken);
     }
 
-    public Task<bool> Delete(Thing thing, CancellationToken cancellationToken = default)
+    public Task<bool> Delete(RecordId recordId, CancellationToken cancellationToken = default)
     {
-        return _engine.Delete(thing, cancellationToken);
+        return _engine.Delete(recordId, cancellationToken);
     }
 
     public Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken = default)
@@ -169,12 +159,12 @@ public abstract partial class BaseSurrealDbClient
     }
 
     public Task<T> Merge<T>(
-        Thing thing,
+        RecordId recordId,
         Dictionary<string, object> data,
         CancellationToken cancellationToken = default
     )
     {
-        return _engine.Merge<T>(thing, data, cancellationToken);
+        return _engine.Merge<T>(recordId, data, cancellationToken);
     }
 
     public Task<T> Merge<T>(
@@ -206,13 +196,13 @@ public abstract partial class BaseSurrealDbClient
     }
 
     public Task<T> Patch<T>(
-        Thing thing,
+        RecordId recordId,
         JsonPatchDocument<T> patches,
         CancellationToken cancellationToken = default
     )
         where T : class
     {
-        return _engine.Patch(thing, patches, cancellationToken);
+        return _engine.Patch(recordId, patches, cancellationToken);
     }
 
     public Task<T> Patch<T>(
@@ -269,8 +259,8 @@ public abstract partial class BaseSurrealDbClient
 
     public async Task<TOutput> Relate<TOutput>(
         string table,
-        Thing @in,
-        Thing @out,
+        RecordId @in,
+        RecordId @out,
         CancellationToken cancellationToken = default
     )
         where TOutput : class
@@ -284,8 +274,8 @@ public abstract partial class BaseSurrealDbClient
 
     public async Task<TOutput> Relate<TOutput, TData>(
         string table,
-        Thing @in,
-        Thing @out,
+        RecordId @in,
+        RecordId @out,
         TData? data,
         CancellationToken cancellationToken = default
     )
@@ -300,8 +290,8 @@ public abstract partial class BaseSurrealDbClient
 
     public Task<IEnumerable<TOutput>> Relate<TOutput>(
         string table,
-        IEnumerable<Thing> ins,
-        Thing @out,
+        IEnumerable<RecordId> ins,
+        RecordId @out,
         CancellationToken cancellationToken = default
     )
         where TOutput : class
@@ -311,8 +301,8 @@ public abstract partial class BaseSurrealDbClient
 
     public Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
         string table,
-        IEnumerable<Thing> ins,
-        Thing @out,
+        IEnumerable<RecordId> ins,
+        RecordId @out,
         TData? data,
         CancellationToken cancellationToken = default
     )
@@ -323,8 +313,8 @@ public abstract partial class BaseSurrealDbClient
 
     public Task<IEnumerable<TOutput>> Relate<TOutput>(
         string table,
-        Thing @in,
-        IEnumerable<Thing> outs,
+        RecordId @in,
+        IEnumerable<RecordId> outs,
         CancellationToken cancellationToken = default
     )
         where TOutput : class
@@ -334,8 +324,8 @@ public abstract partial class BaseSurrealDbClient
 
     public Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
         string table,
-        Thing @in,
-        IEnumerable<Thing> outs,
+        RecordId @in,
+        IEnumerable<RecordId> outs,
         TData? data,
         CancellationToken cancellationToken = default
     )
@@ -346,8 +336,8 @@ public abstract partial class BaseSurrealDbClient
 
     public Task<IEnumerable<TOutput>> Relate<TOutput>(
         string table,
-        IEnumerable<Thing> ins,
-        IEnumerable<Thing> outs,
+        IEnumerable<RecordId> ins,
+        IEnumerable<RecordId> outs,
         CancellationToken cancellationToken = default
     )
         where TOutput : class
@@ -357,8 +347,8 @@ public abstract partial class BaseSurrealDbClient
 
     public Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
         string table,
-        IEnumerable<Thing> ins,
-        IEnumerable<Thing> outs,
+        IEnumerable<RecordId> ins,
+        IEnumerable<RecordId> outs,
         TData? data,
         CancellationToken cancellationToken = default
     )
@@ -368,26 +358,26 @@ public abstract partial class BaseSurrealDbClient
     }
 
     public Task<TOutput> Relate<TOutput>(
-        Thing thing,
-        Thing @in,
-        Thing @out,
+        RecordId recordId,
+        RecordId @in,
+        RecordId @out,
         CancellationToken cancellationToken = default
     )
         where TOutput : class
     {
-        return _engine.Relate<TOutput, object>(thing, @in, @out, null, cancellationToken);
+        return _engine.Relate<TOutput, object>(recordId, @in, @out, null, cancellationToken);
     }
 
     public Task<TOutput> Relate<TOutput, TData>(
-        Thing thing,
-        Thing @in,
-        Thing @out,
+        RecordId recordId,
+        RecordId @in,
+        RecordId @out,
         TData? data,
         CancellationToken cancellationToken = default
     )
         where TOutput : class
     {
-        return _engine.Relate<TOutput, TData>(thing, @in, @out, data, cancellationToken);
+        return _engine.Relate<TOutput, TData>(recordId, @in, @out, data, cancellationToken);
     }
 
     public Task<IEnumerable<T>> Select<T>(
@@ -398,9 +388,9 @@ public abstract partial class BaseSurrealDbClient
         return _engine.Select<T>(table, cancellationToken);
     }
 
-    public Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken = default)
+    public Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken = default)
     {
-        return _engine.Select<T?>(thing, cancellationToken);
+        return _engine.Select<T?>(recordId, cancellationToken);
     }
 
     public Task<T?> Select<T>(

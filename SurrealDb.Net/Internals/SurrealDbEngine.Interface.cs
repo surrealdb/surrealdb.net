@@ -15,8 +15,6 @@ namespace SurrealDb.Net.Internals;
 public interface ISurrealDbEngine : IDisposable
 {
     Task Authenticate(Jwt jwt, CancellationToken cancellationToken);
-    void Configure(string? ns, string? db, string? username, string? password);
-    void Configure(string? ns, string? db, string? token = null);
     Task Connect(CancellationToken cancellationToken);
     Task<T> Create<T>(T data, CancellationToken cancellationToken)
         where T : Record;
@@ -28,7 +26,7 @@ public interface ISurrealDbEngine : IDisposable
     )
         where TOutput : Record;
     Task Delete(string table, CancellationToken cancellationToken);
-    Task<bool> Delete(Thing thing, CancellationToken cancellationToken);
+    Task<bool> Delete(RecordId recordId, CancellationToken cancellationToken);
     Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken);
     Task<bool> Health(CancellationToken cancellationToken);
     Task<T> Info<T>(CancellationToken cancellationToken);
@@ -58,7 +56,7 @@ public interface ISurrealDbEngine : IDisposable
     Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken)
         where TMerge : Record;
     Task<T> Merge<T>(
-        Thing thing,
+        RecordId recordId,
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     );
@@ -78,7 +76,11 @@ public interface ISurrealDbEngine : IDisposable
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     );
-    Task<T> Patch<T>(Thing thing, JsonPatchDocument<T> patches, CancellationToken cancellationToken)
+    Task<T> Patch<T>(
+        RecordId recordId,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken
+    )
         where T : class;
     Task<T> Patch<T>(
         StringRecordId recordId,
@@ -99,22 +101,22 @@ public interface ISurrealDbEngine : IDisposable
     );
     Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
         string table,
-        IEnumerable<Thing> ins,
-        IEnumerable<Thing> outs,
+        IEnumerable<RecordId> ins,
+        IEnumerable<RecordId> outs,
         TData? data,
         CancellationToken cancellationToken
     )
         where TOutput : class;
     Task<TOutput> Relate<TOutput, TData>(
-        Thing thing,
-        Thing @in,
-        Thing @out,
+        RecordId recordId,
+        RecordId @in,
+        RecordId @out,
         TData? data,
         CancellationToken cancellationToken
     )
         where TOutput : class;
     Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken);
-    Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken);
+    Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken);
     Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken);
     Task Set(string key, object value, CancellationToken cancellationToken);
     Task SignIn(RootAuth root, CancellationToken cancellationToken);

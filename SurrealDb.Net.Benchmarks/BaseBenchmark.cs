@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using SurrealDb.Net.Benchmarks.Constants;
 
 namespace SurrealDb.Net.Benchmarks;
 
@@ -6,23 +7,21 @@ public class BaseBenchmark
 {
     protected string NamingPolicy { get; } = "SnakeCase";
 
-    protected void InitializeSurrealDbClient(ISurrealDbClient client, DatabaseInfo databaseInfo)
+    protected BaseBenchmark()
     {
-        client.Configure(databaseInfo.Namespace, databaseInfo.Database, "root", "root");
+        bool isNativeAotRuntime = !string.IsNullOrWhiteSpace(
+            Environment.GetEnvironmentVariable(EnvVariablesConstants.NativeAotRuntime)
+        );
     }
 
     protected async Task CreatePostTable(ISurrealDbClient client, DatabaseInfo databaseInfo)
     {
-        InitializeSurrealDbClient(client, databaseInfo);
-
         string query = GetPostQueryContent();
         await client.RawQuery(query);
     }
 
     protected async Task CreateEcommerceTables(ISurrealDbClient client, DatabaseInfo databaseInfo)
     {
-        InitializeSurrealDbClient(client, databaseInfo);
-
         string query = GetEcommerceQueryContent();
         await client.RawQuery(query);
     }
@@ -33,8 +32,6 @@ public class BaseBenchmark
         IEnumerable<GeneratedPost> posts
     )
     {
-        InitializeSurrealDbClient(client, databaseInfo);
-
         var tasks = new List<Task>();
 
         foreach (var post in posts)
@@ -51,8 +48,6 @@ public class BaseBenchmark
 
     protected async Task<Post> GetFirstPost(ISurrealDbClient client, DatabaseInfo databaseInfo)
     {
-        InitializeSurrealDbClient(client, databaseInfo);
-
         var posts = await client.Select<Post>("post");
         return posts.First();
     }

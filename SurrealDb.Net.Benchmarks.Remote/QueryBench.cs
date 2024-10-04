@@ -2,7 +2,6 @@
 using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Benchmarks.Models;
-using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Tests.Fixtures;
 
 namespace SurrealDb.Net.Benchmarks.Remote;
@@ -15,13 +14,12 @@ public class QueryBench : BaseRemoteBenchmark
 
     private ISurrealDbClient? _surrealdbHttpClient;
     private ISurrealDbClient? _surrealdbHttpClientWithHttpClientFactory;
-    private ISurrealDbClient? _surrealdbWsTextClient;
     private ISurrealDbClient? _surrealdbWsBinaryClient;
 
     [GlobalSetup]
     public async Task GlobalSetup()
     {
-        for (int index = 0; index < 4; index++)
+        for (int index = 0; index < 3; index++)
         {
             var clientGenerator = new SurrealDbClientGenerator();
             var dbInfo = clientGenerator.GenerateDatabaseInfo();
@@ -33,47 +31,34 @@ public class QueryBench : BaseRemoteBenchmark
                         SurrealDbOptions
                             .Create()
                             .WithEndpoint(HttpUrl)
+                            .WithNamespace(dbInfo.Namespace)
+                            .WithDatabase(dbInfo.Database)
+                            .WithUsername("root")
+                            .WithPassword("root")
                             .WithNamingPolicy(NamingPolicy)
-                            .Build(),
-                        appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
+                            .Build()
                     );
-                    InitializeSurrealDbClient(_surrealdbHttpClient, dbInfo);
                     await _surrealdbHttpClient.Connect();
                     break;
                 case 1:
                     _surrealdbHttpClientWithHttpClientFactory = clientGenerator.Create(
-                        $"Endpoint={HttpUrl}",
-                        funcJsonSerializerContexts: GetFuncJsonSerializerContexts()
+                        $"Endpoint={HttpUrl};NS={dbInfo.Namespace};DB={dbInfo.Database};user=root;pass=root"
                     );
-                    InitializeSurrealDbClient(_surrealdbHttpClientWithHttpClientFactory, dbInfo);
                     await _surrealdbHttpClientWithHttpClientFactory.Connect();
                     break;
                 case 2:
-                    _surrealdbWsTextClient = new SurrealDbClient(
+                    _surrealdbWsBinaryClient = new SurrealDbClient(
                         SurrealDbOptions
                             .Create()
                             .WithEndpoint(WsUrl)
+                            .WithNamespace(dbInfo.Namespace)
+                            .WithDatabase(dbInfo.Database)
+                            .WithUsername("root")
+                            .WithPassword("root")
                             .WithNamingPolicy(NamingPolicy)
-                            .Build(),
-                        appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
+                            .Build()
                     );
-                    InitializeSurrealDbClient(_surrealdbWsTextClient, dbInfo);
-                    await _surrealdbWsTextClient.Connect();
-                    break;
-                case 3:
-                    if (JsonSerializer.IsReflectionEnabledByDefault)
-                    {
-                        _surrealdbWsBinaryClient = new SurrealDbClient(
-                            SurrealDbOptions
-                                .Create()
-                                .WithEndpoint(WsUrl)
-                                .WithNamingPolicy(NamingPolicy)
-                                .WithSerialization(SerializationConstants.CBOR)
-                                .Build()
-                        );
-                        InitializeSurrealDbClient(_surrealdbWsBinaryClient, dbInfo);
-                        await _surrealdbWsBinaryClient.Connect();
-                    }
+                    await _surrealdbWsBinaryClient.Connect();
                     break;
             }
             await SeedData(WsUrl, dbInfo, _generatedPosts);
@@ -91,7 +76,6 @@ public class QueryBench : BaseRemoteBenchmark
 
         _surrealdbHttpClient?.Dispose();
         _surrealdbHttpClientWithHttpClientFactory?.Dispose();
-        _surrealdbWsTextClient?.Dispose();
         _surrealdbWsBinaryClient?.Dispose();
     }
 
@@ -108,13 +92,7 @@ public class QueryBench : BaseRemoteBenchmark
     }
 
     [Benchmark]
-    public Task<List<Post>> WsText()
-    {
-        return BenchmarkRuns.Query(_surrealdbWsTextClient!);
-    }
-
-    [Benchmark]
-    public Task<List<Post>> WsBinary()
+    public Task<List<Post>> Ws()
     {
         return BenchmarkRuns.Query(_surrealdbWsBinaryClient!);
     }

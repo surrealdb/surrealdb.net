@@ -6,10 +6,8 @@ public class DeleteTests
 {
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldDeletePostTable(string connectionString)
     {
         IEnumerable<Post>? list = null;
@@ -43,10 +41,8 @@ public class DeleteTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldDeletePostRecord(string connectionString)
     {
         IEnumerable<Post>? list = null;
@@ -78,7 +74,7 @@ public class DeleteTests
 
         list.Should().NotBeNull().And.HaveCount(1);
 
-        var firstPost = list!.FirstOrDefault(p => p.Id!.Id == "first");
+        var firstPost = list!.FirstOrDefault(p => p.Id! == ("post", "first"));
 
         firstPost.Should().BeNull();
 
@@ -87,11 +83,9 @@ public class DeleteTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
-    public async Task ShouldDeletePostRecordUsingThing(string connectionString)
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task ShouldDeletePostRecordUsingRecordId(string connectionString)
     {
         IEnumerable<Post>? list = null;
         bool? result = null;
@@ -122,7 +116,7 @@ public class DeleteTests
 
         list.Should().NotBeNull().And.HaveCount(1);
 
-        var firstPost = list!.FirstOrDefault(p => p.Id!.Id == "first");
+        var firstPost = list!.FirstOrDefault(p => p.Id! == ("post", "first"));
 
         firstPost.Should().BeNull();
 
@@ -131,10 +125,8 @@ public class DeleteTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldTryToDeleteInexistentRecord(string connectionString)
     {
         IEnumerable<Post>? list = null;
@@ -170,16 +162,8 @@ public class DeleteTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData(
-        "Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON",
-        Skip = "To be removed"
-    )]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData(
-        "Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON",
-        Skip = "To be removed"
-    )]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldDeletePostRecordUsingStringRecordId(string connectionString)
     {
         IEnumerable<Post>? list = null;
@@ -211,7 +195,7 @@ public class DeleteTests
 
         list.Should().NotBeNull().And.HaveCount(1);
 
-        var firstPost = list!.FirstOrDefault(p => p.Id!.Id == "first");
+        var firstPost = list!.FirstOrDefault(p => p.Id!.DeserializeId<string>() == "first");
 
         firstPost.Should().BeNull();
 

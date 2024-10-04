@@ -2,7 +2,6 @@
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
 using SurrealDb.Net.Internals.Extensions;
-using SurrealDb.Net.Internals.Json;
 using SystemTextJsonPatch;
 using SystemTextJsonPatch.Operations;
 
@@ -99,7 +98,10 @@ internal class JsonPatchDocumentConverter<T> : CborConverterBase<JsonPatchDocume
             operations.Add(operation);
         }
 
-        return new JsonPatchDocument<T>(operations, SurrealDbSerializerOptions.Default);
+        var document = new JsonPatchDocument<T>();
+        document.Operations.AddRange(operations);
+
+        return document;
     }
 
     public override void Write(ref CborWriter writer, JsonPatchDocument<T> value)

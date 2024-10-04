@@ -6,10 +6,8 @@ public class UpsertTests
 {
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldCreateNewPost(string connectionString)
     {
         IEnumerable<Post>? list = null;
@@ -54,7 +52,7 @@ public class UpsertTests
         result!.CreatedAt.Should().NotBeNull();
         result!.Status.Should().Be("DRAFT");
 
-        var anotherPost = list!.First(r => r.Id!.Id == "another");
+        var anotherPost = list!.First(p => p.Id! == ("post", "another"));
 
         anotherPost.Should().NotBeNull();
         anotherPost!.Title.Should().Be("A new article");
@@ -65,10 +63,8 @@ public class UpsertTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldUpdateExistingPost(string connectionString)
     {
         IEnumerable<Post>? list = null;
@@ -121,16 +117,8 @@ public class UpsertTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData(
-        "Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON",
-        Skip = "To be removed"
-    )]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData(
-        "Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON",
-        Skip = "To be removed"
-    )]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldCreateNewPostUsingStringRecordId(string connectionString)
     {
         IEnumerable<Post>? list = null;
@@ -174,7 +162,7 @@ public class UpsertTests
         result!.CreatedAt.Should().NotBeNull();
         result!.Status.Should().Be("DRAFT");
 
-        var anotherPost = list!.First(r => r.Id!.Id == "another");
+        var anotherPost = list!.First(r => r.Id!.DeserializeId<string>() == "another");
 
         anotherPost.Should().NotBeNull();
         anotherPost!.Title.Should().Be("A new article");
@@ -185,16 +173,8 @@ public class UpsertTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData(
-        "Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON",
-        Skip = "To be removed"
-    )]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData(
-        "Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON",
-        Skip = "To be removed"
-    )]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldUpdateExistingPostUsingStringRecordId(string connectionString)
     {
         IEnumerable<Post>? list = null;

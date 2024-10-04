@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using SurrealDb.Net.Benchmarks.Constants;
+﻿using SurrealDb.Net.Benchmarks.Constants;
 using SurrealDb.Net.Benchmarks.Models;
 using SurrealDb.Net.Tests.Fixtures;
 
@@ -11,41 +10,22 @@ public class BaseRemoteBenchmark : BaseBenchmark
     protected string HttpUrl { get; } = $"http://{Host}";
     protected string WsUrl { get; } = $"ws://{Host}/rpc";
 
-    private readonly Func<JsonSerializerContext[]>? _funcJsonSerializerContexts;
-
     protected BaseRemoteBenchmark()
     {
         var isNativeAotRuntime = Environment.GetEnvironmentVariable(
             EnvVariablesConstants.NativeAotRuntime
         );
-
-        _funcJsonSerializerContexts = string.IsNullOrWhiteSpace(isNativeAotRuntime)
-            ? null
-            : () => new JsonSerializerContext[] { AppJsonSerializerContext.Default };
-    }
-
-    protected Func<JsonSerializerContext[]>? GetFuncJsonSerializerContexts()
-    {
-        return _funcJsonSerializerContexts;
     }
 
     protected Task CreatePostTable(string url, DatabaseInfo databaseInfo)
     {
-        var client = new SurrealDbClient(
-            url,
-            NamingPolicy,
-            appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
-        );
+        var client = new SurrealDbClient(url, NamingPolicy);
         return CreatePostTable(client, databaseInfo);
     }
 
     protected Task CreateEcommerceTables(string url, DatabaseInfo databaseInfo)
     {
-        var client = new SurrealDbClient(
-            url,
-            NamingPolicy,
-            appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
-        );
+        var client = new SurrealDbClient(url, NamingPolicy);
         return CreateEcommerceTables(client, databaseInfo);
     }
 
@@ -55,21 +35,13 @@ public class BaseRemoteBenchmark : BaseBenchmark
         IEnumerable<GeneratedPost> posts
     )
     {
-        var client = new SurrealDbClient(
-            url,
-            NamingPolicy,
-            appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
-        );
+        var client = new SurrealDbClient(url, NamingPolicy);
         return SeedData(client, databaseInfo, posts);
     }
 
     protected Task<Post> GetFirstPost(string url, DatabaseInfo databaseInfo)
     {
-        var client = new SurrealDbClient(
-            url,
-            NamingPolicy,
-            appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
-        );
+        var client = new SurrealDbClient(url, NamingPolicy);
         return GetFirstPost(client, databaseInfo);
     }
 }
