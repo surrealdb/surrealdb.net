@@ -30,14 +30,14 @@ public class SetTests
 
                 string query = fileContent;
 
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             await client.Set("status", "DRAFT");
 
             {
                 string query = "SELECT * FROM post WHERE status == $status;";
-                response = await client.RawQuery(query);
+                response = (await client.RawQuery(query)).EnsureAllOks();
             }
         };
 
@@ -77,7 +77,7 @@ public class SetTests
 
                 string query = fileContent;
 
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             await client.Set(null!, "DRAFT");
@@ -111,7 +111,7 @@ public class SetTests
 
                 string query = fileContent;
 
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             await client.Set(string.Empty, "DRAFT");
@@ -145,7 +145,7 @@ public class SetTests
 
                 string query = fileContent;
 
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             await client.Set("st at us", "DRAFT");
@@ -181,14 +181,14 @@ public class SetTests
 
                 string query = fileContent;
 
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             await client.Set("st_at_us", "DRAFT");
 
             {
                 string query = "SELECT * FROM post WHERE status == $st_at_us;";
-                response = await client.RawQuery(query);
+                response = (await client.RawQuery(query)).EnsureAllOks();
             }
         };
 
@@ -230,14 +230,14 @@ public class SetTests
 
                 string query = fileContent;
 
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             await client.Set("a.b@c.d", "DRAFT");
 
             {
                 string query = "SELECT * FROM post WHERE status == $`a.b@c.d`;";
-                response = await client.RawQuery(query);
+                response = (await client.RawQuery(query)).EnsureAllOks();
             }
         };
 

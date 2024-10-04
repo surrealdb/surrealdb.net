@@ -285,6 +285,10 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
 
+        if (_version?.Major > 1)
+        {
+            return dbResponse.GetValue<T>()!;
+        }
         return dbResponse.DeserializeEnumerable<T>().First();
     }
 

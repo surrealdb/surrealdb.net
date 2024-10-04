@@ -27,7 +27,7 @@ public class DeleteTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             await client.Delete("post");
 
@@ -63,7 +63,7 @@ public class DeleteTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             result = await client.Delete(("post", "first"));
 
@@ -105,7 +105,7 @@ public class DeleteTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             result = await client.Delete(("post", "first"));
 
@@ -147,7 +147,7 @@ public class DeleteTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             result = await client.Delete(("post", "inexistent"));
 
@@ -184,7 +184,7 @@ public class DeleteTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             result = await client.Delete(new StringRecordId("post:first"));
 

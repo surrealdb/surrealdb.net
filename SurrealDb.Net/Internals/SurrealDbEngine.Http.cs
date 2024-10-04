@@ -110,6 +110,10 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
 
+        if (_version?.Major > 1)
+        {
+            return dbResponse.GetValue<T>()!;
+        }
         return dbResponse.DeserializeEnumerable<T>().First();
     }
 

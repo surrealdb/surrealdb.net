@@ -75,7 +75,7 @@ public class SelectTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             result = await client.Select<Post>("post");
         };
@@ -126,7 +126,7 @@ public class SelectTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             result = await client.Select<Post>(("post", "first"));
         };
@@ -163,7 +163,7 @@ public class SelectTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var recordId = new RecordIdOfString("post", "first");
 
@@ -202,7 +202,7 @@ public class SelectTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var recordId = RecordId.From("recordId", 17493);
 
@@ -238,7 +238,7 @@ public class SelectTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var recordId = RecordId.From("recordId", "surrealdb");
 
@@ -274,7 +274,7 @@ public class SelectTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var recordId = RecordId.From(
                 "recordId",
@@ -313,7 +313,7 @@ public class SelectTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var recordId = RecordId.From(
                 "recordId",
@@ -352,7 +352,7 @@ public class SelectTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var recordId = RecordId.From("recordId", new object[] { "London", 2023 });
 
@@ -388,7 +388,7 @@ public class SelectTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var recordId = new StringRecordId("recordId:surrealdb");
 

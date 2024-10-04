@@ -59,7 +59,7 @@ public class InfoTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             {

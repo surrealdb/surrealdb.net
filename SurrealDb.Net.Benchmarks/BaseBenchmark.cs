@@ -17,13 +17,13 @@ public class BaseBenchmark
     protected async Task CreatePostTable(ISurrealDbClient client, DatabaseInfo databaseInfo)
     {
         string query = GetPostQueryContent();
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
     }
 
     protected async Task CreateEcommerceTables(ISurrealDbClient client, DatabaseInfo databaseInfo)
     {
         string query = GetEcommerceQueryContent();
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
     }
 
     protected async Task<IEnumerable<GeneratedPost>> SeedData(

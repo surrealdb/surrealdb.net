@@ -39,7 +39,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var record = await client.Select<GeometryPointRecord>(("geometry", "PointFromTuple"));
 
@@ -69,7 +69,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var record = await client.Select<GeometryPointRecord>(("geometry", "Point"));
 
@@ -99,7 +99,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var record = await client.Select<GeometryLineStringRecord>(("geometry", "LineString"));
 
@@ -136,7 +136,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var record = await client.Select<GeometryPolygonRecord>(("geometry", "Polygon"));
 
@@ -190,7 +190,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var record = await client.Select<GeometryMultiPointRecord>(("geometry", "MultiPoint"));
 
@@ -229,7 +229,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var record = await client.Select<GeometryMultiLineStringRecord>(
             ("geometry", "MultiLineString")
@@ -292,7 +292,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var record = await client.Select<GeometryMultiPolygonRecord>(("geometry", "MultiPolygon"));
 
@@ -371,7 +371,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var record = await client.Select<GeometryCollectionRecord>(
             ("geometry", "GeometryCollection")

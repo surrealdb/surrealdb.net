@@ -1,5 +1,7 @@
 ﻿using Bogus;
 using Microsoft.Extensions.DependencyInjection;
+using Semver;
+using SurrealDb.Net.Extensions;
 using SurrealDb.Net.Models.Auth;
 
 namespace SurrealDb.Net.Tests.Fixtures;
@@ -19,7 +21,7 @@ public class DatabaseInfoFaker : Faker<DatabaseInfo>
     }
 }
 
-public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
+public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 {
     private static readonly DatabaseInfoFaker _databaseInfoFaker = new();
 
@@ -47,6 +49,14 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
     {
         _databaseInfo = _databaseInfoFaker.Generate();
         return _databaseInfo;
+    }
+
+    public static async Task<SemVersion> GetSurrealTestVersion(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        using var client = surrealDbClientGenerator.Create(connectionString);
+
+        return (await client.Version()).ToSemver();
     }
 
     public void Dispose()

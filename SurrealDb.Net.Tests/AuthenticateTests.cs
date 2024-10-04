@@ -28,7 +28,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             {
@@ -39,7 +39,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -87,7 +87,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             {
@@ -98,7 +98,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -148,7 +148,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             {
@@ -159,7 +159,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete

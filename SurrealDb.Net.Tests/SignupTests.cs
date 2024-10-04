@@ -26,7 +26,7 @@ public class SignUpTests
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
             string query = fileContent;
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
@@ -69,7 +69,7 @@ public class SignUpTests
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
             string query = fileContent;
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams

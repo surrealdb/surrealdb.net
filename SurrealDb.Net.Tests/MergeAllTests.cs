@@ -28,7 +28,7 @@ public class MergeAllTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var merge = new PostMergeData { Content = "[Edit] Oops" };
 
@@ -77,7 +77,7 @@ public class MergeAllTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var recordId = new RecordIdOfString("post", "first");
             var data = new Dictionary<string, object> { { "content", "[Edit] Oops" } };

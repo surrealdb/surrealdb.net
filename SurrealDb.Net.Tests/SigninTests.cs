@@ -60,7 +60,7 @@ public class SignInTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             string query = "DEFINE USER johndoe ON NAMESPACE PASSWORD 'password123'";
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             jwt = await client.SignIn(
                 new NamespaceAuth
@@ -91,7 +91,7 @@ public class SignInTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             string query = "DEFINE USER johndoe ON NAMESPACE PASSWORD 'password123'";
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             await client.SignIn(
                 new NamespaceAuth
@@ -124,7 +124,7 @@ public class SignInTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             string query = "DEFINE USER johndoe ON DATABASE PASSWORD 'password123'";
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             jwt = await client.SignIn(
                 new DatabaseAuth
@@ -156,7 +156,7 @@ public class SignInTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             string query = "DEFINE USER johndoe ON DATABASE PASSWORD 'password123'";
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             await client.SignIn(
                 new DatabaseAuth
@@ -196,7 +196,7 @@ public class SignInTests
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
             string query = fileContent;
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
@@ -241,7 +241,7 @@ public class SignInTests
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
             string query = fileContent;
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams

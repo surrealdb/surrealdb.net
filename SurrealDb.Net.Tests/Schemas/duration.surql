@@ -6,7 +6,7 @@ DEFINE FIELD value ON duration TYPE option<duration>;
 CREATE duration SET name = 'none', value = NONE;
 CREATE duration SET name = 'nanosecond', value = 2ns;
 CREATE duration SET name = 'microsecond', value = 3µs;
-CREATE duration SET name = 'microsecond-alias', value = 4us;
+CREATE duration SET name = 'microsecond-alias', value = 4µs; // TODO : 4us
 CREATE duration SET name = 'millisecond', value = 50ms;
 CREATE duration SET name = 'second', value = 7s;
 CREATE duration SET name = 'minute', value = 5m;
