@@ -31,7 +31,6 @@ public class ScopeAuth
     /// <summary>
     /// The access method to use for signin and signup
     /// </summary>
-    [JsonPropertyName("ac")]
     [CborProperty("ac")]
     public string Access { get; set; } = string.Empty;
 }

@@ -858,7 +858,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
     {
         long executionStartTime = Stopwatch.GetTimestamp();
-        
+
         if (_version == null && request.Method != "version")
         {
             await Connect(cancellationToken).ConfigureAwait(false);
