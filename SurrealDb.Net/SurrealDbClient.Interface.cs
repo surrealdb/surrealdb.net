@@ -183,6 +183,27 @@ public interface ISurrealDbClient : IDisposable
         where T : Record;
 
     /// <summary>
+    /// Inserts a new relation record in the database.
+    /// </summary>
+    /// <typeparam name="T">The type of the record to create.</typeparam>
+    /// <param name="data">The record data used to create the record.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created.</returns>
+    Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken = default)
+        where T : RelationRecord;
+
+    /// <summary>
+    /// Inserts a new relation record in the database.
+    /// </summary>
+    /// <typeparam name="T">The type of the record to create.</typeparam>
+    /// <param name="table">The table name where the records will be stored.</param>
+    /// <param name="data">The record data used to create the record.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created.</returns>
+    Task<T> InsertRelation<T>(string table, T data, CancellationToken cancellationToken = default)
+        where T : RelationRecord;
+
+    /// <summary>
     /// Invalidates the authentication for the current connection.
     /// </summary>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>

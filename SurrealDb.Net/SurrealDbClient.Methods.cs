@@ -89,6 +89,22 @@ public abstract partial class BaseSurrealDbClient
         return _engine.Insert(table, data, cancellationToken);
     }
 
+    public Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken = default)
+        where T : RelationRecord
+    {
+        return _engine.InsertRelation(data, cancellationToken);
+    }
+
+    public Task<T> InsertRelation<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken = default
+    )
+        where T : RelationRecord
+    {
+        return _engine.InsertRelation(table, data, cancellationToken);
+    }
+
     public Task Invalidate(CancellationToken cancellationToken = default)
     {
         return _engine.Invalidate(cancellationToken);

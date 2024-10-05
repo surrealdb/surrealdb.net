@@ -228,6 +228,44 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             .ConfigureAwait(false);
     }
 
+    public async Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken)
+        where T : RelationRecord
+    {
+        if (data.Id is null)
+            throw new SurrealDbException("Cannot create a relation record without an Id");
+
+        var result = await SendRequestAsync<List<T>>(
+                Method.InsertRelation,
+                [null, data],
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        return result.Single();
+    }
+
+    public async Task<T> InsertRelation<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken
+    )
+        where T : RelationRecord
+    {
+        if (data.Id is not null)
+            throw new SurrealDbException(
+                "You cannot provide both the table and an Id for the record. Either use the method overload without 'table' param or set the Id property to null."
+            );
+
+        var result = await SendRequestAsync<List<T>>(
+                Method.InsertRelation,
+                [table, data],
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        return result.Single();
+    }
+
     public Task Invalidate(CancellationToken cancellationToken)
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");

@@ -82,6 +82,7 @@ namespace SurrealDb.Embedded.InMemory.Internals
         Query = 14,
         Relate = 15,
         Run = 16,
+        InsertRelation = 17,
     }
 
 

@@ -445,6 +445,52 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<T>();
     }
 
+    public async Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken)
+        where T : RelationRecord
+    {
+        if (_version?.Major < 2)
+            throw new NotImplementedException();
+
+        if (data.Id is null)
+            throw new SurrealDbException("Cannot create a relation record without an Id");
+
+        var dbResponse = await SendRequestAsync(
+                "insert_relation",
+                [null, data],
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        return dbResponse.DeserializeEnumerable<T>().Single();
+    }
+
+    public async Task<T> InsertRelation<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken
+    )
+        where T : RelationRecord
+    {
+        if (_version?.Major < 2)
+            throw new NotImplementedException();
+
+        if (data.Id is not null)
+            throw new SurrealDbException(
+                "You cannot provide both the table and an Id for the record. Either use the method overload without 'table' param or set the Id property to null."
+            );
+
+        var dbResponse = await SendRequestAsync(
+                "insert_relation",
+                [table, data],
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        return dbResponse.DeserializeEnumerable<T>().Single();
+    }
+
     public async Task Invalidate(CancellationToken cancellationToken)
     {
         await SendRequestAsync(

@@ -36,6 +36,10 @@ public interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     )
         where T : Record;
+    Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken)
+        where T : RelationRecord;
+    Task<T> InsertRelation<T>(string table, T data, CancellationToken cancellationToken)
+        where T : RelationRecord;
     Task Invalidate(CancellationToken cancellationToken);
     Task Kill(
         Guid queryUuid,
