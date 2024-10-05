@@ -74,13 +74,14 @@ namespace SurrealDb.Embedded.InMemory.Internals
         Insert = 6,
         Create = 7,
         Update = 8,
-        Merge = 9,
-        Patch = 10,
-        Delete = 11,
-        Version = 12,
-        Query = 13,
-        Relate = 14,
-        Run = 15,
+        Upsert = 9,
+        Merge = 10,
+        Patch = 11,
+        Delete = 12,
+        Version = 13,
+        Query = 14,
+        Relate = 15,
+        Run = 16,
     }
 
 

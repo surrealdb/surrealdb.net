@@ -158,14 +158,8 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
 
     public async Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken)
     {
-        var list = await SendRequestAsync<IEnumerable<T>>(
-                Method.Create,
-                [table, data],
-                cancellationToken
-            )
+        return await SendRequestAsync<T>(Method.Create, [table, data], cancellationToken)
             .ConfigureAwait(false);
-
-        return list.First();
     }
 
     public async Task<TOutput> Create<TData, TOutput>(
@@ -566,7 +560,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        return await SendRequestAsync<T>(Method.Update, [data.Id, data], cancellationToken)
+        return await SendRequestAsync<T>(Method.Upsert, [data.Id, data], cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -577,7 +571,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     )
         where TOutput : Record
     {
-        return await SendRequestAsync<TOutput>(Method.Update, [recordId, data], cancellationToken)
+        return await SendRequestAsync<TOutput>(Method.Upsert, [recordId, data], cancellationToken)
             .ConfigureAwait(false);
     }
 
