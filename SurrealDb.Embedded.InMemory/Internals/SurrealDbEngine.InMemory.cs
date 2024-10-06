@@ -577,6 +577,27 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         await SendRequestAsync<Unit>(Method.Unset, [key], cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<T> Update<T>(T data, CancellationToken cancellationToken)
+        where T : Record
+    {
+        if (data.Id is null)
+            throw new SurrealDbException("Cannot update a record without an Id");
+
+        return await SendRequestAsync<T>(Method.Update, [data.Id, data], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<TOutput> Update<TData, TOutput>(
+        StringRecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record
+    {
+        return await SendRequestAsync<TOutput>(Method.Update, [recordId, data], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public async Task<IEnumerable<T>> Update<T>(
         string table,
         T data,
@@ -596,7 +617,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         where T : Record
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot create a record without an Id");
+            throw new SurrealDbException("Cannot upsert a record without an Id");
 
         return await SendRequestAsync<T>(Method.Upsert, [data.Id, data], cancellationToken)
             .ConfigureAwait(false);
@@ -610,6 +631,21 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         where TOutput : Record
     {
         return await SendRequestAsync<TOutput>(Method.Upsert, [recordId, data], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<IEnumerable<T>> Upsert<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        return await SendRequestAsync<IEnumerable<T>>(
+                Method.Upsert,
+                [table, data],
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 

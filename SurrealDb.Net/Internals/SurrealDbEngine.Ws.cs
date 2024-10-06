@@ -982,6 +982,45 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             .ConfigureAwait(false);
     }
 
+    public async Task<T> Update<T>(T data, CancellationToken cancellationToken)
+        where T : Record
+    {
+        if (_version?.Major < 2)
+            throw new NotImplementedException();
+
+        if (data.Id is null)
+            throw new SurrealDbException("Cannot update a record without an Id");
+
+        var dbResponse = await SendRequestAsync(
+                "update",
+                [data.Id, data],
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<T>()!;
+    }
+
+    public async Task<TOutput> Update<TData, TOutput>(
+        StringRecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record
+    {
+        if (_version?.Major < 2)
+            throw new NotImplementedException();
+
+        var dbResponse = await SendRequestAsync(
+                "update",
+                [recordId, data],
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<TOutput>()!;
+    }
+
     public async Task<IEnumerable<T>> Update<T>(
         string table,
         T data,
@@ -1003,7 +1042,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         where T : Record
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot create a record without an Id");
+            throw new SurrealDbException("Cannot upsert a record without an Id");
 
         string method = _version?.Major > 1 ? "upsert" : "update";
         var dbResponse = await SendRequestAsync(
@@ -1032,6 +1071,24 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
         return dbResponse.GetValue<TOutput>()!;
+    }
+
+    public async Task<IEnumerable<T>> Upsert<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        string method = _version?.Major > 1 ? "upsert" : "update";
+        var dbResponse = await SendRequestAsync(
+                method,
+                [table, data],
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        return dbResponse.DeserializeEnumerable<T>();
     }
 
     public Task Use(string ns, string db, CancellationToken cancellationToken)

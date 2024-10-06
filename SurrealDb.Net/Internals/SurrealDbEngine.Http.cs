@@ -693,6 +693,40 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return Task.CompletedTask;
     }
 
+    public async Task<T> Update<T>(T data, CancellationToken cancellationToken)
+        where T : Record
+    {
+        if (_version?.Major < 2)
+            throw new NotImplementedException();
+
+        if (data.Id is null)
+            throw new SurrealDbException("Cannot update a record without an Id");
+
+        string method = _version?.Major > 1 ? "upsert" : "";
+        var request = new SurrealDbHttpRequest { Method = "update", Parameters = [data.Id, data] };
+
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<T>()!;
+    }
+
+    public async Task<TOutput> Update<TData, TOutput>(
+        StringRecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record
+    {
+        if (_version?.Major < 2)
+            throw new NotImplementedException();
+
+        var request = new SurrealDbHttpRequest { Method = "update", Parameters = [recordId, data] };
+
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<TOutput>()!;
+    }
+
     public async Task<IEnumerable<T>> Update<T>(
         string table,
         T data,
@@ -711,7 +745,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         where T : Record
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot create a record without an Id");
+            throw new SurrealDbException("Cannot upsert a record without an Id");
 
         string method = _version?.Major > 1 ? "upsert" : "update";
         var request = new SurrealDbHttpRequest { Method = method, Parameters = [data.Id, data] };
@@ -734,6 +768,21 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<TOutput>()!;
+    }
+
+    public async Task<IEnumerable<T>> Upsert<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        string method = _version?.Major > 1 ? "upsert" : "update";
+        var request = new SurrealDbHttpRequest { Method = method, Parameters = [table, data] };
+
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.DeserializeEnumerable<T>();
     }
 
     public async Task Use(string ns, string db, CancellationToken cancellationToken)
