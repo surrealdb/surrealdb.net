@@ -364,7 +364,7 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+    Task<IEnumerable<TOutput>> Merge<TMerge, TOutput>(
         string table,
         TMerge data,
         CancellationToken cancellationToken = default
@@ -383,7 +383,7 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<IEnumerable<T>> MergeAll<T>(
+    Task<IEnumerable<T>> Merge<T>(
         string table,
         Dictionary<string, object> data,
         CancellationToken cancellationToken = default
@@ -427,7 +427,7 @@ public interface ISurrealDbClient : IDisposable
     /// <param name="patches">A list of JSON Patch operations.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>The list of updated records.</returns>
-    Task<IEnumerable<T>> PatchAll<T>(
+    Task<IEnumerable<T>> Patch<T>(
         string table,
         JsonPatchDocument<T> patches,
         CancellationToken cancellationToken = default
@@ -824,7 +824,7 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<IEnumerable<T>> UpdateAll<T>(
+    Task<IEnumerable<T>> Update<T>(
         string table,
         T data,
         CancellationToken cancellationToken = default

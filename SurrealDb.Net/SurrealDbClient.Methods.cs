@@ -192,23 +192,23 @@ public abstract partial class BaseSurrealDbClient
         return _engine.Merge<T>(recordId, data, cancellationToken);
     }
 
-    public Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+    public Task<IEnumerable<TOutput>> Merge<TMerge, TOutput>(
         string table,
         TMerge data,
         CancellationToken cancellationToken = default
     )
         where TMerge : class
     {
-        return _engine.MergeAll<TMerge, TOutput>(table, data, cancellationToken);
+        return _engine.Merge<TMerge, TOutput>(table, data, cancellationToken);
     }
 
-    public Task<IEnumerable<T>> MergeAll<T>(
+    public Task<IEnumerable<T>> Merge<T>(
         string table,
         Dictionary<string, object> data,
         CancellationToken cancellationToken = default
     )
     {
-        return _engine.MergeAll<T>(table, data, cancellationToken);
+        return _engine.Merge<T>(table, data, cancellationToken);
     }
 
     public Task<T> Patch<T>(
@@ -231,14 +231,14 @@ public abstract partial class BaseSurrealDbClient
         return _engine.Patch(recordId, patches, cancellationToken);
     }
 
-    public Task<IEnumerable<T>> PatchAll<T>(
+    public Task<IEnumerable<T>> Patch<T>(
         string table,
         JsonPatchDocument<T> patches,
         CancellationToken cancellationToken = default
     )
         where T : class
     {
-        return _engine.PatchAll(table, patches, cancellationToken);
+        return _engine.Patch(table, patches, cancellationToken);
     }
 
 #if NET6_0_OR_GREATER
@@ -473,14 +473,14 @@ public abstract partial class BaseSurrealDbClient
         return _engine.Unset(key, cancellationToken);
     }
 
-    public Task<IEnumerable<T>> UpdateAll<T>(
+    public Task<IEnumerable<T>> Update<T>(
         string table,
         T data,
         CancellationToken cancellationToken = default
     )
         where T : class
     {
-        return _engine.UpdateAll(table, data, cancellationToken);
+        return _engine.Update(table, data, cancellationToken);
     }
 
     public Task<T> Upsert<T>(T data, CancellationToken cancellationToken = default)

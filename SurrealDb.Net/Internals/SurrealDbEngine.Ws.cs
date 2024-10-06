@@ -632,7 +632,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.GetValue<T>()!;
     }
 
-    public async Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+    public async Task<IEnumerable<TOutput>> Merge<TMerge, TOutput>(
         string table,
         TMerge data,
         CancellationToken cancellationToken
@@ -649,7 +649,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<TOutput>();
     }
 
-    public async Task<IEnumerable<T>> MergeAll<T>(
+    public async Task<IEnumerable<T>> Merge<T>(
         string table,
         Dictionary<string, object> data,
         CancellationToken cancellationToken
@@ -699,7 +699,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.GetValue<T>()!;
     }
 
-    public async Task<IEnumerable<T>> PatchAll<T>(
+    public async Task<IEnumerable<T>> Patch<T>(
         string table,
         JsonPatchDocument<T> patches,
         CancellationToken cancellationToken
@@ -982,7 +982,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             .ConfigureAwait(false);
     }
 
-    public async Task<IEnumerable<T>> UpdateAll<T>(
+    public async Task<IEnumerable<T>> Update<T>(
         string table,
         T data,
         CancellationToken cancellationToken

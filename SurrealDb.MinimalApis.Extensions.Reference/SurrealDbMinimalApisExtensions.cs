@@ -226,7 +226,7 @@ public static class SurrealDbMinimalApisExtensions
                     ) =>
                     {
                         string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
-                        return surrealDbClient.PatchAll(tableName, patches, cancellationToken);
+                        return surrealDbClient.Patch(tableName, patches, cancellationToken);
                     }
                 )
                 .WithName($"PatchAll{entityName}")

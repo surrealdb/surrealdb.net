@@ -1,8 +1,6 @@
 ﻿using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using SurrealDb.Net.Extensions.DependencyInjection;
-using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
@@ -69,13 +67,13 @@ public interface ISurrealDbEngine : IDisposable
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     );
-    Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+    Task<IEnumerable<TOutput>> Merge<TMerge, TOutput>(
         string table,
         TMerge data,
         CancellationToken cancellationToken
     )
         where TMerge : class;
-    Task<IEnumerable<T>> MergeAll<T>(
+    Task<IEnumerable<T>> Merge<T>(
         string table,
         Dictionary<string, object> data,
         CancellationToken cancellationToken
@@ -92,7 +90,7 @@ public interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     )
         where T : class;
-    Task<IEnumerable<T>> PatchAll<T>(
+    Task<IEnumerable<T>> Patch<T>(
         string table,
         JsonPatchDocument<T> patches,
         CancellationToken cancellationToken
@@ -138,7 +136,7 @@ public interface ISurrealDbEngine : IDisposable
         where T : ScopeAuth;
     SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id);
     Task Unset(string key, CancellationToken cancellationToken);
-    Task<IEnumerable<T>> UpdateAll<T>(string table, T data, CancellationToken cancellationToken)
+    Task<IEnumerable<T>> Update<T>(string table, T data, CancellationToken cancellationToken)
         where T : class;
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record;

@@ -42,7 +42,7 @@ public class UpdateAllTests
 
             list = await client.Select<Post>("post");
 
-            results = await client.UpdateAll("post", postUpdate);
+            results = await client.Update("post", postUpdate);
         };
 
         await func.Should().NotThrowAsync();
