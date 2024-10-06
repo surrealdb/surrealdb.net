@@ -94,11 +94,6 @@ jobs:
           --
           DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
-      - name: Upload Coverage
-        uses: codecov/codecov-action@v3
-        with:
-          directory: .coverage
-
   test-v2:
     needs: [embedded-build]
     runs-on: ubuntu-latest
@@ -150,6 +145,11 @@ jobs:
           --results-directory .coverage
           --
           DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          directory: .coverage
 
   embedded-build:
     runs-on: ubuntu-latest
