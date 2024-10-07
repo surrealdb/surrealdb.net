@@ -23,7 +23,9 @@ internal sealed class RecordIdConverter : CborConverterBase<RecordId>
             CborDataItemType.Null => default!,
             CborDataItemType.Array => ReadRecordIdFromArray(ref reader),
             CborDataItemType.String
-                => throw new CborException("The type 'StringRecordId' was not expected here"), // TODO : nameof
+                => throw new CborException(
+                    $"The type '{nameof(StringRecordId)}' was not expected here"
+                ),
             _
                 => throw new CborException(
                     "Expected a CBOR text data type, or a CBOR array with 2 elements"

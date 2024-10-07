@@ -725,6 +725,24 @@ public interface ISurrealDbClient : IDisposable
     Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Selects a range of records.
+    /// </summary>
+    /// <typeparam name="TStart">The type of the left/start bound range limit</typeparam>
+    /// <typeparam name="TEnd">The type of the right/end bound range limit</typeparam>
+    /// <typeparam name="TOutput">The type of the record</typeparam>
+    /// <param name="recordIdRange">The record id range.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The list of extracted records</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<IEnumerable<TOutput>> Select<TStart, TEnd, TOutput>(
+        RecordIdRange<TStart, TEnd> recordIdRange,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
     /// Assigns a value as a parameter for this connection.
     /// </summary>
     /// <param name="key">The name of the parameter.</param>

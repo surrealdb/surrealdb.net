@@ -36,6 +36,13 @@ public static class SurrealDbCborOptions
         options.Registry.ConverterRegistry.RegisterConverterProvider(
             new RecordIdOfConverterProvider()
         );
+        options.Registry.ConverterRegistry.RegisterConverterProvider(
+            new RangeBoundConverterProvider()
+        );
+        options.Registry.ConverterRegistry.RegisterConverterProvider(new RangeConverterProvider());
+        options.Registry.ConverterRegistry.RegisterConverterProvider(
+            new RecordIdRangeConverterProvider()
+        );
         options.Registry.ConverterRegistry.RegisterConverterProvider(new VectorConverterProvider());
         options.Registry.ConverterRegistry.RegisterConverterProvider(
             new GeographyConverterProvider()

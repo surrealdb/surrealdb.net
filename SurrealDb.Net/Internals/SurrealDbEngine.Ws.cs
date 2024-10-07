@@ -846,6 +846,24 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.GetValue<T?>();
     }
 
+    public async Task<IEnumerable<TOutput>> Select<TStart, TEnd, TOutput>(
+        RecordIdRange<TStart, TEnd> recordIdRange,
+        CancellationToken cancellationToken
+    )
+    {
+        if (_version?.Major < 2)
+            throw new NotImplementedException();
+
+        var dbResponse = await SendRequestAsync(
+                "select",
+                [recordIdRange],
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        return dbResponse.DeserializeEnumerable<TOutput>()!;
+    }
+
     public async Task Set(string key, object value, CancellationToken cancellationToken)
     {
         if (key is null)

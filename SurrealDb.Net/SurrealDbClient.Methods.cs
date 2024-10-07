@@ -436,6 +436,14 @@ public abstract partial class BaseSurrealDbClient
         return _engine.Select<T?>(recordId, cancellationToken);
     }
 
+    public Task<IEnumerable<TOutput>> Select<TStart, TEnd, TOutput>(
+        RecordIdRange<TStart, TEnd> recordIdRange,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _engine.Select<TStart, TEnd, TOutput>(recordIdRange, cancellationToken);
+    }
+
     public Task Set(string key, object value, CancellationToken cancellationToken = default)
     {
         return _engine.Set(key, value, cancellationToken);

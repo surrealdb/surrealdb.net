@@ -400,4 +400,54 @@ public class SelectTests
         result.Should().NotBeNull();
         result!.Name.Should().Be("string");
     }
+
+    [Theory]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task ShouldSelectFromRecordIdRange(string connectionString)
+    {
+        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
+
+        IEnumerable<Empty>? result = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            const string alphabet = "abcdefghijklmnopqrstuvwxyz";
+            var itemsToInsert = new List<Empty>(26);
+
+            foreach (char c in alphabet)
+            {
+                itemsToInsert.Add(new Empty { Id = ("empty", c.ToString()) });
+            }
+
+            await client.Insert("empty", itemsToInsert);
+
+            result = await client.Select<string, string, Empty>(
+                new RecordIdRange<string, string>(
+                    "empty",
+                    RangeBound.Inclusive("b"),
+                    RangeBound.Exclusive("d")
+                )
+            );
+        };
+
+        if (version.Major < 2)
+        {
+            await func.Should().ThrowAsync<NotImplementedException>();
+            return;
+        }
+
+        await func.Should().NotThrowAsync();
+
+        result
+            .Should()
+            .BeEquivalentTo([new Empty { Id = ("empty", "b") }, new Empty { Id = ("empty", "c") }]);
+    }
 }

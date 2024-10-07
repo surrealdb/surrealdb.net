@@ -516,6 +516,19 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             .ConfigureAwait(false);
     }
 
+    public async Task<IEnumerable<TOutput>> Select<TStart, TEnd, TOutput>(
+        RecordIdRange<TStart, TEnd> recordIdRange,
+        CancellationToken cancellationToken
+    )
+    {
+        return await SendRequestAsync<IEnumerable<TOutput>>(
+                Method.Select,
+                [recordIdRange],
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+    }
+
     public async Task Set(string key, object value, CancellationToken cancellationToken)
     {
         if (key is null)
