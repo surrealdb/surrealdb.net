@@ -10,7 +10,7 @@ public static class StringAssertionsExtensions
 {
     public static AndConstraint<StringAssertions> BeNanoid(this StringAssertions assertions)
     {
-        string nanoidPattern = "[a-z0-9]{20}";
+        const string nanoidPattern = "[a-z0-9]{20}";
 
         Execute
             .Assertion.ForCondition(

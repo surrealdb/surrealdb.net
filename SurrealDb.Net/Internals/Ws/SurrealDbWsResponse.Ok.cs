@@ -28,14 +28,8 @@ internal class SurrealDbWsOkResponse : ISurrealDbWsStandardResponse
 
     internal IEnumerable<T> DeserializeEnumerable<T>()
     {
-        var items = CborSerializer.Deserialize<IEnumerable<T>>(
-            _binaryResult!.Value.Span,
-            _cborOptions!
-        );
-        foreach (var item in items)
-        {
-            yield return item;
-        }
+        // TODO : Try to implement yield pattern in the Deserialization
+        return CborSerializer.Deserialize<IEnumerable<T>>(_binaryResult!.Value.Span, _cborOptions!);
     }
 
     internal bool ExpectNone()

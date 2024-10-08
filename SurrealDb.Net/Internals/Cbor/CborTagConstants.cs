@@ -9,6 +9,9 @@ internal static class CborTagConstants
     public const ulong TAG_CUSTOM_DURATION = 14;
     public const ulong TAG_FUTURE = 15;
     public const ulong TAG_UUID = 37;
+    public const ulong TAG_RANGE = 49;
+    public const ulong TAG_INCLUSIVE_BOUND = 50;
+    public const ulong TAG_EXCLUSIVE_BOUND = 51;
     public const ulong TAG_GEOMETRY_POINT = 88;
     public const ulong TAG_GEOMETRY_LINE = 89;
     public const ulong TAG_GEOMETRY_POLYGON = 90;

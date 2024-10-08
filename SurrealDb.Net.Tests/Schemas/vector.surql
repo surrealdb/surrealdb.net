@@ -1,8 +1,7 @@
 DEFINE TABLE vector SCHEMAFULL;
 
 DEFINE FIELD name ON vector TYPE string;
-DEFINE FIELD value ON vector TYPE option<array>;
-DEFINE FIELD value.* ON vector TYPE number;
+DEFINE FIELD value ON vector TYPE option<array<number>>;
 
 CREATE vector:none SET name = "none", value = NONE;
 CREATE vector:empty SET name = "empty", value = [];

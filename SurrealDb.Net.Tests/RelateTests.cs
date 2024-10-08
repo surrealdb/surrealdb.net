@@ -36,7 +36,7 @@ public class RelateTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             result = await client.Relate<EmptyRelation>("empty", ("in", "one"), ("out", "one"));
 
@@ -76,7 +76,7 @@ public class RelateTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var data = new WroteRelation { CreatedAt = DateTime.UtcNow, NumberOfPages = 14 };
 
@@ -125,7 +125,7 @@ public class RelateTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var data = new WroteRelation { CreatedAt = DateTime.UtcNow, NumberOfPages = 14 };
 

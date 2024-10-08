@@ -1,8 +1,6 @@
 ﻿using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using SurrealDb.Net.Extensions.DependencyInjection;
-using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
@@ -36,6 +34,10 @@ public interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     )
         where T : Record;
+    Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken)
+        where T : RelationRecord;
+    Task<T> InsertRelation<T>(string table, T data, CancellationToken cancellationToken)
+        where T : RelationRecord;
     Task Invalidate(CancellationToken cancellationToken);
     Task Kill(
         Guid queryUuid,
@@ -65,13 +67,13 @@ public interface ISurrealDbEngine : IDisposable
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     );
-    Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+    Task<IEnumerable<TOutput>> Merge<TMerge, TOutput>(
         string table,
         TMerge data,
         CancellationToken cancellationToken
     )
         where TMerge : class;
-    Task<IEnumerable<T>> MergeAll<T>(
+    Task<IEnumerable<T>> Merge<T>(
         string table,
         Dictionary<string, object> data,
         CancellationToken cancellationToken
@@ -88,7 +90,7 @@ public interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     )
         where T : class;
-    Task<IEnumerable<T>> PatchAll<T>(
+    Task<IEnumerable<T>> Patch<T>(
         string table,
         JsonPatchDocument<T> patches,
         CancellationToken cancellationToken
@@ -115,9 +117,19 @@ public interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     )
         where TOutput : class;
+    Task<T> Run<T>(
+        string name,
+        string? version,
+        object[]? args,
+        CancellationToken cancellationToken
+    );
     Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken);
     Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken);
     Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken);
+    Task<IEnumerable<TOutput>> Select<TStart, TEnd, TOutput>(
+        RecordIdRange<TStart, TEnd> recordIdRange,
+        CancellationToken cancellationToken
+    );
     Task Set(string key, object value, CancellationToken cancellationToken);
     Task SignIn(RootAuth root, CancellationToken cancellationToken);
     Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken);
@@ -128,7 +140,15 @@ public interface ISurrealDbEngine : IDisposable
         where T : ScopeAuth;
     SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id);
     Task Unset(string key, CancellationToken cancellationToken);
-    Task<IEnumerable<T>> UpdateAll<T>(string table, T data, CancellationToken cancellationToken)
+    Task<T> Update<T>(T data, CancellationToken cancellationToken)
+        where T : Record;
+    Task<TOutput> Update<TData, TOutput>(
+        StringRecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record;
+    Task<IEnumerable<T>> Update<T>(string table, T data, CancellationToken cancellationToken)
         where T : class;
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record;
@@ -138,6 +158,8 @@ public interface ISurrealDbEngine : IDisposable
         CancellationToken cancellationToken
     )
         where TOutput : Record;
+    Task<IEnumerable<T>> Upsert<T>(string table, T data, CancellationToken cancellationToken)
+        where T : class;
     Task Use(string ns, string db, CancellationToken cancellationToken);
     Task<string> Version(CancellationToken cancellationToken);
 }
