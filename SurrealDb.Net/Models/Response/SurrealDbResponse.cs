@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using SurrealDb.Net.Exceptions;
 
 namespace SurrealDb.Net.Models.Response;
 
@@ -66,6 +67,20 @@ public sealed class SurrealDbResponse : IReadOnlyList<ISurrealDbResult>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return _results.GetEnumerator();
+    }
+
+    /// <summary>
+    /// Throws an exception if at least one error is found in the list of <see cref="ISurrealDbResult"/>.
+    /// </summary>
+    /// <exception cref="SurrealDbException">The SurrealDbResponse is unsuccessful.</exception>
+    public SurrealDbResponse EnsureAllOks()
+    {
+        if (HasErrors)
+        {
+            throw new SurrealDbException($"The {nameof(SurrealDbResponse)} is unsuccessful.");
+        }
+
+        return this;
     }
 
     /// <summary>

@@ -58,6 +58,8 @@ public class ParserTests
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseRecordId(string connectionString)
     {
+        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
+
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
@@ -72,7 +74,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var records = await client.Select<RecordIdRecord>("recordId");
 
@@ -167,7 +169,15 @@ public class ParserTests
             uuidRecord.Should().NotBeNull();
             uuidRecord!.Id.Should().NotBeNull();
             uuidRecord!.Id!.Table.ToString().Should().Be("recordId");
-            uuidRecord!.Id!.DeserializeId<string>().Should().BeUuid();
+
+            if (version.Major > 1)
+            {
+                uuidRecord!.Id!.DeserializeId<Guid>().Should().NotBeEmpty();
+            }
+            else
+            {
+                uuidRecord!.Id!.DeserializeId<string>().Should().BeUuid();
+            }
         }
     }
 
@@ -191,7 +201,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var records = await client.Select<StringRecord>("string");
 
@@ -255,7 +265,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var records = await client.Select<LongRecord>("number");
 
@@ -304,7 +314,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var records = await client.Select<DecimalRecord>("decimal");
 
@@ -375,7 +385,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var records = await client.Select<FloatRecord>("decimal");
 
@@ -444,7 +454,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var records = await client.Select<DoubleRecord>("decimal");
 
@@ -513,7 +523,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var records = await client.Select<DurationRecord>("duration");
 
@@ -622,7 +632,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var records = await client.Select<TimeSpanRecord>("duration");
 
@@ -719,7 +729,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var records = await client.Select<StringRecord>("duration");
 
@@ -816,7 +826,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var records = await client.Select<TimeOnlyRecord>("duration");
 
@@ -913,7 +923,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var records = await client.Select<DateTimeRecord>("datetime");
 
@@ -993,7 +1003,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         var records = await client.Select<DateOnlyRecord>("datetime");
 
@@ -1060,7 +1070,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         {
             var noneRecord = await client.Select<Vector2Record>(("vector", "none"));
@@ -1115,7 +1125,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         {
             var noneRecord = await client.Select<Vector3Record>(("vector", "none"));
@@ -1172,7 +1182,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         {
             var noneRecord = await client.Select<Vector4Record>(("vector", "none"));
@@ -1231,7 +1241,7 @@ public class ParserTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         {
             var noneRecord = await client.Select<NoneRecord>(("string", "none"));

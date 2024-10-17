@@ -38,7 +38,7 @@ public class MergeTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var merge = new PostMergeRecord
             {
@@ -86,7 +86,7 @@ public class MergeTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var data = new Dictionary<string, object>
             {
@@ -133,7 +133,7 @@ public class MergeTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var data = new Dictionary<string, object>
             {

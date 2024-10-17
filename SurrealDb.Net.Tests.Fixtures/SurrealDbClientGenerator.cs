@@ -1,5 +1,7 @@
 ﻿using Bogus;
 using Microsoft.Extensions.DependencyInjection;
+using Semver;
+using SurrealDb.Net.Extensions;
 using SurrealDb.Net.Models.Auth;
 
 namespace SurrealDb.Net.Tests.Fixtures;
@@ -19,7 +21,7 @@ public class DatabaseInfoFaker : Faker<DatabaseInfo>
     }
 }
 
-public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
+public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 {
     private static readonly DatabaseInfoFaker _databaseInfoFaker = new();
 
@@ -49,6 +51,14 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
         return _databaseInfo;
     }
 
+    public static async Task<SemVersion> GetSurrealTestVersion(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        using var client = surrealDbClientGenerator.Create(connectionString);
+
+        return (await client.Version()).ToSemver();
+    }
+
     public void Dispose()
     {
         _serviceProvider?.Dispose();
@@ -62,7 +72,7 @@ public class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(_databaseInfo.Namespace, _databaseInfo.Database);
 
-            await client.RawQuery($"REMOVE DATABASE {_databaseInfo.Database};");
+            await client.RawQuery($"REMOVE DATABASE `{_databaseInfo.Database}`;");
         }
 
         Dispose();

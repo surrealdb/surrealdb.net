@@ -183,6 +183,27 @@ public interface ISurrealDbClient : IDisposable
         where T : Record;
 
     /// <summary>
+    /// Inserts a new relation record in the database.
+    /// </summary>
+    /// <typeparam name="T">The type of the record to create.</typeparam>
+    /// <param name="data">The record data used to create the record.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created.</returns>
+    Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken = default)
+        where T : RelationRecord;
+
+    /// <summary>
+    /// Inserts a new relation record in the database.
+    /// </summary>
+    /// <typeparam name="T">The type of the record to create.</typeparam>
+    /// <param name="table">The table name where the records will be stored.</param>
+    /// <param name="data">The record data used to create the record.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The record created.</returns>
+    Task<T> InsertRelation<T>(string table, T data, CancellationToken cancellationToken = default)
+        where T : RelationRecord;
+
+    /// <summary>
     /// Invalidates the authentication for the current connection.
     /// </summary>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -343,7 +364,7 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+    Task<IEnumerable<TOutput>> Merge<TMerge, TOutput>(
         string table,
         TMerge data,
         CancellationToken cancellationToken = default
@@ -362,7 +383,7 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<IEnumerable<T>> MergeAll<T>(
+    Task<IEnumerable<T>> Merge<T>(
         string table,
         Dictionary<string, object> data,
         CancellationToken cancellationToken = default
@@ -406,7 +427,7 @@ public interface ISurrealDbClient : IDisposable
     /// <param name="patches">A list of JSON Patch operations.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>The list of updated records.</returns>
-    Task<IEnumerable<T>> PatchAll<T>(
+    Task<IEnumerable<T>> Patch<T>(
         string table,
         JsonPatchDocument<T> patches,
         CancellationToken cancellationToken = default
@@ -635,6 +656,36 @@ public interface ISurrealDbClient : IDisposable
         where TOutput : class;
 
     /// <summary>
+    /// Runs a SurrealQL function.
+    /// </summary>
+    /// <typeparam name="T">The type of the output of the function called.</typeparam>
+    /// <param name="name">The full name of the function.</param>
+    /// <param name="args">The arguments supplied to the function.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The output of the function called.</returns>
+    Task<T> Run<T>(
+        string name,
+        object[]? args = null,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Runs a versioned SurrealQL function.
+    /// </summary>
+    /// <typeparam name="T">The type of the output of the function called.</typeparam>
+    /// <param name="name">The full name of the function.</param>
+    /// <param name="version">The version of the function.</param>
+    /// <param name="args">The arguments supplied to the function.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The output of the function called.</returns>
+    Task<T> Run<T>(
+        string name,
+        string version,
+        object[]? args = null,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
     /// Selects all records in a table.
     /// </summary>
     /// <typeparam name="T">The type of record to extract</typeparam>
@@ -672,6 +723,24 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Selects a range of records.
+    /// </summary>
+    /// <typeparam name="TStart">The type of the left/start bound range limit</typeparam>
+    /// <typeparam name="TEnd">The type of the right/end bound range limit</typeparam>
+    /// <typeparam name="TOutput">The type of the record</typeparam>
+    /// <param name="recordIdRange">The record id range.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The list of extracted records</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<IEnumerable<TOutput>> Select<TStart, TEnd, TOutput>(
+        RecordIdRange<TStart, TEnd> recordIdRange,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Assigns a value as a parameter for this connection.
@@ -762,9 +831,43 @@ public interface ISurrealDbClient : IDisposable
     Task Unset(string key, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Updates the specified record in the database.
+    /// </summary>
+    /// <typeparam name="T">The type of the record to update.</typeparam>
+    /// <param name="data">The record to update.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The updated record.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<T> Update<T>(T data, CancellationToken cancellationToken = default)
+        where T : Record;
+
+    /// <summary>
+    /// Updates the specified record in the database.
+    /// </summary>
+    /// <typeparam name="TData">The type of data contained in the record.</typeparam>
+    /// <typeparam name="TOutput">The type of the record updated.</typeparam>
+    /// <param name="recordId">The record id.</param>
+    /// <param name="data">The record to update.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The updated record.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<TOutput> Update<TData, TOutput>(
+        StringRecordId recordId,
+        TData data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : Record;
+
+    /// <summary>
     /// Updates all records in the database.
     /// </summary>
-    /// <typeparam name="T">The type of the record to create.</typeparam>
+    /// <typeparam name="T">The type of the record to update.</typeparam>
     /// <param name="table">The name of the database table.</param>
     /// <param name="data">The record to create or update.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -773,7 +876,7 @@ public interface ISurrealDbClient : IDisposable
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<IEnumerable<T>> UpdateAll<T>(
+    Task<IEnumerable<T>> Update<T>(
         string table,
         T data,
         CancellationToken cancellationToken = default
@@ -813,6 +916,25 @@ public interface ISurrealDbClient : IDisposable
         CancellationToken cancellationToken = default
     )
         where TOutput : Record;
+
+    /// <summary>
+    /// Updates or creates all records in the database.
+    /// </summary>
+    /// <typeparam name="T">The type of the record to upsert.</typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="data">The record to create or update.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The list of created or updated records.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<IEnumerable<T>> Upsert<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken = default
+    )
+        where T : class;
 
     /// <summary>
     /// Switch to a specific namespace and database.

@@ -1,7 +1,7 @@
 DEFINE TABLE geometry SCHEMAFULL;
 
 DEFINE FIELD name ON geometry TYPE string;
-DEFINE FIELD value ON geometry TYPE geometry(point, line, polygon, multipoint, multiline, multipolygon, collection);
+DEFINE FIELD value ON geometry TYPE geometry<point | line | polygon | multipoint | multiline | multipolygon | collection>;
 
 CREATE geometry:PointFromTuple SET name = "point-from-tuple", value = (-0.118092, 51.509865);
 

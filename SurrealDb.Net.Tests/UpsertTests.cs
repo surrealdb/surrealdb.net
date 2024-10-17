@@ -28,7 +28,7 @@ public class UpsertTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var post = new Post
             {
@@ -85,7 +85,7 @@ public class UpsertTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var existingCreatedAt = DateTime.UtcNow;
             string existingStatus = "DRAFT";
@@ -139,7 +139,7 @@ public class UpsertTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var post = new Post
             {
@@ -195,7 +195,7 @@ public class UpsertTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var existingCreatedAt = DateTime.UtcNow;
             string existingStatus = "DRAFT";

@@ -26,7 +26,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("string");
 
@@ -117,7 +117,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("number");
 
@@ -176,7 +176,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("decimal");
 
@@ -275,7 +275,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("decimal");
 
@@ -374,7 +374,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("decimal");
 
@@ -473,7 +473,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("duration");
 
@@ -630,7 +630,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("duration");
 
@@ -777,7 +777,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("datetime");
 
@@ -913,7 +913,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("vector");
 

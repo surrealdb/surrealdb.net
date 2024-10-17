@@ -28,13 +28,13 @@ public class MergeAllTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var merge = new PostMergeData { Content = "[Edit] Oops" };
 
             list = await client.Select<Post>("post");
 
-            results = await client.MergeAll<PostMergeData, Post>("post", merge);
+            results = await client.Merge<PostMergeData, Post>("post", merge);
         };
 
         await func.Should().NotThrowAsync();
@@ -77,14 +77,14 @@ public class MergeAllTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var recordId = new RecordIdOfString("post", "first");
             var data = new Dictionary<string, object> { { "content", "[Edit] Oops" } };
 
             list = await client.Select<Post>("post");
 
-            results = await client.MergeAll<Post>("post", data);
+            results = await client.Merge<Post>("post", data);
         };
 
         await func.Should().NotThrowAsync();

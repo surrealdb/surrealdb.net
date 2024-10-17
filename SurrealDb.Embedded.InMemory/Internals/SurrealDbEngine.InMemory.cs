@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reactive;
 using System.Runtime.InteropServices;
 using Dahomey.Cbor;
@@ -158,14 +158,8 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
 
     public async Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken)
     {
-        var list = await SendRequestAsync<IEnumerable<T>>(
-                Method.Create,
-                [table, data],
-                cancellationToken
-            )
+        return await SendRequestAsync<T>(Method.Create, [table, data], cancellationToken)
             .ConfigureAwait(false);
-
-        return list.First();
     }
 
     public async Task<TOutput> Create<TData, TOutput>(
@@ -232,6 +226,44 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     {
         return await SendRequestAsync<List<T>>(Method.Insert, [table, data], cancellationToken)
             .ConfigureAwait(false);
+    }
+
+    public async Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken)
+        where T : RelationRecord
+    {
+        if (data.Id is null)
+            throw new SurrealDbException("Cannot create a relation record without an Id");
+
+        var result = await SendRequestAsync<List<T>>(
+                Method.InsertRelation,
+                [null, data],
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        return result.Single();
+    }
+
+    public async Task<T> InsertRelation<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken
+    )
+        where T : RelationRecord
+    {
+        if (data.Id is not null)
+            throw new SurrealDbException(
+                "You cannot provide both the table and an Id for the record. Either use the method overload without 'table' param or set the Id property to null."
+            );
+
+        var result = await SendRequestAsync<List<T>>(
+                Method.InsertRelation,
+                [table, data],
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        return result.Single();
     }
 
     public Task Invalidate(CancellationToken cancellationToken)
@@ -312,7 +344,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             .ConfigureAwait(false);
     }
 
-    public async Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+    public async Task<IEnumerable<TOutput>> Merge<TMerge, TOutput>(
         string table,
         TMerge data,
         CancellationToken cancellationToken
@@ -327,7 +359,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             .ConfigureAwait(false);
     }
 
-    public async Task<IEnumerable<T>> MergeAll<T>(
+    public async Task<IEnumerable<T>> Merge<T>(
         string table,
         Dictionary<string, object> data,
         CancellationToken cancellationToken
@@ -363,7 +395,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             .ConfigureAwait(false);
     }
 
-    public async Task<IEnumerable<T>> PatchAll<T>(
+    public async Task<IEnumerable<T>> Patch<T>(
         string table,
         JsonPatchDocument<T> patches,
         CancellationToken cancellationToken
@@ -455,6 +487,17 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             .ConfigureAwait(false);
     }
 
+    public async Task<T> Run<T>(
+        string name,
+        string? version,
+        object[]? args,
+        CancellationToken cancellationToken
+    )
+    {
+        return await SendRequestAsync<T>(Method.Run, [name, version, args], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public async Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken)
     {
         return await SendRequestAsync<IEnumerable<T>>(Method.Select, [table], cancellationToken)
@@ -470,6 +513,19 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     public async Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken)
     {
         return await SendRequestAsync<T?>(Method.Select, [recordId], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<IEnumerable<TOutput>> Select<TStart, TEnd, TOutput>(
+        RecordIdRange<TStart, TEnd> recordIdRange,
+        CancellationToken cancellationToken
+    )
+    {
+        return await SendRequestAsync<IEnumerable<TOutput>>(
+                Method.Select,
+                [recordIdRange],
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
@@ -534,7 +590,28 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         await SendRequestAsync<Unit>(Method.Unset, [key], cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<IEnumerable<T>> UpdateAll<T>(
+    public async Task<T> Update<T>(T data, CancellationToken cancellationToken)
+        where T : Record
+    {
+        if (data.Id is null)
+            throw new SurrealDbException("Cannot update a record without an Id");
+
+        return await SendRequestAsync<T>(Method.Update, [data.Id, data], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<TOutput> Update<TData, TOutput>(
+        StringRecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record
+    {
+        return await SendRequestAsync<TOutput>(Method.Update, [recordId, data], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<IEnumerable<T>> Update<T>(
         string table,
         T data,
         CancellationToken cancellationToken
@@ -553,9 +630,9 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         where T : Record
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot create a record without an Id");
+            throw new SurrealDbException("Cannot upsert a record without an Id");
 
-        return await SendRequestAsync<T>(Method.Update, [data.Id, data], cancellationToken)
+        return await SendRequestAsync<T>(Method.Upsert, [data.Id, data], cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -566,7 +643,22 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     )
         where TOutput : Record
     {
-        return await SendRequestAsync<TOutput>(Method.Update, [recordId, data], cancellationToken)
+        return await SendRequestAsync<TOutput>(Method.Upsert, [recordId, data], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<IEnumerable<T>> Upsert<T>(
+        string table,
+        T data,
+        CancellationToken cancellationToken
+    )
+        where T : class
+    {
+        return await SendRequestAsync<IEnumerable<T>>(
+                Method.Upsert,
+                [table, data],
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
@@ -640,30 +732,48 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
     {
         long executionStartTime = Stopwatch.GetTimestamp();
 
-        using var timeoutCts = new CancellationTokenSource();
-        var timeoutTask = Task.Delay(30_000, cancellationToken);
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-        Task.Run(async () => await timeoutTask.ConfigureAwait(false), timeoutCts.Token);
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        cancellationToken.Register(timeoutCts.Cancel);
 
         bool requireInitialized = method != Method.Use;
-        await InternalConnectAsync(requireInitialized, cancellationToken).ConfigureAwait(false);
 
-        if (cancellationToken.IsCancellationRequested)
+        try
         {
-            timeoutCts.Cancel();
-            cancellationToken.ThrowIfCancellationRequested();
+            await InternalConnectAsync(requireInitialized, timeoutCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _surrealDbLoggerFactory?.Method?.LogMethodFailed(method.ToString(), "Timeout"); // TODO : Avoid ToString()
+                throw new TimeoutException();
+            }
+
+            throw;
         }
 
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
-        await CborSerializer
-            .SerializeAsync(parameters ?? [], stream, GetCborOptions(), cancellationToken)
-            .ConfigureAwait(false);
+
+        try
+        {
+            await CborSerializer
+                .SerializeAsync(parameters ?? [], stream, GetCborOptions(), timeoutCts.Token)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _surrealDbLoggerFactory?.Method?.LogMethodFailed(method.ToString(), "Timeout"); // TODO : Avoid ToString()
+                throw new TimeoutException();
+            }
+
+            throw;
+        }
 
         bool canGetBuffer = stream.TryGetBuffer(out var bytes);
         if (!canGetBuffer)
         {
-            timeoutCts.Cancel();
             _surrealDbLoggerFactory?.Method?.LogMethodFailed(
                 method.ToString(),
                 "Failed to retrieve serialized buffer."
@@ -672,6 +782,10 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         }
 
         var taskCompletionSource = new TaskCompletionSource<T>();
+        timeoutCts.Token.Register(() =>
+        {
+            taskCompletionSource.TrySetCanceled();
+        });
 
         bool expectOutput = typeof(T) != typeof(Unit);
 
@@ -744,17 +858,7 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             }
         }
 
-        var completedTask = await Task.WhenAny(taskCompletionSource.Task, timeoutTask)
-            .ConfigureAwait(false);
-
-        if (cancellationToken.IsCancellationRequested)
-        {
-            timeoutCts.Cancel();
-            taskCompletionSource.TrySetCanceled(CancellationToken.None);
-            cancellationToken.ThrowIfCancellationRequested();
-        }
-
-        if (completedTask == taskCompletionSource.Task)
+        try
         {
 #if NET7_0_OR_GREATER
             var executionTime = Stopwatch.GetElapsedTime(executionStartTime);
@@ -763,7 +867,6 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             var executionTime = TimeSpan.FromTicks(executionEndTime - executionStartTime);
 #endif
 
-            timeoutCts.Cancel();
             _surrealDbLoggerFactory?.Method?.LogMethodSuccess(
                 method.ToString(), // TODO : Avoid ToString()
                 SurrealDbLoggerExtensions.FormatRequestParameters(
@@ -772,11 +875,18 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
                 ),
                 SurrealDbLoggerExtensions.FormatExecutionTime(executionTime)
             );
+
             return await taskCompletionSource.Task.ConfigureAwait(false);
         }
+        catch (OperationCanceledException)
+        {
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _surrealDbLoggerFactory?.Method?.LogMethodFailed(method.ToString(), "Timeout"); // TODO : Avoid ToString()
+                throw new TimeoutException();
+            }
 
-        taskCompletionSource.TrySetCanceled(CancellationToken.None);
-        _surrealDbLoggerFactory?.Method?.LogMethodFailed(method.ToString(), "Timeout"); // TODO : Avoid ToString()
-        throw new TimeoutException();
+            throw;
+        }
     }
 }

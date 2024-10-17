@@ -28,7 +28,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             {
@@ -39,18 +39,21 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
+#pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
             {
                 Namespace = dbInfo.Namespace,
                 Database = dbInfo.Database,
                 Scope = "user_scope",
+                Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
                 Password = "password123"
             };
+#pragma warning restore CS0618 // Type or member is obsolete
 
             jwt = await client.SignUp(authParams);
 
@@ -84,7 +87,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             {
@@ -95,18 +98,21 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
+#pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
             {
                 Namespace = dbInfo.Namespace,
                 Database = dbInfo.Database,
                 Scope = "user_scope",
+                Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
                 Password = "password123"
             };
+#pragma warning restore CS0618 // Type or member is obsolete
 
             var jwt = await client.SignUp(authParams);
 
@@ -142,7 +148,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             {
@@ -153,18 +159,21 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
+#pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
             {
                 Namespace = dbInfo.Namespace,
                 Database = dbInfo.Database,
                 Scope = "user_scope",
+                Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
                 Password = "password123"
             };
+#pragma warning restore CS0618 // Type or member is obsolete
 
             jwt = await client.SignUp(authParams);
 

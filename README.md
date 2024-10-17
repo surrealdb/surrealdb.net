@@ -211,7 +211,7 @@ public class WeatherForecastController : ControllerBase
         CancellationToken cancellationToken
     )
     {
-        return _surrealDbClient.PatchAll(Table, patches, cancellationToken);
+        return _surrealDbClient.Patch(Table, patches, cancellationToken);
     }
 
     [HttpPatch("{id}")]
@@ -304,7 +304,7 @@ Unit/Integration tests are written using [xUnit](https://xunit.net/) and [Fluent
 You will need a local SurrealDB instance alongside the tests. Start one using the following command:
 
 ```
-surreal start --log debug --user root --pass root memory --auth --allow-guests
+surreal start --log debug --user root --pass root memory --allow-guests
 ```
 
 Once ready, go to the root directory of the project and run the following command:
@@ -330,7 +330,7 @@ This project also contains [benchmarks](https://benchmarkdotnet.org/) in order t
 You will need a local SurrealDB instance alongside the tests. Start one using the following command:
 
 ```
-surreal start --user root --pass root memory --auth --allow-guests
+surreal start --user root --pass root memory --allow-guests
 ```
 
 Once ready, go to the root directory of the project and run the following command:

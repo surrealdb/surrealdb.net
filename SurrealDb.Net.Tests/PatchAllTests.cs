@@ -30,7 +30,7 @@ public class PatchAllTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var jsonPatchDocument = new JsonPatchDocument<Post>
             {
@@ -43,7 +43,7 @@ public class PatchAllTests
 
             list = await client.Select<Post>("post");
 
-            results = await client.PatchAll("post", jsonPatchDocument);
+            results = await client.Patch("post", jsonPatchDocument);
         };
 
         await func.Should().NotThrowAsync();
