@@ -140,7 +140,7 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Create Package
-        run: dotnet pack --configuration Release --output ${{ env.NuGetDirectory }}
+        run: dotnet pack /p:GenerateCompatibilitySuppressionFile=true --configuration Release --output ${{ env.NuGetDirectory }}
 
       - uses: actions/upload-artifact@v4
         with:
