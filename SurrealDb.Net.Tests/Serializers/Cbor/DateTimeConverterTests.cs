@@ -9,7 +9,11 @@ public class DateTimeConverterTests : BaseCborConverterTests
             DateTime.Parse("2024-03-24T13:30:26.1623225Z").ToUniversalTime()
         );
 
+#if NET7_0_OR_GREATER
         result.Should().Be("cc821a66002af21a09acd844");
+#else
+        result.Should().Be("cc821a66002af21a09acd843");
+#endif
     }
 
     [Fact]

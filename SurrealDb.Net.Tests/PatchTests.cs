@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿#if NET8_0_OR_GREATER
+using System.Text;
 using System.Text.Json;
 using SystemTextJsonPatch;
 
@@ -108,3 +109,4 @@ public class PatchTests
         result!.Status.Should().Be("DRAFT");
     }
 }
+#endif
