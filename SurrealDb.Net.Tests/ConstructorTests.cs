@@ -1,4 +1,4 @@
-namespace SurrealDb.Net.Tests;
+﻿namespace SurrealDb.Net.Tests;
 
 public class ConstructorTests
 {
@@ -39,6 +39,19 @@ public class ConstructorTests
     }
 
     [Fact]
+    public void ShouldRequireDependencyInjectionForMemoryProtocol()
+    {
+        Action action = () => new SurrealDbClient("mem://");
+
+        action
+            .Should()
+            .Throw<Exception>()
+            .WithMessage(
+                "Impossible to create a new in-memory SurrealDB client. Make sure to use `AddInMemoryProvider`."
+            );
+    }
+
+    [Fact]
     public void ShouldThrowErrorOnInvalidUri()
     {
         Action act = () => new SurrealDbClient("123456");
@@ -51,6 +64,8 @@ public class ConstructorTests
     {
         Action act = () => new SurrealDbClient("abc://cloud.SurrealDb.com");
 
-        act.Should().Throw<ArgumentException>().WithMessage("This protocol is not supported.");
+        act.Should()
+            .Throw<NotSupportedException>()
+            .WithMessage("The protocol 'abc' is not supported.");
     }
 }

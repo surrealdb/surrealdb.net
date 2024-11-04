@@ -25,6 +25,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configurat
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
+		global.json = global.json
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Net.LiveQuery.Tests", "SurrealDb.Net.LiveQuery.Tests\SurrealDb.Net.LiveQuery.Tests.csproj", "{8A61723E-3341-4F38-9D93-13777E8D5566}"
@@ -49,7 +51,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.MinimalApis.Exten
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Examples.MinimalApis", "SurrealDb.Examples.MinimalApis\SurrealDb.Examples.MinimalApis.csproj", "{15FC7474-5CB5-4EAA-91B0-796DD5DE3BD6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.MinimalApis.Extensions.Reference", "SurrealDb.MinimalApis.Extensions.Reference\SurrealDb.MinimalApis.Extensions.Reference.csproj", "{15C6F284-FAAA-4794-9FD9-9B500A1B15FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.MinimalApis.Extensions.Reference", "SurrealDb.MinimalApis.Extensions.Reference\SurrealDb.MinimalApis.Extensions.Reference.csproj", "{15C6F284-FAAA-4794-9FD9-9B500A1B15FF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Providers", "Providers", "{ED80259F-C52A-4936-9345-E8E3ABE19FBF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Embedded.InMemory", "SurrealDb.Embedded.InMemory\SurrealDb.Embedded.InMemory.csproj", "{DF431D96-ED87-4A2B-959E-D345E337F110}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Net.Benchmarks.Embedded", "SurrealDb.Net.Benchmarks.Embedded\SurrealDb.Net.Benchmarks.Embedded.csproj", "{ABB406DB-023C-4B7C-891F-0B75454D0205}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Net.Benchmarks.Remote", "SurrealDb.Net.Benchmarks.Remote\SurrealDb.Net.Benchmarks.Remote.csproj", "{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -117,6 +127,18 @@ Global
 		{15C6F284-FAAA-4794-9FD9-9B500A1B15FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15C6F284-FAAA-4794-9FD9-9B500A1B15FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15C6F284-FAAA-4794-9FD9-9B500A1B15FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF431D96-ED87-4A2B-959E-D345E337F110}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF431D96-ED87-4A2B-959E-D345E337F110}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF431D96-ED87-4A2B-959E-D345E337F110}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF431D96-ED87-4A2B-959E-D345E337F110}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABB406DB-023C-4B7C-891F-0B75454D0205}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABB406DB-023C-4B7C-891F-0B75454D0205}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABB406DB-023C-4B7C-891F-0B75454D0205}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABB406DB-023C-4B7C-891F-0B75454D0205}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -137,6 +159,9 @@ Global
 		{8DCBC7C3-66B3-498F-ABFA-0979A9711281} = {D38C363A-3C36-465F-9C56-A6EC31321BD4}
 		{15FC7474-5CB5-4EAA-91B0-796DD5DE3BD6} = {D38C363A-3C36-465F-9C56-A6EC31321BD4}
 		{15C6F284-FAAA-4794-9FD9-9B500A1B15FF} = {D38C363A-3C36-465F-9C56-A6EC31321BD4}
+		{DF431D96-ED87-4A2B-959E-D345E337F110} = {ED80259F-C52A-4936-9345-E8E3ABE19FBF}
+		{ABB406DB-023C-4B7C-891F-0B75454D0205} = {2AA621E5-D78A-4710-9C77-48B305A67928}
+		{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2} = {2AA621E5-D78A-4710-9C77-48B305A67928}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {70C100EF-E131-45C0-9515-02FC4823BA20}

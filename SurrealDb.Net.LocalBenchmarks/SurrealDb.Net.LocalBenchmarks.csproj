@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,9 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.10" />
-    <PackageReference Include="Pidgin" Version="3.2.3" />
-    <PackageReference Include="Superpower" Version="3.0.0" />
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="Pidgin" />
+    <PackageReference Include="Superpower" />
+    <PackageReference Include="Ulid" />
   </ItemGroup>
 
   <ItemGroup>

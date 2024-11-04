@@ -5,9 +5,10 @@ namespace SurrealDb.Net.Tests;
 public class DeleteTests
 {
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldDeletePostTable(string url)
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task ShouldDeletePostTable(string connectionString)
     {
         IEnumerable<Post>? list = null;
 
@@ -24,10 +25,9 @@ public class DeleteTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             await client.Delete("post");
 
@@ -40,9 +40,10 @@ public class DeleteTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldDeletePostRecord(string url)
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task ShouldDeletePostRecord(string connectionString)
     {
         IEnumerable<Post>? list = null;
         bool? result = null;
@@ -60,10 +61,9 @@ public class DeleteTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             result = await client.Delete(("post", "first"));
 
@@ -74,7 +74,7 @@ public class DeleteTests
 
         list.Should().NotBeNull().And.HaveCount(1);
 
-        var firstPost = list!.FirstOrDefault(p => p.Id!.Id == "first");
+        var firstPost = list!.FirstOrDefault(p => p.Id! == ("post", "first"));
 
         firstPost.Should().BeNull();
 
@@ -82,9 +82,10 @@ public class DeleteTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldDeletePostRecordUsingThing(string url)
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task ShouldDeletePostRecordUsingRecordId(string connectionString)
     {
         IEnumerable<Post>? list = null;
         bool? result = null;
@@ -102,14 +103,11 @@ public class DeleteTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
-            var thing = new Thing("post", "first");
-
-            result = await client.Delete(thing);
+            result = await client.Delete(("post", "first"));
 
             list = await client.Select<Post>("post");
         };
@@ -118,7 +116,7 @@ public class DeleteTests
 
         list.Should().NotBeNull().And.HaveCount(1);
 
-        var firstPost = list!.FirstOrDefault(p => p.Id!.Id == "first");
+        var firstPost = list!.FirstOrDefault(p => p.Id! == ("post", "first"));
 
         firstPost.Should().BeNull();
 
@@ -126,9 +124,10 @@ public class DeleteTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldTryToDeleteInexistentRecord(string url)
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task ShouldTryToDeleteInexistentRecord(string connectionString)
     {
         IEnumerable<Post>? list = null;
         bool? result = null;
@@ -146,14 +145,11 @@ public class DeleteTests
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(url);
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+            using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
-            var thing = new Thing("post", "inexistent");
-
-            result = await client.Delete(thing);
+            result = await client.Delete(("post", "inexistent"));
 
             list = await client.Select<Post>("post");
         };
@@ -162,5 +158,47 @@ public class DeleteTests
 
         list.Should().NotBeNull().And.HaveCount(2);
         result.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task ShouldDeletePostRecordUsingStringRecordId(string connectionString)
+    {
+        IEnumerable<Post>? list = null;
+        bool? result = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            string filePath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "Schemas/post.surql"
+            );
+            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+
+            string query = fileContent;
+
+            using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+            (await client.RawQuery(query)).EnsureAllOks();
+
+            result = await client.Delete(new StringRecordId("post:first"));
+
+            list = await client.Select<Post>("post");
+        };
+
+        await func.Should().NotThrowAsync();
+
+        list.Should().NotBeNull().And.HaveCount(1);
+
+        var firstPost = list!.FirstOrDefault(p => p.Id!.DeserializeId<string>() == "first");
+
+        firstPost.Should().BeNull();
+
+        result.Should().BeTrue();
     }
 }

@@ -1,12 +1,10 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
+﻿using Dahomey.Cbor;
+using SurrealDb.Net.Models;
 
 namespace SurrealDb.Net.Internals.Ws;
 
-internal class SurrealDbWsLiveResponse : ISurrealDbWsLiveResponse
+internal sealed class SurrealDbWsLiveResponse : ISurrealDbWsLiveResponse
 {
-    [JsonPropertyName("result")]
     public SurrealDbWsLiveResponseContent Result { get; }
 
     internal SurrealDbWsLiveResponse(SurrealDbWsLiveResponseContent result)
@@ -15,48 +13,34 @@ internal class SurrealDbWsLiveResponse : ISurrealDbWsLiveResponse
     }
 }
 
-internal class SurrealDbWsLiveResponseContent
+internal sealed class SurrealDbWsLiveResponseContent
 {
-    private readonly JsonSerializerOptions _jsonSerializerOptions;
+    private readonly ReadOnlyMemory<byte>? _binaryResult;
+    private readonly CborOptions? _cborOptions;
 
-    [JsonPropertyName("id")]
     public Guid Id { get; }
 
-    [JsonPropertyName("action")]
     public string Action { get; }
 
-    [JsonPropertyName("result")]
-    public JsonElement Result { get; }
+    public RecordId? Record { get; }
 
     internal SurrealDbWsLiveResponseContent(
         Guid id,
         string action,
-        JsonElement result,
-        JsonSerializerOptions jsonSerializerOptions
+        ReadOnlyMemory<byte> binaryResult,
+        RecordId? record,
+        CborOptions cborOptions
     )
     {
         Id = id;
         Action = action;
-        Result = result;
-        _jsonSerializerOptions = jsonSerializerOptions;
+        _binaryResult = binaryResult;
+        Record = record;
+        _cborOptions = cborOptions;
     }
 
-#if NET8_0_OR_GREATER
     public T? GetValue<T>()
     {
-        if (JsonSerializer.IsReflectionEnabledByDefault)
-        {
-#pragma warning disable IL2026, IL3050
-            return Result.Deserialize<T>(_jsonSerializerOptions);
-#pragma warning restore IL2026, IL3050
-        }
-
-        return Result.Deserialize(
-            (_jsonSerializerOptions.GetTypeInfo(typeof(T)) as JsonTypeInfo<T>)!
-        );
+        return CborSerializer.Deserialize<T>(_binaryResult!.Value.Span, _cborOptions!);
     }
-
-#else
-    public T? GetValue<T>() => Result.Deserialize<T>(_jsonSerializerOptions);
-#endif
 }

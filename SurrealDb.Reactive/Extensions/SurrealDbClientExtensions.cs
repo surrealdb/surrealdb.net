@@ -2,6 +2,11 @@
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
+#if NET6_0_OR_GREATER
+using SurrealDb.Net.Handlers;
+#else
+using SurrealDb.Net.Internals.Extensions;
+#endif
 
 namespace SurrealDb.Net;
 
@@ -18,66 +23,21 @@ public static class SurrealDbClientExtensions
     /// <returns>Returns an Observable to consume incoming live query notification.</returns>
     public static IObservable<SurrealDbLiveQueryResponse> ObserveQuery<T>(
         this ISurrealDbClient client,
+#if NET6_0_OR_GREATER
+        QueryInterpolatedStringHandler query
+#else
         FormattableString query
+#endif
     )
     {
-        return Observable.Defer(
-            () =>
-                Observable.Create<SurrealDbLiveQueryResponse>(
-                    async (observer, cancellationToken) =>
-                    {
-                        SurrealDbResponse response = null!;
+#if NET6_0_OR_GREATER
+        string formattedQuery = query.FormattedText;
+        var parameters = query.Parameters;
+#else
+        var (formattedQuery, parameters) = query.ExtractRawQueryParams();
+#endif
 
-                        try
-                        {
-                            response = await client.Query(query, cancellationToken);
-                        }
-                        catch (Exception e)
-                        {
-                            observer.OnError(e);
-                            return () => { };
-                        }
-
-                        if (response.HasErrors)
-                        {
-                            observer.OnError(
-                                new SurrealDbErrorResultException(response.FirstError!)
-                            );
-                            return () => { };
-                        }
-
-                        if (response.FirstOk is null)
-                        {
-                            observer.OnError(new SurrealDbErrorResultException());
-                            return () => { };
-                        }
-
-                        // TODO : handle multi-queries
-
-                        SurrealDbLiveQuery<T> liveQuery = null!;
-
-                        var queryUuid = response.FirstOk!.GetValue<Guid>();
-
-                        try
-                        {
-                            liveQuery = client.ListenLive<T>(queryUuid);
-                        }
-                        catch (Exception e)
-                        {
-                            observer.OnError(e);
-                            return () => { };
-                        }
-
-                        var subscription = liveQuery.ToObservable().Subscribe(observer);
-
-                        return () =>
-                        {
-                            subscription.Dispose();
-                            liveQuery.DisposeAsync().GetAwaiter().GetResult();
-                        };
-                    }
-                )
-        );
+        return client.ObserveRawQuery<T>(formattedQuery, parameters);
     }
 
     /// <summary>

@@ -13,16 +13,17 @@ on:
       - '**.md'
 jobs:
   build:
+    needs: [embedded-build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Download SurrealDB
-        run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh
-
-      - name: Run SurrealDB root
-        run: surreal start --user root --pass root memory --auth --allow-guests &
+      
+      - name: Download embedded artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: embedded
+          path: ./rust-embedded/target/debug
 
       - name: Setup dotnet 8.0
         uses: actions/setup-dotnet@v3
@@ -34,6 +35,88 @@ jobs:
 
       - name: Check Formatting
         run: dotnet csharpier --check .
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+  test-v1:
+    needs: [embedded-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Download embedded artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: embedded
+          path: ./rust-embedded/target/debug
+
+      - name: Download SurrealDB
+        run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh -s -- --version v1.5.5
+
+      - name: Run SurrealDB root
+        run: surreal start --user root --pass root memory --auth --allow-guests &
+
+      - name: Setup dotnet 8.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      - name: Test library
+        run: >
+          dotnet test 
+          ./SurrealDb.Net.Tests/SurrealDb.Net.Tests.csproj
+          --no-restore
+          --no-build
+          --collect "XPlat Code Coverage"
+          --results-directory .coverage
+          --
+          DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+      - name: Test Live Query feature
+        run: >
+          dotnet test 
+          ./SurrealDb.Net.LiveQuery.Tests/SurrealDb.Net.LiveQuery.Tests.csproj
+          --no-restore
+          --no-build
+          --collect "XPlat Code Coverage"
+          --results-directory .coverage
+          --
+          DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+  test-v2:
+    needs: [embedded-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Download embedded artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: embedded
+          path: ./rust-embedded/target/debug
+
+      - name: Download SurrealDB
+        run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh -s
+
+      - name: Run SurrealDB root
+        run: surreal start --user root --pass root memory --allow-guests &
+
+      - name: Setup dotnet 8.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.x"
 
       - name: Install dependencies
         run: dotnet restore
@@ -67,3 +150,82 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           directory: .coverage
+
+  embedded-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            rust-embedded
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build libraries
+        working-directory: ./rust-embedded
+        run: cargo build
+      
+      - name: Publish embedded artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: embedded
+          path: ./rust-embedded/target/debug/libsurreal_memory.so
+
+  cargo-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            rust-embedded
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run check
+        working-directory: ./rust-embedded
+        run: cargo check --all
+
+      - name: Run tests
+        working-directory: ./rust-embedded
+        run: cargo test
+
+      - name: Run format
+        working-directory: ./rust-embedded
+        run: |
+          cargo check --all
+          cargo fix --allow-no-vcs
+
+      - name: Run lint
+        working-directory: ./rust-embedded
+        run: cargo clippy -- -Dwarnings
+
+  cargo-deny:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        manifests:
+          - ./rust-embedded/memory/Cargo.toml
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            rust-embedded
+
+      - uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          manifest-path: ${{ matrix.manifests }}
+      

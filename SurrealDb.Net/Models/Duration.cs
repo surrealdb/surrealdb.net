@@ -1,4 +1,5 @@
-using SurrealDb.Net.Internals.Constants;
+﻿using SurrealDb.Net.Internals.Constants;
+using SurrealDb.Net.Internals.Extensions;
 
 namespace SurrealDb.Net.Models;
 
@@ -16,25 +17,15 @@ public readonly partial struct Duration : IEquatable<Duration>, IComparable<Dura
 {
     public bool Equals(Duration other)
     {
-        if (_unitValues == null && other._unitValues == null)
-            return true;
-
-        if (_unitValues == null || other._unitValues == null)
-            return false;
-
-        if (_unitValues.Count != other._unitValues.Count)
-            return false;
-
-        foreach (var (key, value) in _unitValues)
-        {
-            if (!other._unitValues.TryGetValue(key, out var otherValue))
-                return false;
-
-            if (value != otherValue)
-                return false;
-        }
-
-        return true;
+        return NanoSeconds == other.NanoSeconds
+            && MicroSeconds == other.MicroSeconds
+            && MilliSeconds == other.MilliSeconds
+            && Seconds == other.Seconds
+            && Minutes == other.Minutes
+            && Hours == other.Hours
+            && Days == other.Days
+            && Weeks == other.Weeks
+            && Years == other.Years;
     }
 
     public int CompareTo(Duration other)
@@ -79,11 +70,119 @@ public readonly partial struct Duration : IEquatable<Duration>, IComparable<Dura
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(_value);
+        return HashCode.Combine(
+            NanoSeconds
+                + MicroSeconds * TimeConstants.NANOS_PER_MICROSECOND
+                + MilliSeconds * TimeConstants.NANOS_PER_MILLISECOND,
+            Seconds,
+            Minutes,
+            Hours,
+            Days,
+            Weeks,
+            Years
+        );
     }
 
     public override string ToString()
     {
-        return _value ?? DurationConstants.DefaultDuration;
+        if (this == Zero)
+        {
+            const string DEFAULT_DURATION_STRING = "0ns";
+            return DEFAULT_DURATION_STRING;
+        }
+
+        return string.Create(
+            CalculateStringLength(),
+            this,
+            (buffer, self) =>
+            {
+                if (self.Years != 0)
+                {
+                    buffer.Write(self.Years);
+                    buffer.Write('y');
+                }
+                if (self.Weeks != 0)
+                {
+                    buffer.Write(self.Weeks);
+                    buffer.Write('y');
+                }
+                if (self.Days != 0)
+                {
+                    buffer.Write(self.Days);
+                    buffer.Write('d');
+                }
+                if (self.Hours != 0)
+                {
+                    buffer.Write(self.Hours);
+                    buffer.Write('h');
+                }
+                if (self.Minutes != 0)
+                {
+                    buffer.Write(self.Minutes);
+                    buffer.Write('m');
+                }
+                if (self.Seconds != 0)
+                {
+                    buffer.Write(self.Seconds);
+                    buffer.Write('s');
+                }
+                if (self.MilliSeconds != 0)
+                {
+                    buffer.Write(self.MilliSeconds);
+                    buffer.Write("ms");
+                }
+                if (self.MicroSeconds != 0)
+                {
+                    buffer.Write(self.MicroSeconds);
+                    buffer.Write("us");
+                }
+                if (self.NanoSeconds != 0)
+                {
+                    buffer.Write(self.NanoSeconds);
+                    buffer.Write("ns");
+                }
+            }
+        );
+    }
+
+    private int CalculateStringLength()
+    {
+        int total = 0;
+
+        if (Years != 0)
+            total += CalculateInt32Length(Years) + 1;
+        if (Weeks != 0)
+            total += CalculateInt32Length(Weeks) + 1;
+        if (Days != 0)
+            total += CalculateInt32Length(Days) + 1;
+        if (Hours != 0)
+            total += CalculateInt32Length(Hours) + 1;
+        if (Minutes != 0)
+            total += CalculateInt32Length(Minutes) + 1;
+        if (Seconds != 0)
+            total += CalculateInt32Length(Seconds) + 1;
+        if (MilliSeconds != 0)
+            total += CalculateInt32Length(MilliSeconds) + 2;
+        if (MicroSeconds != 0)
+            total += CalculateInt32Length(MicroSeconds) + 2;
+        if (NanoSeconds != 0)
+            total += CalculateInt32Length(NanoSeconds) + 2;
+
+        return total;
+    }
+
+    private static int CalculateInt32Length(int i)
+    {
+        if (i == 0)
+        {
+            return 1;
+        }
+
+        if (i < 0)
+        {
+            return CalculateInt32Length(Math.Abs(i)) + 1;
+        }
+
+        return (int)Math.Floor(Math.Log10(i)) + 1;
     }
 }

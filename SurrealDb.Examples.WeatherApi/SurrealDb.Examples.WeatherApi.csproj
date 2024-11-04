@@ -6,9 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Bogus" Version="34.0.2" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-    <PackageReference Include="SystemTextJsonPatch" Version="3.0.1" />
+    <PackageReference Include="Bogus" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="SystemTextJsonPatch" />
   </ItemGroup>
 
   <ItemGroup>

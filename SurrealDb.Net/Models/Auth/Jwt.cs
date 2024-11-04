@@ -1,4 +1,4 @@
-namespace SurrealDb.Net.Models.Auth;
+﻿namespace SurrealDb.Net.Models.Auth;
 
 /// <summary>
 /// A JSON Web Token for authenticating with the server.<br /><br />
@@ -11,10 +11,25 @@ namespace SurrealDb.Net.Models.Auth;
 /// * stored in a database with restricted access,<br />
 /// * or encrypted in conjunction with other encryption mechanisms.<br />
 /// </summary>
-public sealed class Jwt
+public readonly struct Jwt
 {
     /// <summary>
     /// The underlying token string
     /// </summary>
-    public string Token { get; set; } = string.Empty;
+    public string Token { get; }
+
+    public Jwt()
+    {
+        Token = string.Empty;
+    }
+
+    public Jwt(string token)
+    {
+        Token = token;
+    }
+
+    public override string ToString()
+    {
+        return Token;
+    }
 }

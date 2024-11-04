@@ -1,11 +1,11 @@
-#if NET6_0_OR_GREATER
+﻿#if NET6_0_OR_GREATER
 namespace SurrealDb.Net.Internals.Parsers;
 
-internal class TimeOnlyParser
+internal static class TimeOnlyParser
 {
-    public static TimeOnly Parse(string input)
+    public static TimeOnly Convert(long? seconds, int? nanos)
     {
-        var timeSpan = TimeSpanParser.Parse(input);
+        var timeSpan = TimeSpanParser.Convert(seconds, nanos);
         return new TimeOnly(timeSpan.Ticks % TimeSpan.TicksPerDay);
     }
 }

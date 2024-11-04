@@ -1,6 +1,6 @@
-namespace SurrealDb.Net.Internals.Helpers;
+﻿namespace SurrealDb.Net.Internals.Helpers;
 
-internal class UriBuilderHelper
+internal static class UriBuilderHelper
 {
     public static string CreateEndpointFromProtocolAndHost(
         string host,

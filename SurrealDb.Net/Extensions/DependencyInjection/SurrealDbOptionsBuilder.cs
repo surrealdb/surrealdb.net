@@ -1,9 +1,8 @@
-﻿using System.Text.Json;
-using SurrealDb.Net.Internals.Constants;
+﻿using SurrealDb.Net.Internals.Constants;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
-public class SurrealDbOptionsBuilder
+public sealed class SurrealDbOptionsBuilder
 {
     private string? _endpoint;
     private string? _namespace;
@@ -12,6 +11,7 @@ public class SurrealDbOptionsBuilder
     private string? _password;
     private string? _token;
     private string? _namingPolicy;
+    private bool _sensitiveDataLoggingEnabled;
 
     /// <summary>
     /// Parses the connection string and set the configuration accordingly.
@@ -28,7 +28,10 @@ public class SurrealDbOptionsBuilder
                 int separatorIndex = str.IndexOf("=", StringComparison.Ordinal);
 
                 if (separatorIndex <= 0)
-                    throw new ArgumentException($"Invalid connection string: {connectionString}");
+                    throw new ArgumentException(
+                        $"Invalid connection string: {connectionString}",
+                        nameof(connectionString)
+                    );
 
                 return new KeyValuePair<string, string>(
                     str[..separatorIndex],
@@ -41,7 +44,14 @@ public class SurrealDbOptionsBuilder
             switch (key.ToLowerInvariant())
             {
                 case "endpoint":
+                    _endpoint = value;
+                    break;
                 case "server":
+                    EnsuresCorrectServerEndpoint(value, nameof(connectionString));
+                    _endpoint = value;
+                    break;
+                case "client":
+                    EnsuresCorrectClientEndpoint(value, nameof(connectionString));
                     _endpoint = value;
                     break;
                 case "namespace":
@@ -70,6 +80,48 @@ public class SurrealDbOptionsBuilder
         }
 
         return this;
+    }
+
+    private static void EnsuresCorrectServerEndpoint(string? endpoint, string argumentName)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint))
+        {
+            return;
+        }
+
+        string[] validServerEndpoints =
+        [
+            EndpointConstants.Server.HTTP,
+            EndpointConstants.Server.HTTPS,
+            EndpointConstants.Server.WS,
+            EndpointConstants.Server.WSS
+        ];
+        string lowerEndpoint = endpoint.ToLowerInvariant();
+
+        if (validServerEndpoints.Any(lowerEndpoint.StartsWith))
+        {
+            return;
+        }
+
+        throw new ArgumentException($"Invalid server endpoint: {endpoint}", argumentName);
+    }
+
+    private static void EnsuresCorrectClientEndpoint(string? endpoint, string argumentName)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint))
+        {
+            return;
+        }
+
+        string[] validClientEndpoints = [EndpointConstants.Client.MEMORY];
+        string lowerEndpoint = endpoint.ToLowerInvariant();
+
+        if (validClientEndpoints.Any(lowerEndpoint.StartsWith))
+        {
+            return;
+        }
+
+        throw new ArgumentException($"Invalid client endpoint: {endpoint}", argumentName);
     }
 
     public SurrealDbOptionsBuilder WithEndpoint(string? endpoint)
@@ -142,6 +194,21 @@ public class SurrealDbOptionsBuilder
         throw new ArgumentException($"Invalid naming policy: {namingPolicy}", nameof(namingPolicy));
     }
 
+    /// <summary>
+    /// Enables application data to be included in logs.
+    /// This typically include parameter values set for SURQL queries, and parameters sent via any client methods.
+    /// You should only enable this flag if you have the appropriate security measures in place based on the sensitivity of this data.
+    /// </summary>
+    /// <param name="sensitiveDataLoggingEnabled">If <c>true</c>, then sensitive data is logged.</param>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public SurrealDbOptionsBuilder EnableSensitiveDataLogging(
+        bool sensitiveDataLoggingEnabled = true
+    )
+    {
+        _sensitiveDataLoggingEnabled = sensitiveDataLoggingEnabled;
+        return this;
+    }
+
     public SurrealDbOptions Build()
     {
         return new SurrealDbOptions
@@ -152,7 +219,8 @@ public class SurrealDbOptionsBuilder
             Username = _username,
             Password = _password,
             Token = _token,
-            NamingPolicy = _namingPolicy
+            NamingPolicy = _namingPolicy,
+            Logging = new() { SensitiveDataLoggingEnabled = _sensitiveDataLoggingEnabled }
         };
     }
 }

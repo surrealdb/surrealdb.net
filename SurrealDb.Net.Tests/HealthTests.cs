@@ -1,11 +1,12 @@
-namespace SurrealDb.Net.Tests;
+﻿namespace SurrealDb.Net.Tests;
 
 public class HealthTests
 {
     [Theory]
-    [InlineData("http://127.0.0.1:8000")]
-    [InlineData("ws://127.0.0.1:8000/rpc")]
-    public async Task ShouldBeTrueOnAValidServer(string url)
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task ShouldBeTrueOnAValidEndpoint(string connectionString)
     {
         bool? response = null;
 
@@ -14,7 +15,7 @@ public class HealthTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
 
             response = await client.Health();
         };
@@ -25,9 +26,9 @@ public class HealthTests
     }
 
     [Theory]
-    [InlineData("http://localhost:1234")]
-    [InlineData("ws://localhost:1234/rpc")]
-    public async Task ShouldBeFalseOnAnInvalidServer(string url)
+    [InlineData("Endpoint=http://localhost:1234")]
+    [InlineData("Endpoint=ws://localhost:1234/rpc")]
+    public async Task ShouldBeFalseOnAnInvalidServer(string connectionString)
     {
         bool? response = null;
 
@@ -36,7 +37,7 @@ public class HealthTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(url);
+            using var client = surrealDbClientGenerator.Create(connectionString);
 
             response = await client.Health();
         };

@@ -4,18 +4,18 @@ using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.LiveQuery.Tests;
 
-[CollectionDefinition("LiveQuery")]
 public class KillLiveQueryTests
 {
-    [Fact]
-    public async Task ShouldAutomaticallyKillLiveQueryWhenDisposed()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task ShouldAutomaticallyKillLiveQueryWhenDisposed(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
+        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
 
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -44,23 +44,27 @@ public class KillLiveQueryTests
 
         liveQueryUuid.Should().NotBeEmpty();
 
+        string errorMessage =
+            version.Major > 1
+                ? "There was a problem with the database: Can not execute KILL statement using id '$id'"
+                : "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'";
+
         await liveQueryAlreadyKilledFunc
             .Should()
             .ThrowAsync<SurrealDbException>()
-            .WithMessage(
-                "There was a problem with the database: Can not execute KILL statement using id '$id'"
-            );
+            .WithMessage(errorMessage);
     }
 
-    [Fact]
-    public async Task ShouldManuallyKillLiveQuery()
+    [Theory]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task ShouldManuallyKillLiveQuery(string connectionString)
     {
-        const string url = "ws://127.0.0.1:8000/rpc";
+        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
 
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        using var client = surrealDbClientGenerator.Create(url);
+        using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -92,11 +96,14 @@ public class KillLiveQueryTests
 
         await manuallyKillLiveQueryFunc.Should().NotThrowAsync();
 
+        string errorMessage =
+            version.Major > 1
+                ? "There was a problem with the database: Can not execute KILL statement using id '$id'"
+                : "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'";
+
         await liveQueryAlreadyKilledFunc
             .Should()
             .ThrowAsync<SurrealDbException>()
-            .WithMessage(
-                "There was a problem with the database: Can not execute KILL statement using id '$id'"
-            );
+            .WithMessage(errorMessage);
     }
 }
