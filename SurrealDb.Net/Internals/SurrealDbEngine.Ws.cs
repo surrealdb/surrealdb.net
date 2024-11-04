@@ -382,6 +382,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             }
             catch (SurrealDbException) { }
             catch (OperationCanceledException) { }
+            catch (TimeoutException) { }
         }
 
         _wsClient.Stop(WebSocketCloseStatus.NormalClosure, "Client disposed");
