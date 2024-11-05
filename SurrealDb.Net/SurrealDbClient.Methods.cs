@@ -507,6 +507,16 @@ public abstract partial class BaseSurrealDbClient
         return _engine.Update(table, data, cancellationToken);
     }
 
+    public Task<TOutput> Update<TData, TOutput>(
+        RecordId recordId,
+        TData data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : Record
+    {
+        return _engine.Update<TData, TOutput>(recordId, data, cancellationToken);
+    }
+
     public Task<T> Upsert<T>(T data, CancellationToken cancellationToken = default)
         where T : Record
     {
@@ -531,6 +541,16 @@ public abstract partial class BaseSurrealDbClient
         where T : class
     {
         return _engine.Upsert(table, data, cancellationToken);
+    }
+
+    public Task<TOutput> Upsert<TData, TOutput>(
+        RecordId recordId,
+        TData data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : Record
+    {
+        return _engine.Upsert<TData, TOutput>(recordId, data, cancellationToken);
     }
 
     public Task Use(string ns, string db, CancellationToken cancellationToken = default)

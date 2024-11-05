@@ -150,6 +150,12 @@ public interface ISurrealDbEngine : IDisposable
         where TOutput : Record;
     Task<IEnumerable<T>> Update<T>(string table, T data, CancellationToken cancellationToken)
         where T : class;
+    Task<TOutput> Update<TData, TOutput>(
+        RecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record;
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record;
     Task<TOutput> Upsert<TData, TOutput>(
@@ -160,6 +166,12 @@ public interface ISurrealDbEngine : IDisposable
         where TOutput : Record;
     Task<IEnumerable<T>> Upsert<T>(string table, T data, CancellationToken cancellationToken)
         where T : class;
+    Task<TOutput> Upsert<TData, TOutput>(
+        RecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record;
     Task Use(string ns, string db, CancellationToken cancellationToken);
     Task<string> Version(CancellationToken cancellationToken);
 }

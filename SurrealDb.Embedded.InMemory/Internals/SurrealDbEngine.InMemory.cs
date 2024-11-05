@@ -18,7 +18,7 @@ using SystemTextJsonPatch;
 
 namespace SurrealDb.Embedded.InMemory.Internals;
 
-internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
+internal sealed class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
 {
     private static int _globalId;
 
@@ -410,15 +410,6 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             .ConfigureAwait(false);
     }
 
-    public async Task<SurrealDbResponse> Query(
-        FormattableString query,
-        CancellationToken cancellationToken
-    )
-    {
-        var (formattedQuery, parameters) = query.ExtractRawQueryParams();
-        return await RawQuery(formattedQuery, parameters, cancellationToken).ConfigureAwait(false);
-    }
-
     public async Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
@@ -611,6 +602,17 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
             .ConfigureAwait(false);
     }
 
+    public async Task<TOutput> Update<TData, TOutput>(
+        RecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record
+    {
+        return await SendRequestAsync<TOutput>(Method.Update, [recordId, data], cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public async Task<IEnumerable<T>> Update<T>(
         string table,
         T data,
@@ -659,6 +661,17 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
                 [table, data],
                 cancellationToken
             )
+            .ConfigureAwait(false);
+    }
+
+    public async Task<TOutput> Upsert<TData, TOutput>(
+        RecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record
+    {
+        return await SendRequestAsync<TOutput>(Method.Upsert, [recordId, data], cancellationToken)
             .ConfigureAwait(false);
     }
 
