@@ -1,4 +1,4 @@
-﻿using System.Reactive.Linq;
+using System.Reactive.Linq;
 using Microsoft.Reactive.Testing;
 using SurrealDb.Net.LiveQuery.Tests.Abstract;
 using SurrealDb.Net.LiveQuery.Tests.Models;
@@ -36,12 +36,10 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
 
             var coldObservable = client
                 .ObserveQuery<TestRecord>($"LIVE SELECT * FROM test;")
-                .Publish()
+                .Replay()
                 .RefCount();
 
             using var _ = coldObservable.SubscribeOn(testScheduler).Subscribe(allResults.Add);
-
-            await Task.Yield();
 
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
@@ -116,7 +114,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
 
             var coldObservable = client
                 .ObserveRawQuery<TestRecord>("LIVE SELECT * FROM test;")
-                .Publish()
+                .Replay()
                 .RefCount();
 
             using var _ = coldObservable
@@ -128,8 +126,6 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                         e.Should().BeNull();
                     }
                 );
-
-            await Task.Yield();
 
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
@@ -208,7 +204,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                 completionSource.TrySetCanceled();
             });
 
-            var coldObservable = client.ObserveTable<TestRecord>("test").Publish().RefCount();
+            var coldObservable = client.ObserveTable<TestRecord>("test").Replay().RefCount();
 
             using var _ = coldObservable
                 .SubscribeOn(testScheduler)
@@ -219,8 +215,6 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                         e.Should().BeNull();
                     }
                 );
-
-            await Task.Yield();
 
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
