@@ -69,6 +69,11 @@ public abstract partial class BaseSurrealDbClient
         _engine.Dispose();
     }
 
+    public ValueTask DisposeAsync()
+    {
+        return _engine.DisposeAsync();
+    }
+
     public Task<bool> Health(CancellationToken cancellationToken = default)
     {
         return _engine.Health(cancellationToken);

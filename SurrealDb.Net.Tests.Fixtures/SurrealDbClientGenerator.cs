@@ -54,7 +54,7 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
     public static async Task<SemVersion> GetSurrealTestVersion(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-        using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = surrealDbClientGenerator.Create(connectionString);
 
         return (await client.Version()).ToSemver();
     }
@@ -68,13 +68,16 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
     {
         if (_options is not null && !_options.IsEmbedded && _databaseInfo is not null)
         {
-            using var client = new SurrealDbClient("ws://127.0.0.1:8000/rpc", "SnakeCase");
+            await using var client = new SurrealDbClient("ws://127.0.0.1:8000/rpc", "SnakeCase");
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(_databaseInfo.Namespace, _databaseInfo.Database);
 
             await client.RawQuery($"REMOVE DATABASE `{_databaseInfo.Database}`;");
         }
 
-        Dispose();
+        if (_serviceProvider is not null)
+        {
+            await _serviceProvider.DisposeAsync();
+        }
     }
 }
