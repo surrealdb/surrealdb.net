@@ -245,6 +245,22 @@ public class WeatherForecastController : ControllerBase
 
 ## Contributing
 
+### Prerequisites
+
+Before contributing to this repository, please take note of the [Contributing](./CONTRIBUTING.md) guidelines. To contribute to this project, you will also need to install the following tools:
+
+* The .NET SDK, preferably the latest stable version which is available for [download here](https://dotnet.microsoft.com/download)
+* The [Rust programming language](https://www.rust-lang.org/learn/get-started)
+
+The test and benchmark projects are highly dependent on the local Rust crate used by embedded providers. This crate is located in the [./rust-embedded](./rust-embedded) folder of this repository. To build the crate, make sure you installed the Rust toolchain on your machine and then follow these steps:
+
+```sh
+cd ./rust-embedded
+cargo build
+```
+
+If the command line was successful, the compiled libraries are generated in the target folder and automatically copied when the .NET projects are built. 
+
 ### .NET release versions
 
 The .NET release versions must follow these rules:
