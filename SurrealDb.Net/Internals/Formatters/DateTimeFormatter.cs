@@ -6,22 +6,13 @@ internal static class DateTimeFormatter
 {
     public static (long seconds, int nanos) Convert(DateTime value)
     {
-        var diff = value - DateTime.UnixEpoch;
+        var utc = value.Kind == DateTimeKind.Utc ? value : value.ToUniversalTime();
 
-        long seconds = (long)diff.TotalSeconds;
+        var ticks = utc.Ticks - DateTime.UnixEpoch.Ticks;
 
-#if NET7_0_OR_GREATER
-        int nanos =
-            value.Nanosecond
-            + (value.Microsecond * TimeConstants.NANOS_PER_MICROSECOND)
-            + (value.Millisecond * TimeConstants.NANOS_PER_MILLISECOND);
-#else
-        double fractionedMilliseconds =
-            value.TimeOfDay.TotalMilliseconds - Math.Truncate(value.TimeOfDay.TotalMilliseconds);
-        int nanos =
-            (int)(fractionedMilliseconds * TimeConstants.NANOS_PER_MILLISECOND)
-            + (value.Millisecond * TimeConstants.NANOS_PER_MILLISECOND);
-#endif
+        var seconds = ticks / TimeSpan.TicksPerSecond;
+        var remaining = ticks % TimeSpan.TicksPerSecond;
+        var nanos = (int)remaining * 100;
 
         return (seconds, nanos);
     }
