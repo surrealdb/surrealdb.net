@@ -981,6 +981,14 @@ public class ParserTests
                 .Value.Should()
                 .Be(new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(123_456_789));
         }
+
+        {
+            var problematicRecord = records.First(r => r.Name == "problematic");
+            problematicRecord.Should().NotBeNull();
+            problematicRecord!
+                .Value.Should()
+                .Be(new DateTime(1913, 6, 3, 14, 38, 30).AddNanoseconds(164_000_000));
+        }
     }
 
     [Theory]

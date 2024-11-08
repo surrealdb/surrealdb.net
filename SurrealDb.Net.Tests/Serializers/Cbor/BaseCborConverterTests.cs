@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Buffers;
+using System.Text;
 using SurrealDb.Net.Internals.Cbor;
 
 namespace SurrealDb.Net.Tests.Serializers.Cbor;
@@ -45,5 +46,18 @@ public abstract class BaseCborConverterTests
         }
 
         return bytes;
+    }
+
+    protected ReadOnlySpan<byte> SerializeToCborBinary<T>(T value)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+        CborSerializer.Serialize(value, buffer, SurrealDbCborOptions.Default);
+
+        return buffer.WrittenMemory.Span;
+    }
+
+    protected T DeserializeCborBinary<T>(ReadOnlySpan<byte> bytes)
+    {
+        return CborSerializer.Deserialize<T>(bytes, SurrealDbCborOptions.Default);
     }
 }
