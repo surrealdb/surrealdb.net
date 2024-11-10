@@ -101,6 +101,7 @@ public class InfoTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     public async Task InfoIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>

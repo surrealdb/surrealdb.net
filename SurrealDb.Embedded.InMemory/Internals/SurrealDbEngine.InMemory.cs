@@ -58,20 +58,6 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
 
-    public void Configure(string? ns, string? db, string? username, string? password)
-    {
-        // 💡 Pre-configuration before connect
-        if (ns is not null)
-            _config.Use(ns, db);
-    }
-
-    public void Configure(string? ns, string? db, string? token = null)
-    {
-        // 💡 Pre-configuration before connect
-        if (ns is not null)
-            _config.Use(ns, db);
-    }
-
     public async Task Connect(CancellationToken cancellationToken)
     {
         if (!_isConnected)

@@ -29,6 +29,7 @@ public class SignInTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     public async Task SignInAsRootUserIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -80,6 +81,7 @@ public class SignInTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     public async Task SignInUsingNamespaceAuthIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -145,6 +147,7 @@ public class SignInTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     public async Task SignInUsingDatabaseAuthIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -224,6 +227,7 @@ public class SignInTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     public async Task SignInUsingScopeAuthIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>

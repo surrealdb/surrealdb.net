@@ -8,6 +8,7 @@ public class PatchTests
 {
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldPatchExistingPost(string connectionString)
@@ -59,6 +60,7 @@ public class PatchTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldPatchExistingPostUsingStringRecordId(string connectionString)

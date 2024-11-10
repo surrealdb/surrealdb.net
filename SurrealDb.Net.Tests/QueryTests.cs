@@ -9,6 +9,7 @@ public class QueryTests
 {
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldQueryWithoutParam(string connectionString)
@@ -53,6 +54,7 @@ public class QueryTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldQueryWithOneParam(string connectionString)
@@ -100,6 +102,7 @@ public class QueryTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldQueryWithMultipleParams(string connectionString)
@@ -156,6 +159,7 @@ AND created_at >= {threeMonthsAgo};
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldHaveOneProtocolErrorResult(string connectionString)

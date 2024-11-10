@@ -9,6 +9,7 @@ public class RawQueryTests
 {
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldQueryWithParams(string connectionString)
@@ -60,6 +61,7 @@ public class RawQueryTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldHaveOneProtocolErrorResult(string connectionString)
@@ -115,6 +117,7 @@ public class RawQueryTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldHave4Results(string connectionString)
@@ -162,6 +165,7 @@ SELECT xyz FROM post;
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldIterateOnOkResults(string connectionString)
@@ -212,6 +216,7 @@ CANCEL TRANSACTION;
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldIterateOnErrorResults(string connectionString)
@@ -262,6 +267,7 @@ CANCEL TRANSACTION;
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldReturnFirstOkResult(string connectionString)
@@ -312,6 +318,7 @@ CANCEL TRANSACTION;
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldReturnFirstError(string connectionString)
@@ -362,6 +369,7 @@ CANCEL TRANSACTION;
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldHaveError(string connectionString)
@@ -412,6 +420,7 @@ CANCEL TRANSACTION;
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldGetValueFromIndex(string connectionString)

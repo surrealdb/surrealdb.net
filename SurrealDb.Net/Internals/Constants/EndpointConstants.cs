@@ -5,6 +5,7 @@ internal static class EndpointConstants
     internal static class Client
     {
         public const string MEMORY = "mem://";
+        public const string ROCKSDB = "rocksdb://";
     }
 
     internal static class Server

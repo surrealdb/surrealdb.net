@@ -69,6 +69,7 @@ public class AuthenticateTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     public async Task InvalidateIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>

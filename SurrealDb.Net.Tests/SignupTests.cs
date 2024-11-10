@@ -52,6 +52,7 @@ public class SignUpTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
     public async Task SignUpIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>

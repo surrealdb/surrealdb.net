@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SurrealDb.Embedded.InMemory\SurrealDb.Embedded.InMemory.csproj" />
+    <ProjectReference Include="..\SurrealDb.Embedded.RocksDb\SurrealDb.Embedded.RocksDb.csproj" />
     <ProjectReference Include="..\SurrealDb.Net\SurrealDb.Net.csproj" />
   </ItemGroup>
 

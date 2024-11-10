@@ -6,13 +6,13 @@ using SurrealDb.Net.Models.Auth;
 
 namespace SurrealDb.Net.Tests.Fixtures;
 
-public class DatabaseInfo
+public sealed class DatabaseInfo
 {
-    public string Namespace { get; set; } = string.Empty;
-    public string Database { get; set; } = string.Empty;
+    public string Namespace { get; init; } = string.Empty;
+    public string Database { get; init; } = string.Empty;
 }
 
-public class DatabaseInfoFaker : Faker<DatabaseInfo>
+internal sealed class DatabaseInfoFaker : Faker<DatabaseInfo>
 {
     public DatabaseInfoFaker()
     {
@@ -21,13 +21,46 @@ public class DatabaseInfoFaker : Faker<DatabaseInfo>
     }
 }
 
+internal sealed class FilePathInfo
+{
+    public string Path { get; init; } = string.Empty;
+}
+
+internal sealed class FilePathFaker : Faker<FilePathInfo>
+{
+    public FilePathFaker()
+    {
+        RuleFor(o => o.Path, f => $"temp/{f.Random.AlphaNumeric(40)}");
+    }
+}
+
 public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 {
     private static readonly DatabaseInfoFaker _databaseInfoFaker = new();
+    private static readonly FilePathFaker _filePathFaker = new();
 
     private ServiceProvider? _serviceProvider;
     private DatabaseInfo? _databaseInfo;
     private SurrealDbOptions? _options;
+    private string? _folderPath;
+
+    static SurrealDbClientGenerator()
+    {
+        AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
+    }
+
+    private static void OnProcessExit(object? sender, EventArgs e)
+    {
+        if (Directory.Exists("temp"))
+        {
+            Directory.Delete("temp", true);
+        }
+    }
+
+    private void GenerateRandomFilePath()
+    {
+        _folderPath = _filePathFaker.Generate().Path;
+    }
 
     public SurrealDbClient Create(string connectionString)
     {
@@ -37,9 +70,22 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
             .WithNamingPolicy("SnakeCase")
             .Build();
 
+        if (_options.Endpoint == "rocksdb://")
+        {
+            GenerateRandomFilePath();
+
+            _options = SurrealDbOptions
+                .Create()
+                .FromConnectionString(connectionString)
+                .WithNamingPolicy("SnakeCase")
+                .WithEndpoint($"{_options.Endpoint}{_folderPath}")
+                .Build();
+        }
+
         _serviceProvider = new ServiceCollection()
             .AddSurreal(_options)
             .AddInMemoryProvider()
+            .AddRocksDbProvider()
             .And.BuildServiceProvider(validateScopes: true);
 
         return _serviceProvider.GetRequiredService<SurrealDbClient>();

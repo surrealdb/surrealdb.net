@@ -12,7 +12,6 @@
 
   <ItemGroup>
     <Compile Include="..\SurrealDb.Net\Internals\Constants\LoggingConstants.cs" Link="Internals\Constants\LoggingConstants.cs" />
-    <Compile Include="..\SurrealDb.Net\Internals\Constants\SerializationConstants.cs" Link="Internals\Constants\SerializationConstants.cs" />
     <Compile Include="..\SurrealDb.Net\Internals\Extensions\FormattableStringExtensions.cs" Link="Internals\Extensions\FormattableStringExtensions.cs" />
     <Compile Include="..\SurrealDb.Net\Internals\Extensions\StringBuilderExtensions.cs" Link="Internals\Extensions\StringBuilderExtensions.cs" />
     <Compile Include="..\SurrealDb.Net\Internals\Extensions\StringExtensions.cs" Link="Internals\Extensions\StringExtensions.cs" />
