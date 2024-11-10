@@ -16,7 +16,7 @@ dotnet add package SurrealDb.Embedded.RocksDb
 
 ### Constructing a new SurrealDB client
 
-You can easily create a new SurrealDB RocksDB client which will provide a file instance of SurrealDB, backed by RocksDB. 
+You can easily create a new SurrealDB client which will provide a file instance of SurrealDB, backed by RocksDB. 
 
 ```csharp
 using var db = new SurrealDbRocksDbClient("data.db");

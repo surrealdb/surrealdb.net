@@ -1,6 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using SurrealDb.Embedded.InMemory;
 using SurrealDb.Embedded.RocksDb;
+using SurrealDb.Embedded.SurrealKv;
 using SurrealDb.Net.Benchmarks.Models;
 
 namespace SurrealDb.Net.Benchmarks.Embedded;
@@ -9,14 +10,16 @@ public class ScenarioBench : BaseEmbeddedBenchmark
 {
     private SurrealDbMemoryClient? _memoryClient;
     private SurrealDbRocksDbClient? _rocksDbClient;
+    private SurrealDbKvClient? _surrealKvClient;
 
     [IterationSetup]
     public void Setup()
     {
         _memoryClient = new(NamingPolicy);
         _rocksDbClient = new("rocks/scenario.db", NamingPolicy);
+        _surrealKvClient = new("surrealkv/scenario.db", NamingPolicy);
 
-        ISurrealDbClient[] clients = [_memoryClient, _rocksDbClient];
+        ISurrealDbClient[] clients = [_memoryClient, _rocksDbClient, _surrealKvClient];
 
         foreach (var client in clients)
         {
@@ -33,6 +36,7 @@ public class ScenarioBench : BaseEmbeddedBenchmark
     {
         _memoryClient?.Dispose();
         _rocksDbClient?.Dispose();
+        _surrealKvClient?.Dispose();
     }
 
     [Benchmark]
@@ -45,5 +49,11 @@ public class ScenarioBench : BaseEmbeddedBenchmark
     public async Task<List<ProductAlsoPurchased>> RocksDb()
     {
         return await BenchmarkRuns.Scenario(_rocksDbClient!);
+    }
+
+    [Benchmark]
+    public async Task<List<ProductAlsoPurchased>> SurrealKv()
+    {
+        return await BenchmarkRuns.Scenario(_surrealKvClient!);
     }
 }

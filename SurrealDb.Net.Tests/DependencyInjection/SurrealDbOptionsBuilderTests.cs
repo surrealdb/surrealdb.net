@@ -21,6 +21,7 @@ public class SurrealDbOptionsBuilderTests
     [Theory]
     [InlineData("mem://")]
     [InlineData("rocksdb://db.data")]
+    [InlineData("surrealkv://db.data")]
     [InlineData("http://127.0.0.1:8000")]
     [InlineData("https://cloud.surrealdb.com")]
     [InlineData("ws://127.0.0.1:8000/rpc")]
@@ -214,6 +215,7 @@ public class SurrealDbOptionsBuilderTests
     [Theory]
     [InlineData("mem://")]
     [InlineData("rocksdb://db.data")]
+    [InlineData("surrealkv://db.data")]
     public void ShouldFailToCreateFromConnectionStringWithServerEndpoint(string server)
     {
         string connectionString = $"Server={server}";
@@ -230,6 +232,7 @@ public class SurrealDbOptionsBuilderTests
     [Theory]
     [InlineData("mem://")]
     [InlineData("rocksdb://db.data")]
+    [InlineData("surrealkv://db.data")]
     public void ShouldCreateFromConnectionStringWithClientEndpoint(string client)
     {
         string connectionString = $"Client={client}";

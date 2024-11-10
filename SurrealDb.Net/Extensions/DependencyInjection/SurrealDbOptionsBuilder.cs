@@ -116,7 +116,8 @@ public sealed class SurrealDbOptionsBuilder
         string[] validClientEndpoints =
         [
             EndpointConstants.Client.MEMORY,
-            EndpointConstants.Client.ROCKSDB
+            EndpointConstants.Client.ROCKSDB,
+            EndpointConstants.Client.SURREALKV
         ];
         string lowerEndpoint = endpoint.ToLowerInvariant();
 

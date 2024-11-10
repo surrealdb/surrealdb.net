@@ -48,11 +48,12 @@ public sealed class SurrealDbOptions
 
     /// <summary>
     /// Indicates if the options are made to use a SurrealDB instance in embedded mode.
-    /// Supported embedded modes are <c>mem://</c>, <c>rocksdb://</c>.
+    /// Supported embedded modes are <c>mem://</c>, <c>rocksdb://</c> and <c>surrealkv://</c>.
     /// </summary>
     public bool IsEmbedded =>
         Endpoint!.StartsWith(EndpointConstants.Client.MEMORY)
-        || Endpoint.StartsWith(EndpointConstants.Client.ROCKSDB);
+        || Endpoint.StartsWith(EndpointConstants.Client.ROCKSDB)
+        || Endpoint.StartsWith(EndpointConstants.Client.SURREALKV);
 
     /// <summary>
     /// Logging options used for the SurrealDB client.

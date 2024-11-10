@@ -1,6 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using SurrealDb.Embedded.InMemory;
 using SurrealDb.Embedded.RocksDb;
+using SurrealDb.Embedded.SurrealKv;
 using SurrealDb.Net.Benchmarks.Models;
 
 namespace SurrealDb.Net.Benchmarks.Embedded;
@@ -11,14 +12,16 @@ public class QueryBench : BaseEmbeddedBenchmark
 
     private SurrealDbMemoryClient? _memoryClient;
     private SurrealDbRocksDbClient? _rocksDbClient;
+    private SurrealDbKvClient? _surrealKvClient;
 
     [IterationSetup]
     public void Setup()
     {
         _memoryClient = new(NamingPolicy);
         _rocksDbClient = new("rocks/query.db", NamingPolicy);
+        _surrealKvClient = new("surrealkv/query.db", NamingPolicy);
 
-        ISurrealDbClient[] clients = [_memoryClient, _rocksDbClient];
+        ISurrealDbClient[] clients = [_memoryClient, _rocksDbClient, _surrealKvClient];
 
         foreach (var client in clients)
         {
@@ -35,6 +38,7 @@ public class QueryBench : BaseEmbeddedBenchmark
     {
         _memoryClient?.Dispose();
         _rocksDbClient?.Dispose();
+        _surrealKvClient?.Dispose();
     }
 
     [Benchmark]
@@ -47,5 +51,11 @@ public class QueryBench : BaseEmbeddedBenchmark
     public async Task<List<Post>> RocksDb()
     {
         return await BenchmarkRuns.Query(_rocksDbClient!);
+    }
+
+    [Benchmark]
+    public async Task<List<Post>> SurrealKv()
+    {
+        return await BenchmarkRuns.Query(_surrealKvClient!);
     }
 }

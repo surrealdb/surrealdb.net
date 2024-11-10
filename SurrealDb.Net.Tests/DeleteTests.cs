@@ -7,6 +7,7 @@ public class DeleteTests
     [Theory]
     [InlineData("Endpoint=mem://")]
     [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldDeletePostTable(string connectionString)
@@ -43,6 +44,7 @@ public class DeleteTests
     [Theory]
     [InlineData("Endpoint=mem://")]
     [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldDeletePostRecord(string connectionString)
@@ -86,6 +88,7 @@ public class DeleteTests
     [Theory]
     [InlineData("Endpoint=mem://")]
     [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldDeletePostRecordUsingRecordId(string connectionString)
@@ -129,6 +132,7 @@ public class DeleteTests
     [Theory]
     [InlineData("Endpoint=mem://")]
     [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldTryToDeleteInexistentRecord(string connectionString)
@@ -167,6 +171,7 @@ public class DeleteTests
     [Theory]
     [InlineData("Endpoint=mem://")]
     [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldDeletePostRecordUsingStringRecordId(string connectionString)

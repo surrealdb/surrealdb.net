@@ -46,10 +46,16 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 
     static SurrealDbClientGenerator()
     {
+        ClearTempFolder();
         AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
     }
 
     private static void OnProcessExit(object? sender, EventArgs e)
+    {
+        ClearTempFolder();
+    }
+
+    private static void ClearTempFolder()
     {
         if (Directory.Exists("temp"))
         {
@@ -70,7 +76,7 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
             .WithNamingPolicy("SnakeCase")
             .Build();
 
-        if (_options.Endpoint == "rocksdb://")
+        if (_options.Endpoint is "rocksdb://" or "surrealkv://")
         {
             GenerateRandomFilePath();
 
@@ -86,6 +92,7 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
             .AddSurreal(_options)
             .AddInMemoryProvider()
             .AddRocksDbProvider()
+            .AddSurrealKvProvider()
             .And.BuildServiceProvider(validateScopes: true);
 
         return _serviceProvider.GetRequiredService<SurrealDbClient>();

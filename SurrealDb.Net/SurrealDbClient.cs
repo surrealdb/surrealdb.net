@@ -109,6 +109,16 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
                     ?? throw new Exception(
                         "Impossible to create a new file SurrealDB client, backed by RocksDB. Make sure to use `AddRocksDbProvider`."
                     ),
+            "surrealkv"
+                => ResolveEmbeddedProvider<ISurrealDbKvEngine>(
+                    serviceProvider,
+                    configuration,
+                    configureCborOptions,
+                    loggerFactory
+                )
+                    ?? throw new Exception(
+                        "Impossible to create a new file SurrealDB client, backed by SurrealKV. Make sure to use `AddSurrealKvProvider`."
+                    ),
             _ => throw new NotSupportedException($"The protocol '{protocol}' is not supported."),
         };
     }

@@ -177,6 +177,7 @@ jobs:
           path: |
             ./rust-embedded/target/debug/libsurreal_memory.so
             ./rust-embedded/target/debug/libsurreal_rocksdb.so
+            ./rust-embedded/target/debug/libsurreal_surrealkv.so
 
   cargo-check:
     runs-on: ubuntu-latest
@@ -220,6 +221,7 @@ jobs:
         manifests:
           - ./rust-embedded/memory/Cargo.toml
           - ./rust-embedded/rocksdb/Cargo.toml
+          - ./rust-embedded/surrealkv/Cargo.toml
 
     steps:
       - name: Checkout

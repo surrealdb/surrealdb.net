@@ -6,6 +6,7 @@ internal static class EndpointConstants
     {
         public const string MEMORY = "mem://";
         public const string ROCKSDB = "rocksdb://";
+        public const string SURREALKV = "surrealkv://";
     }
 
     internal static class Server
