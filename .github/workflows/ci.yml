@@ -219,9 +219,7 @@ jobs:
     strategy:
       matrix:
         manifests:
-          - ./rust-embedded/memory/Cargo.toml
-          - ./rust-embedded/rocksdb/Cargo.toml
-          - ./rust-embedded/surrealkv/Cargo.toml
+          - ./rust-embedded/shared/Cargo.toml
 
     steps:
       - name: Checkout
