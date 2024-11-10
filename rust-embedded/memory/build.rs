@@ -10,7 +10,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .input_extern_file("src/runtime/engines.rs")
         .input_extern_file("src/runtime/mod.rs")
         .csharp_dll_name("surreal_memory")
-        .csharp_namespace("SurrealDb.Embedded.InMemory.Internals")
+        .csharp_namespace("SurrealDb.Embedded.Internals")
         .generate_csharp_file("../../SurrealDb.Embedded.InMemory/NativeMethods.g.cs")?;
 
     write_surreal_version()?;

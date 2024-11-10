@@ -1,4 +1,4 @@
-﻿namespace SurrealDb.Embedded.InMemory.Internals;
+﻿namespace SurrealDb.Embedded.Internals;
 
 internal sealed class SurrealDbEmbeddedEngineConfig
 {

@@ -1,4 +1,4 @@
-﻿namespace SurrealDb.Embedded.RocksDb.Internals;
+﻿namespace SurrealDb.Embedded.Internals;
 
 internal partial struct ByteBuffer
 {

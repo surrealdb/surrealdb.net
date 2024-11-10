@@ -3,6 +3,7 @@ using System.Reactive;
 using System.Runtime.InteropServices;
 using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
+using SurrealDb.Embedded.Internals;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;

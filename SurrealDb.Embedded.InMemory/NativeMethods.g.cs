@@ -8,7 +8,7 @@ using System;
 using System.Runtime.InteropServices;
 
 
-namespace SurrealDb.Embedded.InMemory.Internals
+namespace SurrealDb.Embedded.Internals
 {
     internal static unsafe partial class NativeMethods
     {

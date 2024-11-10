@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace SurrealDb.Embedded.SurrealKv.Internals;
+namespace SurrealDb.Embedded.Internals;
 
 internal static unsafe partial class NativeMethods
 {

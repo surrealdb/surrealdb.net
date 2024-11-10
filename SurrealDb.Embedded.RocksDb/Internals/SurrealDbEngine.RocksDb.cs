@@ -3,6 +3,7 @@ using System.Reactive;
 using System.Runtime.InteropServices;
 using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
+using SurrealDb.Embedded.Internals;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
@@ -64,15 +65,7 @@ internal class SurrealDbRocksDbEngine : ISurrealDbRocksDbEngine
         {
             _surrealDbLoggerFactory?.Connection?.LogConnectionAttempt(_parameters!.Endpoint!);
 
-            // 💡 Create the directory as the Rust bindings do not have the right to do it
-            string folderPath = _parameters!.Endpoint!.Replace(
-                SurrealDbRocksDbClient.BASE_ENDPOINT,
-                string.Empty
-            );
-            if (!Directory.Exists(folderPath))
-            {
-                Directory.CreateDirectory(folderPath);
-            }
+            PreConnect();
 
             var taskCompletionSource = new TaskCompletionSource<bool>();
 
@@ -149,6 +142,20 @@ internal class SurrealDbRocksDbEngine : ISurrealDbRocksDbEngine
         }
 
         _isInitialized = true;
+    }
+
+    private void PreConnect()
+    {
+        // 💡 Create the directory as the Rust bindings do not have the right to do it
+        string folderPath = _parameters!.Endpoint!.Replace(
+            SurrealDbRocksDbClient.BASE_ENDPOINT,
+            string.Empty
+        );
+
+        if (!Directory.Exists(folderPath))
+        {
+            Directory.CreateDirectory(folderPath);
+        }
     }
 
     public async Task<T> Create<T>(T data, CancellationToken cancellationToken)
