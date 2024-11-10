@@ -105,7 +105,16 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
                     callback = &NativeBindings.FailureCallback,
                 };
 
-                NativeMethods.apply_connect(_id, successAction, failureAction);
+                fixed (char* p = _parameters!.Endpoint)
+                {
+                    NativeMethods.apply_connect(
+                        _id,
+                        (ushort*)p,
+                        _parameters.Endpoint!.Length,
+                        successAction,
+                        failureAction
+                    );
+                }
             }
 
             await taskCompletionSource.Task.ConfigureAwait(false);

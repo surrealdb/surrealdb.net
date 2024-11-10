@@ -131,10 +131,18 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Build libraries
-        working-directory: ./rust-embedded
+      - name: Build "memory" library
+        working-directory: ./rust-embedded/memory
         run: cargo build --release --target ${{ matrix.target }}
-      
+
+      - name: Build "rocksdb" library
+        working-directory: ./rust-embedded/rocksdb
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Build "surrealkv" library
+        working-directory: ./rust-embedded/surrealkv
+        run: cargo build --release --target ${{ matrix.target }}
+    
       - name: Publish embedded artifacts
         uses: actions/upload-artifact@v4
         with:
