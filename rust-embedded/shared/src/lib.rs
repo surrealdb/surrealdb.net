@@ -13,14 +13,17 @@ pub mod err;
 pub mod models;
 pub mod runtime;
 
-// 💡 "connect" is a reserved keyword
+/// # Safety
+///
+/// Apply connection for the SurrealDB engine (given its id).
+/// 💡 "connect" is a reserved keyword
 #[no_mangle]
-pub extern "C" fn apply_connect(
-    id: i32, 
+pub unsafe extern "C" fn apply_connect(
+    id: i32,
     utf16_str: *const u16,
     utf16_len: i32,
-    success: SuccessAction, 
-    failure: FailureAction
+    success: SuccessAction,
+    failure: FailureAction,
 ) {
     let endpoint = convert_csharp_to_rust_string_utf16(utf16_str, utf16_len);
 
@@ -37,8 +40,12 @@ pub extern "C" fn apply_connect(
     });
 }
 
+/// # Safety
+///
+/// Executes a specific method of a SurrealDB engine (given its id).
+/// To execute a method, you should pass down the Method, the params and the callback functions (success, failure).
 #[no_mangle]
-pub extern "C" fn execute(
+pub unsafe extern "C" fn execute(
     id: i32,
     method: Method,
     bytes: *const u8,

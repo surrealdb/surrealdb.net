@@ -5,6 +5,9 @@ use tokio::runtime::{Builder, Runtime};
 
 pub static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 
+/// # Safety
+///
+/// This function is called to initialize the async runtime (using tokio).
 #[no_mangle]
 pub unsafe extern "C" fn create_global_runtime() {
     unsafe {
