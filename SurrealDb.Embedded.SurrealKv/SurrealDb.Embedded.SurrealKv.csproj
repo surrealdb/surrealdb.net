@@ -15,6 +15,7 @@
     <Compile Include="..\SurrealDb.Embedded.Internals\NativeBindings.cs" Link="Internals\NativeBindings.cs" />
     <Compile Include="..\SurrealDb.Embedded.Internals\NativeMethods.cs" Link="Internals\NativeMethods.cs" />
     <Compile Include="..\SurrealDb.Embedded.Internals\PlatformConfiguration.cs" Link="Internals\PlatformConfiguration.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\SurrealDbEmbeddedEngine.cs" Link="Internals\SurrealDbEmbeddedEngine.cs" />
     <Compile Include="..\SurrealDb.Embedded.Internals\SurrealDbEmbeddedEngineConfig.cs" Link="Internals\SurrealDbEmbeddedEngineConfig.cs" />
     <Compile Include="..\SurrealDb.Net\Internals\Constants\LoggingConstants.cs" Link="Internals\Constants\LoggingConstants.cs" />
     <Compile Include="..\SurrealDb.Net\Internals\Extensions\FormattableStringExtensions.cs" Link="Internals\Extensions\FormattableStringExtensions.cs" />

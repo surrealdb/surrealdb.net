@@ -1,7 +1,7 @@
 ﻿using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SurrealDb.Embedded.InMemory.Internals;
+using SurrealDb.Embedded.Internals;
 using SurrealDb.Net;
 
 namespace SurrealDb.Embedded.InMemory;
@@ -36,7 +36,7 @@ public class SurrealDbMemoryClient : BaseSurrealDbClient
         Uri = new Uri(ENDPOINT);
         NamingPolicy = parameters.NamingPolicy;
 
-        var engine = new SurrealDbInMemoryEngine();
+        var engine = new SurrealDbEmbeddedEngine();
         InitializeProviderEngine(engine, parameters, configureCborOptions, loggerFactory);
 
         _engine = engine;

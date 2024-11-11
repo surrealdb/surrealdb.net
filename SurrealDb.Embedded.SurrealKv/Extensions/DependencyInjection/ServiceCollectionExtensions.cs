@@ -1,4 +1,4 @@
-﻿using SurrealDb.Embedded.SurrealKv.Internals;
+﻿using SurrealDb.Embedded.Internals;
 using SurrealDb.Net.Internals;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -11,7 +11,7 @@ public static class ServiceCollectionExtensions
 {
     public static SurrealDbBuilder AddSurrealKvProvider(this SurrealDbBuilder builder)
     {
-        builder.Services.AddTransient<ISurrealDbKvEngine, SurrealDbKvEngine>();
+        builder.Services.AddTransient<ISurrealDbKvEngine, SurrealDbEmbeddedEngine>();
 
         return builder;
     }

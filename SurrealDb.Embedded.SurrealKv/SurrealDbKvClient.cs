@@ -1,7 +1,7 @@
 ﻿using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SurrealDb.Embedded.SurrealKv.Internals;
+using SurrealDb.Embedded.Internals;
 using SurrealDb.Net;
 
 namespace SurrealDb.Embedded.SurrealKv;
@@ -42,7 +42,7 @@ public class SurrealDbKvClient : BaseSurrealDbClient
         Uri = new Uri(parameters.Endpoint);
         NamingPolicy = parameters.NamingPolicy;
 
-        var engine = new SurrealDbKvEngine();
+        var engine = new SurrealDbEmbeddedEngine();
         InitializeProviderEngine(engine, parameters, configureCborOptions, loggerFactory);
 
         _engine = engine;
