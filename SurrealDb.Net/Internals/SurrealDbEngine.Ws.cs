@@ -344,11 +344,31 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return !dbResponse.ExpectNone() && !dbResponse.ExpectEmptyArray();
     }
 
+    private bool _disposed;
+
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
+        DisposeAsync().GetAwaiter().GetResult();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
         _pinger.Dispose();
 
-        var endChannelsTasks = new List<Task>();
+        int expectedEndChannelsTasksCount =
+            _liveQueryChannelSubscriptionsPerQuery.Sum(kv => kv.Value.Count) * 2;
+
+        var endChannelsTasks = new List<Task>(expectedEndChannelsTasksCount);
 
         foreach (var (key, value) in _liveQueryChannelSubscriptionsPerQuery)
         {
@@ -356,11 +376,11 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                 value.WsEngineId == _id
                 && _liveQueryChannelSubscriptionsPerQuery.TryRemove(
                     key,
-                    out var _liveQueryChannelSubscriptions
+                    out var liveQueryChannelSubscriptions
                 )
             )
             {
-                foreach (var liveQueryChannel in _liveQueryChannelSubscriptions)
+                foreach (var liveQueryChannel in liveQueryChannelSubscriptions)
                 {
                     var closeTask = CloseLiveQueryAsync(
                         liveQueryChannel,
@@ -378,13 +398,14 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         {
             try
             {
-                Task.WhenAll(endChannelsTasks).ConfigureAwait(false).GetAwaiter().GetResult();
+                await Task.WhenAll(endChannelsTasks).ConfigureAwait(false);
             }
             catch (SurrealDbException) { }
             catch (OperationCanceledException) { }
+            catch (TimeoutException) { }
         }
 
-        _wsClient.Stop(WebSocketCloseStatus.NormalClosure, "Client disposed");
+        await _wsClient.Stop(WebSocketCloseStatus.NormalClosure, "Client disposed");
         _receiverSubscription.Dispose();
 
         foreach (var (key, value) in _responseTaskHandler)
@@ -397,6 +418,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         _wsClient.Dispose();
         _semaphoreConnect.Dispose();
+
+        _disposed = true;
     }
 
     public async Task<bool> Health(CancellationToken cancellationToken)
@@ -1255,7 +1278,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         long executionStartTime = Stopwatch.GetTimestamp();
 
-        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         cancellationToken.Register(timeoutCts.Cancel);
 
         bool requireInitialized = priority == SurrealDbWsRequestPriority.Normal;
@@ -1266,6 +1289,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         }
         catch (OperationCanceledException)
         {
+            timeoutCts.Dispose();
+
             if (!cancellationToken.IsCancellationRequested)
                 throw new TimeoutException();
 
@@ -1307,6 +1332,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         }
         catch (OperationCanceledException)
         {
+            timeoutCts.Dispose();
+
             _responseTaskHandler.TryRemove(id, out _);
             if (!cancellationToken.IsCancellationRequested)
             {
@@ -1318,6 +1345,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         }
         catch
         {
+            timeoutCts.Dispose();
             _responseTaskHandler.TryRemove(id, out _);
             throw;
         }
@@ -1327,6 +1355,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         if (!isMessageSent)
         {
+            timeoutCts.Dispose();
+
             _responseTaskHandler.TryRemove(id, out _);
             taskCompletionSource.TrySetCanceled(CancellationToken.None);
             _surrealDbLoggerFactory?.Method?.LogRequestFailed(id, "Failed to send message");
@@ -1356,6 +1386,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         }
         catch (OperationCanceledException)
         {
+            timeoutCts.Dispose();
+
             _responseTaskHandler.TryRemove(id, out _);
             if (!cancellationToken.IsCancellationRequested)
             {
@@ -1367,6 +1399,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         }
         catch
         {
+            timeoutCts.Dispose();
             _responseTaskHandler.TryRemove(id, out _);
             throw;
         }

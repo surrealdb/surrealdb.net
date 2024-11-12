@@ -17,9 +17,9 @@ public class OperatorsRecordIdTests
 
     [Theory]
     [MemberData(nameof(EqualityRecordIdCases))]
-    public void ShouldBe(RecordId recordId1, RecordId recordId2, bool expected)
+    public void ShouldBe(RecordId recordId1, RecordId? recordId2, bool expected)
     {
-        bool result = recordId1 == recordId2;
+        bool result = recordId1 == recordId2!;
 
         result.Should().Be(expected);
     }

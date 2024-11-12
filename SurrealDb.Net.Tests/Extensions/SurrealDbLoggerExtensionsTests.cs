@@ -14,7 +14,7 @@ public class SurrealDbLoggerExtensionsTests
     [InlineData("Hello world", false, "?")]
     [InlineData("Hello world", true, "'Hello world'")]
     public void ShouldFormatParameterValue(
-        object value,
+        object? value,
         bool shouldLogParameterValue,
         string expected
     )

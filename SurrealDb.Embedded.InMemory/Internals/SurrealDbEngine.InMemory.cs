@@ -193,9 +193,29 @@ internal class SurrealDbInMemoryEngine : ISurrealDbInMemoryEngine
         return result is not null;
     }
 
+    private bool _disposed;
+
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         NativeMethods.dispose(_id);
+
+        _disposed = true;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+
+#if NET6_0_OR_GREATER
+        return ValueTask.CompletedTask;
+#else
+        return new ValueTask(Task.CompletedTask);
+#endif
     }
 
     public async Task<bool> Health(CancellationToken cancellationToken)

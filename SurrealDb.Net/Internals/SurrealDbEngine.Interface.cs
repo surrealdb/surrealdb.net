@@ -10,7 +10,7 @@ using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.Internals;
 
-public interface ISurrealDbEngine : IDisposable
+public interface ISurrealDbEngine : IDisposable, IAsyncDisposable
 {
     Task Authenticate(Jwt jwt, CancellationToken cancellationToken);
     Task Connect(CancellationToken cancellationToken);
