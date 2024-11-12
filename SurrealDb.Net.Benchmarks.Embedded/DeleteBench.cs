@@ -36,9 +36,13 @@ public class DeleteBench : BaseEmbeddedBenchmark
     [IterationCleanup]
     public void Cleanup()
     {
-        _memoryClient?.Dispose();
-        _rocksDbClient?.Dispose();
-        _surrealKvClient?.Dispose();
+        ISurrealDbClient[] clients = [_memoryClient!, _rocksDbClient!, _surrealKvClient!];
+
+        foreach (var client in clients)
+        {
+            ClearData(client, DefaultDatabaseInfo).GetAwaiter().GetResult();
+            client.Dispose();
+        }
     }
 
     [Benchmark]
