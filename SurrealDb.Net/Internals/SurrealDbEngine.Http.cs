@@ -1007,7 +1007,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return _singleHttpClient.Value;
     }
 
+#if NET9_0_OR_GREATER
+    private readonly Lock _singleHttpClientConfigurationLock = new();
+#else
     private readonly object _singleHttpClientConfigurationLock = new();
+#endif
 
     private bool TrySetSingleHttpClientConfiguration(string? ns, string? db, IAuth auth)
     {

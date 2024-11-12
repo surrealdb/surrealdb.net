@@ -34,10 +34,10 @@ jobs:
       - name: Run SurrealDB root
         run: surreal start --user root --pass root memory --allow-guests &
 
-      - name: Setup dotnet 8.0
+      - name: Setup dotnet 9.0
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "9.0.x"
 
       - name: Assign benchmark mode
         run: ./prepare_embedded_benchmarks.sh -s

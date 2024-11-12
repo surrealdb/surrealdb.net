@@ -25,10 +25,10 @@ jobs:
           name: embedded
           path: ./rust-embedded/target/debug
 
-      - name: Setup dotnet 8.0
+      - name: Setup dotnet 9.0
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "9.0.x"
 
       - name: Install .NET tools
         run: dotnet tool restore
@@ -69,10 +69,10 @@ jobs:
             surreal start --user root --pass root memory --allow-guests &
           fi
 
-      - name: Setup dotnet 8.0
+      - name: Setup dotnet 9.0
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "9.0.x"
 
       - name: Install dependencies
         run: dotnet restore
