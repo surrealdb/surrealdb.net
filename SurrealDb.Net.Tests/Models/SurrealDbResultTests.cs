@@ -10,10 +10,17 @@ public class SurrealDbResultTests
         {
             { new SurrealDbOkResult(TimeSpan.Zero, "OK", new ReadOnlyMemory<byte>(), null!), true },
             { new SurrealDbErrorResult(TimeSpan.Zero, "KO", "Something went wrong..."), false },
+#if NET8_0_OR_GREATER
             {
                 new SurrealDbProtocolErrorResult(HttpStatusCode.UnprocessableContent, "", "", ""),
                 false
             },
+#else
+            {
+                new SurrealDbProtocolErrorResult(HttpStatusCode.UnprocessableEntity, "", "", ""),
+                false
+            },
+#endif
             { new SurrealDbUnknownResult(), false },
         };
 

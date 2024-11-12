@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿#if NET8_0_OR_GREATER
+using System.Text;
 using System.Text.Json;
 using SystemTextJsonPatch;
 
@@ -62,3 +63,4 @@ public class PatchAllTests
         results.Should().BeEquivalentTo(expected);
     }
 }
+#endif

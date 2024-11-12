@@ -54,7 +54,7 @@ public readonly partial struct Duration
                         int value = int.Parse(currentValueSpan, CultureInfo.InvariantCulture);
 #else
                         int value = int.Parse(
-                            currentValueSpan.ToString(),
+                            Encoding.UTF8.GetString(currentValueSpan),
                             CultureInfo.InvariantCulture
                         );
 #endif

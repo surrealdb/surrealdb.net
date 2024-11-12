@@ -1,4 +1,5 @@
-﻿namespace SurrealDb.Net.Tests.Serializers.Cbor;
+﻿#if NET7_0_OR_GREATER
+namespace SurrealDb.Net.Tests.Serializers.Cbor;
 
 public class TimeOnlyConverterTests : BaseCborConverterTests
 {
@@ -22,3 +23,4 @@ public class TimeOnlyConverterTests : BaseCborConverterTests
         result.Should().Be(expected);
     }
 }
+#endif

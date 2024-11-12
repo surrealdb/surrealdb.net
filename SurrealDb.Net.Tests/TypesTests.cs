@@ -610,6 +610,7 @@ public class TypesTests
         }
     }
 
+#if NET7_0_OR_GREATER
     [Theory]
     [InlineData("Endpoint=mem://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
@@ -756,6 +757,7 @@ public class TypesTests
             complexRecord!.Value.TotalSeconds.Should().Be(5421.35);
         }
     }
+#endif
 
     [Theory]
     [InlineData("Endpoint=mem://")]
