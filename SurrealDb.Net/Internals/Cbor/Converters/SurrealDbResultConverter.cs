@@ -105,6 +105,12 @@ internal class SurrealDbResultConverter : CborConverterBase<ISurrealDbResult>
                 return new SurrealDbOkResult(time, status, result.Value, _options);
             }
 
+            if (result.HasValue)
+            {
+                string errorFromResult = CborSerializer.Deserialize<string>(result.Value.Span);
+                return new SurrealDbErrorResult(time, status, errorFromResult);
+            }
+
             return new SurrealDbErrorResult(time, status, errorDetails!);
         }
 

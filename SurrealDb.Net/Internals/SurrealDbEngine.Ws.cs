@@ -95,9 +95,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
                         if (message.MessageType == WebSocketMessageType.Binary)
                         {
-                            using var stream = message.Stream is not null
-                                ? message.Stream
-                                : MemoryStreamProvider.MemoryStreamManager.GetStream(
+                            using var stream =
+                                message.Stream
+                                ?? MemoryStreamProvider.MemoryStreamManager.GetStream(
                                     message.Binary!
                                 );
 
@@ -117,16 +117,14 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                             if (
                                 _liveQueryChannelSubscriptionsPerQuery.TryGetValue(
                                     liveQueryUuid,
-                                    out var _liveQueryChannelSubscriptions
+                                    out var liveQueryChannelSubscriptions
                                 )
                             )
                             {
-                                var tasks = _liveQueryChannelSubscriptions.Select(
-                                    liveQueryChannel =>
-                                    {
-                                        return liveQueryChannel.WriteAsync(surrealDbWsLiveResponse);
-                                    }
-                                );
+                                var tasks = liveQueryChannelSubscriptions.Select(liveQueryChannel =>
+                                {
+                                    return liveQueryChannel.WriteAsync(surrealDbWsLiveResponse);
+                                });
 
                                 await Task.WhenAll(tasks).ConfigureAwait(false);
                             }
@@ -189,11 +187,11 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                         value.WsEngineId == _id
                         && _liveQueryChannelSubscriptionsPerQuery.TryRemove(
                             key,
-                            out var _liveQueryChannelSubscriptions
+                            out var liveQueryChannelSubscriptions
                         )
                     )
                     {
-                        foreach (var liveQueryChannel in _liveQueryChannelSubscriptions)
+                        foreach (var liveQueryChannel in liveQueryChannelSubscriptions)
                         {
                             var closeTask = CloseLiveQueryAsync(
                                 liveQueryChannel,
