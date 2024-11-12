@@ -5,9 +5,9 @@ public class RecordIdRangeTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public void ShouldFailToCreateRecordIdRangeWithoutTable(string table)
+    public void ShouldFailToCreateRecordIdRangeWithoutTable(string? table)
     {
-        var act = () => new RecordIdRange<int, int>(table, new(), new());
+        var act = () => new RecordIdRange<int, int>(table!, new(), new());
         act.Should()
             .Throw<ArgumentNullException>()
             .WithMessage("Value cannot be null. (Parameter 'table')");
@@ -16,9 +16,9 @@ public class RecordIdRangeTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public void ShouldFailToCreateRecordIdRangeWithoutTableAlt(string table)
+    public void ShouldFailToCreateRecordIdRangeWithoutTableAlt(string? table)
     {
-        var act = () => new RecordIdRange<int, int>(table, new());
+        var act = () => new RecordIdRange<int, int>(table!, new());
         act.Should()
             .Throw<ArgumentNullException>()
             .WithMessage("Value cannot be null. (Parameter 'table')");

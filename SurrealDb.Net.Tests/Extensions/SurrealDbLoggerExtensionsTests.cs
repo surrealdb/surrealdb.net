@@ -14,7 +14,7 @@ public class SurrealDbLoggerExtensionsTests
     [InlineData("Hello world", false, "?")]
     [InlineData("Hello world", true, "'Hello world'")]
     public void ShouldFormatParameterValue(
-        object value,
+        object? value,
         bool shouldLogParameterValue,
         string expected
     )
@@ -91,6 +91,7 @@ public class SurrealDbLoggerExtensionsTests
         result.Should().Be("14ms");
     }
 
+#if NET7_0_OR_GREATER
     [Fact]
     public void ShouldFormatExecutionTimeAsMicrosecond()
     {
@@ -99,4 +100,5 @@ public class SurrealDbLoggerExtensionsTests
         );
         result.Should().Be("42us");
     }
+#endif
 }

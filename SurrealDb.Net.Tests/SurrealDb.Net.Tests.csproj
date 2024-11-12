@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,6 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\SurrealDb.Embedded.RocksDb\SurrealDb.Embedded.RocksDb.csproj" />
       <ProjectReference Include="..\SurrealDb.Net.Tests.Extensions\SurrealDb.Net.Tests.Extensions.csproj" />
       <ProjectReference Include="..\SurrealDb.Net.Tests.Fixtures\SurrealDb.Net.Tests.Fixtures.csproj" />
       <ProjectReference Include="..\SurrealDb.Net\SurrealDb.Net.csproj" />

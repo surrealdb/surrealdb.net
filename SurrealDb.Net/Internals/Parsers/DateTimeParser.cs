@@ -2,7 +2,7 @@
 
 namespace SurrealDb.Net.Internals.Parsers;
 
-internal static partial class DateTimeParser
+internal static class DateTimeParser
 {
     public static DateTime Convert(long seconds, int nanos)
     {

@@ -98,6 +98,7 @@ internal sealed class RecordIdJsonConverter : JsonConverter<RecordId>
             writer.WriteRawValue(
                 JsonSerializer.Serialize(value.DeserializeId(idType), idType, options)
             );
+            return;
         }
 
         throw new NotImplementedException();

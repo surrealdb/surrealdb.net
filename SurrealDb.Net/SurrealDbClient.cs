@@ -90,7 +90,7 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
                     loggerFactory is not null ? new SurrealDbLoggerFactory(loggerFactory) : null
                 ),
             "mem"
-                => ResolveInMemoryProvider(
+                => ResolveEmbeddedProvider<ISurrealDbInMemoryEngine>(
                     serviceProvider,
                     configuration,
                     configureCborOptions,
@@ -99,18 +99,39 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
                     ?? throw new Exception(
                         "Impossible to create a new in-memory SurrealDB client. Make sure to use `AddInMemoryProvider`."
                     ),
+            "rocksdb"
+                => ResolveEmbeddedProvider<ISurrealDbRocksDbEngine>(
+                    serviceProvider,
+                    configuration,
+                    configureCborOptions,
+                    loggerFactory
+                )
+                    ?? throw new Exception(
+                        "Impossible to create a new file SurrealDB client, backed by RocksDB. Make sure to use `AddRocksDbProvider`."
+                    ),
+            "surrealkv"
+                => ResolveEmbeddedProvider<ISurrealDbKvEngine>(
+                    serviceProvider,
+                    configuration,
+                    configureCborOptions,
+                    loggerFactory
+                )
+                    ?? throw new Exception(
+                        "Impossible to create a new file SurrealDB client, backed by SurrealKV. Make sure to use `AddSurrealKvProvider`."
+                    ),
             _ => throw new NotSupportedException($"The protocol '{protocol}' is not supported."),
         };
     }
 
-    private ISurrealDbInMemoryEngine? ResolveInMemoryProvider(
+    private T? ResolveEmbeddedProvider<T>(
         IServiceProvider? serviceProvider,
         SurrealDbOptions configuration,
         Action<CborOptions>? configureCborOptions,
         ILoggerFactory? loggerFactory
     )
+        where T : class, ISurrealDbProviderEngine
     {
-        var engine = serviceProvider?.GetService<ISurrealDbInMemoryEngine>();
+        var engine = serviceProvider?.GetService<T>();
         if (engine is not null)
         {
             InitializeProviderEngine(engine, configuration, configureCborOptions, loggerFactory);

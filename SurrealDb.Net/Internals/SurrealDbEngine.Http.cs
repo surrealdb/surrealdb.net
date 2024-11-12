@@ -156,10 +156,32 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return !dbResponse.ExpectNone() && !dbResponse.ExpectEmptyArray();
     }
 
+    private bool _disposed;
+
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         if (_singleHttpClient.IsValueCreated)
+        {
             _singleHttpClient.Value.Dispose();
+        }
+
+        _disposed = true;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+
+#if NET6_0_OR_GREATER
+        return ValueTask.CompletedTask;
+#else
+        return new ValueTask(Task.CompletedTask);
+#endif
     }
 
     public async Task<bool> Health(CancellationToken cancellationToken)

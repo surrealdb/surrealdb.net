@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SurrealDb.Embedded.InMemory\SurrealDb.Embedded.InMemory.csproj" />
+    <ProjectReference Include="..\SurrealDb.Embedded.RocksDb\SurrealDb.Embedded.RocksDb.csproj" />
+    <ProjectReference Include="..\SurrealDb.Embedded.SurrealKv\SurrealDb.Embedded.SurrealKv.csproj" />
     <ProjectReference Include="..\SurrealDb.Net\SurrealDb.Net.csproj" />
   </ItemGroup>
 

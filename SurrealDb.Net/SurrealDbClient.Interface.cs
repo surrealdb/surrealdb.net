@@ -14,7 +14,7 @@ namespace SurrealDb.Net;
 /// The entry point to communicate with a SurrealDB instance.
 /// Authenticate, use namespace/database, execute queries, etc...
 /// </summary>
-public interface ISurrealDbClient : IDisposable
+public interface ISurrealDbClient : IDisposable, IAsyncDisposable
 {
     /// <summary>
     /// The uri linked to the SurrealDB instance target.

@@ -25,51 +25,73 @@ jobs:
             libpath: |
               **/release/surreal_memory.dll
               **/release/surreal_memory.pdb
+              **/release/surreal_rocksdb.dll
+              **/release/surreal_rocksdb.pdb
+              **/release/surreal_surrealkv.dll
+              **/release/surreal_surrealkv.pdb
             continue-on-error: false
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             libpath: |
               **/release/libsurreal_memory.so
+              **/release/libsurreal_rocksdb.so
+              **/release/libsurreal_surrealkv.so
             continue-on-error: false
           # 💡 not supported by the toolchain
           # - os: ubuntu-latest
           #   target: x86_64-unknown-linux-musl
           #   libpath: |
           #     **/release/libsurreal_memory.so
+          #     **/release/libsurreal_rocksdb.so
+          #     **/release/libsurreal_surrealkv.so
           # 💡 not supported by the toolchain
           # - os: ubuntu-latest
           #   target: aarch64-unknown-linux-musl
           #   libpath: |
           #     **/release/libsurreal_memory.so
+          #     **/release/libsurreal_rocksdb.so
+          #     **/release/libsurreal_surrealkv.so
           - os: ubuntu-latest
             target: arm-unknown-linux-gnueabihf
             libpath: |
               **/release/libsurreal_memory.so
+              **/release/libsurreal_rocksdb.so
+              **/release/libsurreal_surrealkv.so
             continue-on-error: true
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             libpath: |
               **/release/libsurreal_memory.so
+              **/release/libsurreal_rocksdb.so
+              **/release/libsurreal_surrealkv.so
             continue-on-error: true
           - os: ubuntu-latest
             target: aarch64-linux-android
             libpath: |
               **/release/libsurreal_memory.so
+              **/release/libsurreal_rocksdb.so
+              **/release/libsurreal_surrealkv.so
             continue-on-error: false
           - os: macos-latest
             target: x86_64-apple-darwin
             libpath: |
               **/release/libsurreal_memory.dylib
+              **/release/libsurreal_rocksdb.dylib
+              **/release/libsurreal_surrealkv.dylib
             continue-on-error: false
           - os: macos-latest
             target: aarch64-apple-darwin
             libpath: |
               **/release/libsurreal_memory.dylib
+              **/release/libsurreal_rocksdb.dylib
+              **/release/libsurreal_surrealkv.dylib
             continue-on-error: false
           - os: macos-latest
             target: aarch64-apple-ios
             libpath: |
               **/release/libsurreal_memory.dylib
+              **/release/libsurreal_rocksdb.dylib
+              **/release/libsurreal_surrealkv.dylib
             continue-on-error: false
 
     steps:
@@ -109,10 +131,18 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Build libraries
-        working-directory: ./rust-embedded
+      - name: Build "memory" library
+        working-directory: ./rust-embedded/memory
         run: cargo build --release --target ${{ matrix.target }}
-      
+
+      - name: Build "rocksdb" library
+        working-directory: ./rust-embedded/rocksdb
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Build "surrealkv" library
+        working-directory: ./rust-embedded/surrealkv
+        run: cargo build --release --target ${{ matrix.target }}
+    
       - name: Publish embedded artifacts
         uses: actions/upload-artifact@v4
         with:
