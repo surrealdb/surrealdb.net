@@ -177,3 +177,7 @@ public interface ISurrealDbProviderEngine : ISurrealDbEngine
 }
 
 public interface ISurrealDbInMemoryEngine : ISurrealDbProviderEngine { }
+
+public interface ISurrealDbRocksDbEngine : ISurrealDbProviderEngine { }
+
+public interface ISurrealDbKvEngine : ISurrealDbProviderEngine { }

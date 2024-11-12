@@ -174,7 +174,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: embedded
-          path: ./rust-embedded/target/debug/libsurreal_memory.so
+          path: |
+            ./rust-embedded/target/debug/libsurreal_memory.so
+            ./rust-embedded/target/debug/libsurreal_rocksdb.so
+            ./rust-embedded/target/debug/libsurreal_surrealkv.so
 
   cargo-check:
     runs-on: ubuntu-latest
@@ -216,7 +219,7 @@ jobs:
     strategy:
       matrix:
         manifests:
-          - ./rust-embedded/memory/Cargo.toml
+          - ./rust-embedded/shared/Cargo.toml
 
     steps:
       - name: Checkout

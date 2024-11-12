@@ -4,6 +4,8 @@ public class FactoryTests
 {
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     public async Task ShouldCreateMultipleClientInstances(string connectionString)
     {
         IEnumerable<Post>? list1 = null;

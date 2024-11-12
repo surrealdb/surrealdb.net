@@ -54,6 +54,8 @@ public class ParserTests
 {
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseRecordId(string connectionString)
@@ -183,6 +185,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseString(string connectionString)
@@ -247,6 +251,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseLong(string connectionString)
@@ -296,6 +302,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseDecimal(string connectionString)
@@ -367,6 +375,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseFloat(string connectionString)
@@ -436,6 +446,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseDouble(string connectionString)
@@ -505,6 +517,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseDuration(string connectionString)
@@ -614,6 +628,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseDurationAsTimeSpan(string connectionString)
@@ -711,6 +727,8 @@ public class ParserTests
 
     [Theory(Skip = "Not supported")]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseDurationAsString(string connectionString)
@@ -808,6 +826,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseTimeOnly(string connectionString)
@@ -905,6 +925,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseDateAsDateTime(string connectionString)
@@ -985,6 +1007,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseDateOnly(string connectionString)
@@ -1052,6 +1076,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseVector2(string connectionString)
@@ -1107,6 +1133,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseVector3(string connectionString)
@@ -1164,6 +1192,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseVector4(string connectionString)
@@ -1223,6 +1253,8 @@ public class ParserTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldParseNone(string connectionString)

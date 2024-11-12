@@ -20,10 +20,27 @@ public class BaseBenchmark
         (await client.RawQuery(query)).EnsureAllOks();
     }
 
+    protected async Task DropPostTable(ISurrealDbClient client, DatabaseInfo databaseInfo)
+    {
+        (await client.RawQuery("REMOVE TABLE post;")).EnsureAllOks();
+    }
+
     protected async Task CreateEcommerceTables(ISurrealDbClient client, DatabaseInfo databaseInfo)
     {
         string query = GetEcommerceQueryContent();
         (await client.RawQuery(query)).EnsureAllOks();
+    }
+
+    protected async Task DropEcommerceTables(ISurrealDbClient client, DatabaseInfo databaseInfo)
+    {
+        string rawQuery = """
+            REMOVE TABLE address;
+            REMOVE TABLE customer;
+            REMOVE TABLE product;
+            REMOVE TABLE purchased;
+            REMOVE TABLE purchase;
+            """;
+        (await client.RawQuery(rawQuery)).EnsureAllOks();
     }
 
     protected async Task<IEnumerable<GeneratedPost>> SeedData(
@@ -44,6 +61,11 @@ public class BaseBenchmark
         await Task.WhenAll(tasks);
 
         return posts;
+    }
+
+    protected Task ClearData(ISurrealDbClient client, DatabaseInfo databaseInfo)
+    {
+        return client.RawQuery("DELETE post");
     }
 
     protected async Task<Post> GetFirstPost(ISurrealDbClient client, DatabaseInfo databaseInfo)

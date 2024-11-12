@@ -1,6 +1,6 @@
-﻿namespace SurrealDb.Embedded.InMemory.Internals;
+﻿namespace SurrealDb.Embedded.Internals;
 
-internal class SurrealDbEmbeddedEngineConfig
+internal sealed class SurrealDbEmbeddedEngineConfig
 {
     public string? Ns { get; private set; }
     public string? Db { get; private set; }
@@ -13,7 +13,6 @@ internal class SurrealDbEmbeddedEngineConfig
 
     public void Reset()
     {
-        Ns = null;
         Db = null;
     }
 }

@@ -24,8 +24,11 @@ pub struct SuccessAction {
 }
 
 impl SuccessAction {
-    pub fn invoke(&self, value: *mut ByteBuffer) {
-        unsafe { (self.callback)(self.handle.ptr, value) };
+    /// # Safety
+    ///
+    /// Invokes the expected Success action.
+    pub unsafe fn invoke(&self, value: *mut ByteBuffer) {
+        (self.callback)(self.handle.ptr, value);
     }
 }
 
@@ -36,8 +39,11 @@ pub struct FailureAction {
 }
 
 impl FailureAction {
-    pub fn invoke(&self, value: *mut ByteBuffer) {
-        unsafe { (self.callback)(self.handle.ptr, value) };
+    /// # Safety
+    ///
+    /// Invokes the expected Failure action.
+    pub unsafe fn invoke(&self, value: *mut ByteBuffer) {
+        (self.callback)(self.handle.ptr, value);
     }
 }
 
@@ -52,14 +58,16 @@ fn value_to_buffer(value: Value) -> Result<*mut ByteBuffer, ()> {
 
 pub fn send_success(bytes: Vec<u8>, success: SuccessAction) {
     let buffer = alloc_u8_buffer(bytes);
-    success.invoke(buffer);
+    unsafe {
+        success.invoke(buffer);
+    }
 }
 
 pub fn send_failure(error: &str, action: FailureAction) {
     let value = Value::Strand(error.into());
 
     match value_to_buffer(value) {
-        Ok(buffer) => action.invoke(buffer),
+        Ok(buffer) => unsafe { action.invoke(buffer) },
         Err(_) => panic!("Failed to serialize Value"),
     }
 }

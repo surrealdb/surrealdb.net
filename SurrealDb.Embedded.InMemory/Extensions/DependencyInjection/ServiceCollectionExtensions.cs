@@ -1,4 +1,4 @@
-﻿using SurrealDb.Embedded.InMemory.Internals;
+﻿using SurrealDb.Embedded.Internals;
 using SurrealDb.Net.Internals;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -11,7 +11,7 @@ public static class ServiceCollectionExtensions
 {
     public static SurrealDbBuilder AddInMemoryProvider(this SurrealDbBuilder builder)
     {
-        builder.Services.AddTransient<ISurrealDbInMemoryEngine, SurrealDbInMemoryEngine>();
+        builder.Services.AddTransient<ISurrealDbInMemoryEngine, SurrealDbEmbeddedEngine>();
 
         return builder;
     }

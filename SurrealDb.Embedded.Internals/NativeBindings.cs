@@ -1,7 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace SurrealDb.Embedded.InMemory.Internals;
+namespace SurrealDb.Embedded.Internals;
 
 internal static class NativeBindings
 {

@@ -12,6 +12,10 @@ impl ByteBuffer {
             .expect("buffer length negative or overflowed")
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.length <= 0
+    }
+
     pub fn from_vec(bytes: Vec<u8>) -> Self {
         let length = i32::try_from(bytes.len()).expect("buffer length cannot fit into a i32.");
         let capacity =

@@ -1,5 +1,6 @@
 ﻿using SurrealDb.Net;
 using SurrealDb.Net.Extensions.DependencyInjection;
+using SurrealDb.Net.Internals.Constants;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -47,9 +48,12 @@ public sealed class SurrealDbOptions
 
     /// <summary>
     /// Indicates if the options are made to use a SurrealDB instance in embedded mode.
-    /// Supported embedded modes are <c>mem://</c>.
+    /// Supported embedded modes are <c>mem://</c>, <c>rocksdb://</c> and <c>surrealkv://</c>.
     /// </summary>
-    public bool IsEmbedded => Endpoint!.StartsWith("mem://");
+    public bool IsEmbedded =>
+        Endpoint!.StartsWith(EndpointConstants.Client.MEMORY)
+        || Endpoint.StartsWith(EndpointConstants.Client.ROCKSDB)
+        || Endpoint.StartsWith(EndpointConstants.Client.SURREALKV);
 
     /// <summary>
     /// Logging options used for the SurrealDB client.
@@ -57,6 +61,18 @@ public sealed class SurrealDbOptions
     public SurrealDbLoggingOptions Logging { get; internal set; } = new();
 
     public SurrealDbOptions() { }
+
+    public SurrealDbOptions(SurrealDbOptions clone)
+    {
+        Endpoint = clone.Endpoint;
+        Namespace = clone.Namespace;
+        Database = clone.Database;
+        Username = clone.Username;
+        Password = clone.Password;
+        Token = clone.Token;
+        NamingPolicy = clone.NamingPolicy;
+        Logging = clone.Logging;
+    }
 
     public SurrealDbOptions(string endpoint, string? namingPolicy = null)
     {

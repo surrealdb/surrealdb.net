@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace SurrealDb.Embedded.InMemory.Internals;
+namespace SurrealDb.Embedded.Internals;
 
 // 💡 Detect platform, inspired by SkiaSharp implementation
 // https://github.com/mono/SkiaSharp/blob/main/binding/Binding.Shared/PlatformConfiguration.cs

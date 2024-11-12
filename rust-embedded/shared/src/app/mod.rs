@@ -43,6 +43,12 @@ impl SurrealEmbeddedEngines {
     }
 }
 
+impl Default for SurrealEmbeddedEngines {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct SurrealEmbeddedEngine(RwLock<SurrealEmbeddedEngineInner>);
 
 impl SurrealEmbeddedEngine {
