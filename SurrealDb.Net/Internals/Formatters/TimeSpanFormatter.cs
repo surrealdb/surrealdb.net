@@ -14,11 +14,10 @@ internal static class TimeSpanFormatter
             + (value.Microseconds * TimeConstants.NANOS_PER_MICROSECOND)
             + (value.Milliseconds * TimeConstants.NANOS_PER_MILLISECOND);
 #else
-        double fractionedMilliseconds =
-            value.TotalMilliseconds - Math.Truncate(value.TotalMilliseconds);
-        int nanos =
-            (int)(fractionedMilliseconds * TimeConstants.NANOS_PER_MILLISECOND)
-            + (value.Milliseconds * TimeConstants.NANOS_PER_MILLISECOND);
+        long ticksInSeconds = seconds * TimeSpan.TicksPerSecond;
+        long remainingTicks = value.Ticks - ticksInSeconds;
+
+        int nanos = (int)(remainingTicks * TimeConstants.NanosecondsPerTick);
 #endif
 
         return (seconds, nanos);
