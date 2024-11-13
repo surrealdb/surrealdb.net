@@ -15,7 +15,7 @@
     <PackageVersion Include="FlakyTest.XUnit" Version="2.4.10" />
     <PackageVersion Include="FluentAssertions" Version="6.12.0" />
     <PackageVersion Include="Meziantou.Xunit.ParallelTestFramework" Version="2.2.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="8.0.3" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="8.0.0" />
@@ -25,9 +25,11 @@
     <PackageVersion Include="Microsoft.Spatial" Version="7.18.0" />
     <PackageVersion Include="MudBlazor" Version="6.11.2" />
     <PackageVersion Include="Pidgin" Version="3.2.3" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="1.2.36" />
     <PackageVersion Include="Semver" Version="2.3.0" />
     <PackageVersion Include="Superpower" Version="3.0.0" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="7.0.0" />
     <PackageVersion Include="System.Collections.Immutable" Version="8.0.0" />
     <PackageVersion Include="System.Interactive.Async" Version="6.0.1" />
     <PackageVersion Include="SystemTextJsonPatch" Version="4.0.0" />

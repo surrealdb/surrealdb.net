@@ -1,33 +1,32 @@
-﻿using System.Reflection;
-using Microsoft.OpenApi.Models;
+﻿using Scalar.AspNetCore;
 using SurrealDb.Examples.MinimalApis.Models;
 using SurrealDb.Net;
+using Swashbuckle.AspNetCore.SwaggerUI;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var services = builder.Services;
 var configuration = builder.Configuration;
 
-services.AddEndpointsApiExplorer();
-services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "MinimalApis Examples API", Version = "v1" });
+services
+    .AddEndpointsApiExplorer()
+    .AddOpenApi(options =>
+    {
+        options.AddDocumentTransformer(
+            (document, _, _) =>
+            {
+                document.Info.Title = "MinimalApis Examples API";
+                document.Info.Version = "v1";
 
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
-});
-services.AddSurreal(configuration.GetConnectionString("SurrealDB")!);
+                return Task.CompletedTask;
+            }
+        );
+    });
 
 // 💡 Be sure to have "NamingPolicy=CamelCase" in your connection string for PATCH methods to work as expected.
+services.AddSurreal(configuration.GetConnectionString("SurrealDB")!);
 
 var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
 app.UseHttpsRedirection();
 
@@ -37,6 +36,22 @@ app.MapGroup("/api")
         new() { Tags = ["WeatherForecast"], EnableMutations = false }
     )
     .MapSurrealEndpoints<Todo>("/todo", new() { Tags = ["Todo"] });
+
+if (app.Environment.IsDevelopment())
+{
+    // 💡 Enable OpenAPI document generation (e.g. "/openapi/v1.json")
+    app.MapOpenApi();
+
+    // 💡 Display OpenAPI User Interfaces (Swagger UI, Scalar)
+    app.UseSwaggerUI(options =>
+    {
+        options.ConfigObject.Urls =
+        [
+            new UrlDescriptor { Name = "MinimalApis Examples API v1", Url = "/openapi/v1.json" }
+        ];
+    });
+    app.MapScalarApiReference();
+}
 
 await InitializeDbAsync();
 
