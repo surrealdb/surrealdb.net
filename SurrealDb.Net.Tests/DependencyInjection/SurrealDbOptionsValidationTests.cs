@@ -82,7 +82,7 @@ public class SurrealDbOptionsValidationTests
         );
 
         var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromMilliseconds(100));
+        cts.CancelAfter(TimeSpan.FromMilliseconds(500));
 
         await builder.RunConsoleAsync(cts.Token);
     }
