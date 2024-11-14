@@ -179,6 +179,23 @@ public class SurrealDbOptionsBuilderTests
     }
 
     [Fact]
+    public void ShouldCreateFromConnectionStringWithLeadingSemiColon()
+    {
+        string connectionString =
+            "Endpoint=http://127.0.0.1:8000;NS=test;DB=test;User=root;Pass=root;";
+
+        var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
+
+        options.Endpoint.Should().Be("http://127.0.0.1:8000");
+        options.Namespace.Should().Be("test");
+        options.Database.Should().Be("test");
+        options.Username.Should().Be("root");
+        options.Password.Should().Be("root");
+        options.Token.Should().BeNull();
+        options.NamingPolicy.Should().BeNull();
+    }
+
+    [Fact]
     public void ShouldCreateFromConnectionStringWithAccessToken()
     {
         string connectionString =

@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Internals.Constants;
+﻿using SurrealDb.Net.Extensions.DependencyInjection;
+using SurrealDb.Net.Internals.Constants;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -152,7 +153,9 @@ public sealed class SurrealDbOptionsBuilder
 
             if (key.Equals("endpoint", StringComparison.OrdinalIgnoreCase))
             {
-                _endpoint = valueSpan.ToString();
+                string value = valueSpan.ToString();
+                EnsuresCorrectEndpoint(value, nameof(connectionString));
+                _endpoint = value;
                 return;
             }
             if (key.Equals("server", StringComparison.OrdinalIgnoreCase))
@@ -208,7 +211,9 @@ public sealed class SurrealDbOptionsBuilder
             }
             if (key.Equals("namingPolicy", StringComparison.OrdinalIgnoreCase))
             {
-                _namingPolicy = valueSpan.ToString();
+                string value = valueSpan.ToString();
+                EnsuresCorrectNamingPolicy(value, nameof(connectionString));
+                _namingPolicy = value;
             }
         }
 
@@ -224,23 +229,29 @@ public sealed class SurrealDbOptionsBuilder
         }
     }
 
-    private static void EnsuresCorrectServerEndpoint(string? endpoint, string argumentName)
+    private static void EnsuresCorrectEndpoint(string? endpoint, string argumentName)
     {
         if (string.IsNullOrWhiteSpace(endpoint))
+        {
+            throw new ArgumentException("Endpoint is required", argumentName);
+        }
+
+        if (SurrealDbOptionsValidation.IsValidEndpoint(endpoint))
         {
             return;
         }
 
-        string[] validServerEndpoints =
-        [
-            EndpointConstants.Server.HTTP,
-            EndpointConstants.Server.HTTPS,
-            EndpointConstants.Server.WS,
-            EndpointConstants.Server.WSS
-        ];
-        string lowerEndpoint = endpoint.ToLowerInvariant();
+        throw new ArgumentException($"Invalid endpoint: {endpoint}", argumentName);
+    }
 
-        if (validServerEndpoints.Any(lowerEndpoint.StartsWith))
+    private static void EnsuresCorrectServerEndpoint(string? endpoint, string argumentName)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint))
+        {
+            throw new ArgumentException("Server endpoint is required", argumentName);
+        }
+
+        if (SurrealDbOptionsValidation.IsValidServerEndpoint(endpoint))
         {
             return;
         }
@@ -252,18 +263,10 @@ public sealed class SurrealDbOptionsBuilder
     {
         if (string.IsNullOrWhiteSpace(endpoint))
         {
-            return;
+            throw new ArgumentException("Client endpoint is required", argumentName);
         }
 
-        string[] validClientEndpoints =
-        [
-            EndpointConstants.Client.MEMORY,
-            EndpointConstants.Client.ROCKSDB,
-            EndpointConstants.Client.SURREALKV
-        ];
-        string lowerEndpoint = endpoint.ToLowerInvariant();
-
-        if (validClientEndpoints.Any(lowerEndpoint.StartsWith))
+        if (SurrealDbOptionsValidation.IsValidClientEndpoint(endpoint))
         {
             return;
         }
@@ -334,36 +337,25 @@ public sealed class SurrealDbOptionsBuilder
 
     public SurrealDbOptionsBuilder WithNamingPolicy(string namingPolicy)
     {
-        EnsuresCorrectNamingPolicy(namingPolicy);
+        EnsuresCorrectNamingPolicy(namingPolicy, nameof(namingPolicy));
 
         _namingPolicy = namingPolicy;
         return this;
     }
 
-    private static void EnsuresCorrectNamingPolicy(string namingPolicy)
+    private static void EnsuresCorrectNamingPolicy(string namingPolicy, string argumentName)
     {
         if (string.IsNullOrWhiteSpace(namingPolicy))
         {
             return;
         }
 
-        string[] validNamingPolicies =
-        [
-            NamingPolicyConstants.CAMEL_CASE,
-            NamingPolicyConstants.SNAKE_CASE,
-            NamingPolicyConstants.SNAKE_CASE_LOWER,
-            NamingPolicyConstants.SNAKE_CASE_UPPER,
-            NamingPolicyConstants.KEBAB_CASE,
-            NamingPolicyConstants.KEBAB_CASE_LOWER,
-            NamingPolicyConstants.KEBAB_CASE_UPPER
-        ];
-
-        if (validNamingPolicies.Contains(namingPolicy.ToLowerInvariant()))
+        if (SurrealDbOptionsValidation.IsValidNamingPolicy(namingPolicy))
         {
             return;
         }
 
-        throw new ArgumentException($"Invalid naming policy: {namingPolicy}", nameof(namingPolicy));
+        throw new ArgumentException($"Invalid naming policy: {namingPolicy}", argumentName);
     }
 
     /// <summary>
