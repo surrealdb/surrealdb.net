@@ -133,7 +133,11 @@ public static class ServiceCollectionExtensions
         if (configuration.Endpoint is null)
             throw new ArgumentNullException(nameof(configuration), "The endpoint is required.");
 
-        RegisterHttpClient(services, configuration.Endpoint);
+        bool shouldRegisterHttpClient = new Uri(configuration.Endpoint).Scheme is "http" or "https";
+        if (shouldRegisterHttpClient)
+        {
+            RegisterHttpClient(services, configuration.Endpoint);
+        }
 
         var classClientType = typeof(SurrealDbClient);
         var interfaceClientType = typeof(ISurrealDbClient);
@@ -195,7 +199,7 @@ public static class ServiceCollectionExtensions
                         return new SurrealDbClient(
                             configuration,
                             serviceProvider,
-                            serviceProvider.GetRequiredService<IHttpClientFactory>(),
+                            serviceProvider.GetService<IHttpClientFactory>(),
                             configureCborOptions,
                             serviceProvider.GetService<ILoggerFactory>()
                         );
@@ -210,7 +214,7 @@ public static class ServiceCollectionExtensions
                         return new SurrealDbClient(
                             configuration,
                             serviceProvider,
-                            serviceProvider.GetRequiredService<IHttpClientFactory>(),
+                            serviceProvider.GetService<IHttpClientFactory>(),
                             configureCborOptions,
                             serviceProvider.GetService<ILoggerFactory>()
                         );
@@ -225,7 +229,7 @@ public static class ServiceCollectionExtensions
                         return new SurrealDbClient(
                             configuration,
                             serviceProvider,
-                            serviceProvider.GetRequiredService<IHttpClientFactory>(),
+                            serviceProvider.GetService<IHttpClientFactory>(),
                             configureCborOptions,
                             serviceProvider.GetService<ILoggerFactory>()
                         );
