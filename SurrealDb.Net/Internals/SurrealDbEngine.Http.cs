@@ -903,7 +903,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         if (isSingleHttpClient)
         {
-            if (TrySetSingleHttpClientConfiguration(ns, db, _config.Auth))
+            if (_version is not null && TrySetSingleHttpClientConfiguration(ns, db, _config.Auth))
             {
                 ApplyHttpClientConfiguration(client, overridedAuth, useConfiguration);
                 return client;
@@ -914,7 +914,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
                 db,
                 overridedAuth ?? _config.Auth
             );
-            bool shouldClone = _singleHttpClientConfiguration != desiredClientConfiguration;
+            bool shouldClone =
+                _version is null || _singleHttpClientConfiguration != desiredClientConfiguration;
 
             if (shouldClone)
             {
