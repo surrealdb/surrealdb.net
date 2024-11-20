@@ -1091,7 +1091,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
     {
 #if NET6_0_OR_GREATER
-        using var stream = await response
+        await using var stream = await response
             .Content.ReadAsStreamAsync(cancellationToken)
             .ConfigureAwait(false);
 #else
