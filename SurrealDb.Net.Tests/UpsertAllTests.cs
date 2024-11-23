@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Semver;
 
 namespace SurrealDb.Net.Tests;
 
@@ -12,6 +13,8 @@ public class UpsertAllTests
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldUpsertAllRecords(string connectionString)
     {
+        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
+
         IEnumerable<Post>? list = null;
         IEnumerable<Post>? results = null;
 
@@ -26,11 +29,11 @@ public class UpsertAllTests
                 AppDomain.CurrentDomain.BaseDirectory,
                 "Schemas/post.surql"
             );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+            string fileContent = await File.ReadAllTextAsync(filePath, Encoding.UTF8);
 
             string query = fileContent;
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
             (await client.RawQuery(query)).EnsureAllOks();
 
@@ -53,15 +56,38 @@ public class UpsertAllTests
 
         results.Should().NotBeNull();
 
-        var expected = list!.Select(item => new Post
+        if (SemVersion.CompareSortOrder(version, new SemVersion(2, 1)) >= 0)
         {
-            Id = item.Id,
-            Title = "# Title",
-            Content = "# Content",
-            CreatedAt = now,
-            Status = "PUBLISHED",
-        });
+            // 💡 Since v2.1.0, creates a new random record instead of updating all records
+            results.Should().HaveCount(1);
 
-        results.Should().BeEquivalentTo(expected);
+            var newRecord = results!.First();
+
+            newRecord
+                .Should()
+                .BeEquivalentTo(
+                    new Post
+                    {
+                        Id = newRecord.Id,
+                        Title = "# Title",
+                        Content = "# Content",
+                        CreatedAt = now,
+                        Status = "PUBLISHED",
+                    }
+                );
+        }
+        else
+        {
+            var expected = list!.Select(item => new Post
+            {
+                Id = item.Id,
+                Title = "# Title",
+                Content = "# Content",
+                CreatedAt = now,
+                Status = "PUBLISHED",
+            });
+
+            results.Should().BeEquivalentTo(expected);
+        }
     }
 }
