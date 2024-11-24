@@ -400,6 +400,9 @@ FodyWeavers.xsd
 *.sln.iml
 .idea/
 
+# Verify snaspshot testing
+*.received.*
+
 ### VisualStudio Patch ###
 # Additional files built by Visual Studio
 
