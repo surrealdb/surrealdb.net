@@ -42,9 +42,12 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
 
-  test-v1:
+  test:
     needs: [embedded-build]
     runs-on: ubuntu-latest-4-cores
+    strategy:
+      matrix:
+        surrealdb_version: ["v1.5.5", "v2.0.4", "v2.1.0"]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -56,62 +59,15 @@ jobs:
           path: ./rust-embedded/target/debug
 
       - name: Download SurrealDB
-        run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh -s -- --version v1.5.5
+        run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh -s -- --version ${{ matrix.surrealdb_version }}
 
       - name: Run SurrealDB root
-        run: surreal start --user root --pass root memory --auth --allow-guests &
-
-      - name: Setup dotnet 8.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: "8.0.x"
-
-      - name: Install dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore
-
-      - name: Test library
-        run: >
-          dotnet test 
-          ./SurrealDb.Net.Tests/SurrealDb.Net.Tests.csproj
-          --no-restore
-          --no-build
-          --collect "XPlat Code Coverage"
-          --results-directory .coverage
-          --
-          DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-
-      - name: Test Live Query feature
-        run: >
-          dotnet test 
-          ./SurrealDb.Net.LiveQuery.Tests/SurrealDb.Net.LiveQuery.Tests.csproj
-          --no-restore
-          --no-build
-          --collect "XPlat Code Coverage"
-          --results-directory .coverage
-          --
-          DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-
-  test-v2:
-    needs: [embedded-build]
-    runs-on: ubuntu-latest-4-cores
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      
-      - name: Download embedded artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: embedded
-          path: ./rust-embedded/target/debug
-
-      - name: Download SurrealDB
-        run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh -s
-
-      - name: Run SurrealDB root
-        run: surreal start --user root --pass root memory --allow-guests &
+        run: |
+          if [ "${{ matrix.surrealdb_version }}" == "v1.5.5" ]; then
+            surreal start --user root --pass root memory --auth --allow-guests &
+          else
+            surreal start --user root --pass root memory --allow-guests &
+          fi
 
       - name: Setup dotnet 8.0
         uses: actions/setup-dotnet@v3
@@ -147,6 +103,7 @@ jobs:
           DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
       - name: Upload Coverage
+        if: matrix.surrealdb_version == 'v2.1.0'
         uses: codecov/codecov-action@v3
         with:
           directory: .coverage
