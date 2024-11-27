@@ -3241,9 +3241,9 @@ dependencies = [
 
 [[package]]
 name = "surrealdb"
-version = "2.1.0"
+version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db4a661389d3422f29d675d5b079630b3f133377dec47135cb12f6bf4214954b"
+checksum = "ee57d04ccd8ec9d51c635a12996085abfe73e86adc05d363b16ee47191ddef1f"
 dependencies = [
  "arrayvec",
  "async-channel",
@@ -3278,9 +3278,9 @@ dependencies = [
 
 [[package]]
 name = "surrealdb-core"
-version = "2.1.0"
+version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62bf88854d4f929b4f5e1a1027a79b3f2d0799b8d5ac646682efabe7a0b27995"
+checksum = "83f24702939c38dee448eb3958ffdc4d9b37aad84122fef3bcc712488213bf1f"
 dependencies = [
  "addr",
  "ahash 0.8.11",
@@ -3377,9 +3377,9 @@ dependencies = [
 
 [[package]]
 name = "surrealkv"
-version = "0.5.4"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b43f3826c1a051977d5a90cb4c12998add8932552918d045fe8942f16c7ec1fc"
+checksum = "ebb03cdc3e271798ab1a45e5eb7a2fe1e9579d5771b6226915ccf8f03b08397a"
 dependencies = [
  "ahash 0.8.11",
  "async-channel",
@@ -3394,6 +3394,7 @@ dependencies = [
  "revision",
  "tokio",
  "vart",
+ "wasm-bindgen-futures",
 ]
 
 [[package]]
