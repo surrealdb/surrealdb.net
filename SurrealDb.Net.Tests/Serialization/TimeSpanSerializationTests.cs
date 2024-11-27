@@ -23,7 +23,9 @@ public class TimeSpanSerializationTests
             ("TimeSpan.FromMinutes(1)", TimeSpan.FromMinutes(1)),
             ("TimeSpan.FromHours(1)", TimeSpan.FromHours(1)),
             ("TimeSpan.FromMilliseconds(1)", TimeSpan.FromMilliseconds(1)),
+#if NET7_0_OR_GREATER
             ("TimeSpan.FromMicroseconds(1)", TimeSpan.FromMicroseconds(1)),
+#endif
             ("TimeSpan.FromTicks(100)", TimeSpan.FromTicks(100)),
             ("TimeSpan.FromTicks(4715615451235648454L)", TimeSpan.FromTicks(4715615451235648454L)),
         ];

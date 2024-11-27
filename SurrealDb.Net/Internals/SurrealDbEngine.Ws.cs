@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Reactive.Concurrency;
@@ -1077,6 +1077,26 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<T>();
     }
 
+    public async Task<TOutput> Update<TData, TOutput>(
+        RecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record
+    {
+        if (_version?.Major < 2)
+            throw new NotImplementedException();
+
+        var dbResponse = await SendRequestAsync(
+                "update",
+                [recordId, data],
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<TOutput>()!;
+    }
+
     public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : Record
     {
@@ -1128,6 +1148,24 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
+    }
+
+    public async Task<TOutput> Upsert<TData, TOutput>(
+        RecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : Record
+    {
+        string method = _version?.Major > 1 ? "upsert" : "update";
+        var dbResponse = await SendRequestAsync(
+                method,
+                [recordId, data],
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<TOutput>()!;
     }
 
     public Task Use(string ns, string db, CancellationToken cancellationToken)

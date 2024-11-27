@@ -32,10 +32,12 @@ public class DateTimeSerializationTests
             ("3", isWindowsOS ? new(3) : new()),
             ("4", isWindowsOS ? new(4) : new()),
             ("715615451235648454L", new(715615451235648454L)),
+#if NET7_0_OR_GREATER
             (
                 "(1981, 1, 1, 10, 58, 23, 122, 82, DateTimeKind.Unspecified)",
                 new(1981, 1, 1, 10, 58, 23, 122, 82, DateTimeKind.Unspecified)
             ),
+#endif
             ("(1913, 6, 3, 14, 38, 30, 164)", new(1913, 6, 3, 14, 38, 30, 164)),
             ("2024-11-08 12:29:58.6625489", DateTime.Parse("2024-11-08 12:29:58.6625489Z"))
         ];
