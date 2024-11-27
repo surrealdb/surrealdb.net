@@ -50,6 +50,8 @@ public class Vector4Record : Record<Vector4?> { }
 
 public class NoneRecord : Record<None> { }
 
+public class GuidRecord : Record<Guid?> { }
+
 public class ParserTests
 {
     [Theory]
@@ -166,6 +168,7 @@ public class ParserTests
             ulidRecord!.Id!.DeserializeId<string>().ToString().Should().BeUlid();
         }
 
+#if NET8_0_OR_GREATER
         {
             var uuidRecord = records.First(r => r.Name == "uuid");
             uuidRecord.Should().NotBeNull();
@@ -181,6 +184,7 @@ public class ParserTests
                 uuidRecord!.Id!.DeserializeId<string>().Should().BeUuid();
             }
         }
+#endif
     }
 
     [Theory]
@@ -1288,4 +1292,48 @@ public class ParserTests
                 .WithMessage("Expected a CBOR type of NONE");
         }
     }
+
+#if NET8_0_OR_GREATER
+    [Theory]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task ShouldParseGuid(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schemas/uuid.surql");
+        string fileContent = await File.ReadAllTextAsync(filePath, Encoding.UTF8);
+
+        string query = fileContent;
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        (await client.RawQuery(query)).EnsureAllOks();
+
+        var records = await client.Select<GuidRecord>("uuid");
+
+        {
+            var noneRecord = records.First(r => r.Name == "none");
+            noneRecord.Should().NotBeNull();
+            noneRecord!.Value.Should().BeNull();
+        }
+
+        {
+            var preciseRecord = records.First(r => r.Name == "precise");
+            preciseRecord.Should().NotBeNull();
+            preciseRecord!.Value.Should().Be(Guid.Parse("a8f30d8b-db67-47ec-8b38-ef703e05ad1b"));
+        }
+
+        {
+            var v4Record = records.First(r => r.Name == "v4");
+            v4Record.Should().NotBeNull();
+            v4Record!.Value.Should().NotBeEmpty();
+        }
+    }
+#endif
 }
