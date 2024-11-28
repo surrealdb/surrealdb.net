@@ -58,6 +58,7 @@ public class KillTests
     public async Task ShouldFailToKillInexistantLiveQueryOnWsProtocol(string connectionString)
     {
         var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
+        var liveQueryUuid = Guid.NewGuid();
 
         Func<Task> func = async () =>
         {
@@ -68,15 +69,18 @@ public class KillTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            var liveQueryUuid = Guid.NewGuid();
-
             await client.Kill(liveQueryUuid);
         };
 
-        string errorMessage =
-            version.Major > 1
-                ? "There was a problem with the database: Can not execute KILL statement using id '$id'"
-                : "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'";
+        string errorMessage = version switch
+        {
+            { Major: 1 }
+                => "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'",
+            { Major: 2, Minor: 0 }
+                => "There was a problem with the database: Can not execute KILL statement using id '$id'",
+            _
+                => $"There was a problem with the database: Can not execute KILL statement using id 'u'{liveQueryUuid}''"
+        };
 
         await func.Should().ThrowAsync<SurrealDbException>().WithMessage(errorMessage);
     }

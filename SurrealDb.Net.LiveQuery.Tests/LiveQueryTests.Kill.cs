@@ -44,10 +44,15 @@ public class KillLiveQueryTests
 
         liveQueryUuid.Should().NotBeEmpty();
 
-        string errorMessage =
-            version.Major > 1
-                ? "There was a problem with the database: Can not execute KILL statement using id '$id'"
-                : "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'";
+        string errorMessage = version switch
+        {
+            { Major: 1 }
+                => "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'",
+            { Major: 2, Minor: 0 }
+                => "There was a problem with the database: Can not execute KILL statement using id '$id'",
+            _
+                => $"There was a problem with the database: Can not execute KILL statement using id 'u'{liveQueryUuid}''"
+        };
 
         await liveQueryAlreadyKilledFunc
             .Should()
@@ -69,6 +74,7 @@ public class KillLiveQueryTests
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         SurrealDbLiveQuery<int>? liveQuery = null;
+        Guid liveQueryUuid = Guid.Empty;
 
         Func<Task> createLiveQueryFunc = async () =>
         {
@@ -77,7 +83,7 @@ public class KillLiveQueryTests
             if (response.FirstResult is not SurrealDbOkResult okResult)
                 throw new Exception("Expected a SurrealDbOkResult");
 
-            var liveQueryUuid = okResult.GetValue<Guid>();
+            liveQueryUuid = okResult.GetValue<Guid>();
 
             liveQuery = client.ListenLive<int>(liveQueryUuid);
         };
@@ -96,10 +102,15 @@ public class KillLiveQueryTests
 
         await manuallyKillLiveQueryFunc.Should().NotThrowAsync();
 
-        string errorMessage =
-            version.Major > 1
-                ? "There was a problem with the database: Can not execute KILL statement using id '$id'"
-                : "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'";
+        string errorMessage = version switch
+        {
+            { Major: 1 }
+                => "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'",
+            { Major: 2, Minor: 0 }
+                => "There was a problem with the database: Can not execute KILL statement using id '$id'",
+            _
+                => $"There was a problem with the database: Can not execute KILL statement using id 'u'{liveQueryUuid}''"
+        };
 
         await liveQueryAlreadyKilledFunc
             .Should()

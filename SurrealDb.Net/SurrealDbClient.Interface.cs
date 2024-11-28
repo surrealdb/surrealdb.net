@@ -938,7 +938,8 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : Record;
 
     /// <summary>
-    /// Updates or creates all records in the database.
+    /// Creates a random record in the database.
+    /// Prior to SurrealDB v2.1.0, this method would update or create all records in the database.
     /// </summary>
     /// <typeparam name="T">The type of the record to upsert.</typeparam>
     /// <param name="table">The name of the database table.</param>
@@ -954,7 +955,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         T data,
         CancellationToken cancellationToken = default
     )
-        where T : class;
+        where T : class; // TODO : Change return type from "IEnumerable<T>" to "T" in the future
 
     /// <summary>
     /// Updates or creates the specified record in the database.
