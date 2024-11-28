@@ -1,14 +1,15 @@
 ﻿using SurrealDb.Net.Benchmarks.Constants;
 using SurrealDb.Net.Benchmarks.Models;
+using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Tests.Fixtures;
 
 namespace SurrealDb.Net.Benchmarks.Remote;
 
 public class BaseRemoteBenchmark : BaseBenchmark
 {
-    public static string Host { get; } = "127.0.0.1:8000";
-    protected string HttpUrl { get; } = $"http://{Host}";
-    protected string WsUrl { get; } = $"ws://{Host}/rpc";
+    private const string Host = "127.0.0.1:8000";
+    protected string HttpUrl => $"http://{Host}";
+    protected string WsUrl => $"ws://{Host}/rpc";
 
     protected BaseRemoteBenchmark()
     {
@@ -17,31 +18,40 @@ public class BaseRemoteBenchmark : BaseBenchmark
         );
     }
 
-    protected Task CreatePostTable(string url, DatabaseInfo databaseInfo)
+    protected async Task CreatePostTable(string url, DatabaseInfo databaseInfo)
     {
-        var client = new SurrealDbClient(url, NamingPolicy);
-        return CreatePostTable(client, databaseInfo);
+        await using var client = await CreateClient(url, databaseInfo);
+        await CreatePostTable(client, databaseInfo);
     }
 
-    protected Task CreateEcommerceTables(string url, DatabaseInfo databaseInfo)
+    protected async Task CreateEcommerceTables(string url, DatabaseInfo databaseInfo)
     {
-        var client = new SurrealDbClient(url, NamingPolicy);
-        return CreateEcommerceTables(client, databaseInfo);
+        await using var client = await CreateClient(url, databaseInfo);
+        await CreateEcommerceTables(client, databaseInfo);
     }
 
-    protected Task<IEnumerable<GeneratedPost>> SeedData(
+    protected async Task<IEnumerable<GeneratedPost>> SeedData(
         string url,
         DatabaseInfo databaseInfo,
         IEnumerable<GeneratedPost> posts
     )
     {
-        var client = new SurrealDbClient(url, NamingPolicy);
-        return SeedData(client, databaseInfo, posts);
+        await using var client = await CreateClient(url, databaseInfo);
+        return await SeedData(client, databaseInfo, posts);
     }
 
-    protected Task<Post> GetFirstPost(string url, DatabaseInfo databaseInfo)
+    protected async Task<Post> GetFirstPost(string url, DatabaseInfo databaseInfo)
+    {
+        await using var client = await CreateClient(url, databaseInfo);
+        return await GetFirstPost(client, databaseInfo);
+    }
+
+    private async Task<SurrealDbClient> CreateClient(string url, DatabaseInfo databaseInfo)
     {
         var client = new SurrealDbClient(url, NamingPolicy);
-        return GetFirstPost(client, databaseInfo);
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await client.Use(databaseInfo.Namespace, databaseInfo.Database);
+
+        return client;
     }
 }

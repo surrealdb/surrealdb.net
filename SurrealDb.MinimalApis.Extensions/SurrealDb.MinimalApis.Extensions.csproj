@@ -2,8 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <!-- TODO : Get rid of <EnforceExtendedAnalyzerRules> warning -->
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
 
     <IsPackable>true</IsPackable>
     <PackageId>SurrealDb.MinimalApis.Extensions</PackageId>

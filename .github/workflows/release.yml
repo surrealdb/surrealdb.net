@@ -164,10 +164,10 @@ jobs:
           pattern: embedded-*
           merge-multiple: true
 
-      - name: Setup dotnet 8.0
+      - name: Setup dotnet 9.0
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "9.0.x"
 
       - name: Create Package
         run: dotnet pack /p:GenerateCompatibilitySuppressionFile=true --configuration Release --output ${{ env.NuGetDirectory }}
@@ -184,10 +184,10 @@ jobs:
     runs-on: ubuntu-latest-4-cores
 
     steps:
-      - name: Setup dotnet 8.0
+      - name: Setup dotnet 9.0
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "9.0.x"
 
       - uses: actions/download-artifact@v4
         with:
@@ -205,10 +205,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup dotnet 8.0
+      - name: Setup dotnet 9.0
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "9.0.x"
 
       - uses: actions/download-artifact@v4
         with:

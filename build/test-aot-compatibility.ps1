@@ -18,7 +18,7 @@ foreach ($line in $($publishOutput -split "`r`n"))
 pushd $rootDirectory/SurrealDb.Examples.TodoApi.Aot/bin/Release/$targetNetFramework/linux-x64
 
 Write-Host "Executing test App..."
-./SurrealDb.Examples.TodoApi.Aot 5000
+./native/SurrealDb.Examples.TodoApi.Aot 5000
 Write-Host "Finished executing test App"
 
 if ($LastExitCode -ne 0)

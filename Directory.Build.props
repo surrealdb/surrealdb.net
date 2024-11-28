@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-	  <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">false</IsAotCompatible>
+	  <IsAotCompatible>false</IsAotCompatible>
     
     <IsPackable>false</IsPackable>
     <Version>0.6.0</Version>

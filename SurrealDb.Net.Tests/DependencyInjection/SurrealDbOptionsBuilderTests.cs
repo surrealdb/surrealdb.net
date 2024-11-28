@@ -276,4 +276,53 @@ public class SurrealDbOptionsBuilderTests
         options.Logging.Should().NotBeNull();
         options.Logging.SensitiveDataLoggingEnabled.Should().Be(expected);
     }
+
+    [Theory]
+    [InlineData("", null)]
+    [InlineData("  ", null)]
+    [InlineData("with=equals", "with=equals")]
+    [InlineData("&!ayhiof-]}k(w'2.&)o,qh4", "&!ayhiof-]}k(w'2.&)o,qh4")]
+    [InlineData("'surrounded'", "surrounded")]
+    [InlineData("\"surrounded'2\"", "surrounded'2")]
+    [InlineData("{surrounded'3}", "surrounded'3")]
+    [InlineData("'with;semi-colon'", "with;semi-colon")]
+    [InlineData("\"cn$r;'d^u_s4dm%^zr!frxqf\"", "cn$r;'d^u_s4dm%^zr!frxqf")]
+    [InlineData("{cn$r;'d^u_s4dm%^zr!frxqf}", "cn$r;'d^u_s4dm%^zr!frxqf")]
+    public void ShouldParseConnectionStringWithSpecialCharsInPassword(
+        string passwordInput,
+        string? expectedPassword
+    )
+    {
+        string connectionString =
+            $"Endpoint=http://127.0.0.1:8000;NS=test;DB=test;User=root;Password={passwordInput}";
+
+        var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
+
+        options.Endpoint.Should().Be("http://127.0.0.1:8000");
+        options.Namespace.Should().Be("test");
+        options.Database.Should().Be("test");
+        options.Username.Should().Be("root");
+        options.Password.Should().Be(expectedPassword);
+        options.Token.Should().BeNull();
+        options.NamingPolicy.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData("with;semi-colon")]
+    [InlineData("cn$r;'d^u_s4dm%^zr!frxqf")]
+    [InlineData("'cn$r;'d^u_s4dm%^zr!frxqf'")]
+    public void ShouldFailToParseConnectionStringWithSpecialCharsInPassword(string passwordInput)
+    {
+        string connectionString =
+            $"Endpoint=http://127.0.0.1:8000;NS=test;DB=test;User=root;Password={passwordInput}";
+
+        var act = () =>
+            new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
+
+        act.Should()
+            .Throw<ArgumentException>()
+            .WithMessage(
+                $"Invalid connection string: {connectionString} (Parameter 'connectionString')"
+            );
+    }
 }

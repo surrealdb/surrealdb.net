@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Benchmarks.Models;
 using SurrealDb.Net.Tests.Fixtures;
@@ -8,7 +7,7 @@ namespace SurrealDb.Net.Benchmarks.Remote;
 
 public class UpsertBench : BaseRemoteBenchmark
 {
-    private readonly SurrealDbClientGenerator[] _surrealDbClientGenerators =
+    private readonly SurrealDbClientGenerator?[] _surrealDbClientGenerators =
         new SurrealDbClientGenerator[4];
     private readonly PostFaker _postFaker = new();
     private readonly IEnumerable<GeneratedPost> _generatedPosts = new PostFaker().Generate(1000);
@@ -102,6 +101,6 @@ public class UpsertBench : BaseRemoteBenchmark
     [Benchmark]
     public Task<Post> Ws()
     {
-        return BenchmarkRuns.Upsert(_surrealdbWsBinaryClient!, _postFaker, _posts[3]);
+        return BenchmarkRuns.Upsert(_surrealdbWsBinaryClient!, _postFaker, _posts[2]);
     }
 }

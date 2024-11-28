@@ -19,7 +19,11 @@ internal class WsResponseTaskHandler
         SurrealWsTaskCompletionSource
     > _normalResponseTasks = new();
 
+#if NET9_0_OR_GREATER
+    private readonly Lock _queueSourcesLock = new();
+#else
     private readonly object _queueSourcesLock = new();
+#endif
     private readonly Dictionary<
         SurrealDbWsRequestPriority,
         TaskCompletionSource<bool>

@@ -903,7 +903,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         if (isSingleHttpClient)
         {
-            if (TrySetSingleHttpClientConfiguration(ns, db, _config.Auth))
+            if (_version is not null && TrySetSingleHttpClientConfiguration(ns, db, _config.Auth))
             {
                 ApplyHttpClientConfiguration(client, overridedAuth, useConfiguration);
                 return client;
@@ -914,7 +914,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
                 db,
                 overridedAuth ?? _config.Auth
             );
-            bool shouldClone = _singleHttpClientConfiguration != desiredClientConfiguration;
+            bool shouldClone =
+                _version is null || _singleHttpClientConfiguration != desiredClientConfiguration;
 
             if (shouldClone)
             {
@@ -1007,7 +1008,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return _singleHttpClient.Value;
     }
 
+#if NET9_0_OR_GREATER
+    private readonly Lock _singleHttpClientConfigurationLock = new();
+#else
     private readonly object _singleHttpClientConfigurationLock = new();
+#endif
 
     private bool TrySetSingleHttpClientConfiguration(string? ns, string? db, IAuth auth)
     {
@@ -1087,7 +1092,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
     {
 #if NET6_0_OR_GREATER
-        using var stream = await response
+        await using var stream = await response
             .Content.ReadAsStreamAsync(cancellationToken)
             .ConfigureAwait(false);
 #else

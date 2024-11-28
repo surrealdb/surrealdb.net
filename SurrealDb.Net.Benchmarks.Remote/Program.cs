@@ -1,4 +1,4 @@
-﻿using BenchmarkDotNet.Columns;
+using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Environments;
@@ -10,7 +10,7 @@ using SurrealDb.Net.Benchmarks.Helpers;
 
 const bool enableNativeAotBenchmarks = false;
 
-var config = DefaultConfig.Instance.AddJob(Job.Default.WithRuntime(CoreRuntime.Core80));
+var config = DefaultConfig.Instance.AddJob(Job.Default.WithRuntime(CoreRuntime.Core90));
 
 if (enableNativeAotBenchmarks)
 {
