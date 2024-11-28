@@ -1,6 +1,8 @@
 ﻿using Dahomey.Cbor;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SurrealDb.Net;
+using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals.Helpers;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -138,6 +140,8 @@ public static class ServiceCollectionExtensions
         {
             RegisterHttpClient(services, configuration.Endpoint);
         }
+
+        services.AddSingleton<IValidateOptions<SurrealDbOptions>, SurrealDbOptionsValidation>();
 
         var classClientType = typeof(SurrealDbClient);
         var interfaceClientType = typeof(ISurrealDbClient);

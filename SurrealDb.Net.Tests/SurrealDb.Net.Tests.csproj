@@ -5,6 +5,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <FrameworkReference Include="Microsoft.AspNetCore.App" />
+      
+        <PackageReference Include="FlakyTest.XUnit" />
         <PackageReference Include="FluentAssertions" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" />
         <PackageReference Include="Semver" />
