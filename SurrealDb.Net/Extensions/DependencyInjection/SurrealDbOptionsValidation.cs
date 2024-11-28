@@ -36,13 +36,6 @@ internal sealed class SurrealDbOptionsValidation : IValidateOptions<SurrealDbOpt
             return ValidateOptionsResult.Fail("Naming policy should be valid.");
         }
 
-        if (!string.IsNullOrWhiteSpace(options.Password) && options.Password.Length < 8)
-        {
-            _logger.LogWarning(
-                "Your password must be at least 8 characters long. Please enforce a stronger password for better security."
-            );
-        }
-
         return ValidateOptionsResult.Success;
     }
 
