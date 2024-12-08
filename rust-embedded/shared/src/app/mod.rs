@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use surrealdb::dbs::Session;
+use surrealdb::kvs::export::Config;
 use surrealdb::kvs::Datastore;
 use surrealdb::rpc::format::cbor;
 use surrealdb::rpc::method::Method;
@@ -28,6 +29,14 @@ impl SurrealEmbeddedEngines {
             return Err("Engine not found".into());
         };
         engine.execute(method, params).await
+    }
+
+    pub async fn export(&self, id: i32, params: Vec<u8>) -> Result<Vec<u8>, Error> {
+        let read_lock = self.0.read().await;
+        let Some(engine) = read_lock.get(&id) else {
+            return Err("Engine not found".into());
+        };
+        engine.export(params).await
     }
 
     pub async fn insert(
@@ -80,6 +89,31 @@ impl SurrealEmbeddedEngine {
         };
 
         Ok(SurrealEmbeddedEngine(RwLock::new(inner)))
+    }
+
+    pub async fn export(&self, config: Vec<u8>) -> Result<Vec<u8>, Error> {
+        let (tx, rx) = channel::unbounded();
+
+        let inner = self.0.read().await;
+
+        let in_config = cbor::parse_value(config.to_vec()).map_err(|e| e.to_string())?;
+        let config = Config::try_from(&in_config).map_err(|e| e.to_string())?;
+
+        inner
+            .kvs
+            .export_with_config(&inner.session, tx, config)
+            .await?
+            .await?;
+
+        let mut buffer = Vec::new();
+        while let Ok(item) = rx.try_recv() {
+            buffer.push(item);
+        }
+
+		let result = String::from_utf8(buffer.concat()).map_err(|e| e.to_string())?;
+        
+        let out = cbor::res(result).map_err(|e| e.to_string())?;
+        Ok(out)
     }
 }
 
