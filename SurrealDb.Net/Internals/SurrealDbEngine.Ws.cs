@@ -30,12 +30,13 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 {
     private static readonly ConcurrentDictionary<string, SurrealDbWsEngine> _wsEngines = new();
 
-    private SemVersion? _version;
+    internal SemVersion? _version { get; private set; }
+    internal Action<CborOptions>? _configureCborOptions { get; }
+    internal SurrealDbWsEngineConfig _config { get; }
+
     private readonly string _id;
     private readonly SurrealDbOptions _parameters;
-    private readonly Action<CborOptions>? _configureCborOptions;
     private readonly ISurrealDbLoggerFactory? _surrealDbLoggerFactory;
-    private readonly SurrealDbWsEngineConfig _config;
     private readonly WebsocketClient _wsClient;
     private readonly IDisposable _receiverSubscription;
     private readonly ConcurrentDictionary<
@@ -1282,7 +1283,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     /// Avoid multiple connections in a multi-threading context
     /// and prevent usage before initialized
     /// </summary>
-    private async Task InternalConnectAsync(
+    internal async Task InternalConnectAsync(
         bool requireInitialized,
         CancellationToken cancellationToken
     )

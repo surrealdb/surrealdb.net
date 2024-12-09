@@ -141,6 +141,21 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Export the database as a SurrealQL script.
+    /// </summary>
+    /// <param name="options">Export configuration options.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>SurrealQL script as <see cref="String"/></returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="NotImplementedException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<string> Export(
+        ExportOptions? options = default,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
     /// Checks the status of the database server and storage engine.
     /// </summary>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>

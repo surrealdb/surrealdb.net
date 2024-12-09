@@ -3011,6 +3011,7 @@ dependencies = [
 name = "shared"
 version = "2.0.4"
 dependencies = [
+ "async-channel",
  "cargo-lock",
  "ciborium",
  "csbindgen",

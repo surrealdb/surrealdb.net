@@ -28,15 +28,16 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 {
     private const string RPC_ENDPOINT = "/rpc";
 
-    private SemVersion? _version;
+    internal SemVersion? _version { get; private set; }
+    internal Action<CborOptions>? _configureCborOptions { get; }
+    internal SurrealDbHttpEngineConfig _config { get; }
+
     private readonly Uri _uri;
     private readonly SurrealDbOptions _parameters;
     private readonly IHttpClientFactory? _httpClientFactory;
-    private readonly Action<CborOptions>? _configureCborOptions;
     private readonly ISurrealDbLoggerFactory? _surrealDbLoggerFactory;
     private readonly Lazy<HttpClient> _singleHttpClient = new(() => new HttpClient(), true);
     private HttpClientConfiguration? _singleHttpClientConfiguration;
-    private readonly SurrealDbHttpEngineConfig _config;
 
     public SurrealDbHttpEngine(
         SurrealDbOptions parameters,
@@ -187,7 +188,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<bool> Health(CancellationToken cancellationToken)
     {
         using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(new SurrealDbHttpRequest { Method = "ping" });
+        using var body = CreateBodyContent(
+            _parameters.NamingPolicy,
+            _configureCborOptions,
+            new SurrealDbHttpRequest { Method = "ping" }
+        );
 
         try
         {
@@ -873,12 +878,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return version.Replace(VERSION_PREFIX, string.Empty);
     }
 
-    private CborOptions GetCborSerializerOptions()
+    private static CborOptions GetCborSerializerOptions(
+        string? namingPolicy,
+        Action<CborOptions>? configureCborOptions
+    )
     {
-        return SurrealDbCborOptions.GetCborSerializerOptions(
-            _parameters.NamingPolicy,
-            _configureCborOptions
-        );
+        return SurrealDbCborOptions.GetCborSerializerOptions(namingPolicy, configureCborOptions);
     }
 
     private HttpClientWrapper CreateHttpClientWrapper(
@@ -941,9 +946,24 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         client.BaseAddress = _uri;
 
+        var ns = useConfiguration is not null ? useConfiguration.Ns : _config.Ns;
+        var db = useConfiguration is not null ? useConfiguration.Db : _config.Db;
+        SetNsDbHttpClientHeaders(client, _version, ns, db);
+
+        var auth = overridedAuth ?? _config.Auth;
+        SetAuthHttpClientHeaders(client, auth);
+    }
+
+    internal static void SetNsDbHttpClientHeaders(
+        HttpClient client,
+        SemVersion? version,
+        string? ns,
+        string? db
+    )
+    {
         client.DefaultRequestHeaders.Remove(HttpConstants.ACCEPT_HEADER_NAME);
 
-        if (_version?.Major > 1)
+        if (version?.Major > 1)
         {
             client.DefaultRequestHeaders.Remove(HttpConstants.NS_HEADER_NAME_V2);
             client.DefaultRequestHeaders.Remove(HttpConstants.DB_HEADER_NAME_V2);
@@ -956,10 +976,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         client.DefaultRequestHeaders.Add(HttpConstants.ACCEPT_HEADER_NAME, ["application/cbor"]);
 
-        var ns = useConfiguration is not null ? useConfiguration.Ns : _config.Ns;
-        var db = useConfiguration is not null ? useConfiguration.Db : _config.Db;
-
-        if (_version?.Major > 1)
+        if (version?.Major > 1)
         {
             client.DefaultRequestHeaders.Add(HttpConstants.NS_HEADER_NAME_V2, ns);
             client.DefaultRequestHeaders.Add(HttpConstants.DB_HEADER_NAME_V2, db);
@@ -969,9 +986,10 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             client.DefaultRequestHeaders.Add(HttpConstants.NS_HEADER_NAME, ns);
             client.DefaultRequestHeaders.Add(HttpConstants.DB_HEADER_NAME, db);
         }
+    }
 
-        var auth = overridedAuth ?? _config.Auth;
-
+    internal static void SetAuthHttpClientHeaders(HttpClient client, IAuth? auth)
+    {
         switch (auth)
         {
             case BearerAuth bearerAuth:
@@ -1033,10 +1051,18 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return _singleHttpClient.IsValueCreated && client == _singleHttpClient.Value;
     }
 
-    private HttpContent CreateBodyContent<T>(T data)
+    internal static HttpContent CreateBodyContent<T>(
+        string? namingPolicy,
+        Action<CborOptions>? configureCborOptions,
+        T data
+    )
     {
         var writer = new ArrayBufferWriter<byte>();
-        CborSerializer.Serialize(data, writer, GetCborSerializerOptions());
+        CborSerializer.Serialize(
+            data,
+            writer,
+            GetCborSerializerOptions(namingPolicy, configureCborOptions)
+        );
         var payload = writer.WrittenSpan.ToArray();
 
         var content = new ByteArrayContent(payload);
@@ -1058,7 +1084,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         }
 
         using var wrapper = CreateHttpClientWrapper();
-        using var body = CreateBodyContent(request);
+        using var body = CreateBodyContent(
+            _parameters.NamingPolicy,
+            _configureCborOptions,
+            request
+        );
 
         using var response = await wrapper
             .Instance.PostAsync(RPC_ENDPOINT, body, cancellationToken)
@@ -1099,7 +1129,10 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 #endif
 
-        var cborSerializerOptions = GetCborSerializerOptions();
+        var cborSerializerOptions = GetCborSerializerOptions(
+            _parameters.NamingPolicy,
+            _configureCborOptions
+        );
 
         var result = await CborSerializer
             .DeserializeAsync<ISurrealDbHttpResponse>(

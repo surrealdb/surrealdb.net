@@ -37,6 +37,14 @@ namespace SurrealDb.Embedded.Internals
         /// <summary>
         ///  # Safety
         ///
+        ///  Executes the "export" method of a SurrealDB engine (given its id).
+        /// </summary>
+        [DllImport(__DllName, EntryPoint = "export", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern void export(int id, byte* bytes, int len, SuccessAction success, FailureAction failure);
+
+        /// <summary>
+        ///  # Safety
+        ///
         ///  This function is used to free Rust memory from a C# binding.
         /// </summary>
         [DllImport(__DllName, EntryPoint = "free_u8_buffer", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
