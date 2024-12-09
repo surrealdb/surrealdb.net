@@ -126,7 +126,8 @@ jobs:
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          toolchain: 1.81.0 # must match the version in the `rust-embedded/rust-toolchain` file
+          target: ${{ matrix.target }}
       
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
@@ -148,7 +149,6 @@ jobs:
         with:
           name: embedded-${{ matrix.target }}
           path: ${{ matrix.libpath }}
-
 
   create-package:
     needs: [embedded-builds]
