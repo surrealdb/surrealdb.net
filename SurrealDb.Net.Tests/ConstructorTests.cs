@@ -38,6 +38,19 @@ public class ConstructorTests
         func().AbsoluteUri.Should().Be("wss://cloud.surrealdb.com/rpc");
     }
 
+    [Theory]
+    [InlineData("ws://127.0.0.1:8000", "ws://127.0.0.1:8000/rpc")]
+    [InlineData("wss://cloud.SurrealDb.com", "wss://cloud.surrealdb.com/rpc")]
+    [InlineData("ws://127.0.0.1:8000/", "ws://127.0.0.1:8000/rpc")]
+    [InlineData("wss://cloud.SurrealDb.com/", "wss://cloud.surrealdb.com/rpc")]
+    public void ShouldAutomaticallyAddRpcSuffixForWsProtocols(string endpoint, string expected)
+    {
+        Func<Uri> func = () => new SurrealDbClient(endpoint).Uri;
+
+        func.Should().NotThrow();
+        func().AbsoluteUri.Should().Be(expected);
+    }
+
     [Fact]
     public void ShouldRequireDependencyInjectionForMemoryProtocol()
     {
