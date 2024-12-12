@@ -1,0 +1,23 @@
+﻿-- ------------------------------
+-- OPTION
+-- ------------------------------
+
+OPTION IMPORT;
+
+-- ------------------------------
+-- TABLE: post
+-- ------------------------------
+
+DEFINE TABLE post TYPE NORMAL SCHEMAFULL PERMISSIONS FOR select, create, update, delete WHERE $auth.id != NONE;
+
+DEFINE FIELD content ON post TYPE string PERMISSIONS FULL;
+DEFINE FIELD created_at ON post TYPE datetime DEFAULT time::now() PERMISSIONS FULL;
+DEFINE FIELD status ON post TYPE string DEFAULT 'DRAFT' ASSERT $value INSIDE ['DRAFT', 'PUBLISHED'] PERMISSIONS FULL;
+DEFINE FIELD title ON post TYPE string PERMISSIONS FULL;
+
+-- ------------------------------
+-- TABLE DATA: post
+-- ------------------------------
+
+INSERT [ { content: 'This is a new article created using the .NET SDK', created_at: d'DateTime_1', id: post:⟨dotnet-123456⟩, status: 'DRAFT', title: 'A new article' } ];
+

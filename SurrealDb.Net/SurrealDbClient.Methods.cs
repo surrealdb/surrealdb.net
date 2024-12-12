@@ -1,4 +1,9 @@
 ﻿using System.Collections.Immutable;
+using Dahomey.Cbor;
+using Semver;
+using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Internals;
+using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -72,6 +77,94 @@ public abstract partial class BaseSurrealDbClient
     public ValueTask DisposeAsync()
     {
         return _engine.DisposeAsync();
+    }
+
+    public async Task<string> Export(
+        ExportOptions? options = default,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (_engine is ISurrealDbProviderEngine providerEngine)
+        {
+            return await providerEngine.Export(options, cancellationToken).ConfigureAwait(false);
+        }
+
+        const string path = "/export";
+
+        var exportUri = Uri.Scheme switch
+        {
+            "http" or "https" => new Uri(Uri, path),
+            "ws" => new Uri(new Uri(Uri.AbsoluteUri.Replace("ws://", "http://")), path),
+            "wss" => new Uri(new Uri(Uri.AbsoluteUri.Replace("wss://", "https://")), path),
+            _ => throw new NotImplementedException(),
+        };
+
+        SemVersion? version;
+        string? ns;
+        string? db;
+        IAuth? auth;
+        Action<CborOptions>? configureCborOptions;
+
+        switch (_engine)
+        {
+            case SurrealDbHttpEngine httpEngine:
+                // 💡 Ensures underlying engine is started to retrieve some information
+                await httpEngine.Connect(cancellationToken).ConfigureAwait(false);
+
+                version = httpEngine._version;
+                ns = httpEngine._config.Ns;
+                db = httpEngine._config.Db;
+                auth = httpEngine._config.Auth;
+                configureCborOptions = httpEngine._configureCborOptions;
+                break;
+            case SurrealDbWsEngine wsEngine:
+                // 💡 Ensures underlying engine is started to retrieve some information
+                await wsEngine.InternalConnectAsync(true, cancellationToken).ConfigureAwait(false);
+
+                version = wsEngine._version;
+                ns = wsEngine._config.Ns;
+                db = wsEngine._config.Db;
+                auth = wsEngine._config.Auth;
+                configureCborOptions = wsEngine._configureCborOptions;
+                break;
+            default:
+                throw new SurrealDbException("No underlying engine is started.");
+        }
+
+        if (string.IsNullOrWhiteSpace(ns))
+        {
+            throw new SurrealDbException("Namespace should be provided to export data.");
+        }
+        if (string.IsNullOrWhiteSpace(db))
+        {
+            throw new SurrealDbException("Database should be provided to export data.");
+        }
+
+        using var httpContent = SurrealDbHttpEngine.CreateBodyContent(
+            null,
+            configureCborOptions,
+            options ?? new()
+        );
+
+        using var httpClient = new HttpClient();
+
+        SurrealDbHttpEngine.SetNsDbHttpClientHeaders(httpClient, version, ns, db);
+        SurrealDbHttpEngine.SetAuthHttpClientHeaders(httpClient, auth);
+
+        bool shouldUsePostRequest = version is { Major: >= 2, Minor: >= 1 };
+
+        var httpRequestTask = shouldUsePostRequest
+            ? httpClient.PostAsync(exportUri, httpContent, cancellationToken)
+            : httpClient.GetAsync(exportUri, cancellationToken);
+
+        using var response = await httpRequestTask.ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+
+#if NET6_0_OR_GREATER
+        return await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+#else
+        return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+#endif
     }
 
     public Task<bool> Health(CancellationToken cancellationToken = default)

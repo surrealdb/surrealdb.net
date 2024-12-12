@@ -67,3 +67,28 @@ pub unsafe extern "C" fn execute(
         }
     });
 }
+
+/// # Safety
+///
+/// Executes the "export" method of a SurrealDB engine (given its id).
+#[no_mangle]
+pub unsafe extern "C" fn export(
+    id: i32,
+    bytes: *const u8,
+    len: i32,
+    success: SuccessAction,
+    failure: FailureAction,
+) {
+    let params_bytes = convert_csharp_to_rust_bytes(bytes, len);
+
+    get_global_runtime().spawn(async move {
+        match ENGINES.export(id, params_bytes).await {
+            Ok(output) => {
+                send_success(output, success);
+            }
+            Err(error) => {
+                send_failure(error.as_str(), failure);
+            }
+        }
+    });
+}

@@ -186,6 +186,14 @@ public interface ISurrealDbProviderEngine : ISurrealDbEngine
         Action<CborOptions>? configureCborOptions,
         ISurrealDbLoggerFactory? surrealDbLoggerFactory
     );
+
+    /// <summary>
+    /// Export the database as a SurrealQL script.
+    /// </summary>
+    /// <param name="options">Export configuration options.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>SurrealQL script as <see cref="String"/></returns>
+    Task<string> Export(ExportOptions? options, CancellationToken cancellationToken);
 }
 
 public interface ISurrealDbInMemoryEngine : ISurrealDbProviderEngine { }

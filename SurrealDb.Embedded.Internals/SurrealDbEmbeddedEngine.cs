@@ -217,6 +217,111 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 #endif
     }
 
+    public async Task<string> Export(ExportOptions? options, CancellationToken cancellationToken)
+    {
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        cancellationToken.Register(timeoutCts.Cancel);
+
+        await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
+
+        try
+        {
+            await CborSerializer
+                .SerializeAsync(options ?? new(), stream, GetCborOptions(), timeoutCts.Token)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                throw new TimeoutException();
+            }
+
+            throw;
+        }
+
+        bool canGetBuffer = stream.TryGetBuffer(out var bytes);
+        if (!canGetBuffer)
+        {
+            throw new SurrealDbException("Failed to retrieve serialized buffer.");
+        }
+
+        var taskCompletionSource = new TaskCompletionSource<string>();
+        timeoutCts.Token.Register(() =>
+        {
+            taskCompletionSource.TrySetCanceled();
+        });
+
+        Action<ByteBuffer> success = (byteBuffer) =>
+        {
+            try
+            {
+                var result = CborSerializer.Deserialize<string>(
+                    byteBuffer.AsReadOnly(),
+                    GetCborOptions()
+                );
+                taskCompletionSource.SetResult(result!);
+            }
+            catch (Exception e)
+            {
+                taskCompletionSource.SetException(e);
+            }
+        };
+        Action<ByteBuffer> fail = (byteBuffer) =>
+        {
+            string error = CborSerializer.Deserialize<string>(
+                byteBuffer.AsReadOnly(),
+                GetCborOptions()
+            );
+            taskCompletionSource.SetException(new SurrealDbException(error));
+        };
+
+        var successHandle = GCHandle.Alloc(success);
+        var failureHandle = GCHandle.Alloc(fail);
+
+        unsafe
+        {
+            var successAction = new SuccessAction()
+            {
+                handle = new RustGCHandle()
+                {
+                    ptr = GCHandle.ToIntPtr(successHandle),
+                    drop_callback = &NativeBindings.DropGcHandle
+                },
+                callback = &NativeBindings.SuccessCallback,
+            };
+
+            var failureAction = new FailureAction()
+            {
+                handle = new RustGCHandle()
+                {
+                    ptr = GCHandle.ToIntPtr(failureHandle),
+                    drop_callback = &NativeBindings.DropGcHandle
+                },
+                callback = &NativeBindings.FailureCallback,
+            };
+
+            fixed (byte* payload = bytes.AsSpan())
+            {
+                NativeMethods.export(_id, payload, bytes.Count, successAction, failureAction);
+            }
+        }
+
+        try
+        {
+            return await taskCompletionSource.Task.ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                throw new TimeoutException();
+            }
+
+            throw;
+        }
+    }
+
     public async Task<bool> Health(CancellationToken cancellationToken)
     {
         try
