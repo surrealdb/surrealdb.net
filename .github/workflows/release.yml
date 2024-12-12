@@ -152,7 +152,7 @@ jobs:
 
   create-package:
     needs: [embedded-builds]
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-4cores
 
     steps:
       - name: Checkout repository
@@ -181,7 +181,7 @@ jobs:
 
   validate-package:
     needs: [create-package]
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-4cores
 
     steps:
       - name: Setup dotnet 9.0
