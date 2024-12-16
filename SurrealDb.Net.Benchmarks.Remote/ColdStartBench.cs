@@ -51,8 +51,7 @@ public class ColdStartBench : BaseRemoteBenchmark
 
         var client = new SurrealDbClient(
             options,
-            _serviceProvider!.GetRequiredService<IHttpClientFactory>(),
-            appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
+            _serviceProvider!.GetRequiredService<IHttpClientFactory>()
         );
         _clients.Add(client);
 
@@ -71,10 +70,7 @@ public class ColdStartBench : BaseRemoteBenchmark
             .WithNamingPolicy(NamingPolicy)
             .Build();
 
-        var client = new SurrealDbClient(
-            options,
-            appendJsonSerializerContexts: GetFuncJsonSerializerContexts()
-        );
+        var client = new SurrealDbClient(options);
         _clients.Add(client);
 
         await client.Connect();

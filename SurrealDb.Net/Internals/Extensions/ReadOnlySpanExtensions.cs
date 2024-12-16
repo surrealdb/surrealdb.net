@@ -8,4 +8,11 @@ internal static class ReadOnlySpanExtensions
         span.CopyTo(buffer);
         return new ReadOnlyMemory<byte>(buffer);
     }
+
+    public static ReadOnlyMemory<byte> ToMemoryNonRef(this ReadOnlySpan<byte> span)
+    {
+        var buffer = new byte[span.Length];
+        span.CopyTo(buffer);
+        return new ReadOnlyMemory<byte>(buffer);
+    }
 }

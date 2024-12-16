@@ -6,10 +6,10 @@ public class MergeAllTests
 {
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldMergeAllRecords(string connectionString)
     {
         IEnumerable<Post>? list = null;
@@ -30,13 +30,13 @@ public class MergeAllTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var merge = new PostMergeData { Content = "[Edit] Oops" };
 
             list = await client.Select<Post>("post");
 
-            results = await client.MergeAll<PostMergeData, Post>("post", merge);
+            results = await client.Merge<PostMergeData, Post>("post", merge);
         };
 
         await func.Should().NotThrowAsync();
@@ -57,10 +57,10 @@ public class MergeAllTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldMergeAllRecordsUsingDictionary(string connectionString)
     {
         IEnumerable<Post>? list = null;
@@ -81,14 +81,14 @@ public class MergeAllTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
-            var thing = new Thing("post", "first");
+            var recordId = new RecordIdOfString("post", "first");
             var data = new Dictionary<string, object> { { "content", "[Edit] Oops" } };
 
             list = await client.Select<Post>("post");
 
-            results = await client.MergeAll<Post>("post", data);
+            results = await client.Merge<Post>("post", data);
         };
 
         await func.Should().NotThrowAsync();

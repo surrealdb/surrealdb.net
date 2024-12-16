@@ -2,6 +2,8 @@
 using SurrealDb.Examples.TodoApi.Aot.Models;
 using SurrealDb.Net;
 
+// TODO : Handle AOT via CborSerializerContext
+
 HandleTimeoutFromArgs(args);
 
 var builder = WebApplication.CreateSlimBuilder(args);
@@ -15,10 +17,7 @@ services.ConfigureHttpJsonOptions(options =>
 });
 
 JsonSerializerContext[] jsonSerializerContexts = { AppJsonSerializerContext.Default };
-services.AddSurreal(
-    configuration.GetConnectionString("SurrealDB")!,
-    appendJsonSerializerContexts: () => jsonSerializerContexts
-);
+services.AddSurreal(configuration.GetConnectionString("SurrealDB")!);
 
 var app = builder.Build();
 
@@ -60,8 +59,7 @@ async Task InitializeDbAsync()
         SurrealDbOptions
             .Create()
             .FromConnectionString(configuration.GetConnectionString("SurrealDB")!)
-            .Build(),
-        appendJsonSerializerContexts: () => jsonSerializerContexts
+            .Build()
     );
 
     var tasks = sampleTodos.Select(async todo =>

@@ -8,6 +8,8 @@ public class TypesTests
 {
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportString(string connectionString)
@@ -26,7 +28,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("string");
 
@@ -99,6 +101,8 @@ public class TypesTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportLong(string connectionString)
@@ -117,7 +121,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("number");
 
@@ -158,6 +162,8 @@ public class TypesTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShoulSupportDecimal(string connectionString)
@@ -176,7 +182,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("decimal");
 
@@ -257,6 +263,8 @@ public class TypesTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportFloat(string connectionString)
@@ -275,7 +283,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("decimal");
 
@@ -356,6 +364,8 @@ public class TypesTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportDouble(string connectionString)
@@ -374,7 +384,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("decimal");
 
@@ -455,6 +465,8 @@ public class TypesTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportDuration(string connectionString)
@@ -473,7 +485,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("duration");
 
@@ -610,8 +622,11 @@ public class TypesTests
         }
     }
 
+#if NET7_0_OR_GREATER
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportTimeSpan(string connectionString)
@@ -630,7 +645,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("duration");
 
@@ -756,9 +771,12 @@ public class TypesTests
             complexRecord!.Value.TotalSeconds.Should().Be(5421.35);
         }
     }
+#endif
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportDateTime(string connectionString)
@@ -777,7 +795,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("datetime");
 
@@ -895,6 +913,8 @@ public class TypesTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportVector2(string connectionString)
@@ -913,7 +933,7 @@ public class TypesTests
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        await client.RawQuery(query);
+        (await client.RawQuery(query)).EnsureAllOks();
 
         await client.Delete("vector");
 
@@ -940,6 +960,8 @@ public class TypesTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSupportThing(string connectionString)
@@ -952,7 +974,7 @@ public class TypesTests
 
         await client.Create(
             "thing",
-            new ThingRecord { Name = "custom", Value = new Thing("person", "tobie") }
+            new ThingRecord { Name = "custom", Value = ("person", "tobie") }
         );
 
         var records = (await client.Select<ThingRecord>("thing")).ToList();
@@ -962,7 +984,7 @@ public class TypesTests
             customRecord.Should().NotBeNull();
             customRecord!.Value.Should().NotBeNull();
             customRecord!.Value!.Table.Should().Be("person");
-            customRecord!.Value!.Id.Should().Be("tobie");
+            customRecord!.Value!.DeserializeId<string>().Should().Be("tobie");
         }
     }
 }

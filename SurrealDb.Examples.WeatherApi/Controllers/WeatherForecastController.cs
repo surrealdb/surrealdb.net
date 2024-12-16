@@ -88,7 +88,7 @@ public class WeatherForecastController : ControllerBase
         CancellationToken cancellationToken
     )
     {
-        return _surrealDbClient.PatchAll(Table, patches, cancellationToken);
+        return _surrealDbClient.Patch(Table, patches, cancellationToken);
     }
 
     /// <summary>

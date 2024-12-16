@@ -18,7 +18,13 @@ internal class WsResponseTaskHandler
         string,
         SurrealWsTaskCompletionSource
     > _normalResponseTasks = new();
-    private readonly ConcurrentDictionary<
+
+#if NET9_0_OR_GREATER
+    private readonly Lock _queueSourcesLock = new();
+#else
+    private readonly object _queueSourcesLock = new();
+#endif
+    private readonly Dictionary<
         SurrealDbWsRequestPriority,
         TaskCompletionSource<bool>
     > _queueSources =
@@ -75,17 +81,20 @@ internal class WsResponseTaskHandler
 
         if (nextPriority != _currentPriority)
         {
-            if (nextPriority.HasValue)
+            lock (_queueSourcesLock)
             {
-                _queueSources.GetValueOrDefault(nextPriority.Value)?.TrySetResult(true);
-            }
-            if (_currentPriority.HasValue)
-            {
-                //_queueSources.TryRemove(_currentPriority.Value, out _);
-                //_queueSources.TryAdd(_currentPriority.Value, new());
-                _queueSources.TryRemove(_currentPriority.Value, out var src);
-                if (src is not null)
-                    _queueSources.TryAdd(_currentPriority.Value, src);
+                if (nextPriority.HasValue)
+                {
+                    _queueSources.GetValueOrDefault(nextPriority.Value)?.TrySetResult(true);
+                }
+                if (_currentPriority.HasValue)
+                {
+                    var previousTaskCompletionSource = _queueSources.GetValueOrDefault(
+                        _currentPriority.Value
+                    );
+                    previousTaskCompletionSource?.TrySetResult(true);
+                    _queueSources[_currentPriority.Value] = new();
+                }
             }
 
             _currentPriority = nextPriority;
@@ -131,15 +140,22 @@ internal class WsResponseTaskHandler
         return result;
     }
 
-    public async Task WaitUntilAsync(
-        SurrealDbWsRequestPriority priority,
-        CancellationToken cancellationToken
-    )
+    public async Task WaitUntilAsync(SurrealDbWsRequestPriority priority)
     {
-        var completionTokenSource = _queueSources.GetOrAdd(
-            priority,
-            _ => new TaskCompletionSource<bool>()
-        );
+        TaskCompletionSource<bool> completionTokenSource;
+
+        lock (_queueSourcesLock)
+        {
+            if (_queueSources.TryGetValue(priority, out var cts))
+            {
+                completionTokenSource = cts;
+            }
+            else
+            {
+                completionTokenSource = new();
+                _queueSources.Add(priority, completionTokenSource);
+            }
+        }
 
         await completionTokenSource.Task.ConfigureAwait(false);
     }

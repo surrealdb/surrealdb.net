@@ -16,11 +16,12 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().BeNull();
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().BeNull();
-        options.Serialization.Should().BeNull();
     }
 
     [Theory]
     [InlineData("mem://")]
+    [InlineData("rocksdb://db.data")]
+    [InlineData("surrealkv://db.data")]
     [InlineData("http://127.0.0.1:8000")]
     [InlineData("https://cloud.surrealdb.com")]
     [InlineData("ws://127.0.0.1:8000/rpc")]
@@ -36,7 +37,6 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().BeNull();
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().BeNull();
-        options.Serialization.Should().BeNull();
     }
 
     [Fact]
@@ -51,7 +51,6 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().BeNull();
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().BeNull();
-        options.Serialization.Should().BeNull();
     }
 
     [Fact]
@@ -66,7 +65,6 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().BeNull();
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().BeNull();
-        options.Serialization.Should().BeNull();
     }
 
     [Fact]
@@ -81,7 +79,6 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().BeNull();
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().BeNull();
-        options.Serialization.Should().BeNull();
     }
 
     [Fact]
@@ -96,7 +93,6 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().Be("password");
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().BeNull();
-        options.Serialization.Should().BeNull();
     }
 
     [Fact]
@@ -119,7 +115,6 @@ public class SurrealDbOptionsBuilderTests
                 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
             );
         options.NamingPolicy.Should().BeNull();
-        options.Serialization.Should().BeNull();
     }
 
     [Theory]
@@ -139,7 +134,6 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().BeNull();
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().Be(namingPolicy);
-        options.Serialization.Should().BeNull();
     }
 
     [Fact]
@@ -150,36 +144,11 @@ public class SurrealDbOptionsBuilderTests
         act.Should().Throw<ArgumentException>().WithParameterName("namingPolicy");
     }
 
-    [Theory]
-    [InlineData("JSON")]
-    [InlineData("CBOR")]
-    public void ShouldCreateWithSerialization(string serialization)
-    {
-        var options = new SurrealDbOptionsBuilder().WithSerialization(serialization).Build();
-
-        options.Endpoint.Should().BeNull();
-        options.Namespace.Should().BeNull();
-        options.Database.Should().BeNull();
-        options.Username.Should().BeNull();
-        options.Password.Should().BeNull();
-        options.Token.Should().BeNull();
-        options.NamingPolicy.Should().BeNull();
-        options.Serialization.Should().Be(serialization);
-    }
-
-    [Fact]
-    public void ShouldFailToCreateWithIncorrectSerialization()
-    {
-        Action act = () => new SurrealDbOptionsBuilder().WithSerialization("test").Build();
-
-        act.Should().Throw<ArgumentException>().WithParameterName("serialization");
-    }
-
     [Fact]
     public void ShouldCreateFromConnectionString()
     {
         string connectionString =
-            "Server=http://127.0.0.1:8000;Namespace=test;Database=test;Username=root;Password=root;NamingPolicy=CamelCase;Serialization=CBOR";
+            "Server=http://127.0.0.1:8000;Namespace=test;Database=test;Username=root;Password=root;NamingPolicy=CamelCase";
 
         var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
 
@@ -190,7 +159,6 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().Be("root");
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().Be("CamelCase");
-        options.Serialization.Should().Be("CBOR");
     }
 
     [Fact]
@@ -208,7 +176,23 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().Be("root");
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().BeNull();
-        options.Serialization.Should().BeNull();
+    }
+
+    [Fact]
+    public void ShouldCreateFromConnectionStringWithLeadingSemiColon()
+    {
+        string connectionString =
+            "Endpoint=http://127.0.0.1:8000;NS=test;DB=test;User=root;Pass=root;";
+
+        var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
+
+        options.Endpoint.Should().Be("http://127.0.0.1:8000");
+        options.Namespace.Should().Be("test");
+        options.Database.Should().Be("test");
+        options.Username.Should().Be("root");
+        options.Password.Should().Be("root");
+        options.Token.Should().BeNull();
+        options.NamingPolicy.Should().BeNull();
     }
 
     [Fact]
@@ -230,7 +214,6 @@ public class SurrealDbOptionsBuilderTests
                 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
             );
         options.NamingPolicy.Should().BeNull();
-        options.Serialization.Should().BeNull();
     }
 
     [Theory]
@@ -248,6 +231,8 @@ public class SurrealDbOptionsBuilderTests
 
     [Theory]
     [InlineData("mem://")]
+    [InlineData("rocksdb://db.data")]
+    [InlineData("surrealkv://db.data")]
     public void ShouldFailToCreateFromConnectionStringWithServerEndpoint(string server)
     {
         string connectionString = $"Server={server}";
@@ -263,6 +248,8 @@ public class SurrealDbOptionsBuilderTests
 
     [Theory]
     [InlineData("mem://")]
+    [InlineData("rocksdb://db.data")]
+    [InlineData("surrealkv://db.data")]
     public void ShouldCreateFromConnectionStringWithClientEndpoint(string client)
     {
         string connectionString = $"Client={client}";
@@ -287,5 +274,72 @@ public class SurrealDbOptionsBuilderTests
             .Throw<ArgumentException>()
             .WithParameterName("connectionString")
             .WithMessage($"Invalid client endpoint: {client} (Parameter 'connectionString')");
+    }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public void ShouldSetSensitiveDataLoggingEnabled(bool value, bool expected)
+    {
+        var options = new SurrealDbOptionsBuilder().EnableSensitiveDataLogging(value).Build();
+
+        options.Endpoint.Should().BeNull();
+        options.Namespace.Should().BeNull();
+        options.Database.Should().BeNull();
+        options.Username.Should().BeNull();
+        options.Password.Should().BeNull();
+        options.Token.Should().BeNull();
+        options.NamingPolicy.Should().BeNull();
+        options.Logging.Should().NotBeNull();
+        options.Logging.SensitiveDataLoggingEnabled.Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("", null)]
+    [InlineData("  ", null)]
+    [InlineData("with=equals", "with=equals")]
+    [InlineData("&!ayhiof-]}k(w'2.&)o,qh4", "&!ayhiof-]}k(w'2.&)o,qh4")]
+    [InlineData("'surrounded'", "surrounded")]
+    [InlineData("\"surrounded'2\"", "surrounded'2")]
+    [InlineData("{surrounded'3}", "surrounded'3")]
+    [InlineData("'with;semi-colon'", "with;semi-colon")]
+    [InlineData("\"cn$r;'d^u_s4dm%^zr!frxqf\"", "cn$r;'d^u_s4dm%^zr!frxqf")]
+    [InlineData("{cn$r;'d^u_s4dm%^zr!frxqf}", "cn$r;'d^u_s4dm%^zr!frxqf")]
+    public void ShouldParseConnectionStringWithSpecialCharsInPassword(
+        string passwordInput,
+        string? expectedPassword
+    )
+    {
+        string connectionString =
+            $"Endpoint=http://127.0.0.1:8000;NS=test;DB=test;User=root;Password={passwordInput}";
+
+        var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
+
+        options.Endpoint.Should().Be("http://127.0.0.1:8000");
+        options.Namespace.Should().Be("test");
+        options.Database.Should().Be("test");
+        options.Username.Should().Be("root");
+        options.Password.Should().Be(expectedPassword);
+        options.Token.Should().BeNull();
+        options.NamingPolicy.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData("with;semi-colon")]
+    [InlineData("cn$r;'d^u_s4dm%^zr!frxqf")]
+    [InlineData("'cn$r;'d^u_s4dm%^zr!frxqf'")]
+    public void ShouldFailToParseConnectionStringWithSpecialCharsInPassword(string passwordInput)
+    {
+        string connectionString =
+            $"Endpoint=http://127.0.0.1:8000;NS=test;DB=test;User=root;Password={passwordInput}";
+
+        var act = () =>
+            new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
+
+        act.Should()
+            .Throw<ArgumentException>()
+            .WithMessage(
+                $"Invalid connection string: {connectionString} (Parameter 'connectionString')"
+            );
     }
 }

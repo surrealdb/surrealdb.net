@@ -78,7 +78,7 @@ else
         _loading = false;
 
         _subscription = Client.ObserveTable<DisplayableColumn>(DisplayableColumn.Table)
-            .ScanRecords(_columns.ToDictionary(c => c.Id!.ToString()))
+            .ScanRecords(_columns.ToDictionary(c => c.Id!.DeserializeId<string>()))
             .Subscribe(async columnsAsDictionary =>
             {
                 await InvokeAsync(() =>
@@ -122,8 +122,8 @@ else
         var moveTask = new MoveTask
             {
                 Task = task.Id!,
-                From = Thing.From(ColumnRecord.Table, fromColumn.Id!.Id),
-                To = Thing.From(ColumnRecord.Table, toColumn.Id!.Id),
+                From = RecordId.From(ColumnRecord.Table, fromColumn.Id!.DeserializeId<string>()),
+                To = RecordId.From(ColumnRecord.Table, toColumn.Id!.DeserializeId<string>()),
                 NewIndex = newIndex
             };
         return Client.Create(MoveTask.Table, moveTask);
@@ -144,7 +144,7 @@ else
 
     private Task CreateTaskAsync(DisplayableColumn column, AddTaskForm formData)
     {
-        var columnId = Thing.From(ColumnRecord.Table, column.Id!.Id);
+        var columnId = RecordId.From(ColumnRecord.Table, column.Id!.DeserializeId<string>());
 
         var @event = new CreateTask
             {

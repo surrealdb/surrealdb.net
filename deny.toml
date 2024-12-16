@@ -61,16 +61,7 @@ notice = "warn"
 # Threshold for security vulnerabilities: None, Low, Medium, High, Critical.
 severity-threshold = "None"
 # A list of security advisory identifiers to ignore.
-ignore = [
-	# Will be resolved once "surrealdb-jsonwebtoken", a temporary fork
-	# of "jsonwebtoken", is replaced by the upstream version which no
-	# longer uses the affected "rsa" crate.
-	"RUSTSEC-2023-0071",
-	# TODO(Odonno)
-	# Will be resolved when migrating to SurrealDB v2.0.0.
-	# By updating "object_store" crate version
-	"RUSTSEC-2024-0358",
-]
+ignore = []
 
 # --------------------------------------------------
 # LICENSES
@@ -92,8 +83,10 @@ allow = [
 	"CC0-1.0",
 	"MPL-2.0",
 	"Apache-2.0",
+	"BSD-2-Clause",
 	"BSD-3-Clause",
 	"Unlicense",
+	"Unicode-3.0",
 ]
 # The confidence threshold for detecting a license from license text.
 confidence-threshold = 0.95

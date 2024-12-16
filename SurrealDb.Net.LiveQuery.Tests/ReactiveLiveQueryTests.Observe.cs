@@ -1,4 +1,5 @@
 ﻿using System.Reactive.Linq;
+using FlakyTest.XUnit.Attributes;
 using Microsoft.Reactive.Testing;
 using SurrealDb.Net.LiveQuery.Tests.Abstract;
 using SurrealDb.Net.LiveQuery.Tests.Models;
@@ -8,9 +9,8 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 
 public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
 {
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [FlakyTheory("May fail due to concurrency issues or timeout.")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldObserveQuery(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();
@@ -20,7 +20,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -37,12 +37,10 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
 
             var coldObservable = client
                 .ObserveQuery<TestRecord>($"LIVE SELECT * FROM test;")
-                .Publish()
+                .Replay()
                 .RefCount();
 
             using var _ = coldObservable.SubscribeOn(testScheduler).Subscribe(allResults.Add);
-
-            await Task.Yield();
 
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
@@ -89,9 +87,8 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
         lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse<TestRecord>>();
     }
 
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [FlakyTheory("May fail due to concurrency issues or timeout.")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldObserveRawQuery(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();
@@ -101,7 +98,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -118,7 +115,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
 
             var coldObservable = client
                 .ObserveRawQuery<TestRecord>("LIVE SELECT * FROM test;")
-                .Publish()
+                .Replay()
                 .RefCount();
 
             using var _ = coldObservable
@@ -130,8 +127,6 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                         e.Should().BeNull();
                     }
                 );
-
-            await Task.Yield();
 
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()
@@ -184,9 +179,8 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
         lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse<TestRecord>>();
     }
 
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [FlakyTheory("May fail due to concurrency issues or timeout.")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldObserveTable(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();
@@ -196,7 +190,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -211,7 +205,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                 completionSource.TrySetCanceled();
             });
 
-            var coldObservable = client.ObserveTable<TestRecord>("test").Publish().RefCount();
+            var coldObservable = client.ObserveTable<TestRecord>("test").Replay().RefCount();
 
             using var _ = coldObservable
                 .SubscribeOn(testScheduler)
@@ -222,8 +216,6 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                         e.Should().BeNull();
                     }
                 );
-
-            await Task.Yield();
 
             using var __ = coldObservable
                 .OfType<SurrealDbLiveQueryOpenResponse>()

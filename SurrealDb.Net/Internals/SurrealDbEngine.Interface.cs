@@ -1,5 +1,6 @@
 ﻿using Dahomey.Cbor;
-using SurrealDb.Net.Internals.Models;
+using Microsoft.Extensions.DependencyInjection;
+using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Internals.ObjectPool;
 using SurrealDb.Net.Models;
@@ -10,7 +11,7 @@ using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.Internals;
 
-public interface ISurrealDbEngine : IDisposable, IAsyncResettable
+public interface ISurrealDbEngine : IDisposable, IAsyncResettable, IAsyncDisposable
 {
 #if DEBUG
     string Id { get; }
@@ -29,7 +30,7 @@ public interface ISurrealDbEngine : IDisposable, IAsyncResettable
     )
         where TOutput : IRecord;
     Task Delete(string table, CancellationToken cancellationToken);
-    Task<bool> Delete(Thing thing, CancellationToken cancellationToken);
+    Task<bool> Delete(RecordId recordId, CancellationToken cancellationToken);
     Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken);
     Task<bool> Health(CancellationToken cancellationToken);
     Task<T> Info<T>(CancellationToken cancellationToken);
@@ -39,6 +40,10 @@ public interface ISurrealDbEngine : IDisposable, IAsyncResettable
         CancellationToken cancellationToken
     )
         where T : IRecord;
+    Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken)
+        where T : RelationRecord;
+    Task<T> InsertRelation<T>(string table, T data, CancellationToken cancellationToken)
+        where T : RelationRecord;
     Task Invalidate(CancellationToken cancellationToken);
     Task Kill(
         Guid queryUuid,
@@ -59,7 +64,7 @@ public interface ISurrealDbEngine : IDisposable, IAsyncResettable
     Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken)
         where TMerge : IRecord;
     Task<T> Merge<T>(
-        Thing thing,
+        RecordId recordId,
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     );
@@ -68,18 +73,22 @@ public interface ISurrealDbEngine : IDisposable, IAsyncResettable
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     );
-    Task<IEnumerable<TOutput>> MergeAll<TMerge, TOutput>(
+    Task<IEnumerable<TOutput>> Merge<TMerge, TOutput>(
         string table,
         TMerge data,
         CancellationToken cancellationToken
     )
         where TMerge : class;
-    Task<IEnumerable<T>> MergeAll<T>(
+    Task<IEnumerable<T>> Merge<T>(
         string table,
         Dictionary<string, object> data,
         CancellationToken cancellationToken
     );
-    Task<T> Patch<T>(Thing thing, JsonPatchDocument<T> patches, CancellationToken cancellationToken)
+    Task<T> Patch<T>(
+        RecordId recordId,
+        JsonPatchDocument<T> patches,
+        CancellationToken cancellationToken
+    )
         where T : class;
     Task<T> Patch<T>(
         StringRecordId recordId,
@@ -87,7 +96,7 @@ public interface ISurrealDbEngine : IDisposable, IAsyncResettable
         CancellationToken cancellationToken
     )
         where T : class;
-    Task<IEnumerable<T>> PatchAll<T>(
+    Task<IEnumerable<T>> Patch<T>(
         string table,
         JsonPatchDocument<T> patches,
         CancellationToken cancellationToken
@@ -100,23 +109,33 @@ public interface ISurrealDbEngine : IDisposable, IAsyncResettable
     );
     Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
         string table,
-        IEnumerable<Thing> ins,
-        IEnumerable<Thing> outs,
+        IEnumerable<RecordId> ins,
+        IEnumerable<RecordId> outs,
         TData? data,
         CancellationToken cancellationToken
     )
         where TOutput : class;
     Task<TOutput> Relate<TOutput, TData>(
-        Thing thing,
-        Thing @in,
-        Thing @out,
+        RecordId recordId,
+        RecordId @in,
+        RecordId @out,
         TData? data,
         CancellationToken cancellationToken
     )
         where TOutput : class;
+    Task<T> Run<T>(
+        string name,
+        string? version,
+        object[]? args,
+        CancellationToken cancellationToken
+    );
     Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken);
-    Task<T?> Select<T>(Thing thing, CancellationToken cancellationToken);
+    Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken);
     Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken);
+    Task<IEnumerable<TOutput>> Select<TStart, TEnd, TOutput>(
+        RecordIdRange<TStart, TEnd> recordIdRange,
+        CancellationToken cancellationToken
+    );
     Task Set(string key, object value, CancellationToken cancellationToken);
     Task SignIn(RootAuth root, CancellationToken cancellationToken);
     Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken);
@@ -127,18 +146,34 @@ public interface ISurrealDbEngine : IDisposable, IAsyncResettable
         where T : ScopeAuth;
     SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id);
     Task Unset(string key, CancellationToken cancellationToken);
-    Task<IEnumerable<T>> Update<T>(
-        string table,
-        IEnumerable<T> data,
+    Task<T> Update<T>(T data, CancellationToken cancellationToken)
+        where T : IRecord;
+    Task<TOutput> Update<TData, TOutput>(
+        StringRecordId recordId,
+        TData data,
         CancellationToken cancellationToken
     )
-        where T : IRecord;
-    Task<IEnumerable<T>> UpdateAll<T>(string table, T data, CancellationToken cancellationToken)
+        where TOutput : IRecord;
+    Task<IEnumerable<T>> Update<T>(string table, T data, CancellationToken cancellationToken)
         where T : class;
+    Task<TOutput> Update<TData, TOutput>(
+        RecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : IRecord;
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : IRecord;
     Task<TOutput> Upsert<TData, TOutput>(
         StringRecordId recordId,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : IRecord;
+    Task<IEnumerable<T>> Upsert<T>(string table, T data, CancellationToken cancellationToken)
+        where T : class;
+    Task<TOutput> Upsert<TData, TOutput>(
+        RecordId recordId,
         TData data,
         CancellationToken cancellationToken
     )
@@ -152,7 +187,23 @@ public interface ISurrealDbProviderEngine : ISurrealDbEngine
     /// <summary>
     /// Initializes engine dynamically, due to DependencyInjection interop.
     /// </summary>
-    void Initialize(SurrealDbClientParams parameters, Action<CborOptions>? configureCborOptions);
+    void Initialize(
+        SurrealDbOptions configuration,
+        Action<CborOptions>? configureCborOptions,
+        ISurrealDbLoggerFactory? surrealDbLoggerFactory
+    );
+
+    /// <summary>
+    /// Export the database as a SurrealQL script.
+    /// </summary>
+    /// <param name="options">Export configuration options.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>SurrealQL script as <see cref="String"/></returns>
+    Task<string> Export(ExportOptions? options, CancellationToken cancellationToken);
 }
 
 public interface ISurrealDbInMemoryEngine : ISurrealDbProviderEngine { }
+
+public interface ISurrealDbRocksDbEngine : ISurrealDbProviderEngine { }
+
+public interface ISurrealDbKvEngine : ISurrealDbProviderEngine { }

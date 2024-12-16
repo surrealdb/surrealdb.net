@@ -25,6 +25,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configurat
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
+		global.json = global.json
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Net.LiveQuery.Tests", "SurrealDb.Net.LiveQuery.Tests\SurrealDb.Net.LiveQuery.Tests.csproj", "{8A61723E-3341-4F38-9D93-13777E8D5566}"
@@ -59,7 +61,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Net.Benchmarks.Em
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SurrealDb.Net.Benchmarks.Remote", "SurrealDb.Net.Benchmarks.Remote\SurrealDb.Net.Benchmarks.Remote.csproj", "{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dahomey.Cbor", "..\Dahomey.Cbor\src\Dahomey.Cbor\Dahomey.Cbor.csproj", "{FF0177EE-8912-4122-826C-506D37AEB530}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.Embedded.RocksDb", "SurrealDb.Embedded.RocksDb\SurrealDb.Embedded.RocksDb.csproj", "{94D34588-23C7-40CA-8ADB-6057603DA031}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.Embedded.SurrealKv", "SurrealDb.Embedded.SurrealKv\SurrealDb.Embedded.SurrealKv.csproj", "{E7048C18-3B7E-4B00-8550-3FBDF10910E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.Embedded.Internals", "SurrealDb.Embedded.Internals\SurrealDb.Embedded.Internals.csproj", "{8ED80F32-D22A-4267-9BDE-865223C99020}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -139,10 +145,18 @@ Global
 		{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FF0177EE-8912-4122-826C-506D37AEB530}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FF0177EE-8912-4122-826C-506D37AEB530}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FF0177EE-8912-4122-826C-506D37AEB530}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FF0177EE-8912-4122-826C-506D37AEB530}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94D34588-23C7-40CA-8ADB-6057603DA031}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94D34588-23C7-40CA-8ADB-6057603DA031}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94D34588-23C7-40CA-8ADB-6057603DA031}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94D34588-23C7-40CA-8ADB-6057603DA031}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7048C18-3B7E-4B00-8550-3FBDF10910E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7048C18-3B7E-4B00-8550-3FBDF10910E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7048C18-3B7E-4B00-8550-3FBDF10910E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7048C18-3B7E-4B00-8550-3FBDF10910E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8ED80F32-D22A-4267-9BDE-865223C99020}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8ED80F32-D22A-4267-9BDE-865223C99020}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8ED80F32-D22A-4267-9BDE-865223C99020}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8ED80F32-D22A-4267-9BDE-865223C99020}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -166,7 +180,9 @@ Global
 		{DF431D96-ED87-4A2B-959E-D345E337F110} = {ED80259F-C52A-4936-9345-E8E3ABE19FBF}
 		{ABB406DB-023C-4B7C-891F-0B75454D0205} = {2AA621E5-D78A-4710-9C77-48B305A67928}
 		{9B9B9E0F-4AEF-4629-95FE-F627B13A19F2} = {2AA621E5-D78A-4710-9C77-48B305A67928}
-		{FF0177EE-8912-4122-826C-506D37AEB530} = {C96942BD-CC4A-48C1-BC4D-54FB6EC5C168}
+		{94D34588-23C7-40CA-8ADB-6057603DA031} = {ED80259F-C52A-4936-9345-E8E3ABE19FBF}
+		{E7048C18-3B7E-4B00-8550-3FBDF10910E0} = {ED80259F-C52A-4936-9345-E8E3ABE19FBF}
+		{8ED80F32-D22A-4267-9BDE-865223C99020} = {ED80259F-C52A-4936-9345-E8E3ABE19FBF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {70C100EF-E131-45C0-9515-02FC4823BA20}

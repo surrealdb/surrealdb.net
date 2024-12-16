@@ -5,10 +5,8 @@ namespace SurrealDb.Net.Tests;
 public class SignUpTests
 {
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSignUpUsingScopeAuth(string connectionString)
     {
         Jwt? jwt = null;
@@ -28,17 +26,20 @@ public class SignUpTests
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
             string query = fileContent;
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
+#pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
             {
                 Namespace = dbInfo.Namespace,
                 Database = dbInfo.Database,
                 Scope = "user_scope",
+                Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
                 Password = "password123"
             };
+#pragma warning restore CS0618 // Type or member is obsolete
 
             jwt = await client.SignUp(authParams);
         };
@@ -46,11 +47,13 @@ public class SignUpTests
         await func.Should().NotThrowAsync();
 
         jwt.Should().NotBeNull();
-        jwt!.Token.Should().BeValidJwt();
+        jwt!.Value.Token.Should().BeValidJwt();
     }
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     public async Task SignUpIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -68,17 +71,20 @@ public class SignUpTests
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
             string query = fileContent;
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
+#pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
             {
                 Namespace = dbInfo.Namespace,
                 Database = dbInfo.Database,
                 Scope = "user_scope",
+                Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
                 Password = "password123"
             };
+#pragma warning restore CS0618 // Type or member is obsolete
 
             await client.SignUp(authParams);
         };

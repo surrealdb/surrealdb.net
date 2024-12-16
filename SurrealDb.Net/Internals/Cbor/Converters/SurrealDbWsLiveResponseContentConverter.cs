@@ -4,20 +4,23 @@ using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Ws;
+using SurrealDb.Net.Models;
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
 
-internal class SurrealDbWsLiveResponseContentConverter
+internal sealed class SurrealDbWsLiveResponseContentConverter
     : CborConverterBase<SurrealDbWsLiveResponseContent>
 {
     private readonly CborOptions _options;
     private readonly ICborConverter<Guid> _guidConverter;
+    private readonly ICborConverter<RecordId> _recordIdConverter;
 
     public SurrealDbWsLiveResponseContentConverter(CborOptions options)
     {
         _options = options;
 
         _guidConverter = options.Registry.ConverterRegistry.Lookup<Guid>();
+        _recordIdConverter = options.Registry.ConverterRegistry.Lookup<RecordId>();
     }
 
     public override SurrealDbWsLiveResponseContent Read(ref CborReader reader)
@@ -27,6 +30,7 @@ internal class SurrealDbWsLiveResponseContentConverter
         int remainingItemCount = reader.ReadSize();
 
         Guid? id = null;
+        RecordId? record = null;
         string? action = null;
         ReadOnlyMemory<byte>? result = null;
 
@@ -46,6 +50,12 @@ internal class SurrealDbWsLiveResponseContentConverter
                 continue;
             }
 
+            if (key.SequenceEqual("record"u8))
+            {
+                record = _recordIdConverter.Read(ref reader);
+                continue;
+            }
+
             if (key.SequenceEqual("result"u8))
             {
                 result = reader.ReadDataItemAsMemory();
@@ -59,7 +69,13 @@ internal class SurrealDbWsLiveResponseContentConverter
 
         if (result.HasValue && id.HasValue && action is not null)
         {
-            return new SurrealDbWsLiveResponseContent(id.Value, action!, result.Value, _options);
+            return new SurrealDbWsLiveResponseContent(
+                id.Value,
+                action!,
+                result.Value,
+                record,
+                _options
+            );
         }
 
         throw new CborException("Expected a valid response content");

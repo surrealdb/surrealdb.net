@@ -71,6 +71,7 @@ public static partial class ReactiveLinqExtensions
     > GetRecordsAccumulator<T>()
         where T : IRecord
     {
+        // TODO : This only works with RecordId of string. Find a way to make it work for any type of RecordId.
         return (acc, response) =>
         {
             if (
@@ -78,7 +79,7 @@ public static partial class ReactiveLinqExtensions
                 && createResponse.Result.Id is not null
             )
             {
-                acc[createResponse.Result.Id.ToString()] = createResponse.Result;
+                acc[createResponse.Result.Id.DeserializeId<string>()] = createResponse.Result;
                 return acc;
             }
 
@@ -87,7 +88,7 @@ public static partial class ReactiveLinqExtensions
                 && updateResponse.Result.Id is not null
             )
             {
-                acc[updateResponse.Result.Id.ToString()] = updateResponse.Result;
+                acc[updateResponse.Result.Id.DeserializeId<string>()] = updateResponse.Result;
                 return acc;
             }
 
@@ -96,7 +97,7 @@ public static partial class ReactiveLinqExtensions
                 && deleteResponse.Result.Id is not null
             )
             {
-                acc.Remove(deleteResponse.Result.Id.ToString());
+                acc.Remove(deleteResponse.Result.Id.DeserializeId<string>());
                 return acc;
             }
 

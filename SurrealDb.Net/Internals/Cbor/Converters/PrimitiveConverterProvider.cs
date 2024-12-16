@@ -33,9 +33,13 @@ internal class PrimitiveConverterProvider : CborConverterProviderBase
         {
             return new DurationConverter();
         }
-        if (type == typeof(Thing))
+        if (type == typeof(RecordIdOfString))
         {
-            return new ThingConverter();
+            return new RecordIdOfStringConverter();
+        }
+        if (type == typeof(RecordId))
+        {
+            return new RecordIdConverter(options);
         }
         if (type == typeof(None))
         {
@@ -56,6 +60,10 @@ internal class PrimitiveConverterProvider : CborConverterProviderBase
             return new TimeOnlyConverter();
         }
 #endif
+        if (type == typeof(Future))
+        {
+            return new FutureConverter();
+        }
 
         return null;
     }

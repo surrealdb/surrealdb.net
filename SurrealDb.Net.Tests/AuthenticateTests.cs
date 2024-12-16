@@ -5,10 +5,8 @@ namespace SurrealDb.Net.Tests;
 public class AuthenticateTests
 {
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldAuthenticate(string connectionString)
     {
         Jwt? jwt = null;
@@ -30,7 +28,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             {
@@ -41,22 +39,25 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
+#pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
             {
                 Namespace = dbInfo.Namespace,
                 Database = dbInfo.Database,
                 Scope = "user_scope",
+                Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
                 Password = "password123"
             };
+#pragma warning restore CS0618 // Type or member is obsolete
 
             jwt = await client.SignUp(authParams);
 
-            await client.Authenticate(jwt);
+            await client.Authenticate(jwt.Value);
 
             list = await client.Select<Post>("post");
         };
@@ -68,6 +69,8 @@ public class AuthenticateTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     public async Task InvalidateIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -86,7 +89,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             {
@@ -97,18 +100,21 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
+#pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
             {
                 Namespace = dbInfo.Namespace,
                 Database = dbInfo.Database,
                 Scope = "user_scope",
+                Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
                 Password = "password123"
             };
+#pragma warning restore CS0618 // Type or member is obsolete
 
             var jwt = await client.SignUp(authParams);
 
@@ -121,10 +127,8 @@ public class AuthenticateTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldFailWhenInvalidate(string connectionString)
     {
         Jwt? jwt = null;
@@ -146,7 +150,7 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
             {
@@ -157,18 +161,21 @@ public class AuthenticateTests
                 string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
                 string query = fileContent;
-                await client.RawQuery(query);
+                (await client.RawQuery(query)).EnsureAllOks();
             }
 
+#pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
             {
                 Namespace = dbInfo.Namespace,
                 Database = dbInfo.Database,
                 Scope = "user_scope",
+                Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
                 Password = "password123"
             };
+#pragma warning restore CS0618 // Type or member is obsolete
 
             jwt = await client.SignUp(authParams);
 

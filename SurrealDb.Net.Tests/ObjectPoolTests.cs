@@ -19,8 +19,7 @@ public class ObjectPoolTests
         Func<Task> func = async () =>
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator().Configure(
-                connectionString,
-                ServiceLifetime.Scoped
+                connectionString
             );
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
@@ -130,7 +129,7 @@ public class ObjectPoolTests
                 {
                     Namespace = dbInfo.Namespace,
                     Database = dbInfo.Database,
-                    Scope = "user_scope",
+                    Access = "user_scope",
                     Username = "johndoe",
                     Email = "john.doe@example.com",
                     Password = "password123"

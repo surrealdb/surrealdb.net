@@ -1,0 +1,90 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <IsPackable>true</IsPackable>
+    <PackageId>SurrealDb.Embedded.SurrealKv</PackageId>
+    <Description>File provider for the SurrealDB library for .NET, backed by SurrealKV</Description>
+    <PackageTags>SurrealDB Surreal Database File Provider SurrealKV</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\SurrealDb.Embedded.Internals\ByteBuffer.cs" Link="Internals\ByteBuffer.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\NativeBindings.cs" Link="Internals\NativeBindings.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\NativeMethods.cs" Link="Internals\NativeMethods.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\PlatformConfiguration.cs" Link="Internals\PlatformConfiguration.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\SurrealDbEmbeddedEngine.cs" Link="Internals\SurrealDbEmbeddedEngine.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\SurrealDbEmbeddedEngineConfig.cs" Link="Internals\SurrealDbEmbeddedEngineConfig.cs" />
+    <Compile Include="..\SurrealDb.Net\Internals\Constants\LoggingConstants.cs" Link="Internals\Constants\LoggingConstants.cs" />
+    <Compile Include="..\SurrealDb.Net\Internals\Extensions\FormattableStringExtensions.cs" Link="Internals\Extensions\FormattableStringExtensions.cs" />
+    <Compile Include="..\SurrealDb.Net\Internals\Extensions\StringBuilderExtensions.cs" Link="Internals\Extensions\StringBuilderExtensions.cs" />
+    <Compile Include="..\SurrealDb.Net\Internals\Extensions\StringExtensions.cs" Link="Internals\Extensions\StringExtensions.cs" />
+    <Compile Include="..\SurrealDb.Net\Internals\Extensions\SurrealDbLoggerExtensions.cs" Link="Internals\Extensions\SurrealDbLoggerExtensions.cs" />
+    <Compile Include="..\SurrealDb.Net\Internals\Stream\MemoryStreamProvider.cs" Link="Internals\Stream\MemoryStreamProvider.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="csbindgen">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SurrealDb.Net\SurrealDb.Net.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Internals\Extensions\" />
+    <Folder Include="Internals\Constants\" />
+    <Folder Include="Internals\Stream\" />
+  </ItemGroup>
+
+  <!-- Used to enable the consumption of the memory library during benchmarks (local or CI/CD) -->
+  <PropertyGroup Label="Constants" Condition="false">
+    <DefineConstants>BENCHMARK_MODE</DefineConstants>
+  </PropertyGroup>
+  
+  <!-- https://stackoverflow.com/a/48714896/7847252 -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <Content Include="../rust-embedded/target/debug/surreal_surrealkv.dll" TargetPath="surreal_surrealkv.dll" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
+    <Content Include="../rust-embedded/target/debug/surreal_surrealkv.pdb" TargetPath="surreal_surrealkv.pdb" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
+
+    <Content Include="../rust-embedded/target/debug/libsurreal_surrealkv.so" TargetPath="libsurreal_surrealkv.so" CopyToOutputDirectory="Always" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'" />
+
+    <Content Include="../rust-embedded/target/debug/libsurreal_surrealkv.dylib" TargetPath="libsurreal_surrealkv.dylib" CopyToOutputDirectory="Always" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))'" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="$(DefineConstants.Contains('BENCHMARK_MODE'))">
+    <Content Include="../rust-embedded/target/release/surreal_surrealkv.dll" TargetPath="surreal_surrealkv.dll" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
+    <Content Include="../rust-embedded/target/release/surreal_surrealkv.pdb" TargetPath="surreal_surrealkv.pdb" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
+
+    <Content Include="../rust-embedded/target/release/libsurreal_surrealkv.so" TargetPath="libsurreal_surrealkv.so" CopyToOutputDirectory="Always" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'" />
+
+    <Content Include="../rust-embedded/target/release/libsurreal_surrealkv.dylib" TargetPath="libsurreal_surrealkv.dylib" CopyToOutputDirectory="Always" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))'" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Release' And !$(DefineConstants.Contains('BENCHMARK_MODE'))">
+    <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_surrealkv.dll" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_surrealkv.dll')" Pack="true" PackagePath="runtimes/win-x64/native/" />
+    <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_surrealkv.pdb" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_surrealkv.pdb')" Pack="true" PackagePath="runtimes/win-x64/native/" />
+
+    <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_surrealkv.dll" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_surrealkv.dll')" Pack="true" PackagePath="runtimes/win-x86/native/" />
+    <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_surrealkv.pdb" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_surrealkv.pdb')" Pack="true" PackagePath="runtimes/win-x86/native/" />
+
+    <Content Include="../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal_surrealkv.so" Condition="Exists('../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal_surrealkv.so')" Pack="true" PackagePath="runtimes/linux-x64/native/" />
+    <Content Include="../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal_surrealkv.so" Condition="Exists('../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal_surrealkv.so')" Pack="true" PackagePath="runtimes/linux-x86/native/" />
+    <Content Include="../rust-embedded/target/arm-unknown-linux-gnueabihf/release/libsurreal_surrealkv.so" Condition="Exists('../rust-embedded/target/arm-unknown-linux-gnueabihf/release/libsurreal_surrealkv.so')" Pack="true" PackagePath="runtimes/linux-arm/native/" />
+    <Content Include="../rust-embedded/target/aarch64-unknown-linux-gnu/release/libsurreal_surrealkv.so" Condition="Exists('user../rust-embedded/target/aarch64-unknown-linux-gnu/release/libsurreal_surrealkv.so')" Pack="true" PackagePath="runtimes/linux-arm64/native/" />
+
+    <Content Include="../rust-embedded/target/x86_64-apple-darwin/release/libsurreal_surrealkv.dylib" Condition="Exists('../rust-embedded/target/x86_64-apple-darwin/release/libsurreal_surrealkv.dylib')" Pack="true" PackagePath="runtimes/osx-x64/native/" />
+    <Content Include="../rust-embedded/target/x86_64-apple-darwin/release/libsurreal_surrealkv.dylib" Condition="Exists('../rust-embedded/target/x86_64-apple-darwin/release/libsurreal_surrealkv.dylib')" Pack="true" PackagePath="runtimes/osx-x86/native/" />
+    <Content Include="../rust-embedded/target/aarch64-apple-darwin/release/libsurreal_surrealkv.dylib" Condition="Exists('../rust-embedded/target/aarch64-apple-darwin/release/libsurreal_surrealkv.dylib')" Pack="true" PackagePath="runtimes/osx-arm64/native/" />
+
+    <Content Include="../rust-embedded/target/aarch64-apple-ios/release/libsurreal_surrealkv.dylib" Condition="Exists('../rust-embedded/target/aarch64-apple-ios/release/libsurreal_surrealkv.dylib')" Pack="true" PackagePath="runtimes/ios-arm64/native/" />
+
+    <Content Include="../rust-embedded/target/aarch64-linux-android/release/libsurreal_surrealkv.so" Condition="Exists('../rust-embedded/target/aarch64-linux-android/release/libsurreal_surrealkv.so')" Pack="true" PackagePath="runtimes/android-arm64/native/" />
+  </ItemGroup>
+
+</Project>

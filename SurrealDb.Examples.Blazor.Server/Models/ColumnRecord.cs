@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+﻿using Dahomey.Cbor.Attributes;
 using SurrealDb.Net.Models;
 
 namespace SurrealDb.Examples.Blazor.Server.Models;
@@ -9,8 +9,8 @@ public class ColumnRecord : Record
 
     public string Name { get; set; } = string.Empty;
     public int Order { get; set; }
-    public IEnumerable<Thing> Tasks { get; set; } = Array.Empty<Thing>();
+    public IEnumerable<RecordId> Tasks { get; set; } = Array.Empty<RecordId>();
 
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    [CborIgnoreIfDefault]
     public DateTime CreatedAt { get; set; }
 }

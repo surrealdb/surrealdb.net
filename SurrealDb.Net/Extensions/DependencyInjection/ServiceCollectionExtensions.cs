@@ -1,9 +1,11 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using Dahomey.Cbor;
+﻿using Dahomey.Cbor;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
+using Microsoft.Extensions.Options;
 using SurrealDb.Net;
+using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Models;
 using SurrealDb.Net.Internals.ObjectPool;
@@ -23,15 +25,6 @@ public static class ServiceCollectionExtensions
     /// <param name="services">Service collection.</param>
     /// <param name="connectionString">Connection string to a SurrealDB instance.</param>
     /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
-    /// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
-    /// <param name="prependJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and prepend to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
-    /// <param name="appendJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
     /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <returns>Service collection</returns>
     /// <exception cref="ArgumentException"></exception>
@@ -41,9 +34,6 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         string connectionString,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
         Action<CborOptions>? configureCborOptions = null
     )
     {
@@ -51,9 +41,6 @@ public static class ServiceCollectionExtensions
             services,
             connectionString,
             lifetime,
-            configureJsonSerializerOptions,
-            prependJsonSerializerContexts,
-            appendJsonSerializerContexts,
             configureCborOptions
         );
     }
@@ -65,15 +52,6 @@ public static class ServiceCollectionExtensions
     /// <param name="services">Service collection.</param>
     /// <param name="connectionString">Connection string to a SurrealDB instance.</param>
     /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
-    /// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
-    /// <param name="prependJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and prepend to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
-    /// <param name="appendJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
     /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <returns>Service collection</returns>
     /// <exception cref="ArgumentException"></exception>
@@ -83,9 +61,6 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         string connectionString,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
         Action<CborOptions>? configureCborOptions = null
     )
         where T : ISurrealDbClient
@@ -95,15 +70,7 @@ public static class ServiceCollectionExtensions
             .FromConnectionString(connectionString)
             .Build();
 
-        return AddSurreal<T>(
-            services,
-            configuration,
-            lifetime,
-            configureJsonSerializerOptions,
-            prependJsonSerializerContexts,
-            appendJsonSerializerContexts,
-            configureCborOptions
-        );
+        return AddSurreal<T>(services, configuration, lifetime, configureCborOptions);
     }
 
     /// <summary>
@@ -132,15 +99,6 @@ public static class ServiceCollectionExtensions
     /// <param name="services">Service collection.</param>
     /// <param name="configuration">Configuration options.</param>
     /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
-    /// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
-    /// <param name="prependJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and prepend to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
-    /// <param name="appendJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
     /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <returns>Service collection</returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
@@ -149,9 +107,6 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         SurrealDbOptions configuration,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
         Action<CborOptions>? configureCborOptions = null
     )
     {
@@ -159,9 +114,6 @@ public static class ServiceCollectionExtensions
             services,
             configuration,
             lifetime,
-            configureJsonSerializerOptions,
-            prependJsonSerializerContexts,
-            appendJsonSerializerContexts,
             configureCborOptions
         );
     }
@@ -173,15 +125,6 @@ public static class ServiceCollectionExtensions
     /// <param name="services">Service collection.</param>
     /// <param name="configuration">Configuration options.</param>
     /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
-    /// <param name="configureJsonSerializerOptions">An optional action to configure <see cref="JsonSerializerOptions"/>.</param>
-    /// <param name="prependJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and prepend to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
-    /// <param name="appendJsonSerializerContexts">
-    /// An option function to retrieve the <see cref="JsonSerializerContext"/> to use and append to the current list of contexts,
-    /// in AoT mode.
-    /// </param>
     /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <returns>Service collection</returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
@@ -190,9 +133,6 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         SurrealDbOptions configuration,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
         Action<CborOptions>? configureCborOptions = null
     )
         where T : ISurrealDbClient
@@ -200,7 +140,13 @@ public static class ServiceCollectionExtensions
         if (configuration.Endpoint is null)
             throw new ArgumentNullException(nameof(configuration), "The endpoint is required.");
 
-        RegisterHttpClient(services, configuration.Endpoint);
+        bool shouldRegisterHttpClient = new Uri(configuration.Endpoint).Scheme is "http" or "https";
+        if (shouldRegisterHttpClient)
+        {
+            RegisterHttpClient(services, configuration.Endpoint);
+        }
+
+        services.AddSingleton<IValidateOptions<SurrealDbOptions>, SurrealDbOptionsValidation>();
 
         var classClientType = typeof(SurrealDbClient);
         var interfaceClientType = typeof(ISurrealDbClient);
@@ -214,30 +160,167 @@ public static class ServiceCollectionExtensions
                 services,
                 configuration,
                 lifetime,
-                configureJsonSerializerOptions,
-                prependJsonSerializerContexts,
-                appendJsonSerializerContexts,
                 configureCborOptions
             );
             RegisterSurrealDbClient<SurrealDbClient>(
                 services,
                 configuration,
                 lifetime,
-                configureJsonSerializerOptions,
-                prependJsonSerializerContexts,
-                appendJsonSerializerContexts,
                 configureCborOptions
             );
         }
         else
         {
-            RegisterSurrealDbClient<T>(
+            RegisterSurrealDbClient<T>(services, configuration, lifetime, configureCborOptions);
+        }
+
+        return new SurrealDbBuilder(services);
+    }
+
+    /// <summary>
+    /// Registers keyed SurrealDB services from a ConnectionString.
+    /// </summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
+    /// <param name="connectionString">Connection string to a SurrealDB instance.</param>
+    /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
+    /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
+    /// <returns>Service collection</returns>
+    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
+    public static SurrealDbBuilder AddKeyedSurreal(
+        this IServiceCollection services,
+        object? serviceKey,
+        string connectionString,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
+        Action<CborOptions>? configureCborOptions = null
+    )
+    {
+        var configuration = SurrealDbOptions
+            .Create()
+            .FromConnectionString(connectionString)
+            .Build();
+
+        return AddKeyedSurreal<ISurrealDbClient>(
+            services,
+            serviceKey,
+            configuration,
+            lifetime,
+            configureCborOptions
+        );
+    }
+
+    /// <summary>
+    /// Registers keyed SurrealDB services with the specified configuration.
+    /// </summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
+    /// <param name="configureOptions">A delegate that is used to configure a <see cref="SurrealDbOptionsBuilder"/>.</param>
+    /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
+    /// <returns>Service collection</returns>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
+    public static SurrealDbBuilder AddKeyedSurreal(
+        this IServiceCollection services,
+        object? serviceKey,
+        Action<SurrealDbOptionsBuilder> configureOptions,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton
+    )
+    {
+        var options = SurrealDbOptions.Create();
+        configureOptions(options);
+        return AddKeyedSurreal<ISurrealDbClient>(services, serviceKey, options.Build(), lifetime);
+    }
+
+    /// <summary>
+    /// Registers keyed SurrealDB services with the specified configuration.
+    /// </summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
+    /// <param name="configuration">Configuration options.</param>
+    /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
+    /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
+    /// <returns>Service collection</returns>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
+    public static SurrealDbBuilder AddKeyedSurreal(
+        this IServiceCollection services,
+        object? serviceKey,
+        SurrealDbOptions configuration,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
+        Action<CborOptions>? configureCborOptions = null
+    )
+    {
+        return AddKeyedSurreal<ISurrealDbClient>(
+            services,
+            serviceKey,
+            configuration,
+            lifetime,
+            configureCborOptions
+        );
+    }
+
+    /// <summary>
+    /// Registers keyed SurrealDB services with the specified configuration.
+    /// </summary>
+    /// <typeparam name="T">Type of <see cref="ISurrealDbClient"/> to register.</typeparam>
+    /// <param name="services">Service collection.</param>
+    /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
+    /// <param name="configuration">Configuration options.</param>
+    /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
+    /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
+    /// <returns>Service collection</returns>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
+    public static SurrealDbBuilder AddKeyedSurreal<T>(
+        this IServiceCollection services,
+        object? serviceKey,
+        SurrealDbOptions configuration,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
+        Action<CborOptions>? configureCborOptions = null
+    )
+        where T : ISurrealDbClient
+    {
+        if (configuration.Endpoint is null)
+            throw new ArgumentNullException(nameof(configuration), "The endpoint is required.");
+
+        bool shouldRegisterHttpClient = new Uri(configuration.Endpoint).Scheme is "http" or "https";
+        if (shouldRegisterHttpClient)
+        {
+            RegisterHttpClient(services, configuration.Endpoint);
+        }
+
+        var classClientType = typeof(SurrealDbClient);
+        var interfaceClientType = typeof(ISurrealDbClient);
+        var type = typeof(T);
+
+        bool isBaseType = type == classClientType || type == interfaceClientType;
+
+        if (isBaseType)
+        {
+            RegisterKeyedSurrealDbClient<ISurrealDbClient>(
                 services,
+                serviceKey,
                 configuration,
                 lifetime,
-                configureJsonSerializerOptions,
-                prependJsonSerializerContexts,
-                appendJsonSerializerContexts,
+                configureCborOptions
+            );
+            RegisterKeyedSurrealDbClient<SurrealDbClient>(
+                services,
+                serviceKey,
+                configuration,
+                lifetime,
+                configureCborOptions
+            );
+        }
+        else
+        {
+            RegisterKeyedSurrealDbClient<T>(
+                services,
+                serviceKey,
+                configuration,
+                lifetime,
                 configureCborOptions
             );
         }
@@ -263,14 +346,9 @@ public static class ServiceCollectionExtensions
         IServiceCollection services,
         SurrealDbOptions configuration,
         ServiceLifetime lifetime,
-        Action<JsonSerializerOptions>? configureJsonSerializerOptions = null,
-        Func<JsonSerializerContext[]>? prependJsonSerializerContexts = null,
-        Func<JsonSerializerContext[]>? appendJsonSerializerContexts = null,
         Action<CborOptions>? configureCborOptions = null
     )
     {
-        var parameters = new SurrealDbClientParams(configuration);
-
         switch (lifetime)
         {
             case ServiceLifetime.Singleton:
@@ -278,14 +356,27 @@ public static class ServiceCollectionExtensions
                     typeof(T),
                     serviceProvider =>
                     {
+                        var pool = serviceProvider.GetRequiredService<SurrealDbClientPool>();
+                        var container = pool.Get();
+
+                        var poolTask = new Func<Task>(() => pool.ReturnAsync(container));
+
+                        if (container.ClientEngine is not null)
+                        {
+                            return new SurrealDbClient(
+                                configuration,
+                                container.ClientEngine,
+                                poolTask
+                            );
+                        }
+
                         return new SurrealDbClient(
-                            parameters,
+                            configuration,
                             serviceProvider,
-                            serviceProvider.GetRequiredService<IHttpClientFactory>(),
-                            configureJsonSerializerOptions,
-                            prependJsonSerializerContexts,
-                            appendJsonSerializerContexts,
-                            configureCborOptions
+                            serviceProvider.GetService<IHttpClientFactory>(),
+                            configureCborOptions,
+                            poolTask,
+                            serviceProvider.GetService<ILoggerFactory>()
                         );
                     }
                 );
@@ -309,22 +400,21 @@ public static class ServiceCollectionExtensions
                         if (container.ClientEngine is not null)
                         {
                             return new SurrealDbClient(
-                                parameters,
+                                configuration,
                                 container.ClientEngine,
                                 poolTask
                             );
                         }
 
                         var client = new SurrealDbClient(
-                            parameters,
+                            configuration,
                             serviceProvider,
-                            serviceProvider.GetRequiredService<IHttpClientFactory>(),
-                            configureJsonSerializerOptions,
-                            prependJsonSerializerContexts,
-                            appendJsonSerializerContexts,
+                            serviceProvider.GetService<IHttpClientFactory>(),
                             configureCborOptions,
-                            poolTask
+                            poolTask,
+                            serviceProvider.GetService<ILoggerFactory>()
                         );
+
                         container.ClientEngine = client.Engine;
 
                         return client;
@@ -350,21 +440,131 @@ public static class ServiceCollectionExtensions
                         if (container.ClientEngine is not null)
                         {
                             return new SurrealDbClient(
-                                parameters,
+                                configuration,
+                                container.ClientEngine,
+                                poolTask
+                            );
+                        }
+
+                        return new SurrealDbClient(
+                            configuration,
+                            serviceProvider,
+                            serviceProvider.GetService<IHttpClientFactory>(),
+                            configureCborOptions,
+                            poolTask,
+                            serviceProvider.GetService<ILoggerFactory>()
+                        );
+                    }
+                );
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(
+                    nameof(lifetime),
+                    lifetime,
+                    "Invalid service lifetime."
+                );
+        }
+    }
+
+    private static void RegisterKeyedSurrealDbClient<T>(
+        IServiceCollection services,
+        object? serviceKey,
+        SurrealDbOptions configuration,
+        ServiceLifetime lifetime,
+        Action<CborOptions>? configureCborOptions = null
+    )
+    {
+        switch (lifetime)
+        {
+            case ServiceLifetime.Singleton:
+                services.AddKeyedSingleton(
+                    typeof(T),
+                    serviceKey,
+                    (serviceProvider, _) =>
+                    {
+                        var pool = serviceProvider.GetRequiredService<SurrealDbClientPool>();
+                        var container = pool.Get();
+
+                        var poolTask = new Func<Task>(() => pool.ReturnAsync(container));
+
+                        if (container.ClientEngine is not null)
+                        {
+                            return new SurrealDbClient(
+                                configuration,
+                                container.ClientEngine,
+                                poolTask
+                            );
+                        }
+
+                        return new SurrealDbClient(
+                            configuration,
+                            serviceProvider,
+                            serviceProvider.GetRequiredService<IHttpClientFactory>(),
+                            configureCborOptions,
+                            poolTask,
+                            serviceProvider.GetService<ILoggerFactory>()
+                        );
+                    }
+                );
+                break;
+            case ServiceLifetime.Scoped:
+                services.AddKeyedScoped(
+                    typeof(T),
+                    serviceKey,
+                    (serviceProvider, _) =>
+                    {
+                        var pool = serviceProvider.GetRequiredService<SurrealDbClientPool>();
+                        var container = pool.Get();
+
+                        var poolTask = new Func<Task>(() => pool.ReturnAsync(container));
+
+                        if (container.ClientEngine is not null)
+                        {
+                            return new SurrealDbClient(
+                                configuration,
+                                container.ClientEngine,
+                                poolTask
+                            );
+                        }
+
+                        return new SurrealDbClient(
+                            configuration,
+                            serviceProvider,
+                            serviceProvider.GetRequiredService<IHttpClientFactory>(),
+                            configureCborOptions,
+                            poolTask,
+                            serviceProvider.GetService<ILoggerFactory>()
+                        );
+                    }
+                );
+                break;
+            case ServiceLifetime.Transient:
+                services.AddKeyedTransient(
+                    typeof(T),
+                    serviceKey,
+                    (serviceProvider, _) =>
+                    {
+                        var pool = serviceProvider.GetRequiredService<SurrealDbClientPool>();
+                        var container = pool.Get();
+
+                        var poolTask = new Func<Task>(() => pool.ReturnAsync(container));
+
+                        if (container.ClientEngine is not null)
+                        {
+                            return new SurrealDbClient(
+                                configuration,
                                 container.ClientEngine,
                                 poolTask
                             );
                         }
 
                         var client = new SurrealDbClient(
-                            parameters,
+                            configuration,
                             serviceProvider,
                             serviceProvider.GetRequiredService<IHttpClientFactory>(),
-                            configureJsonSerializerOptions,
-                            prependJsonSerializerContexts,
-                            appendJsonSerializerContexts,
                             configureCborOptions,
-                            poolTask
+                            poolTask,
+                            serviceProvider.GetService<ILoggerFactory>()
                         );
                         container.ClientEngine = client.Engine;
 

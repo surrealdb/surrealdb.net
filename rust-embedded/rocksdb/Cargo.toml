@@ -1,0 +1,14 @@
+[package]
+name = "surreal_rocksdb"
+publish = false
+version = "2.0.4"
+edition = "2021"
+rust-version = "1.80.1"
+license-file = "../../LICENSE"
+resolver = "2"
+
+[dependencies]
+shared = { path = "../shared", features = ["rocksdb"] }
+
+[lib]
+crate-type = ["cdylib"]

@@ -6,10 +6,10 @@ public class UpdateAllTests
 {
     [Theory]
     [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldUpdateAllRecords(string connectionString)
     {
         IEnumerable<Post>? list = null;
@@ -32,7 +32,7 @@ public class UpdateAllTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var postUpdate = new Post
             {
@@ -44,7 +44,7 @@ public class UpdateAllTests
 
             list = await client.Select<Post>("post");
 
-            results = await client.UpdateAll("post", postUpdate);
+            results = await client.Update("post", postUpdate);
         };
 
         await func.Should().NotThrowAsync();

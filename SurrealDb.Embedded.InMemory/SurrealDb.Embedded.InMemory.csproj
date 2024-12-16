@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <IsPackable>true</IsPackable>
@@ -11,14 +11,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\SurrealDb.Net\Internals\Constants\SerializationConstants.cs" Link="Internals\Constants\SerializationConstants.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\ByteBuffer.cs" Link="Internals\ByteBuffer.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\NativeBindings.cs" Link="Internals\NativeBindings.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\NativeMethods.cs" Link="Internals\NativeMethods.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\PlatformConfiguration.cs" Link="Internals\PlatformConfiguration.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\SurrealDbEmbeddedEngine.cs" Link="Internals\SurrealDbEmbeddedEngine.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\SurrealDbEmbeddedEngineConfig.cs" Link="Internals\SurrealDbEmbeddedEngineConfig.cs" />
+    <Compile Include="..\SurrealDb.Net\Internals\Constants\LoggingConstants.cs" Link="Internals\Constants\LoggingConstants.cs" />
     <Compile Include="..\SurrealDb.Net\Internals\Extensions\FormattableStringExtensions.cs" Link="Internals\Extensions\FormattableStringExtensions.cs" />
+    <Compile Include="..\SurrealDb.Net\Internals\Extensions\StringBuilderExtensions.cs" Link="Internals\Extensions\StringBuilderExtensions.cs" />
     <Compile Include="..\SurrealDb.Net\Internals\Extensions\StringExtensions.cs" Link="Internals\Extensions\StringExtensions.cs" />
+    <Compile Include="..\SurrealDb.Net\Internals\Extensions\SurrealDbLoggerExtensions.cs" Link="Internals\Extensions\SurrealDbLoggerExtensions.cs" />
     <Compile Include="..\SurrealDb.Net\Internals\Stream\MemoryStreamProvider.cs" Link="Internals\Stream\MemoryStreamProvider.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="csbindgen" Version="1.9.1">
+    <PackageReference Include="csbindgen">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -55,7 +63,7 @@
 
     <Content Include="../rust-embedded/target/release/libsurreal_memory.so" TargetPath="libsurreal_memory.so" CopyToOutputDirectory="Always" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'" />
 
-    <Content Include="../rust-embedded/target/release/libsurreal_memory.dylib" TargetPath="libsurreal_memory.dylib" CopyToOutputDirectory="Always"   Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))'" />
+    <Content Include="../rust-embedded/target/release/libsurreal_memory.dylib" TargetPath="libsurreal_memory.dylib" CopyToOutputDirectory="Always" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))'" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Release' And !$(DefineConstants.Contains('BENCHMARK_MODE'))">

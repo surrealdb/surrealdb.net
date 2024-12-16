@@ -7,7 +7,6 @@ using SurrealDb.Net.Internals.Cbor.Converters.Spatial;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Http;
 using SurrealDb.Net.Internals.Ws;
-using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Internals.Cbor;
@@ -33,6 +32,16 @@ public static class SurrealDbCborOptions
 
         options.Registry.ConverterRegistry.RegisterConverterProvider(
             new PrimitiveConverterProvider()
+        );
+        options.Registry.ConverterRegistry.RegisterConverterProvider(
+            new RecordIdOfConverterProvider()
+        );
+        options.Registry.ConverterRegistry.RegisterConverterProvider(
+            new RangeBoundConverterProvider()
+        );
+        options.Registry.ConverterRegistry.RegisterConverterProvider(new RangeConverterProvider());
+        options.Registry.ConverterRegistry.RegisterConverterProvider(
+            new RecordIdRangeConverterProvider()
         );
         options.Registry.ConverterRegistry.RegisterConverterProvider(new VectorConverterProvider());
         options.Registry.ConverterRegistry.RegisterConverterProvider(

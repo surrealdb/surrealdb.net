@@ -57,10 +57,10 @@ This library supports connecting to SurrealDB over the remote HTTP and WebSocket
 You can easily create a new SurrealDB client. All you have to do is define the `endpoint` to the SurrealDB instance.
 
 ```csharp
-var clientHttp = new SurrealDbClient("http://127.0.0.1:8000");
-var clientHttps = new SurrealDbClient("https://127.0.0.1:8000");
-var clientWs = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
-var clientWss = new SurrealDbClient("wss://127.0.0.1:8000/rpc");
+using var clientHttp = new SurrealDbClient("http://127.0.0.1:8000");
+using var clientHttps = new SurrealDbClient("https://127.0.0.1:8000");
+using var clientWs = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
+using var clientWss = new SurrealDbClient("wss://127.0.0.1:8000/rpc");
 
 // Now you can call other methods including Signin & Use
 ```
@@ -73,13 +73,13 @@ You can use Dependency Injection with the `services.AddSurreal()` function.
 
 ```csharp
 var options = SurrealDbOptions
-	.Create()
-	.WithEndpoint("http://127.0.0.1:8000")
-	.WithNamespace("test")
-	.WithDatabase("test")
-	.WithUsername("root")
-	.WithPassword("root")
-	.Build();
+  .Create()
+  .WithEndpoint("http://127.0.0.1:8000")
+  .WithNamespace("test")
+  .WithDatabase("test")
+  .WithUsername("root")
+  .WithPassword("root")
+  .Build();
 
 services.AddSurreal(options);
 ```
@@ -89,14 +89,14 @@ Then you will be able to use the `ISurrealDbClient` interface or `SurrealDbClien
 ```csharp
 public class MyClass
 {
-	private readonly ISurrealDbClient _client;
+  private readonly ISurrealDbClient _client;
 
-	public MyClass(ISurrealDbClient client)
-	{
-		_client = client;
-	}
+  public MyClass(ISurrealDbClient client)
+  {
+    _client = client;
+  }
 
-	// ...
+  // ...
 }
 ```
 
@@ -159,91 +159,107 @@ Here you will have 3 instances:
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
 {
-	private const string Table = "weatherForecast";
+  private const string Table = "weatherForecast";
 
-	private readonly ISurrealDbClient _surrealDbClient;
+  private readonly ISurrealDbClient _surrealDbClient;
 
-	public WeatherForecastController(ISurrealDbClient surrealDbClient)
-	{
-		_surrealDbClient = surrealDbClient;
-	}
+  public WeatherForecastController(ISurrealDbClient surrealDbClient)
+  {
+    _surrealDbClient = surrealDbClient;
+  }
 
-	[HttpGet]
-	public Task<IEnumerable<WeatherForecast>> GetAll(CancellationToken cancellationToken)
-	{
-		return _surrealDbClient.Select<WeatherForecast>(Table, cancellationToken);
-	}
+  [HttpGet]
+  public Task<IEnumerable<WeatherForecast>> GetAll(CancellationToken cancellationToken)
+  {
+    return _surrealDbClient.Select<WeatherForecast>(Table, cancellationToken);
+  }
 
-	[HttpGet("{id}")]
-	public async Task<IActionResult> Get(string id, CancellationToken cancellationToken)
-	{
-		var weatherForecast = await _surrealDbClient.Select<WeatherForecast>((Table, id), cancellationToken);
+  [HttpGet("{id}")]
+  public async Task<IActionResult> Get(string id, CancellationToken cancellationToken)
+  {
+    var weatherForecast = await _surrealDbClient.Select<WeatherForecast>((Table, id), cancellationToken);
 
-		if (weatherForecast is null)
-			return NotFound();
+    if (weatherForecast is null)
+      return NotFound();
 
-		return Ok(weatherForecast);
-	}
+    return Ok(weatherForecast);
+  }
 
-	[HttpPost]
-	public Task<WeatherForecast> Create(CreateWeatherForecast data, CancellationToken cancellationToken)
-	{
-		var weatherForecast = new WeatherForecast
-		{
-			Date = data.Date,
-			Country = data.Country,
-			TemperatureC = data.TemperatureC,
-			Summary = data.Summary
-		};
-
-		return _surrealDbClient.Create(Table, weatherForecast, cancellationToken);
-	}
-
-	[HttpPut]
-	public Task<WeatherForecast> Update(WeatherForecast data, CancellationToken cancellationToken)
-	{
-		return _surrealDbClient.Upsert(data, cancellationToken);
-	}
-
-    [HttpPatch]
-    public Task<IEnumerable<WeatherForecast>> PatchAll(
-        JsonPatchDocument<WeatherForecast> patches,
-        CancellationToken cancellationToken
-    )
+  [HttpPost]
+  public Task<WeatherForecast> Create(CreateWeatherForecast data, CancellationToken cancellationToken)
+  {
+    var weatherForecast = new WeatherForecast
     {
-        return _surrealDbClient.PatchAll(Table, patches, cancellationToken);
-    }
+      Date = data.Date,
+      Country = data.Country,
+      TemperatureC = data.TemperatureC,
+      Summary = data.Summary
+    };
 
-    [HttpPatch("{id}")]
-    public Task<WeatherForecast> Patch(
-        string id,
-        JsonPatchDocument<WeatherForecast> patches,
-        CancellationToken cancellationToken
-    )
-    {
-        return _surrealDbClient.Patch((Table, id), patches, cancellationToken);
-    }
+    return _surrealDbClient.Create(Table, weatherForecast, cancellationToken);
+  }
 
-	[HttpDelete]
-	public Task DeleteAll(CancellationToken cancellationToken)
-	{
-		return _surrealDbClient.Delete(Table, cancellationToken);
-	}
+  [HttpPut]
+  public Task<WeatherForecast> Update(WeatherForecast data, CancellationToken cancellationToken)
+  {
+    return _surrealDbClient.Upsert(data, cancellationToken);
+  }
 
-	[HttpDelete("{id}")]
-	public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
-	{
-		bool success = await _surrealDbClient.Delete((Table, id), cancellationToken);
+  [HttpPatch]
+  public Task<IEnumerable<WeatherForecast>> PatchAll(
+    JsonPatchDocument<WeatherForecast> patches,
+    CancellationToken cancellationToken
+  )
+  {
+    return _surrealDbClient.Patch(Table, patches, cancellationToken);
+  }
 
-		if (!success)
-			return NotFound();
+  [HttpPatch("{id}")]
+  public Task<WeatherForecast> Patch(
+    string id,
+    JsonPatchDocument<WeatherForecast> patches,
+    CancellationToken cancellationToken
+  )
+  {
+    return _surrealDbClient.Patch((Table, id), patches, cancellationToken);
+  }
 
-		return Ok();
-	}
+  [HttpDelete]
+  public Task DeleteAll(CancellationToken cancellationToken)
+  {
+    return _surrealDbClient.Delete(Table, cancellationToken);
+  }
+
+  [HttpDelete("{id}")]
+  public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
+  {
+    bool success = await _surrealDbClient.Delete((Table, id), cancellationToken);
+
+    if (!success)
+      return NotFound();
+
+    return Ok();
+  }
 }
 ```
 
 ## Contributing
+
+### Prerequisites
+
+Before contributing to this repository, please take note of the [Contributing](./CONTRIBUTING.md) guidelines. To contribute to this project, you will also need to install the following tools:
+
+* The .NET SDK, preferably the latest stable version which is available for [download here](https://dotnet.microsoft.com/download)
+* The [Rust programming language](https://www.rust-lang.org/learn/get-started)
+
+The test and benchmark projects are highly dependent on the local Rust crate used by embedded providers. This crate is located in the [./rust-embedded](./rust-embedded) folder of this repository. To build the crate, make sure you installed the Rust toolchain on your machine and then follow these steps:
+
+```sh
+cd ./rust-embedded
+cargo build
+```
+
+If the command line was successful, the compiled libraries are generated in the target folder and automatically copied when the .NET projects are built. 
 
 ### .NET release versions
 
@@ -262,6 +278,7 @@ Note that the support for .NET standard 2.1 will be maintained until further not
 | .NET 6            | LTS         | November 8, 2021  | November 12, 2024 |
 | .NET 7            | STS         | November 8, 2022  | May 14, 2024      |
 | .NET 8            | Current LTS | November 14, 2023 | November 10, 2026 |
+| .NET 9            | STS         | November 12, 2024 | May 12, 2026      |
 
 ### Formatting
 
@@ -271,14 +288,14 @@ This project is using [CSharpier](https://csharpier.com/), an opinionated code f
 
 You can install it on your machine via `dotnet tool`.
 
-```bash
+```sh
 # Run this command at the root of the project
 dotnet tool install csharpier
 ```
 
 You can then use it as a cli:
 
-```bash
+```sh
 dotnet csharpier .
 ```
 
@@ -303,19 +320,19 @@ Unit/Integration tests are written using [xUnit](https://xunit.net/) and [Fluent
 
 You will need a local SurrealDB instance alongside the tests. Start one using the following command:
 
-```
-surreal start --log debug --user root --pass root memory --auth --allow-guests
+```sh
+surreal start --log debug --user root --pass root memory --allow-guests
 ```
 
 Once ready, go to the root directory of the project and run the following command:
 
-```
+```sh
 dotnet watch test --project SurrealDb.Net.Tests
 ```
 
 Due to the asynchronous nature of Live Queries, they are tested against a separate project named `SurrealDb.Net.LiveQuery.Tests`. Where the default test project allow full parallelization, this project completely disable test parallelization. To execute tests on Live Queries, run the following command:
 
-```
+```sh
 dotnet watch test --project SurrealDb.Net.LiveQuery.Tests
 ```
 
@@ -329,17 +346,17 @@ This project also contains [benchmarks](https://benchmarkdotnet.org/) in order t
 
 You will need a local SurrealDB instance alongside the tests. Start one using the following command:
 
-```
-surreal start --user root --pass root memory --auth --allow-guests
+```sh
+surreal start --user root --pass root memory --allow-guests
 ```
 
 Once ready, go to the root directory of the project and run the following command:
 
-```
+```sh
 dotnet run -c Release --project SurrealDb.Net.Benchmarks.Remote --filter '*'
 ```
 
-```
+```sh
 ./prepare_embedded_benchmarks.sh -s
 dotnet run -c Release --project SurrealDb.Net.Benchmarks.Embedded --filter '*'
 ./prepare_embedded_benchmarks.sh -e
@@ -347,7 +364,7 @@ dotnet run -c Release --project SurrealDb.Net.Benchmarks.Embedded --filter '*'
 
 For Windows:
 
-```
+```sh
 ./prepare_embedded_benchmarks.ps1 -s
 dotnet run -c Release --project SurrealDb.Net.Benchmarks.Embedded --filter '*'
 ./prepare_embedded_benchmarks.ps1 -e

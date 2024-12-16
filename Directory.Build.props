@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project>
 
   <PropertyGroup>
@@ -6,10 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-	  <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
+	  <IsAotCompatible>false</IsAotCompatible>
     
     <IsPackable>false</IsPackable>
-    <Version>0.5.1</Version>
+    <Version>0.7.0</Version>
     <Authors>surrealdb</Authors>
     <Company>SurrealDB</Company>
     <Copyright>Copyright © SurrealDB Ltd</Copyright>
@@ -28,18 +27,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CSharpier.MsBuild" Version="0.27.3">
+    <PackageReference Include="CSharpier.MsBuild">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-	  <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
+	  <PackageReference Include="DotNet.ReproducibleBuilds">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 	  </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-	  <None Include="..\README.md" Pack="true" PackagePath="\" />
+	  <None Include="README.md" Pack="true" PackagePath="\" />
 	  <None Include="..\LICENSE" Pack="true" PackagePath="\" Visible="false" />
 	  <None Include="..\img\icon.png" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>

@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using SurrealDb.Net.Internals.Json;
 using SystemTextJsonPatch;
 using SystemTextJsonPatch.Operations;
 
@@ -12,9 +11,10 @@ public class JsonPatchDocumentConverterTests : BaseCborConverterTests
     {
         var value = new JsonPatchDocument
         {
-            Options = SurrealDbSerializerOptions.GetDefaultSerializerFromPolicy(
-                JsonNamingPolicy.CamelCase
-            )
+            Options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            },
         };
         value.Operations.Add(new Operation("add", "/value", null, new { X = 1, Y = 2 }));
 
@@ -70,9 +70,10 @@ public class JsonPatchDocumentConverterTests : BaseCborConverterTests
     {
         var value = new JsonPatchDocument<Post>
         {
-            Options = SurrealDbSerializerOptions.GetDefaultSerializerFromPolicy(
-                JsonNamingPolicy.CamelCase
-            )
+            Options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            },
         };
         value.Replace(x => x.Content, "[Edit] Oops");
 
@@ -94,9 +95,10 @@ public class JsonPatchDocumentConverterTests : BaseCborConverterTests
 
         var expected = new JsonPatchDocument<Post>
         {
-            Options = SurrealDbSerializerOptions.GetDefaultSerializerFromPolicy(
-                JsonNamingPolicy.CamelCase
-            )
+            Options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            },
         };
         expected.Replace(x => x.Content, "[Edit] Oops");
 

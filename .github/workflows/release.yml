@@ -25,51 +25,73 @@ jobs:
             libpath: |
               **/release/surreal_memory.dll
               **/release/surreal_memory.pdb
+              **/release/surreal_rocksdb.dll
+              **/release/surreal_rocksdb.pdb
+              **/release/surreal_surrealkv.dll
+              **/release/surreal_surrealkv.pdb
             continue-on-error: false
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             libpath: |
               **/release/libsurreal_memory.so
+              **/release/libsurreal_rocksdb.so
+              **/release/libsurreal_surrealkv.so
             continue-on-error: false
           # 💡 not supported by the toolchain
           # - os: ubuntu-latest
           #   target: x86_64-unknown-linux-musl
           #   libpath: |
           #     **/release/libsurreal_memory.so
+          #     **/release/libsurreal_rocksdb.so
+          #     **/release/libsurreal_surrealkv.so
           # 💡 not supported by the toolchain
           # - os: ubuntu-latest
           #   target: aarch64-unknown-linux-musl
           #   libpath: |
           #     **/release/libsurreal_memory.so
+          #     **/release/libsurreal_rocksdb.so
+          #     **/release/libsurreal_surrealkv.so
           - os: ubuntu-latest
             target: arm-unknown-linux-gnueabihf
             libpath: |
               **/release/libsurreal_memory.so
+              **/release/libsurreal_rocksdb.so
+              **/release/libsurreal_surrealkv.so
             continue-on-error: true
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             libpath: |
               **/release/libsurreal_memory.so
+              **/release/libsurreal_rocksdb.so
+              **/release/libsurreal_surrealkv.so
             continue-on-error: true
           - os: ubuntu-latest
             target: aarch64-linux-android
             libpath: |
               **/release/libsurreal_memory.so
+              **/release/libsurreal_rocksdb.so
+              **/release/libsurreal_surrealkv.so
             continue-on-error: false
           - os: macos-latest
             target: x86_64-apple-darwin
             libpath: |
               **/release/libsurreal_memory.dylib
+              **/release/libsurreal_rocksdb.dylib
+              **/release/libsurreal_surrealkv.dylib
             continue-on-error: false
           - os: macos-latest
             target: aarch64-apple-darwin
             libpath: |
               **/release/libsurreal_memory.dylib
+              **/release/libsurreal_rocksdb.dylib
+              **/release/libsurreal_surrealkv.dylib
             continue-on-error: false
           - os: macos-latest
             target: aarch64-apple-ios
             libpath: |
               **/release/libsurreal_memory.dylib
+              **/release/libsurreal_rocksdb.dylib
+              **/release/libsurreal_surrealkv.dylib
             continue-on-error: false
 
     steps:
@@ -104,25 +126,33 @@ jobs:
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          toolchain: 1.81.0 # must match the version in the `rust-embedded/rust-toolchain` file
+          target: ${{ matrix.target }}
       
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Build libraries
-        working-directory: ./rust-embedded
+      - name: Build "memory" library
+        working-directory: ./rust-embedded/memory
         run: cargo build --release --target ${{ matrix.target }}
-      
+
+      - name: Build "rocksdb" library
+        working-directory: ./rust-embedded/rocksdb
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Build "surrealkv" library
+        working-directory: ./rust-embedded/surrealkv
+        run: cargo build --release --target ${{ matrix.target }}
+    
       - name: Publish embedded artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: embedded-${{ matrix.target }}
           path: ${{ matrix.libpath }}
 
-
   create-package:
     needs: [embedded-builds]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-4cores
 
     steps:
       - name: Checkout repository
@@ -134,15 +164,15 @@ jobs:
           pattern: embedded-*
           merge-multiple: true
 
-      - name: Setup dotnet 8.0
+      - name: Setup dotnet 9.0
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "9.0.x"
 
       - name: Create Package
-        run: dotnet pack --configuration Release --output ${{ env.NuGetDirectory }}
+        run: dotnet pack /p:GenerateCompatibilitySuppressionFile=true --configuration Release --output ${{ env.NuGetDirectory }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: nuget
           if-no-files-found: error
@@ -151,15 +181,15 @@ jobs:
 
   validate-package:
     needs: [create-package]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-4cores
 
     steps:
-      - name: Setup dotnet 8.0
+      - name: Setup dotnet 9.0
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "9.0.x"
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: nuget
           path: ${{ env.NuGetDirectory }}
@@ -170,23 +200,23 @@ jobs:
       - name: Validate package
         run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg")
 
-  # publish-package:
-  #   needs: [validate-package]
-  #   runs-on: ubuntu-latest
+  publish-package:
+    needs: [validate-package]
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Setup dotnet 8.0
-  #       uses: actions/setup-dotnet@v3
-  #       with:
-  #         dotnet-version: "8.0.x"
+    steps:
+      - name: Setup dotnet 9.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "9.0.x"
 
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: nuget
-  #         path: ${{ env.NuGetDirectory }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: nuget
+          path: ${{ env.NuGetDirectory }}
 
-  #     - name: Publish NuGet package
-  #       run: |
-  #         foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
-  #             dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
-  #         }
+      - name: Publish NuGet package
+        run: |
+          foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
+              dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+          }

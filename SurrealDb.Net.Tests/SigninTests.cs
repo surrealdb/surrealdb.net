@@ -12,10 +12,8 @@ public class AuthParams : ScopeAuth
 public class SignInTests
 {
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSignInAsRootUser(string connectionString)
     {
         Func<Task> func = async () =>
@@ -31,6 +29,8 @@ public class SignInTests
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     public async Task SignInAsRootUserIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -47,10 +47,8 @@ public class SignInTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSignInUsingNamespaceAuth(string connectionString)
     {
         Jwt? jwt = null;
@@ -64,7 +62,7 @@ public class SignInTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             string query = "DEFINE USER johndoe ON NAMESPACE PASSWORD 'password123'";
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             jwt = await client.SignIn(
                 new NamespaceAuth
@@ -79,11 +77,13 @@ public class SignInTests
         await func.Should().NotThrowAsync();
 
         jwt.Should().NotBeNull();
-        jwt!.Token.Should().BeValidJwt();
+        jwt!.Value.Token.Should().BeValidJwt();
     }
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     public async Task SignInUsingNamespaceAuthIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -95,7 +95,7 @@ public class SignInTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             string query = "DEFINE USER johndoe ON NAMESPACE PASSWORD 'password123'";
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             await client.SignIn(
                 new NamespaceAuth
@@ -113,10 +113,8 @@ public class SignInTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSignInUsingDatabaseAuth(string connectionString)
     {
         Jwt? jwt = null;
@@ -130,7 +128,7 @@ public class SignInTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             string query = "DEFINE USER johndoe ON DATABASE PASSWORD 'password123'";
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             jwt = await client.SignIn(
                 new DatabaseAuth
@@ -146,11 +144,13 @@ public class SignInTests
         await func.Should().NotThrowAsync();
 
         jwt.Should().NotBeNull();
-        jwt!.Token.Should().BeValidJwt();
+        jwt!.Value.Token.Should().BeValidJwt();
     }
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     public async Task SignInUsingDatabaseAuthIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -162,7 +162,7 @@ public class SignInTests
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             string query = "DEFINE USER johndoe ON DATABASE PASSWORD 'password123'";
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             await client.SignIn(
                 new DatabaseAuth
@@ -181,10 +181,8 @@ public class SignInTests
     }
 
     [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root;Serialization=CBOR")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=JSON")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root;Serialization=CBOR")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldSignInUsingScopeAuth(string connectionString)
     {
         Jwt? jwt = null;
@@ -204,17 +202,20 @@ public class SignInTests
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
             string query = fileContent;
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
+#pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
             {
                 Namespace = dbInfo.Namespace,
                 Database = dbInfo.Database,
                 Scope = "user_scope",
+                Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
                 Password = "password123"
             };
+#pragma warning restore CS0618 // Type or member is obsolete
 
             await client.SignUp(authParams);
 
@@ -224,11 +225,13 @@ public class SignInTests
         await func.Should().NotThrowAsync();
 
         jwt.Should().NotBeNull();
-        jwt!.Token.Should().BeValidJwt();
+        jwt!.Value.Token.Should().BeValidJwt();
     }
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     public async Task SignInUsingScopeAuthIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -246,17 +249,20 @@ public class SignInTests
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
 
             string query = fileContent;
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
+#pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
             {
                 Namespace = dbInfo.Namespace,
                 Database = dbInfo.Database,
                 Scope = "user_scope",
+                Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
                 Password = "password123"
             };
+#pragma warning restore CS0618 // Type or member is obsolete
 
             await client.SignUp(authParams);
 

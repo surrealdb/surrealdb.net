@@ -226,7 +226,7 @@ public static class SurrealDbMinimalApisExtensions
                     ) =>
                     {
                         string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
-                        return surrealDbClient.PatchAll(tableName, patches, cancellationToken);
+                        return surrealDbClient.Patch(tableName, patches, cancellationToken);
                     }
                 )
                 .WithName($"PatchAll{entityName}")
@@ -309,6 +309,7 @@ public static class SurrealDbMinimalApisExtensions
 
     private static string GetDefaultTableName(string entityName, string? namingPolicy)
     {
+#if NET8_0_OR_GREATER
         return (namingPolicy?.ToLowerInvariant()) switch
         {
             "camelcase" => entityName.ToCamelCase(),
@@ -318,6 +319,9 @@ public static class SurrealDbMinimalApisExtensions
             "kebabcaseupper" => entityName.ToKebabCaseUpper(),
             _ => entityName
         };
+#else
+        return entityName.ToCamelCase();
+#endif
     }
 
     private static string ToCamelCase(this string str)
@@ -325,6 +329,7 @@ public static class SurrealDbMinimalApisExtensions
         return JsonNamingPolicy.CamelCase.ConvertName(str);
     }
 
+#if NET8_0_OR_GREATER
     private static string ToSnakeCaseLower(this string str)
     {
         return JsonNamingPolicy.SnakeCaseLower.ConvertName(str);
@@ -344,4 +349,5 @@ public static class SurrealDbMinimalApisExtensions
     {
         return JsonNamingPolicy.KebabCaseUpper.ConvertName(str);
     }
+#endif
 }

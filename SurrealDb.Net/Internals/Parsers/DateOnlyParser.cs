@@ -1,14 +1,8 @@
-#if NET6_0_OR_GREATER
+﻿#if NET6_0_OR_GREATER
 namespace SurrealDb.Net.Internals.Parsers;
 
 internal static class DateOnlyParser
 {
-    public static DateOnly Parse(string input)
-    {
-        var dateTime = DateTimeParser.Parse(input);
-        return new DateOnly(dateTime.Year, dateTime.Month, dateTime.Day);
-    }
-
     public static DateOnly Convert(long seconds, int nanos)
     {
         var dateTime = DateTimeParser.Convert(seconds, nanos);

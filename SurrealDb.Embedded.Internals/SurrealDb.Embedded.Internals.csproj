@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Include="..\SurrealDb.Embedded.InMemory\NativeMethods.g.cs" Link="Fake\NativeMethods.g.cs" />
+      <Compile Include="..\SurrealDb.Net\Internals\Constants\LoggingConstants.cs" Link="Internals\Constants\LoggingConstants.cs" />
+      <Compile Include="..\SurrealDb.Net\Internals\Extensions\FormattableStringExtensions.cs" Link="Internals\Extensions\FormattableStringExtensions.cs" />
+      <Compile Include="..\SurrealDb.Net\Internals\Extensions\StringBuilderExtensions.cs" Link="Internals\Extensions\StringBuilderExtensions.cs" />
+      <Compile Include="..\SurrealDb.Net\Internals\Extensions\StringExtensions.cs" Link="Internals\Extensions\StringExtensions.cs" />
+      <Compile Include="..\SurrealDb.Net\Internals\Extensions\SurrealDbLoggerExtensions.cs" Link="Internals\Extensions\SurrealDbLoggerExtensions.cs" />
+      <Compile Include="..\SurrealDb.Net\Internals\Stream\MemoryStreamProvider.cs" Link="Internals\Stream\MemoryStreamProvider.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\SurrealDb.Net\SurrealDb.Net.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Fake\" />
+      <Folder Include="Internals\Extensions\" />
+      <Folder Include="Internals\Constants\" />
+      <Folder Include="Internals\Stream\" />
+    </ItemGroup>
+
+</Project>

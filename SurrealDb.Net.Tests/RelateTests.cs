@@ -14,6 +14,8 @@ public class RelateTests
 {
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldCreateEmptyRelation(string connectionString)
@@ -36,7 +38,7 @@ public class RelateTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             result = await client.Relate<EmptyRelation>("empty", ("in", "one"), ("out", "one"));
 
@@ -48,12 +50,14 @@ public class RelateTests
         list.Should().NotBeNull().And.HaveCount(1);
 
         result.Should().NotBeNull();
-        result!.In.Should().Be(new Thing("in", "one"));
-        result!.Out.Should().Be(new Thing("out", "one"));
+        result!.In.Should().Be(new RecordIdOfString("in", "one"));
+        result!.Out.Should().Be(new RecordIdOfString("out", "one"));
     }
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldCreateWroteRelation(string connectionString)
@@ -76,7 +80,7 @@ public class RelateTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var data = new WroteRelation { CreatedAt = DateTime.UtcNow, NumberOfPages = 14 };
 
@@ -95,14 +99,16 @@ public class RelateTests
         list.Should().NotBeNull().And.HaveCount(1);
 
         result.Should().NotBeNull();
-        result!.In.Should().Be(new Thing("user", "one"));
-        result!.Out.Should().Be(new Thing("post", "one"));
+        result!.In.Should().Be(new RecordIdOfString("user", "one"));
+        result!.Out.Should().Be(new RecordIdOfString("post", "one"));
         result!.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
         result!.NumberOfPages.Should().Be(14);
     }
 
     [Theory]
     [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
     [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
     [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldCreateWroteRelationWithPredefinedId(string connectionString)
@@ -125,7 +131,7 @@ public class RelateTests
 
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+            (await client.RawQuery(query)).EnsureAllOks();
 
             var data = new WroteRelation { CreatedAt = DateTime.UtcNow, NumberOfPages = 14 };
 
@@ -147,11 +153,11 @@ public class RelateTests
         result!.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
         result!.NumberOfPages.Should().Be(14);
 
-        var relationInList = list!.First(r => r.Id!.Id == "one");
+        var relationInList = list!.First(r => r.Id!.DeserializeId<string>() == "one");
 
         relationInList.Should().NotBeNull();
-        relationInList!.In.Should().Be(new Thing("user", "one"));
-        relationInList!.Out.Should().Be(new Thing("post", "one"));
+        relationInList!.In.Should().Be(new RecordIdOfString("user", "one"));
+        relationInList!.Out.Should().Be(new RecordIdOfString("post", "one"));
         relationInList!.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
         relationInList!.NumberOfPages.Should().Be(14);
     }

@@ -1,0 +1,44 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
+    <PackageVersion Include="Bogus" Version="35.5.1" />
+    <PackageVersion Include="ConcurrentHashSet" Version="1.3.0" />
+    <PackageVersion Include="coverlet.collector" Version="3.1.2" />
+    <PackageVersion Include="csbindgen" Version="1.9.1" />
+    <PackageVersion Include="CSharpier.MsBuild" Version="0.27.3" />
+    <PackageVersion Include="Dahomey.Cbor" Version="1.24.3" />
+    <PackageVersion Include="DotNet.ReproducibleBuilds" Version="1.1.1" />
+    <PackageVersion Include="FlakyTest.XUnit" Version="2.4.10" />
+    <PackageVersion Include="FluentAssertions" Version="6.12.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="8.0.11" />
+    <PackageVersion Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+    <PackageVersion Include="Microsoft.Reactive.Testing" Version="6.0.1" />
+    <PackageVersion Include="Microsoft.Spatial" Version="7.18.0" />
+    <PackageVersion Include="MudBlazor" Version="6.11.2" />
+    <PackageVersion Include="Pidgin" Version="3.2.3" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="1.2.36" />
+    <PackageVersion Include="Semver" Version="2.3.0" />
+    <PackageVersion Include="Serilog" Version="4.0.2" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageVersion Include="Superpower" Version="3.0.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="7.0.0" />
+    <PackageVersion Include="System.Collections.Immutable" Version="8.0.0" />
+    <PackageVersion Include="System.Interactive.Async" Version="6.0.1" />
+    <PackageVersion Include="SystemTextJsonPatch" Version="4.0.0" />
+    <PackageVersion Include="Ulid" Version="1.3.3" />
+    <PackageVersion Include="Verify.Xunit" Version="28.2.1" />
+    <PackageVersion Include="Websocket.Client" Version="5.1.1" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+</Project>
