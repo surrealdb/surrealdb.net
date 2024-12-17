@@ -64,7 +64,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
     public Task Clear(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
     partial void PreConnect();

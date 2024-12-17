@@ -349,6 +349,12 @@ public static class ServiceCollectionExtensions
         Action<CborOptions>? configureCborOptions = null
     )
     {
+        services.TryAddSingleton(serviceProvider =>
+        {
+            var policy = new AsyncPooledObjectPolicy<SurrealDbClientPoolContainer>();
+            return new SurrealDbClientPool(policy);
+        });
+
         switch (lifetime)
         {
             case ServiceLifetime.Singleton:
@@ -382,12 +388,6 @@ public static class ServiceCollectionExtensions
                 );
                 break;
             case ServiceLifetime.Scoped:
-                services.TryAddSingleton(serviceProvider =>
-                {
-                    var policy = new AsyncPooledObjectPolicy<SurrealDbClientPoolContainer>();
-                    return new SurrealDbClientPool(policy);
-                });
-
                 services.AddScoped(
                     typeof(T),
                     serviceProvider =>
@@ -422,12 +422,6 @@ public static class ServiceCollectionExtensions
                 );
                 break;
             case ServiceLifetime.Transient:
-                services.TryAddSingleton(serviceProvider =>
-                {
-                    var policy = new AsyncPooledObjectPolicy<SurrealDbClientPoolContainer>();
-                    return new SurrealDbClientPool(policy);
-                });
-
                 services.AddTransient(
                     typeof(T),
                     serviceProvider =>

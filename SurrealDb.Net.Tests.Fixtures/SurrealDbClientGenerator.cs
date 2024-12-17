@@ -89,9 +89,23 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
             .WithNamingPolicy("SnakeCase")
             .Build();
 
+        if (_options.Endpoint is "rocksdb://" or "surrealkv://")
+        {
+            GenerateRandomFilePath();
+
+            _options = SurrealDbOptions
+                .Create()
+                .FromConnectionString(connectionString)
+                .WithNamingPolicy("SnakeCase")
+                .WithEndpoint($"{_options.Endpoint}{_folderPath}")
+                .Build();
+        }
+
         _serviceProvider = new ServiceCollection()
             .AddSurreal(_options, lifetime)
             .AddInMemoryProvider()
+            .AddRocksDbProvider()
+            .AddSurrealKvProvider()
             .And.BuildServiceProvider(validateScopes: true);
 
         return this;
