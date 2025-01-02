@@ -20,7 +20,7 @@ public static partial class ReactiveLinqExtensions
         this IObservable<SurrealDbLiveQueryResponse> source,
         IDictionary<string, T> seed
     )
-        where T : Record
+        where T : IRecord
     {
         if (source is null)
         {
@@ -49,7 +49,7 @@ public static partial class ReactiveLinqExtensions
         this IObservable<SurrealDbLiveQueryResponse> source,
         IDictionary<string, T> seed
     )
-        where T : Record
+        where T : IRecord
     {
         if (source is null)
         {
@@ -69,7 +69,7 @@ public static partial class ReactiveLinqExtensions
         SurrealDbLiveQueryResponse,
         IDictionary<string, T>
     > GetRecordsAccumulator<T>()
-        where T : Record
+        where T : IRecord
     {
         // TODO : This only works with RecordId of string. Find a way to make it work for any type of RecordId.
         return (acc, response) =>

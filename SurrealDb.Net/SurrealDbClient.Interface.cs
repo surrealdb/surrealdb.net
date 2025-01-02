@@ -65,7 +65,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<T> Create<T>(T data, CancellationToken cancellationToken = default)
-        where T : Record;
+        where T : IRecord;
 
     /// <summary>
     /// Creates a record in a table in the database.
@@ -103,7 +103,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         TData? data = default,
         CancellationToken cancellationToken = default
     )
-        where TOutput : Record;
+        where TOutput : IRecord;
 
     /// <summary>
     /// Deletes all records in a table from the database.
@@ -195,7 +195,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         IEnumerable<T> data,
         CancellationToken cancellationToken = default
     )
-        where T : Record;
+        where T : IRecord;
 
     /// <summary>
     /// Inserts a new relation record in the database.
@@ -205,7 +205,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>The record created.</returns>
     Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken = default)
-        where T : RelationRecord;
+        where T : IRelationRecord;
 
     /// <summary>
     /// Inserts a new relation record in the database.
@@ -216,7 +216,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>The record created.</returns>
     Task<T> InsertRelation<T>(string table, T data, CancellationToken cancellationToken = default)
-        where T : RelationRecord;
+        where T : IRelationRecord;
 
     /// <summary>
     /// Invalidates the authentication for the current connection.
@@ -328,7 +328,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken = default)
-        where TMerge : Record;
+        where TMerge : IRecord;
 
     /// <summary>
     /// Modifies the specified record in the database.
@@ -857,7 +857,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<T> Update<T>(T data, CancellationToken cancellationToken = default)
-        where T : Record;
+        where T : IRecord;
 
     /// <summary>
     /// Updates the specified record in the database.
@@ -877,7 +877,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         TData data,
         CancellationToken cancellationToken = default
     )
-        where TOutput : Record;
+        where TOutput : IRecord;
 
     /// <summary>
     /// Updates all records in the database.
@@ -916,7 +916,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         TData data,
         CancellationToken cancellationToken = default
     )
-        where TOutput : Record;
+        where TOutput : IRecord;
 
     /// <summary>
     /// Updates or creates the specified record in the database.
@@ -930,7 +930,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken = default)
-        where T : Record;
+        where T : IRecord;
 
     /// <summary>
     /// Updates or creates the specified record in the database.
@@ -950,7 +950,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         TData data,
         CancellationToken cancellationToken = default
     )
-        where TOutput : Record;
+        where TOutput : IRecord;
 
     /// <summary>
     /// Creates a random record in the database.
@@ -990,7 +990,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         TData data,
         CancellationToken cancellationToken = default
     )
-        where TOutput : Record;
+        where TOutput : IRecord;
 
     /// <summary>
     /// Switch to a specific namespace and database.

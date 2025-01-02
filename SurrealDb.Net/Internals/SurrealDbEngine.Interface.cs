@@ -15,14 +15,14 @@ public interface ISurrealDbEngine : IDisposable, IAsyncDisposable
     Task Authenticate(Jwt jwt, CancellationToken cancellationToken);
     Task Connect(CancellationToken cancellationToken);
     Task<T> Create<T>(T data, CancellationToken cancellationToken)
-        where T : Record;
+        where T : IRecord;
     Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken);
     Task<TOutput> Create<TData, TOutput>(
         StringRecordId recordId,
         TData? data,
         CancellationToken cancellationToken
     )
-        where TOutput : Record;
+        where TOutput : IRecord;
     Task Delete(string table, CancellationToken cancellationToken);
     Task<bool> Delete(RecordId recordId, CancellationToken cancellationToken);
     Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken);
@@ -33,11 +33,11 @@ public interface ISurrealDbEngine : IDisposable, IAsyncDisposable
         IEnumerable<T> data,
         CancellationToken cancellationToken
     )
-        where T : Record;
+        where T : IRecord;
     Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken)
-        where T : RelationRecord;
+        where T : IRelationRecord;
     Task<T> InsertRelation<T>(string table, T data, CancellationToken cancellationToken)
-        where T : RelationRecord;
+        where T : IRelationRecord;
     Task Invalidate(CancellationToken cancellationToken);
     Task Kill(
         Guid queryUuid,
@@ -56,7 +56,7 @@ public interface ISurrealDbEngine : IDisposable, IAsyncDisposable
         CancellationToken cancellationToken
     );
     Task<TOutput> Merge<TMerge, TOutput>(TMerge data, CancellationToken cancellationToken)
-        where TMerge : Record;
+        where TMerge : IRecord;
     Task<T> Merge<T>(
         RecordId recordId,
         Dictionary<string, object> data,
@@ -141,13 +141,13 @@ public interface ISurrealDbEngine : IDisposable, IAsyncDisposable
     SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id);
     Task Unset(string key, CancellationToken cancellationToken);
     Task<T> Update<T>(T data, CancellationToken cancellationToken)
-        where T : Record;
+        where T : IRecord;
     Task<TOutput> Update<TData, TOutput>(
         StringRecordId recordId,
         TData data,
         CancellationToken cancellationToken
     )
-        where TOutput : Record;
+        where TOutput : IRecord;
     Task<IEnumerable<T>> Update<T>(string table, T data, CancellationToken cancellationToken)
         where T : class;
     Task<TOutput> Update<TData, TOutput>(
@@ -155,15 +155,15 @@ public interface ISurrealDbEngine : IDisposable, IAsyncDisposable
         TData data,
         CancellationToken cancellationToken
     )
-        where TOutput : Record;
+        where TOutput : IRecord;
     Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
-        where T : Record;
+        where T : IRecord;
     Task<TOutput> Upsert<TData, TOutput>(
         StringRecordId recordId,
         TData data,
         CancellationToken cancellationToken
     )
-        where TOutput : Record;
+        where TOutput : IRecord;
     Task<IEnumerable<T>> Upsert<T>(string table, T data, CancellationToken cancellationToken)
         where T : class;
     Task<TOutput> Upsert<TData, TOutput>(
@@ -171,7 +171,7 @@ public interface ISurrealDbEngine : IDisposable, IAsyncDisposable
         TData data,
         CancellationToken cancellationToken
     )
-        where TOutput : Record;
+        where TOutput : IRecord;
     Task Use(string ns, string db, CancellationToken cancellationToken);
     Task<string> Version(CancellationToken cancellationToken);
 }
