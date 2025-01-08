@@ -419,7 +419,7 @@ public static class ServiceCollectionExtensions
                         return new SurrealDbClient(
                             configuration,
                             serviceProvider,
-                            serviceProvider.GetRequiredService<IHttpClientFactory>(),
+                            serviceProvider.GetService<IHttpClientFactory>(),
                             configureCborOptions,
                             serviceProvider.GetService<ILoggerFactory>()
                         );
@@ -435,7 +435,7 @@ public static class ServiceCollectionExtensions
                         return new SurrealDbClient(
                             configuration,
                             serviceProvider,
-                            serviceProvider.GetRequiredService<IHttpClientFactory>(),
+                            serviceProvider.GetService<IHttpClientFactory>(),
                             configureCborOptions,
                             serviceProvider.GetService<ILoggerFactory>()
                         );
@@ -451,7 +451,7 @@ public static class ServiceCollectionExtensions
                         return new SurrealDbClient(
                             configuration,
                             serviceProvider,
-                            serviceProvider.GetRequiredService<IHttpClientFactory>(),
+                            serviceProvider.GetService<IHttpClientFactory>(),
                             configureCborOptions,
                             serviceProvider.GetService<ILoggerFactory>()
                         );
