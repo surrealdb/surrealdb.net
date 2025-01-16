@@ -1,10 +1,14 @@
-using System.Text;
+﻿using System.Text;
 using SurrealDb.Net.Exceptions;
 
 namespace SurrealDb.Net.Tests;
 
 public class InsertRelationTests
 {
+    /// <summary>
+    /// This test exists to do regression testing for this issue:
+    /// https://github.com/surrealdb/surrealdb.net/issues/151
+    /// </summary>
     [Theory]
     [InlineData("Endpoint=mem://")]
     [InlineData("Endpoint=rocksdb://")]

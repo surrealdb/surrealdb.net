@@ -71,10 +71,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         _surrealDbLoggerFactory?.Connection?.LogConnectionAttempt(_parameters.Endpoint!);
 
-        string version = await Version(cancellationToken).ConfigureAwait(false);
-        _version = version.ToSemver();
+        await Version(cancellationToken).ConfigureAwait(false);
 
-        if (_version.CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
+        if (_version!.CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
         {
             throw new SurrealDbException("CBOR is only supported on SurrealDB 1.4.0 or later.");
         }
@@ -236,7 +235,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken)
         where T : RelationRecord
     {
-        if (_version?.Major < 2)
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        if (_version is null || _version.Major < 2)
             throw new NotImplementedException();
 
         if (data.Id is null)
@@ -261,7 +262,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where T : RelationRecord
     {
-        if (_version?.Major < 2)
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        if (_version is null || _version.Major < 2)
             throw new NotImplementedException();
 
         if (data.Id is not null)
@@ -579,7 +582,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        if (_version?.Major < 2)
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        if (_version is null || _version.Major < 2)
             throw new NotImplementedException();
 
         var request = new SurrealDbHttpRequest { Method = "select", Parameters = [recordIdRange] };
@@ -738,13 +743,14 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<T> Update<T>(T data, CancellationToken cancellationToken)
         where T : Record
     {
-        if (_version?.Major < 2)
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        if (_version is null || _version.Major < 2)
             throw new NotImplementedException();
 
         if (data.Id is null)
             throw new SurrealDbException("Cannot update a record without an Id");
 
-        string method = _version?.Major > 1 ? "upsert" : "";
         var request = new SurrealDbHttpRequest { Method = "update", Parameters = [data.Id, data] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -759,7 +765,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where TOutput : Record
     {
-        if (_version?.Major < 2)
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        if (_version is null || _version.Major < 2)
             throw new NotImplementedException();
 
         var request = new SurrealDbHttpRequest { Method = "update", Parameters = [recordId, data] };
@@ -790,7 +798,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where TOutput : Record
     {
-        if (_version?.Major < 2)
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        if (_version is null || _version.Major < 2)
             throw new NotImplementedException();
 
         var request = new SurrealDbHttpRequest { Method = "update", Parameters = [recordId, data] };
@@ -805,6 +815,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         if (data.Id is null)
             throw new SurrealDbException("Cannot upsert a record without an Id");
+
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
         string method = _version?.Major > 1 ? "upsert" : "update";
         var request = new SurrealDbHttpRequest { Method = method, Parameters = [data.Id, data] };
@@ -821,6 +833,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where TOutput : Record
     {
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
         string method = _version?.Major > 1 ? "upsert" : "update";
         var request = new SurrealDbHttpRequest { Method = method, Parameters = [recordId, data] };
 
@@ -836,6 +850,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where T : class
     {
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
         string method = _version?.Major > 1 ? "upsert" : "update";
         var request = new SurrealDbHttpRequest { Method = method, Parameters = [table, data] };
 
@@ -851,6 +867,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where TOutput : Record
     {
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
         string method = _version?.Major > 1 ? "upsert" : "update";
         var request = new SurrealDbHttpRequest { Method = method, Parameters = [recordId, data] };
 
@@ -875,7 +893,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var version = dbResponse.GetValue<string>()!;
 
         const string VERSION_PREFIX = "surrealdb-";
-        return version.Replace(VERSION_PREFIX, string.Empty);
+        version = version.Replace(VERSION_PREFIX, string.Empty);
+
+        _version = version.ToSemver();
+
+        return version;
     }
 
     private static CborOptions GetCborSerializerOptions(
@@ -1069,6 +1091,14 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         content.Headers.ContentType = new MediaTypeHeaderValue("application/cbor");
 
         return content;
+    }
+
+    private async Task EnsureVersionIsSetAsync(CancellationToken cancellationToken)
+    {
+        if (_version is not null)
+            return;
+
+        await Version(cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<SurrealDbHttpOkResponse> ExecuteRequestAsync(
