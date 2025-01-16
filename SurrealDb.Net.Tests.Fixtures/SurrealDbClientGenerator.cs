@@ -68,25 +68,36 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
         _folderPath = _filePathFaker.Generate().Path;
     }
 
-    public SurrealDbClient Create(string connectionString)
+    public SurrealDbClient Create(string connectionString, string? ns = null, string? db = null)
     {
-        _options = SurrealDbOptions
+        var optionsBuilder = SurrealDbOptions
             .Create()
             .FromConnectionString(connectionString)
-            .WithNamingPolicy("SnakeCase")
-            .Build();
+            .WithNamingPolicy("SnakeCase");
 
-        if (_options.Endpoint is "rocksdb://" or "surrealkv://")
+        var temporaryOptions = optionsBuilder.Build();
+
+        if (temporaryOptions.Endpoint is "rocksdb://" or "surrealkv://")
         {
             GenerateRandomFilePath();
 
-            _options = SurrealDbOptions
+            optionsBuilder = SurrealDbOptions
                 .Create()
                 .FromConnectionString(connectionString)
                 .WithNamingPolicy("SnakeCase")
-                .WithEndpoint($"{_options.Endpoint}{_folderPath}")
-                .Build();
+                .WithEndpoint($"{temporaryOptions.Endpoint}{_folderPath}");
         }
+
+        if (ns is not null)
+        {
+            optionsBuilder = optionsBuilder.WithNamespace(ns);
+        }
+        if (db is not null)
+        {
+            optionsBuilder = optionsBuilder.WithDatabase(db);
+        }
+
+        _options = optionsBuilder.Build();
 
         _serviceProvider = new ServiceCollection()
             .AddSurreal(_options)

@@ -27,7 +27,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     private ISurrealDbLoggerFactory? _surrealDbLoggerFactory;
 
     private readonly int _id;
-    private readonly SurrealDbEmbeddedEngineConfig _config = new();
+    private SurrealDbEmbeddedEngineConfig _config = new();
 
     private bool _isConnected;
     private bool _isInitialized;
@@ -51,6 +51,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         _parameters = parameters;
         _configureCborOptions = configureCborOptions;
         _surrealDbLoggerFactory = surrealDbLoggerFactory;
+        _config = new(_parameters);
     }
 
     public Task Authenticate(Jwt jwt, CancellationToken cancellationToken)

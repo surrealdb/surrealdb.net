@@ -1,10 +1,69 @@
-﻿using System.Text;
+using System.Text;
 using SurrealDb.Net.Exceptions;
 
 namespace SurrealDb.Net.Tests;
 
 public class InsertRelationTests
 {
+    [Theory]
+    [InlineData("Endpoint=mem://")]
+    [InlineData("Endpoint=rocksdb://")]
+    [InlineData("Endpoint=surrealkv://")]
+    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
+    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task EnsureInsertRelationWithoutClientInitialization(string connectionString)
+    {
+        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
+
+        WroteRelation? result = null;
+        var now = DateTime.UtcNow;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            await using var client = surrealDbClientGenerator.Create(
+                connectionString,
+                dbInfo.Namespace,
+                dbInfo.Database
+            );
+
+            result = await client.InsertRelation(
+                new WroteRelation
+                {
+                    Id = ("wrote", "w1"),
+                    In = ("user", "u1"),
+                    Out = ("post", "p1"),
+                    CreatedAt = now,
+                    NumberOfPages = 144
+                }
+            );
+        };
+
+        if (version.Major < 2)
+        {
+            await func.Should().ThrowAsync<NotImplementedException>();
+            return;
+        }
+
+        await func.Should().NotThrowAsync();
+
+        result
+            .Should()
+            .NotBeNull()
+            .And.BeEquivalentTo(
+                new WroteRelation
+                {
+                    Id = ("wrote", "w1"),
+                    In = ("user", "u1"),
+                    Out = ("post", "p1"),
+                    CreatedAt = now,
+                    NumberOfPages = 144
+                }
+            );
+    }
+
     [Theory]
     [InlineData("Endpoint=mem://")]
     [InlineData("Endpoint=rocksdb://")]
