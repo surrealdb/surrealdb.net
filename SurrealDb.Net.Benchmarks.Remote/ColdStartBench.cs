@@ -51,7 +51,7 @@ public class ColdStartBench : BaseRemoteBenchmark
 
         var client = new SurrealDbClient(
             options,
-            _serviceProvider!.GetRequiredService<IHttpClientFactory>()
+            _serviceProvider!.GetService<IHttpClientFactory>()
         );
         _clients.Add(client);
 
