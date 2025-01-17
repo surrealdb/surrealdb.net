@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
     
       - name: Download SurrealDB
         run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh -s
@@ -19,7 +19,7 @@ jobs:
         run: surreal start --user root --pass root memory --allow-guests &
 
       - name: Setup dotnet 9.0
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "9.0.x"
 
@@ -27,7 +27,7 @@ jobs:
         run: sudo dotnet run -c Release --project SurrealDb.Net.Benchmarks.Remote --filter '*'
 
       - name: Download previous benchmark data
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: ./cache
           key: ${{ runner.os }}-benchmark

@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-4cores
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
       - name: Download embedded artifacts
         uses: actions/download-artifact@v4
@@ -26,7 +26,7 @@ jobs:
           path: ./rust-embedded/target/debug
 
       - name: Setup dotnet 9.0
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "9.0.x"
 
@@ -50,7 +50,7 @@ jobs:
         surrealdb_version: ["v1.5.5", "v2.0.4", "v2.1.2"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
       - name: Download embedded artifacts
         uses: actions/download-artifact@v4
@@ -70,7 +70,7 @@ jobs:
           fi
 
       - name: Setup dotnet 9.0
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "9.0.x"
 
@@ -104,7 +104,7 @@ jobs:
 
       - name: Upload Coverage
         if: matrix.surrealdb_version == 'v2.1.2'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           directory: .coverage
 
@@ -112,7 +112,7 @@ jobs:
     runs-on: ubuntu-4cores
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           sparse-checkout: |
             rust-embedded
@@ -140,7 +140,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           sparse-checkout: |
             rust-embedded
@@ -180,7 +180,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           sparse-checkout: |
             rust-embedded
