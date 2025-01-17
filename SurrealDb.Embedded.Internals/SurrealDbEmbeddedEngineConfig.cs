@@ -1,18 +1,22 @@
-﻿namespace SurrealDb.Embedded.Internals;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+namespace SurrealDb.Embedded.Internals;
 
 internal sealed class SurrealDbEmbeddedEngineConfig
 {
     public string? Ns { get; private set; }
     public string? Db { get; private set; }
 
-    public void Use(string ns, string? db)
+    public SurrealDbEmbeddedEngineConfig() { }
+
+    public SurrealDbEmbeddedEngineConfig(SurrealDbOptions options)
     {
-        Ns = ns;
-        Db = db;
+        Reset(options);
     }
 
-    public void Reset()
+    private void Reset(SurrealDbOptions options)
     {
-        Db = null;
+        Ns = options.Namespace;
+        Db = options.Database;
     }
 }

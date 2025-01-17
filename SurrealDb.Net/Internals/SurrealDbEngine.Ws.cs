@@ -470,7 +470,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken)
         where T : IRelationRecord
     {
-        if (_version?.Major < 2)
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        if (_version is null || _version.Major < 2)
             throw new NotImplementedException();
 
         if (data.Id is null)
@@ -494,7 +496,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
         where T : IRelationRecord
     {
-        if (_version?.Major < 2)
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        if (_version is null || _version.Major < 2)
             throw new NotImplementedException();
 
         if (data.Id is not null)
@@ -873,7 +877,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        if (_version?.Major < 2)
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        if (_version is null || _version.Major < 2)
             throw new NotImplementedException();
 
         var dbResponse = await SendRequestAsync(
@@ -1025,7 +1031,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<T> Update<T>(T data, CancellationToken cancellationToken)
         where T : IRecord
     {
-        if (_version?.Major < 2)
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        if (_version is null || _version.Major < 2)
             throw new NotImplementedException();
 
         if (data.Id is null)
@@ -1048,7 +1056,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
         where TOutput : IRecord
     {
-        if (_version?.Major < 2)
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        if (_version is null || _version.Major < 2)
             throw new NotImplementedException();
 
         var dbResponse = await SendRequestAsync(
@@ -1085,7 +1095,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
         where TOutput : IRecord
     {
-        if (_version?.Major < 2)
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        if (_version is null || _version.Major < 2)
             throw new NotImplementedException();
 
         var dbResponse = await SendRequestAsync(
@@ -1103,6 +1115,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         if (data.Id is null)
             throw new SurrealDbException("Cannot upsert a record without an Id");
+
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
         string method = _version?.Major > 1 ? "upsert" : "update";
         var dbResponse = await SendRequestAsync(
@@ -1122,6 +1136,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
         where TOutput : IRecord
     {
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
         string method = _version?.Major > 1 ? "upsert" : "update";
         var dbResponse = await SendRequestAsync(
                 method,
@@ -1140,6 +1156,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
         where T : class
     {
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
         string method = _version?.Major > 1 ? "upsert" : "update";
         var dbResponse = await SendRequestAsync(
                 method,
@@ -1158,6 +1176,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     )
         where TOutput : IRecord
     {
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
         string method = _version?.Major > 1 ? "upsert" : "update";
         var dbResponse = await SendRequestAsync(
                 method,
@@ -1304,6 +1324,14 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                 _semaphoreConnect.Release();
             }
         }
+    }
+
+    private async Task EnsureVersionIsSetAsync(CancellationToken cancellationToken)
+    {
+        if (_version is not null)
+            return;
+
+        await Version(cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<SurrealDbWsOkResponse> SendRequestAsync(
