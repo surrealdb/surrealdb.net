@@ -14,7 +14,7 @@ on:
 jobs:
   build:
     needs: [embedded-build]
-    runs-on: ubuntu-4cores
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
 
   test:
     needs: [embedded-build]
-    runs-on: ubuntu-4cores
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         surrealdb_version: ["v1.5.5", "v2.0.4", "v2.1.2"]
