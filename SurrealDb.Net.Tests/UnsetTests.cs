@@ -19,17 +19,7 @@ public class UnsetTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             await client.Set("status", "DRAFT");
             await client.Unset("status");
@@ -65,17 +55,7 @@ public class UnsetTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             await client.Set("status", "DRAFT");
             await client.Unset(null!);
@@ -98,17 +78,7 @@ public class UnsetTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             await client.Set("st at us", "DRAFT");
             await client.Unset(null!);

@@ -21,17 +21,7 @@ public class QueryTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             response = await client.Query($"SELECT * FROM post;");
         };
@@ -63,17 +53,7 @@ public class QueryTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             {
                 string status = "DRAFT";
@@ -108,17 +88,7 @@ public class QueryTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             {
                 string status = "DRAFT";
@@ -165,17 +135,7 @@ AND created_at >= {threeMonthsAgo};
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             response = await client.Query($"abc def;");
         };

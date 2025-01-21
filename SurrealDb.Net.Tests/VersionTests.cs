@@ -8,7 +8,7 @@ public class VersionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = surrealDbClientGenerator.Create(connectionString);
         string result = await client.Version();
 
         result.Should().BeValidSemver();

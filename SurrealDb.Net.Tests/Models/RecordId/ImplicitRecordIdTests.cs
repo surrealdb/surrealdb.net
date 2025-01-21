@@ -35,16 +35,10 @@ public class ImplicitRecordIdTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/recordId.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.RecordId);
 
             result = await client.Select<RecordIdRecord>(("recordId", 17493));
         };

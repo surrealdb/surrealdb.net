@@ -19,27 +19,8 @@ public class AuthenticateTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/user.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
-
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.User);
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
@@ -78,27 +59,8 @@ public class AuthenticateTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/user.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
-
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.User);
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
@@ -138,27 +100,8 @@ public class AuthenticateTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/user.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
-
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.User);
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams

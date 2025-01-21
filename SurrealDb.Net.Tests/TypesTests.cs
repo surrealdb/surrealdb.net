@@ -13,18 +13,10 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/string.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.String);
 
         await client.Delete("string");
 
@@ -102,18 +94,10 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/number.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Number);
 
         await client.Delete("number");
 
@@ -159,18 +143,10 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/decimal.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Decimal);
 
         await client.Delete("decimal");
 
@@ -256,18 +232,10 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/decimal.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Decimal);
 
         await client.Delete("decimal");
 
@@ -353,18 +321,10 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/decimal.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Decimal);
 
         await client.Delete("decimal");
 
@@ -450,18 +410,10 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/duration.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Duration);
 
         await client.Delete("duration");
 
@@ -606,18 +558,10 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/duration.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Duration);
 
         await client.Delete("duration");
 
@@ -752,18 +696,10 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/datetime.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Datetime);
 
         await client.Delete("datetime");
 
@@ -886,18 +822,10 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/vector.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Vector);
 
         await client.Delete("vector");
 

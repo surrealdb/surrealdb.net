@@ -61,17 +61,10 @@ public class SelectTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/post.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             result = await client.Select<Post>("post");
         };
@@ -110,17 +103,10 @@ public class SelectTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/post.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             result = await client.Select<Post>(("post", "first"));
         };
@@ -145,17 +131,10 @@ public class SelectTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/post.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             var recordId = new RecordIdOfString("post", "first");
 
@@ -182,17 +161,10 @@ public class SelectTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/recordId.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.RecordId);
 
             var recordId = RecordId.From("recordId", 17493);
 
@@ -216,17 +188,10 @@ public class SelectTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/recordId.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.RecordId);
 
             var recordId = RecordId.From("recordId", "surrealdb");
 
@@ -251,17 +216,10 @@ public class SelectTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/recordId.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.RecordId);
 
             var recordId = RecordId.From(
                 "recordId",
@@ -288,17 +246,10 @@ public class SelectTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/recordId.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.RecordId);
 
             var recordId = RecordId.From(
                 "recordId",
@@ -325,17 +276,10 @@ public class SelectTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/recordId.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.RecordId);
 
             var recordId = RecordId.From("recordId", new object[] { "London", 2023 });
 
@@ -359,17 +303,10 @@ public class SelectTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/recordId.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.RecordId);
 
             var recordId = new StringRecordId("recordId:surrealdb");
 

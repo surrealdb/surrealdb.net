@@ -24,17 +24,10 @@ public class RelateTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/post.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             result = await client.Relate<EmptyRelation>("empty", ("in", "one"), ("out", "one"));
 
@@ -62,17 +55,10 @@ public class RelateTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/post.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             var data = new WroteRelation { CreatedAt = DateTime.UtcNow, NumberOfPages = 14 };
 
@@ -109,17 +95,10 @@ public class RelateTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/post.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             var data = new WroteRelation { CreatedAt = DateTime.UtcNow, NumberOfPages = 14 };
 

@@ -87,17 +87,10 @@ public class ExportTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/post.surql"
-            );
-            string fileContent = await File.ReadAllTextAsync(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             await client.Delete("post");
 

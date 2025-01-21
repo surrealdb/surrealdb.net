@@ -15,17 +15,10 @@ public class DeleteTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/post.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             await client.Delete("post");
 
@@ -49,17 +42,10 @@ public class DeleteTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/post.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             result = await client.Delete(("post", "first"));
 
@@ -89,17 +75,10 @@ public class DeleteTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/post.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             result = await client.Delete(("post", "first"));
 
@@ -129,17 +108,10 @@ public class DeleteTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/post.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             result = await client.Delete(("post", "inexistent"));
 
@@ -164,17 +136,10 @@ public class DeleteTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/post.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             result = await client.Delete(new StringRecordId("post:first"));
 

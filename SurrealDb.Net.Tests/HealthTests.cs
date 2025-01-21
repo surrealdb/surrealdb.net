@@ -11,9 +11,7 @@ public class HealthTests
         Func<Task> func = async () =>
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
 
             response = await client.Health();
         };
@@ -33,9 +31,7 @@ public class HealthTests
         Func<Task> func = async () =>
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
 
             response = await client.Health();
         };

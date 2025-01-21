@@ -26,18 +26,10 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeographyPointRecord>(("geometry", "PointFromTuple"));
 
@@ -54,18 +46,10 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeographyPointRecord>(("geometry", "Point"));
 
@@ -82,18 +66,10 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeographyLineStringRecord>(("geometry", "LineString"));
 
@@ -117,18 +93,10 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeographyPolygonRecord>(("geometry", "Polygon"));
 
@@ -169,18 +137,10 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeographyMultiPointRecord>(("geometry", "MultiPoint"));
 
@@ -206,18 +166,10 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeographyMultiLineStringRecord>(
             ("geometry", "MultiLineString")
@@ -267,18 +219,10 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeographyMultiPolygonRecord>(("geometry", "MultiPolygon"));
 
@@ -344,18 +288,10 @@ public class ParserTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeographyCollectionRecord>(
             ("geometry", "GeometryCollection")
