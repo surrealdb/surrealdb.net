@@ -2,7 +2,7 @@ namespace SurrealDb.Net.Tests.Models;
 
 public class OperatorsDurationTests
 {
-    [Fact]
+    [Test]
     public void TwoDurationsWithSameValueShouldBeEqual()
     {
         var duration1 = new Duration("1h");
@@ -13,7 +13,7 @@ public class OperatorsDurationTests
         result.Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void TwoDurationsWithDifferentDurationUnitsShouldNotBeEqual()
     {
         var duration1 = new Duration("1m");
@@ -24,7 +24,7 @@ public class OperatorsDurationTests
         result.Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public void TwoDurationsWithDifferentValueShouldNotBeEqual()
     {
         var duration1 = new Duration("2h");
@@ -35,7 +35,7 @@ public class OperatorsDurationTests
         result.Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public void TwoDurationsWithSameValueShouldBeEqualEvenWithExtra0()
     {
         var duration1 = new Duration("0d1h");
@@ -46,7 +46,7 @@ public class OperatorsDurationTests
         result.Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void ShouldBeLowerThan()
     {
         var duration1 = new Duration("5m");
@@ -57,7 +57,7 @@ public class OperatorsDurationTests
         result.Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void ShouldBeLowerThanOrEqualTo()
     {
         var duration1 = new Duration("1h");
@@ -68,7 +68,7 @@ public class OperatorsDurationTests
         result.Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void ShouldBeGreaterThan()
     {
         var duration1 = new Duration("5y2m");
@@ -79,7 +79,7 @@ public class OperatorsDurationTests
         result.Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void ShouldBeGreaterThanOrEqualTo()
     {
         var duration1 = new Duration("1h");

@@ -50,7 +50,7 @@ public class GeographyCollectionConverterTests : BaseCborConverterTests
         _geographyCollection = factory.Build();
     }
 
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         string result = await SerializeCborBinaryAsHexaAsync(_geographyCollection);
@@ -62,7 +62,7 @@ public class GeographyCollectionConverterTests : BaseCborConverterTests
             );
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<GeographyCollection>(

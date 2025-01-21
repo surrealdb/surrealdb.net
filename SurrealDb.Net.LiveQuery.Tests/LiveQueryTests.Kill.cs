@@ -6,8 +6,8 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 
 public class KillLiveQueryTests
 {
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldAutomaticallyKillLiveQueryWhenDisposed(string connectionString)
     {
         var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
@@ -60,8 +60,8 @@ public class KillLiveQueryTests
             .WithMessage(errorMessage);
     }
 
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldManuallyKillLiveQuery(string connectionString)
     {
         var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);

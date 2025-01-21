@@ -4,12 +4,8 @@ namespace SurrealDb.Net.Tests;
 
 public class UpsertTests
 {
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldCreateNewPost(string connectionString)
     {
         IEnumerable<Post>? list = null;
@@ -63,12 +59,8 @@ public class UpsertTests
         anotherPost!.Status.Should().Be("DRAFT");
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldUpdateExistingPost(string connectionString)
     {
         IEnumerable<Post>? list = null;
@@ -119,12 +111,8 @@ public class UpsertTests
         result!.Status.Should().Be("DRAFT");
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldCreateNewPostUsingStringRecordId(string connectionString)
     {
         IEnumerable<Post>? list = null;
@@ -177,12 +165,8 @@ public class UpsertTests
         anotherPost!.Status.Should().Be("DRAFT");
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldUpdateExistingPostUsingStringRecordId(string connectionString)
     {
         IEnumerable<Post>? list = null;

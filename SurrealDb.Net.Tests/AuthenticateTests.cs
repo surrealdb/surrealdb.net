@@ -4,9 +4,8 @@ namespace SurrealDb.Net.Tests;
 
 public class AuthenticateTests
 {
-    [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldAuthenticate(string connectionString)
     {
         Jwt? jwt = null;
@@ -67,10 +66,8 @@ public class AuthenticateTests
         list.Should().NotBeNull().And.HaveCount(2);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
+    [Test]
+    [EmbeddedConnectionStringFixtureGenerator]
     public async Task InvalidateIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -126,9 +123,8 @@ public class AuthenticateTests
             .WithMessage("Authentication is not enabled in embedded mode.");
     }
 
-    [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldFailWhenInvalidate(string connectionString)
     {
         Jwt? jwt = null;

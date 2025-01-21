@@ -4,7 +4,7 @@ namespace SurrealDb.Net.Tests.Models;
 
 public class RangeTests
 {
-    [Fact]
+    [Test]
     public void ShouldCreateFullRange()
     {
         var result = new Range<int, int>();
@@ -13,7 +13,7 @@ public class RangeTests
         result.End.Should().BeNull();
     }
 
-    [Fact]
+    [Test]
     public void ShouldCreateStandardRange()
     {
         var result = new Range<int, string>(
@@ -25,7 +25,7 @@ public class RangeTests
         result.End.Should().Be(new RangeBound<string>("x", RangeBoundType.Exclusive));
     }
 
-    [Fact]
+    [Test]
     public void ShouldCreateStartOnlyRange()
     {
         var result = new Range<int, string>(new(0, RangeBoundType.Inclusive), default);
@@ -34,7 +34,7 @@ public class RangeTests
         result.End.Should().BeNull();
     }
 
-    [Fact]
+    [Test]
     public void ShouldCreateEndOnlyRange()
     {
         var result = new Range<int, string>(default, new("x", RangeBoundType.Exclusive));
@@ -43,7 +43,7 @@ public class RangeTests
         result.End.Should().Be(new RangeBound<string>("x", RangeBoundType.Exclusive));
     }
 
-    [Fact]
+    [Test]
     public void ShouldCreateFullRangeFromStaticClass()
     {
         var result = Range.Full();
@@ -52,7 +52,7 @@ public class RangeTests
         result.End.Should().BeNull();
     }
 
-    [Fact]
+    [Test]
     public void ShouldCreateStartOnlyRangeFromStaticClass()
     {
         var result = Range.StartFrom<int>(new(0, RangeBoundType.Inclusive));
@@ -61,7 +61,7 @@ public class RangeTests
         result.End.Should().BeNull();
     }
 
-    [Fact]
+    [Test]
     public void ShouldCreateEndOnlyRangeFromStaticClass()
     {
         var result = Range.EndTo<string>(new("x", RangeBoundType.Exclusive));

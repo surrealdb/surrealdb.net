@@ -2,7 +2,7 @@
 
 public class RangeBoundTests
 {
-    [Fact]
+    [Test]
     public void ShouldCreateEmptyRangeBound()
     {
         var bound = new RangeBound<int>();
@@ -11,7 +11,7 @@ public class RangeBoundTests
         bound.Type.Should().Be(RangeBoundType.Unknown);
     }
 
-    [Fact]
+    [Test]
     public void ShouldCreateInclusiveRangeBound()
     {
         var bound = new RangeBound<int>(14, RangeBoundType.Inclusive);
@@ -20,7 +20,7 @@ public class RangeBoundTests
         bound.Type.Should().Be(RangeBoundType.Inclusive);
     }
 
-    [Fact]
+    [Test]
     public void ShouldCreateExclusiveRangeBound()
     {
         var bound = new RangeBound<string>("v", RangeBoundType.Exclusive);
@@ -29,7 +29,7 @@ public class RangeBoundTests
         bound.Type.Should().Be(RangeBoundType.Exclusive);
     }
 
-    [Fact]
+    [Test]
     public void ShouldCreateInclusiveRangeBoundFromStaticClass()
     {
         var bound = RangeBound.Inclusive("incl");
@@ -38,7 +38,7 @@ public class RangeBoundTests
         bound.Type.Should().Be(RangeBoundType.Inclusive);
     }
 
-    [Fact]
+    [Test]
     public void ShouldCreateExclusiveRangeBoundFromStaticClass()
     {
         var bound = RangeBound.Exclusive("excl");

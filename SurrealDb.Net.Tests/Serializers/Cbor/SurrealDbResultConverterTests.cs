@@ -5,7 +5,7 @@ namespace SurrealDb.Net.Tests.Serializers.Cbor;
 
 public class SurrealDbResultConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public void CannotSerialize()
     {
         ISurrealDbResult value = new SurrealDbOkResult(
@@ -20,7 +20,7 @@ public class SurrealDbResultConverterTests : BaseCborConverterTests
         act.Should().ThrowAsync<NotImplementedException>();
     }
 
-    [Fact]
+    [Test]
     public async Task DeserializeResultWithNoResult()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<ISurrealDbResult>(

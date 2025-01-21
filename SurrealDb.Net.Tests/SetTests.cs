@@ -5,12 +5,8 @@ namespace SurrealDb.Net.Tests;
 
 public class SetTests
 {
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldSetParam(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -56,12 +52,8 @@ public class SetTests
         list.Should().NotBeNull().And.HaveCount(2);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task KeyShouldNotBeNull(string connectionString)
     {
         Func<Task> func = async () =>
@@ -92,12 +84,8 @@ public class SetTests
             .WithMessage("Value cannot be null. (Parameter 'key')");
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task KeyShouldNotBeEmpty(string connectionString)
     {
         Func<Task> func = async () =>
@@ -128,12 +116,8 @@ public class SetTests
             .WithMessage("Variable name is not valid. (Parameter 'key')");
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task KeyShouldNotContainWhitepace(string connectionString)
     {
         Func<Task> func = async () =>
@@ -164,12 +148,8 @@ public class SetTests
             .WithMessage("Variable name is not valid. (Parameter 'key')");
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task KeyCanContainUnderscore(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -215,12 +195,8 @@ public class SetTests
         list.Should().NotBeNull().And.HaveCount(2);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ComplexKeyShouldBeSurroundedWithBackticks(string connectionString)
     {
         SurrealDbResponse? response = null;

@@ -2,7 +2,7 @@
 
 public class ConstructorTests
 {
-    [Fact]
+    [Test]
     public void ShouldSupportHttpProtocol()
     {
         Func<Uri> func = () => new SurrealDbClient("http://127.0.0.1:8000").Uri;
@@ -11,7 +11,7 @@ public class ConstructorTests
         func().AbsoluteUri.Should().Be("http://127.0.0.1:8000/");
     }
 
-    [Fact]
+    [Test]
     public void ShouldSupportHttpsProtocol()
     {
         Func<Uri> func = () => new SurrealDbClient("https://cloud.SurrealDb.com").Uri;
@@ -20,7 +20,7 @@ public class ConstructorTests
         func().AbsoluteUri.Should().Be("https://cloud.surrealdb.com/");
     }
 
-    [Fact]
+    [Test]
     public void ShouldSupportWsProtocol()
     {
         Func<Uri> func = () => new SurrealDbClient("ws://127.0.0.1:8000/rpc").Uri;
@@ -29,7 +29,7 @@ public class ConstructorTests
         func().AbsoluteUri.Should().Be("ws://127.0.0.1:8000/rpc");
     }
 
-    [Fact]
+    [Test]
     public void ShouldSupportWssProtocol()
     {
         Func<Uri> func = () => new SurrealDbClient("wss://cloud.SurrealDb.com/rpc").Uri;
@@ -38,13 +38,13 @@ public class ConstructorTests
         func().AbsoluteUri.Should().Be("wss://cloud.surrealdb.com/rpc");
     }
 
-    [Theory]
-    [InlineData("ws://127.0.0.1:8000", "ws://127.0.0.1:8000/rpc")]
-    [InlineData("wss://cloud.SurrealDb.com", "wss://cloud.surrealdb.com/rpc")]
-    [InlineData("ws://127.0.0.1:8000/", "ws://127.0.0.1:8000/rpc")]
-    [InlineData("wss://cloud.SurrealDb.com/", "wss://cloud.surrealdb.com/rpc")]
-    [InlineData("ws://127.0.0.1:8000/bar", "ws://127.0.0.1:8000/bar/rpc")]
-    [InlineData("wss://cloud.SurrealDb.com/bar", "wss://cloud.surrealdb.com/bar/rpc")]
+    [Test]
+    [Arguments("ws://127.0.0.1:8000", "ws://127.0.0.1:8000/rpc")]
+    [Arguments("wss://cloud.SurrealDb.com", "wss://cloud.surrealdb.com/rpc")]
+    [Arguments("ws://127.0.0.1:8000/", "ws://127.0.0.1:8000/rpc")]
+    [Arguments("wss://cloud.SurrealDb.com/", "wss://cloud.surrealdb.com/rpc")]
+    [Arguments("ws://127.0.0.1:8000/bar", "ws://127.0.0.1:8000/bar/rpc")]
+    [Arguments("wss://cloud.SurrealDb.com/bar", "wss://cloud.surrealdb.com/bar/rpc")]
     public void ShouldAutomaticallyAddRpcSuffixForWsProtocols(string endpoint, string expected)
     {
         Func<Uri> func = () => new SurrealDbClient(endpoint).Uri;
@@ -53,7 +53,7 @@ public class ConstructorTests
         func().AbsoluteUri.Should().Be(expected);
     }
 
-    [Fact]
+    [Test]
     public void ShouldRequireDependencyInjectionForMemoryProtocol()
     {
         Action action = () => new SurrealDbClient("mem://");
@@ -66,7 +66,7 @@ public class ConstructorTests
             );
     }
 
-    [Fact]
+    [Test]
     public void ShouldThrowErrorOnInvalidUri()
     {
         Action act = () => new SurrealDbClient("123456");
@@ -74,7 +74,7 @@ public class ConstructorTests
         act.Should().Throw<UriFormatException>();
     }
 
-    [Fact]
+    [Test]
     public void ShouldThrowErrorOnUnsupportedProtocol()
     {
         Action act = () => new SurrealDbClient("abc://cloud.SurrealDb.com");

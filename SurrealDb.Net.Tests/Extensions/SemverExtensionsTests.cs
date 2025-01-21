@@ -4,7 +4,7 @@ namespace SurrealDb.Net.Tests.Extensions;
 
 public class SemverExtensionsTests
 {
-    [Fact]
+    [Test]
     public void ShouldParseSemverVersion()
     {
         var result = "surrealdb-1.0.0+20230913.54aedcd".ToSemver();

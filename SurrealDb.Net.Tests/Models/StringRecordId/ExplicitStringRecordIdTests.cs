@@ -2,7 +2,7 @@
 
 public class ExplicitStringRecordIdTests
 {
-    [Fact]
+    [Test]
     public void ShouldCreateStringRecordIdFromStringExplicitly()
     {
         var recordId = (StringRecordId)"table:id";

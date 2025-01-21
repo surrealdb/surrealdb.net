@@ -11,9 +11,8 @@ public class AuthParams : ScopeAuth
 
 public class SignInTests
 {
-    [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldSignInAsRootUser(string connectionString)
     {
         Func<Task> func = async () =>
@@ -27,10 +26,8 @@ public class SignInTests
         await func.Should().NotThrowAsync();
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
+    [Test]
+    [EmbeddedConnectionStringFixtureGenerator]
     public async Task SignInAsRootUserIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -46,9 +43,8 @@ public class SignInTests
             .WithMessage("Authentication is not enabled in embedded mode.");
     }
 
-    [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldSignInUsingNamespaceAuth(string connectionString)
     {
         Jwt? jwt = null;
@@ -80,10 +76,8 @@ public class SignInTests
         jwt!.Value.Token.Should().BeValidJwt();
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
+    [Test]
+    [EmbeddedConnectionStringFixtureGenerator]
     public async Task SignInUsingNamespaceAuthIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -112,9 +106,8 @@ public class SignInTests
             .WithMessage("Authentication is not enabled in embedded mode.");
     }
 
-    [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldSignInUsingDatabaseAuth(string connectionString)
     {
         Jwt? jwt = null;
@@ -147,10 +140,8 @@ public class SignInTests
         jwt!.Value.Token.Should().BeValidJwt();
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
+    [Test]
+    [EmbeddedConnectionStringFixtureGenerator]
     public async Task SignInUsingDatabaseAuthIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -180,9 +171,8 @@ public class SignInTests
             .WithMessage("Authentication is not enabled in embedded mode.");
     }
 
-    [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldSignInUsingScopeAuth(string connectionString)
     {
         Jwt? jwt = null;
@@ -228,10 +218,8 @@ public class SignInTests
         jwt!.Value.Token.Should().BeValidJwt();
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
+    [Test]
+    [EmbeddedConnectionStringFixtureGenerator]
     public async Task SignInUsingScopeAuthIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>

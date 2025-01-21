@@ -2,7 +2,7 @@ namespace SurrealDb.Net.Tests.Models;
 
 public class MethodsDurationTests
 {
-    [Fact]
+    [Test]
     public void ShouldConvertDurationToTimeSpan()
     {
         var duration = new Duration("1h30m20s1350ms");
@@ -11,7 +11,7 @@ public class MethodsDurationTests
         timeSpan.Should().Be(new TimeSpan(0, 1, 30, 21, 350));
     }
 
-    [Fact]
+    [Test]
     public void ShouldConvertDurationToTimeSpanWithNanoseconds()
     {
         var duration = new Duration("25us918ns");
@@ -20,7 +20,7 @@ public class MethodsDurationTests
         timeSpan.Ticks.Should().Be(259);
     }
 
-    [Fact]
+    [Test]
     public void ShouldDisplayDurationString()
     {
         var duration = new Duration("1h30m");

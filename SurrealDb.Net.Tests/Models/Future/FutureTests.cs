@@ -2,7 +2,7 @@
 
 public class FutureTests
 {
-    [Fact]
+    [Test]
     public void ShouldApplyToString()
     {
         var future = new Future("fn::myFunction()");

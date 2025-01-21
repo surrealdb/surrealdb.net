@@ -2,7 +2,7 @@
 
 public class StringRecordIdConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         string result = await SerializeCborBinaryAsHexaAsync(new StringRecordId("table:id"));
@@ -10,7 +10,7 @@ public class StringRecordIdConverterTests : BaseCborConverterTests
         result.Should().Be("c8687461626c653a6964");
     }
 
-    [Fact]
+    [Test]
     public async Task DeserializeShouldThrowException()
     {
         var act = async () =>

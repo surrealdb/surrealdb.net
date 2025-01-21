@@ -4,7 +4,7 @@ namespace SurrealDb.Net.Tests.Serializers.Cbor.Spatial;
 
 public class GeographyLineStringConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         var factory = GeographyFactory.LineString();
@@ -21,7 +21,7 @@ public class GeographyLineStringConverterTests : BaseCborConverterTests
         result.Should().Be("d85984d8588261306130d8588261316131d8588261306131d8588261306130");
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<GeographyLineString>(

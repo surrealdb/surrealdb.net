@@ -2,7 +2,7 @@
 
 public class RecordIdRangeConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         var value = new RecordIdRange<int, string>(
@@ -16,7 +16,7 @@ public class RecordIdRangeConverterTests : BaseCborConverterTests
         result.Should().Be("c882657461626c65d83182d83200d8336178");
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var act = async () =>

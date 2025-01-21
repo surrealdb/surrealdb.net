@@ -6,7 +6,7 @@ namespace SurrealDb.Net.Tests.Serializers.Cbor;
 
 public class SurrealDbWsResponseConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public void CannotSerialize()
     {
         ISurrealDbWsResponse value = new SurrealDbWsOkResponse(
@@ -20,7 +20,7 @@ public class SurrealDbWsResponseConverterTests : BaseCborConverterTests
         act.Should().ThrowAsync<NotImplementedException>();
     }
 
-    [Fact]
+    [Test]
     public async Task DeserializeWsResponseWithNoResult()
     {
         var response = await DeserializeCborBinaryAsHexaAsync<ISurrealDbWsResponse>(
@@ -35,7 +35,7 @@ public class SurrealDbWsResponseConverterTests : BaseCborConverterTests
         okResponse.GetValue<string>().Should().BeNull();
     }
 
-    [Fact]
+    [Test]
     public async Task DeserializeWsResponseWithStringResult()
     {
         var response = await DeserializeCborBinaryAsHexaAsync<ISurrealDbWsResponse>(
@@ -55,7 +55,7 @@ public class SurrealDbWsResponseConverterTests : BaseCborConverterTests
             );
     }
 
-    [Fact]
+    [Test]
     public async Task DeserializeWsResponseWithSingleOkResult()
     {
         var response = await DeserializeCborBinaryAsHexaAsync<ISurrealDbWsResponse>(
@@ -80,7 +80,7 @@ public class SurrealDbWsResponseConverterTests : BaseCborConverterTests
         okResult.GetValue<string>().Should().BeNull();
     }
 
-    [Fact]
+    [Test]
     public async Task DeserializeWsResponseWithMultipleOkResults()
     {
         var response = await DeserializeCborBinaryAsHexaAsync<ISurrealDbWsResponse>(
@@ -95,7 +95,7 @@ public class SurrealDbWsResponseConverterTests : BaseCborConverterTests
         results.Should().HaveCount(9);
     }
 
-    [Fact]
+    [Test]
     public async Task DeserializeWsResponseWithError()
     {
         var response = await DeserializeCborBinaryAsHexaAsync<ISurrealDbWsResponse>(

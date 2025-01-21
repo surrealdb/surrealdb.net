@@ -2,7 +2,7 @@
 
 public class DateTimeConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         string result = await SerializeCborBinaryAsHexaAsync(
@@ -16,7 +16,7 @@ public class DateTimeConverterTests : BaseCborConverterTests
 #endif
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<DateTime>("cc821a66002af21a09acd844");

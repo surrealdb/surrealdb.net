@@ -7,12 +7,8 @@ namespace SurrealDb.Net.Tests;
 
 public class RawQueryTests
 {
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldQueryWithParams(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -60,12 +56,8 @@ public class RawQueryTests
         list.Should().NotBeNull().And.HaveCount(2);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldHaveOneProtocolErrorResult(string connectionString)
     {
         var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
@@ -117,12 +109,8 @@ public class RawQueryTests
         await func.Should().ThrowAsync<SurrealDbException>().WithMessage(errorMessage);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldHave4Results(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -166,12 +154,8 @@ SELECT xyz FROM post;
         response!.Count.Should().Be(4);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldIterateOnOkResults(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -218,12 +202,8 @@ CANCEL TRANSACTION;
         response!.Oks.Should().NotBeNull().And.HaveCount(3);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldIterateOnErrorResults(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -270,12 +250,8 @@ CANCEL TRANSACTION;
         response!.Errors.Should().NotBeNull().And.HaveCount(1);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldReturnFirstOkResult(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -322,12 +298,8 @@ CANCEL TRANSACTION;
         response!.FirstOk.Should().BeOfType<SurrealDbOkResult>();
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldReturnFirstError(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -374,12 +346,8 @@ CANCEL TRANSACTION;
         response!.FirstError.Should().BeOfType<SurrealDbErrorResult>();
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldHaveError(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -426,12 +394,8 @@ CANCEL TRANSACTION;
         response!.HasErrors.Should().BeTrue();
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldGetValueFromIndex(string connectionString)
     {
         SurrealDbResponse? response = null;

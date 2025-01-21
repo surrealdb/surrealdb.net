@@ -2,7 +2,7 @@
 
 public class FloatConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         string result = await SerializeCborBinaryAsHexaAsync(888.44f);
@@ -10,7 +10,7 @@ public class FloatConverterTests : BaseCborConverterTests
         result.Should().Be("fa445e1c29");
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         float result = await DeserializeCborBinaryAsHexaAsync<float>("fa445e1c29");

@@ -12,12 +12,8 @@ public class WroteRelation : SurrealDbRelationRecord
 
 public class RelateTests
 {
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldCreateEmptyRelation(string connectionString)
     {
         IEnumerable<EmptyRelation>? list = null;
@@ -54,12 +50,8 @@ public class RelateTests
         result!.Out.Should().Be(new RecordIdOfString("out", "one"));
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldCreateWroteRelation(string connectionString)
     {
         IEnumerable<WroteRelation>? list = null;
@@ -105,12 +97,8 @@ public class RelateTests
         result!.NumberOfPages.Should().Be(14);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldCreateWroteRelationWithPredefinedId(string connectionString)
     {
         IEnumerable<WroteRelation>? list = null;

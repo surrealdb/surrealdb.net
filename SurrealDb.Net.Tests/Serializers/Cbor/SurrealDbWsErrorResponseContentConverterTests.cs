@@ -4,7 +4,7 @@ namespace SurrealDb.Net.Tests.Serializers.Cbor;
 
 public class SurrealDbWsErrorResponseContentConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public void CannotSerialize()
     {
         var value = new SurrealDbWsErrorResponseContent { Code = 1, Message = "Error message" };
@@ -14,7 +14,7 @@ public class SurrealDbWsErrorResponseContentConverterTests : BaseCborConverterTe
         act.Should().ThrowAsync<NotImplementedException>();
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<SurrealDbWsErrorResponseContent>(

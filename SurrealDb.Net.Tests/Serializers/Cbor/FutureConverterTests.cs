@@ -2,7 +2,7 @@
 
 public class FutureConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         var value = new Future("fn::myFunction()");
@@ -12,7 +12,7 @@ public class FutureConverterTests : BaseCborConverterTests
         result.Should().Be("cf70666e3a3a6d7946756e6374696f6e2829");
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<Future>(

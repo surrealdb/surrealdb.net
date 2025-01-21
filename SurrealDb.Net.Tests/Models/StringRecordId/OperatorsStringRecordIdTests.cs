@@ -2,15 +2,17 @@
 
 public class OperatorsStringRecordIdTests
 {
-    public static TheoryData<StringRecordId, StringRecordId, bool> EqualityCases =>
-        new()
+    public static class TestDataSources
+    {
+        public static IEnumerable<Func<(StringRecordId, StringRecordId, bool)>> EqualityCases()
         {
-            { new StringRecordId("table:id"), new StringRecordId("table:id"), true },
-            { new StringRecordId("table:one"), new StringRecordId("table:two"), false },
-        };
+            yield return () => ((StringRecordId)"table:id", (StringRecordId)"table:id", true);
+            yield return () => ((StringRecordId)"table:one", (StringRecordId)"table:two", false);
+        }
+    }
 
-    [Theory]
-    [MemberData(nameof(EqualityCases))]
+    [Test]
+    [MethodDataSource(typeof(TestDataSources), nameof(TestDataSources.EqualityCases))]
     public void ShouldBe(StringRecordId recordId1, StringRecordId recordId2, bool expected)
     {
         bool result = recordId1 == recordId2;

@@ -11,6 +11,7 @@ public class ExportTests
     {
         _verifySettings.DisableRequireUniquePrefix();
         _verifySettings.UseDirectory("Snapshots");
+        _verifySettings.IgnoreParametersForVerified();
 
         // 💡 "ScrubInlineDateTimes" won't work as DateTime cannot be parsed with more than 7 seconds fraction units
         _verifySettings.AddScrubber(
@@ -41,12 +42,8 @@ public class ExportTests
         );
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldExportEmptyDatabaseWithDefaultOptions(string connectionString)
     {
         var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
@@ -73,12 +70,8 @@ public class ExportTests
         await Verify(result, _verifySettings);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldExportFullDatabaseWithDefaultOptions(string connectionString)
     {
         var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);

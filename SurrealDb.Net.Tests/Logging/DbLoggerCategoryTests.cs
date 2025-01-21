@@ -4,19 +4,19 @@ namespace SurrealDb.Net.Tests.Logging;
 
 public class DbLoggerCategoryTests
 {
-    [Fact]
+    [Test]
     public void ConnectionLoggerCategoryShouldHaveTheCorrectName()
     {
         DbLoggerCategory.Connection.Name.Should().Be("SurrealDB.Connection");
     }
 
-    [Fact]
+    [Test]
     public void MethodLoggerCategoryShouldHaveTheCorrectName()
     {
         DbLoggerCategory.Method.Name.Should().Be("SurrealDB.Method");
     }
 
-    [Fact]
+    [Test]
     public void QueryLoggerCategoryShouldHaveTheCorrectName()
     {
         DbLoggerCategory.Query.Name.Should().Be("SurrealDB.Query");

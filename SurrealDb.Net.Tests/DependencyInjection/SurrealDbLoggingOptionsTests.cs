@@ -4,7 +4,7 @@ namespace SurrealDb.Net.Tests.DependencyInjection;
 
 public class SurrealDbLoggingOptionsTests
 {
-    [Fact]
+    [Test]
     public void SensitiveDataLoggingShouldBeDisabledByDefault()
     {
         new SurrealDbLoggingOptions().SensitiveDataLoggingEnabled.Should().BeFalse();

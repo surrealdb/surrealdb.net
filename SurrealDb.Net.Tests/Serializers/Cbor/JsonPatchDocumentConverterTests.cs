@@ -6,7 +6,7 @@ namespace SurrealDb.Net.Tests.Serializers.Cbor;
 
 public class JsonPatchDocumentConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         var value = new JsonPatchDocument
@@ -25,7 +25,7 @@ public class JsonPatchDocumentConverterTests : BaseCborConverterTests
             .Be("81a4626f70636164646470617468662f76616c75656466726f6df66576616c7565a2615801615902");
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<JsonPatchDocument>(
@@ -65,7 +65,7 @@ public class JsonPatchDocumentConverterTests : BaseCborConverterTests
         }
     }
 
-    [Fact]
+    [Test]
     public async Task SerializeWithGenerics()
     {
         var value = new JsonPatchDocument<Post>
@@ -86,7 +86,7 @@ public class JsonPatchDocumentConverterTests : BaseCborConverterTests
             );
     }
 
-    [Fact]
+    [Test]
     public async Task DeserializeWithGenerics()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<JsonPatchDocument<Post>>(

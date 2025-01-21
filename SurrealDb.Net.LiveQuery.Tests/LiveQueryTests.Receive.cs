@@ -7,8 +7,8 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 
 public class ReceiveLiveQueryTests : BaseLiveQueryTests
 {
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldLiveQueryReceiveCreatedRecord(string connectionString)
     {
         var results = new List<SurrealDbLiveQueryResponse>();
@@ -76,8 +76,8 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
         secondResultAsSurrealDbLiveQueryResultResponse.Result.Value.Should().Be(1);
     }
 
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldLiveQueryReceiveUpdatedRecord(string connectionString)
     {
         var results = new List<SurrealDbLiveQueryResponse>();
@@ -147,8 +147,8 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
         secondResultAsSurrealDbLiveQueryResultResponse.Result.Value.Should().Be(2);
     }
 
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldLiveQueryReceiveDeletedRecord(string connectionString)
     {
         var results = new List<SurrealDbLiveQueryResponse>();
@@ -220,8 +220,8 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
         secondResultAsSurrealDbLiveQueryResultResponse.Result.Id.Should().Be(record!.Id);
     }
 
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldLiveQueryReceiveSocketClosed(string connectionString)
     {
         var results = new List<SurrealDbLiveQueryResponse>();
@@ -295,8 +295,8 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
             .Be(SurrealDbLiveQueryClosureReason.SocketClosed);
     }
 
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldLiveQueryReceiveQueryKilled(string connectionString)
     {
         var results = new List<SurrealDbLiveQueryResponse>();

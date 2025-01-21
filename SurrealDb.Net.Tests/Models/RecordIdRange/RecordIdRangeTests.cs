@@ -2,9 +2,9 @@
 
 public class RecordIdRangeTests
 {
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
+    [Test]
+    [Arguments(null)]
+    [Arguments("")]
     public void ShouldFailToCreateRecordIdRangeWithoutTable(string? table)
     {
         var act = () => new RecordIdRange<int, int>(table!, new(), new());
@@ -13,9 +13,9 @@ public class RecordIdRangeTests
             .WithMessage("Value cannot be null. (Parameter 'table')");
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
+    [Test]
+    [Arguments(null)]
+    [Arguments("")]
     public void ShouldFailToCreateRecordIdRangeWithoutTableAlt(string? table)
     {
         var act = () => new RecordIdRange<int, int>(table!, new());
@@ -24,7 +24,7 @@ public class RecordIdRangeTests
             .WithMessage("Value cannot be null. (Parameter 'table')");
     }
 
-    [Fact]
+    [Test]
     public void ShouldFailToCreateRecordIdRangeWithoutStartBound()
     {
         var act = () => new RecordIdRange<int, int>("table", new Range<int, int>(default, new()));
@@ -33,7 +33,7 @@ public class RecordIdRangeTests
             .WithMessage("The start part is not valid (Parameter 'range')");
     }
 
-    [Fact]
+    [Test]
     public void ShouldFailToCreateRecordIdRangeWithoutEndBound()
     {
         var act = () => new RecordIdRange<int, int>("table", new Range<int, int>(new(), default));
@@ -42,7 +42,7 @@ public class RecordIdRangeTests
             .WithMessage("The end part is not valid (Parameter 'range')");
     }
 
-    [Fact]
+    [Test]
     public void ShouldCreateRecordIdRange()
     {
         var result = new RecordIdRange<int, int>(
@@ -56,7 +56,7 @@ public class RecordIdRangeTests
         result.Range.End.Should().Be(new RangeBound<int>(1, RangeBoundType.Inclusive));
     }
 
-    [Fact]
+    [Test]
     public void ShouldCreateRecordIdRangeAlt()
     {
         var result = new RecordIdRange<int, int>(

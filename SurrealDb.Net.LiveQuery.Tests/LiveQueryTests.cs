@@ -6,7 +6,7 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 
 public class LiveQueryTests : BaseLiveQueryTests
 {
-    [Fact]
+    [Test]
     public async Task ShouldNotBeSupportedOnHttpProtocol()
     {
         const string connectionString = "Endpoint=http://127.0.0.1:8000";
@@ -26,8 +26,8 @@ public class LiveQueryTests : BaseLiveQueryTests
         await func.Should().ThrowAsync<NotSupportedException>();
     }
 
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldReceiveData(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();
