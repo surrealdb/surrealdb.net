@@ -19,7 +19,7 @@ public class SurrealDbMinimalApisExtensionsGenerator : ISourceGenerator
             {
                 "SurrealDb.MinimalApis.Extensions.SurrealDbMinimalApisOptions.cs",
                 "SurrealDbMinimalApisOptions.g.cs"
-            }
+            },
         };
 
         var assembly = Assembly.GetExecutingAssembly();

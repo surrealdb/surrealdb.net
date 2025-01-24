@@ -46,7 +46,7 @@ public class ConnectTests
                 {
                     Endpoint = "ws://127.0.0.1:8000/rpc",
                     Namespace = dbInfo.Namespace,
-                    Database = dbInfo.Database
+                    Database = dbInfo.Database,
                 }
             );
 

@@ -12,5 +12,5 @@ public enum SurrealSchemaFile
     String,
     User,
     Uuid,
-    Vector
+    Vector,
 }

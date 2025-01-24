@@ -31,7 +31,7 @@ public class UpsertAllTests
                 Title = "# Title",
                 Content = "# Content",
                 CreatedAt = now,
-                Status = "PUBLISHED"
+                Status = "PUBLISHED",
             };
 
             list = await client.Select<Post>("post");

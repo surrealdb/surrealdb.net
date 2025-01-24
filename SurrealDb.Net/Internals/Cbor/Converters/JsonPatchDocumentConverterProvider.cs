@@ -15,15 +15,15 @@ internal class JsonPatchDocumentConverterProvider : CborConverterProviderBase
 
         return type switch
         {
-            { Name: "JsonPatchDocument", IsGenericType: false }
-                => new JsonPatchDocumentConverter(options),
-            { Name: "JsonPatchDocument`1", IsGenericType: true }
-                => CreateGenericConverter(
-                    options,
-                    typeof(JsonPatchDocumentConverter<>),
-                    type.GenericTypeArguments[0]
-                ),
-            _ => null
+            { Name: "JsonPatchDocument", IsGenericType: false } => new JsonPatchDocumentConverter(
+                options
+            ),
+            { Name: "JsonPatchDocument`1", IsGenericType: true } => CreateGenericConverter(
+                options,
+                typeof(JsonPatchDocumentConverter<>),
+                type.GenericTypeArguments[0]
+            ),
+            _ => null,
         };
     }
 }

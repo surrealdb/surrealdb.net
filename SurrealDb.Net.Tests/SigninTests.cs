@@ -65,7 +65,7 @@ public class SignInTests
                 {
                     Namespace = dbInfo.Namespace,
                     Username = "johndoe",
-                    Password = "password123"
+                    Password = "password123",
                 }
             );
         };
@@ -96,7 +96,7 @@ public class SignInTests
                 {
                     Namespace = dbInfo.Namespace,
                     Username = "johndoe",
-                    Password = "password123"
+                    Password = "password123",
                 }
             );
         };
@@ -129,7 +129,7 @@ public class SignInTests
                     Namespace = dbInfo.Namespace,
                     Database = dbInfo.Database,
                     Username = "johndoe",
-                    Password = "password123"
+                    Password = "password123",
                 }
             );
         };
@@ -161,7 +161,7 @@ public class SignInTests
                     Namespace = dbInfo.Namespace,
                     Database = dbInfo.Database,
                     Username = "johndoe",
-                    Password = "password123"
+                    Password = "password123",
                 }
             );
         };
@@ -196,7 +196,7 @@ public class SignInTests
                 Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
-                Password = "password123"
+                Password = "password123",
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -234,7 +234,7 @@ public class SignInTests
                 Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
-                Password = "password123"
+                Password = "password123",
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 

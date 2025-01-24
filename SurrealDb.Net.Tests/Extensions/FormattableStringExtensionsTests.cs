@@ -79,7 +79,7 @@ public class FormattableStringExtensionsTests
         {
             { "p0", table },
             { "p1", 5 },
-            { "p2", 10 }
+            { "p2", 10 },
         };
         @params.Should().BeEquivalentTo(expectedParams);
     }

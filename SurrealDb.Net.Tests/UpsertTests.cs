@@ -25,7 +25,7 @@ public class UpsertTests
             {
                 Id = ("post", "another"),
                 Title = "A new article",
-                Content = "This is a new article created using the .NET SDK"
+                Content = "This is a new article created using the .NET SDK",
             };
 
             result = await client.Upsert(post);
@@ -78,7 +78,7 @@ public class UpsertTests
                 Title = "[Updated] First article",
                 Content = "[Edit] This is my first article",
                 CreatedAt = existingCreatedAt,
-                Status = existingStatus
+                Status = existingStatus,
             };
 
             result = await client.Upsert(post);
@@ -117,7 +117,7 @@ public class UpsertTests
             var post = new Post
             {
                 Title = "A new article",
-                Content = "This is a new article created using the .NET SDK"
+                Content = "This is a new article created using the .NET SDK",
             };
 
             result = await client.Upsert<Post, Post>(new StringRecordId("post:another"), post);
@@ -169,7 +169,7 @@ public class UpsertTests
                 Title = "[Updated] First article",
                 Content = "[Edit] This is my first article",
                 CreatedAt = existingCreatedAt,
-                Status = existingStatus
+                Status = existingStatus,
             };
 
             result = await client.Upsert<Post, Post>(new StringRecordId("post:first"), post);

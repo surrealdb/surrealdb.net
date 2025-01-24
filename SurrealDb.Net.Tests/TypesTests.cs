@@ -166,7 +166,7 @@ public class TypesTests
             new DecimalRecord
             {
                 Name = "decimal-precision",
-                Value = 13.5719384719384719385639856394139476937756394756m
+                Value = 13.5719384719384719385639856394139476937756394756m,
             }
         );
         await client.Create(
@@ -174,7 +174,7 @@ public class TypesTests
             new DecimalRecord
             {
                 Name = "float",
-                Value = 13.5719384719384719385639856394139476937756394756m
+                Value = 13.5719384719384719385639856394139476937756394756m,
             }
         );
 
@@ -255,7 +255,7 @@ public class TypesTests
             new FloatRecord
             {
                 Name = "decimal-precision",
-                Value = (float)13.5719384719384719385639856394139476937756394756m
+                Value = (float)13.5719384719384719385639856394139476937756394756m,
             }
         );
         await client.Create(
@@ -263,7 +263,7 @@ public class TypesTests
             new FloatRecord
             {
                 Name = "float",
-                Value = (float)13.5719384719384719385639856394139476937756394756m
+                Value = (float)13.5719384719384719385639856394139476937756394756m,
             }
         );
 
@@ -344,7 +344,7 @@ public class TypesTests
             new DoubleRecord
             {
                 Name = "decimal-precision",
-                Value = 13.5719384719384719385639856394139476937756394756
+                Value = 13.5719384719384719385639856394139476937756394756,
             }
         );
         await client.Create(
@@ -352,7 +352,7 @@ public class TypesTests
             new DoubleRecord
             {
                 Name = "float",
-                Value = 13.5719384719384719385639856394139476937756394756
+                Value = 13.5719384719384719385639856394139476937756394756,
             }
         );
 
@@ -709,7 +709,7 @@ public class TypesTests
             new DateTimeRecord
             {
                 Name = "time",
-                Value = new DateTime(2022, 7, 3, 7, 18, 52).AsUtc()
+                Value = new DateTime(2022, 7, 3, 7, 18, 52).AsUtc(),
             }
         );
         await client.Create(
@@ -717,7 +717,7 @@ public class TypesTests
             new DateTimeRecord
             {
                 Name = "nano",
-                Value = new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(841_147_000).AsUtc()
+                Value = new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(841_147_000).AsUtc(),
             }
         );
         await client.Create(
@@ -729,7 +729,7 @@ public class TypesTests
                     .AddNanoseconds(841_147_000)
                     .AsUtc()
                     .WithOffset(TimeSpan.FromHours(2))
-                    .UtcDateTime
+                    .UtcDateTime,
             }
         );
         await client.Create(
@@ -737,7 +737,7 @@ public class TypesTests
             new DateTimeRecord
             {
                 Name = "time+duration",
-                Value = new DateTime(2022, 7, 17, 7, 18, 52).AsUtc()
+                Value = new DateTime(2022, 7, 17, 7, 18, 52).AsUtc(),
             }
         );
         await client.Create(
@@ -745,7 +745,7 @@ public class TypesTests
             new DateTimeRecord
             {
                 Name = "nano+duration",
-                Value = new DateTime(2022, 7, 3, 8, 49, 14).AddNanoseconds(191_147_000).AsUtc()
+                Value = new DateTime(2022, 7, 3, 8, 49, 14).AddNanoseconds(191_147_000).AsUtc(),
             }
         );
         await client.Create(
@@ -753,7 +753,7 @@ public class TypesTests
             new DateTimeRecord
             {
                 Name = "full-nano",
-                Value = new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(123_456_789).AsUtc()
+                Value = new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(123_456_789).AsUtc(),
             }
         );
 

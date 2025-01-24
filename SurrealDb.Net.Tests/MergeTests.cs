@@ -34,7 +34,7 @@ public class MergeTests
             var merge = new PostMergeRecord
             {
                 Id = ("post", "first"),
-                Content = "[Edit] This is my first article"
+                Content = "[Edit] This is my first article",
             };
 
             result = await client.Merge<PostMergeRecord, Post>(merge);
@@ -72,7 +72,7 @@ public class MergeTests
 
             var data = new Dictionary<string, object>
             {
-                { "content", "[Edit] This is my first article" }
+                { "content", "[Edit] This is my first article" },
             };
 
             result = await client.Merge<Post>(("post", "first"), data);
@@ -110,7 +110,7 @@ public class MergeTests
 
             var data = new Dictionary<string, object>
             {
-                { "content", "[Edit] This is my first article" }
+                { "content", "[Edit] This is my first article" },
             };
 
             result = await client.Merge<Post>(new StringRecordId("post:first"), data);

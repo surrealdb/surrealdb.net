@@ -3,5 +3,5 @@
 public enum SurrealDbLiveQueryClosureReason
 {
     SocketClosed,
-    QueryKilled
+    QueryKilled,
 }

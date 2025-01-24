@@ -82,51 +82,44 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
 
         _engine = protocol switch
         {
-            "http"
-            or "https"
-                => new SurrealDbHttpEngine(
-                    configuration,
-                    httpClientFactory,
-                    configureCborOptions,
-                    loggerFactory is not null ? new SurrealDbLoggerFactory(loggerFactory) : null
+            "http" or "https" => new SurrealDbHttpEngine(
+                configuration,
+                httpClientFactory,
+                configureCborOptions,
+                loggerFactory is not null ? new SurrealDbLoggerFactory(loggerFactory) : null
+            ),
+            "ws" or "wss" => new SurrealDbWsEngine(
+                configuration,
+                configureCborOptions,
+                loggerFactory is not null ? new SurrealDbLoggerFactory(loggerFactory) : null
+            ),
+            "mem" => ResolveEmbeddedProvider<ISurrealDbInMemoryEngine>(
+                serviceProvider,
+                configuration,
+                configureCborOptions,
+                loggerFactory
+            )
+                ?? throw new Exception(
+                    "Impossible to create a new in-memory SurrealDB client. Make sure to use `AddInMemoryProvider`."
                 ),
-            "ws"
-            or "wss"
-                => new SurrealDbWsEngine(
-                    configuration,
-                    configureCborOptions,
-                    loggerFactory is not null ? new SurrealDbLoggerFactory(loggerFactory) : null
+            "rocksdb" => ResolveEmbeddedProvider<ISurrealDbRocksDbEngine>(
+                serviceProvider,
+                configuration,
+                configureCborOptions,
+                loggerFactory
+            )
+                ?? throw new Exception(
+                    "Impossible to create a new file SurrealDB client, backed by RocksDB. Make sure to use `AddRocksDbProvider`."
                 ),
-            "mem"
-                => ResolveEmbeddedProvider<ISurrealDbInMemoryEngine>(
-                    serviceProvider,
-                    configuration,
-                    configureCborOptions,
-                    loggerFactory
-                )
-                    ?? throw new Exception(
-                        "Impossible to create a new in-memory SurrealDB client. Make sure to use `AddInMemoryProvider`."
-                    ),
-            "rocksdb"
-                => ResolveEmbeddedProvider<ISurrealDbRocksDbEngine>(
-                    serviceProvider,
-                    configuration,
-                    configureCborOptions,
-                    loggerFactory
-                )
-                    ?? throw new Exception(
-                        "Impossible to create a new file SurrealDB client, backed by RocksDB. Make sure to use `AddRocksDbProvider`."
-                    ),
-            "surrealkv"
-                => ResolveEmbeddedProvider<ISurrealDbKvEngine>(
-                    serviceProvider,
-                    configuration,
-                    configureCborOptions,
-                    loggerFactory
-                )
-                    ?? throw new Exception(
-                        "Impossible to create a new file SurrealDB client, backed by SurrealKV. Make sure to use `AddSurrealKvProvider`."
-                    ),
+            "surrealkv" => ResolveEmbeddedProvider<ISurrealDbKvEngine>(
+                serviceProvider,
+                configuration,
+                configureCborOptions,
+                loggerFactory
+            )
+                ?? throw new Exception(
+                    "Impossible to create a new file SurrealDB client, backed by SurrealKV. Make sure to use `AddSurrealKvProvider`."
+                ),
             _ => throw new NotSupportedException($"The protocol '{protocol}' is not supported."),
         };
     }

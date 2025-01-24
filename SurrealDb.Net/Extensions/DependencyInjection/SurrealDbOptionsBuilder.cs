@@ -74,7 +74,7 @@ public sealed class SurrealDbOptionsBuilder
                     {
                         '\'' or '"' => currentChar,
                         '{' => '}',
-                        _ => throw new InvalidOperationException()
+                        _ => throw new InvalidOperationException(),
                     };
                 }
 
@@ -384,7 +384,7 @@ public sealed class SurrealDbOptionsBuilder
             Password = _password,
             Token = _token,
             NamingPolicy = _namingPolicy,
-            Logging = new() { SensitiveDataLoggingEnabled = _sensitiveDataLoggingEnabled }
+            Logging = new() { SensitiveDataLoggingEnabled = _sensitiveDataLoggingEnabled },
         };
     }
 }

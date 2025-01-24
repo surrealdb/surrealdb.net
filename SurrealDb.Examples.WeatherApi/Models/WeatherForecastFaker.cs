@@ -18,7 +18,7 @@ public class WeatherForecastFaker : Faker<WeatherForecast>
         "Balmy",
         "Hot",
         "Sweltering",
-        "Scorching"
+        "Scorching",
     };
 
     /// <summary>

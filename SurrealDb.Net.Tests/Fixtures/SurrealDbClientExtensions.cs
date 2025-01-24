@@ -41,7 +41,7 @@ public static class SurrealDbClientExtensions
             SurrealSchemaFile.User => "user",
             SurrealSchemaFile.Uuid => "uuid",
             SurrealSchemaFile.Vector => "vector",
-            _ => throw new NotImplementedException()
+            _ => throw new NotImplementedException(),
         };
 
         string filePath = Path.Combine(

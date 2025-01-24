@@ -43,14 +43,12 @@ internal class GeographyCollectionConverter : CborConverterBase<GeographyCollect
             switch (semanticTag)
             {
                 case CborTagConstants.TAG_GEOMETRY_POINT:
-
                     {
                         var point = _pointConverter.Read(ref reader);
                         geographyBuilder.Point(point.Latitude, point.Longitude);
                     }
                     break;
                 case CborTagConstants.TAG_GEOMETRY_LINE:
-
                     {
                         var lineString = _lineStringConverter.Read(ref reader);
                         geographyBuilder.LineString();
@@ -61,7 +59,6 @@ internal class GeographyCollectionConverter : CborConverterBase<GeographyCollect
                     }
                     break;
                 case CborTagConstants.TAG_GEOMETRY_POLYGON:
-
                     {
                         var polygon = _polygonConverter.Read(ref reader);
                         geographyBuilder.Polygon();
@@ -77,7 +74,6 @@ internal class GeographyCollectionConverter : CborConverterBase<GeographyCollect
                     }
                     break;
                 case CborTagConstants.TAG_GEOMETRY_MULTIPOINT:
-
                     {
                         var multiPoint = _multiPointConverter.Read(ref reader);
                         geographyBuilder.MultiPoint();
@@ -88,7 +84,6 @@ internal class GeographyCollectionConverter : CborConverterBase<GeographyCollect
                     }
                     break;
                 case CborTagConstants.TAG_GEOMETRY_MULTILINE:
-
                     {
                         var multiLineString = _multiLineStringConverter.Read(ref reader);
                         geographyBuilder.MultiLineString();
@@ -103,7 +98,6 @@ internal class GeographyCollectionConverter : CborConverterBase<GeographyCollect
                     }
                     break;
                 case CborTagConstants.TAG_GEOMETRY_MULTIPOLYGON:
-
                     {
                         var multiPolygon = _multiPolygonConverter.Read(ref reader);
                         geographyBuilder.MultiPolygon();

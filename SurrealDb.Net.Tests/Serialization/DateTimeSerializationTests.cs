@@ -37,14 +37,14 @@ public class DateTimeSerializationTests
             ),
 #endif
             ("(1913, 6, 3, 14, 38, 30, 164)", new(1913, 6, 3, 14, 38, 30, 164)),
-            ("2024-11-08 12:29:58.6625489", DateTime.Parse("2024-11-08 12:29:58.6625489Z"))
+            ("2024-11-08 12:29:58.6625489", DateTime.Parse("2024-11-08 12:29:58.6625489Z")),
         ];
 
         foreach (var @case in cases)
         {
             var result = await client.Create(
                 "datetime",
-                new DateTimeRecord { Name = @case.Name, Value = @case.Value, }
+                new DateTimeRecord { Name = @case.Name, Value = @case.Value }
             );
 
             var expectedValue =

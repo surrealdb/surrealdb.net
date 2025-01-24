@@ -74,12 +74,12 @@ public class KillTests
 
         string errorMessage = version switch
         {
-            { Major: 1 }
-                => "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'",
-            { Major: 2, Minor: 0 }
-                => "There was a problem with the database: Can not execute KILL statement using id '$id'",
-            _
-                => $"There was a problem with the database: Can not execute KILL statement using id 'u'{liveQueryUuid}''"
+            { Major: 1 } =>
+                "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'",
+            { Major: 2, Minor: 0 } =>
+                "There was a problem with the database: Can not execute KILL statement using id '$id'",
+            _ =>
+                $"There was a problem with the database: Can not execute KILL statement using id 'u'{liveQueryUuid}''",
         };
 
         await func.Should().ThrowAsync<SurrealDbException>().WithMessage(errorMessage);

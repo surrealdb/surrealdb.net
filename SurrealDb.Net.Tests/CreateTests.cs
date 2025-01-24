@@ -53,7 +53,7 @@ public class CreateTests
             var post = new Post
             {
                 Title = "A new article",
-                Content = "This is a new article created using the .NET SDK"
+                Content = "This is a new article created using the .NET SDK",
             };
 
             result = await client.Create("post", post);
@@ -93,7 +93,7 @@ public class CreateTests
             {
                 Id = new RecordIdOfString("post", "another"),
                 Title = "A new article",
-                Content = "This is a new article created using the .NET SDK"
+                Content = "This is a new article created using the .NET SDK",
             };
 
             result = await client.Create(post);
@@ -142,20 +142,20 @@ public class CreateTests
                 {
                     Id = new RecordIdOfString("post", "A"),
                     Title = "An article",
-                    Content = "This is a new article"
+                    Content = "This is a new article",
                 },
                 new Post
                 {
                     Id = new RecordIdOfString("post", "B"),
                     Title = "An article",
-                    Content = "This is a new article"
+                    Content = "This is a new article",
                 },
                 new Post
                 {
                     Id = new RecordIdOfString("post", "C"),
                     Title = "An article",
-                    Content = "This is a new article"
-                }
+                    Content = "This is a new article",
+                },
             };
 
             var tasks = posts.Select(p => client.Create(p));
@@ -189,7 +189,7 @@ public class CreateTests
             var post = new Post
             {
                 Title = "A new article",
-                Content = "This is a new article created using the .NET SDK"
+                Content = "This is a new article created using the .NET SDK",
             };
 
             result = await client.Create<Post, Post>(new StringRecordId("post:new"), post, default);

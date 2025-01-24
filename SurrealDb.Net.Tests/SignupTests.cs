@@ -29,7 +29,7 @@ public class SignUpTests
                 Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
-                Password = "password123"
+                Password = "password123",
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -65,7 +65,7 @@ public class SignUpTests
                 Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
-                Password = "password123"
+                Password = "password123",
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 

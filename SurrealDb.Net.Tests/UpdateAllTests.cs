@@ -28,7 +28,7 @@ public class UpdateAllTests
                 Title = "# Title",
                 Content = "# Content",
                 CreatedAt = now,
-                Status = "PUBLISHED"
+                Status = "PUBLISHED",
             };
 
             list = await client.Select<Post>("post");

@@ -98,7 +98,7 @@ public class ExportTests
             {
                 Id = ("post", "dotnet-123456"),
                 Title = "A new article",
-                Content = "This is a new article created using the .NET SDK"
+                Content = "This is a new article created using the .NET SDK",
             };
 
             await client.Create(post);

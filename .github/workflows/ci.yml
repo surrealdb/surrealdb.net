@@ -12,6 +12,32 @@ on:
     paths-ignore:
       - '**.md'
 jobs:
+  build-remote:
+    runs-on: ubuntu-4cores
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup dotnet 9.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Install .NET tools
+        run: dotnet tool restore
+
+      - name: Check Formatting
+        run: dotnet csharpier --check .
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Disable embedded mode
+        run: sudo bash disable_embedded_mode.sh 
+
+      - name: Build
+        run: dotnet build --no-restore
+
   build:
     needs: [embedded-build]
     runs-on: ubuntu-4cores
@@ -34,7 +60,9 @@ jobs:
         run: dotnet tool restore
 
       - name: Check Formatting
-        run: dotnet csharpier --check .
+        run: |
+          export PATH
+          dotnet csharpier --check .
 
       - name: Install dependencies
         run: dotnet restore

@@ -65,13 +65,11 @@ public static class SurrealDbCborOptions
         INamingConvention? namingConvention = (namingPolicy?.ToLowerInvariant()) switch
         {
             NamingPolicyConstants.CAMEL_CASE => new CamelCaseNamingConvention(),
-            NamingPolicyConstants.SNAKE_CASE
-            or NamingPolicyConstants.SNAKE_CASE_LOWER
-                => new SnakeCaseNamingConvention(),
+            NamingPolicyConstants.SNAKE_CASE or NamingPolicyConstants.SNAKE_CASE_LOWER =>
+                new SnakeCaseNamingConvention(),
             NamingPolicyConstants.SNAKE_CASE_UPPER => new UpperSnakeCaseNamingConvention(),
-            NamingPolicyConstants.KEBAB_CASE
-            or NamingPolicyConstants.KEBAB_CASE_LOWER
-                => new KebabCaseNamingConvention(),
+            NamingPolicyConstants.KEBAB_CASE or NamingPolicyConstants.KEBAB_CASE_LOWER =>
+                new KebabCaseNamingConvention(),
             NamingPolicyConstants.KEBAB_CASE_UPPER => new UpperKebabCaseNamingConvention(),
             _ => null,
         };

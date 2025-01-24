@@ -61,7 +61,7 @@ public class InfoTests
                     Access = "user_scope",
                     Username = "johndoe",
                     Email = "john.doe@example.com",
-                    Password = "password123"
+                    Password = "password123",
                 };
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -81,7 +81,7 @@ public class InfoTests
             Email = "john.doe@example.com",
             Password = string.Empty, // 💡 Forbid password retrieval
             Avatar = "https://www.gravatar.com/avatar/8eb1b522f60d11fa897de1dc6351b7e8",
-            RegisteredAt = currentUser?.RegisteredAt ?? default
+            RegisteredAt = currentUser?.RegisteredAt ?? default,
         };
 
         currentUser.Should().BeEquivalentTo(expected);

@@ -47,7 +47,7 @@ if (app.Environment.IsDevelopment())
     {
         options.ConfigObject.Urls =
         [
-            new UrlDescriptor { Name = "MinimalApis Examples API v1", Url = "/openapi/v1.json" }
+            new UrlDescriptor { Name = "MinimalApis Examples API v1", Url = "/openapi/v1.json" },
         ];
     });
     app.MapScalarApiReference();

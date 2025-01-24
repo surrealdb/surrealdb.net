@@ -32,7 +32,7 @@ public class TimeSpanSerializationTests
         {
             var result = await client.Create(
                 "timespan",
-                new TimeSpanRecord { Name = @case.ToString(), Value = @case.Value, }
+                new TimeSpanRecord { Name = @case.ToString(), Value = @case.Value }
             );
 
             result

@@ -61,7 +61,7 @@ public static class BenchmarkRuns
                 Number = "221B",
                 Street = "Baker Street",
                 City = "London",
-                Country = "UK"
+                Country = "UK",
             },
             new()
             {
@@ -69,7 +69,7 @@ public static class BenchmarkRuns
                 Number = "221A",
                 Street = "Church street",
                 City = "London",
-                Country = "UK"
+                Country = "UK",
             },
             new()
             {
@@ -77,8 +77,8 @@ public static class BenchmarkRuns
                 Number = "221C",
                 Street = "Pound street",
                 City = "London",
-                Country = "UK"
-            }
+                Country = "UK",
+            },
         };
 
         {
@@ -93,22 +93,22 @@ public static class BenchmarkRuns
                 Id = ("customer", "pratim"),
                 Name = "pratim",
                 Email = "abc@gmail.com",
-                Address = pratimHomeId
+                Address = pratimHomeId,
             },
             new Customer
             {
                 Id = ("customer", "tobie"),
                 Name = "Tobie",
                 Email = "tobie@gmail.com",
-                Address = tobieHomeId
+                Address = tobieHomeId,
             },
             new Customer
             {
                 Id = ("customer", "alex"),
                 Name = "Alex",
                 Email = "alex@gmail.com",
-                Address = alexHomeId
-            }
+                Address = alexHomeId,
+            },
         };
 
         {
@@ -125,7 +125,7 @@ public static class BenchmarkRuns
                 Description = "Slim fit",
                 Price = 6,
                 Category = "clothing",
-                Images = new List<string> { "image1.jpg", "image2.jpg", "image3.jpg" }
+                Images = new List<string> { "image1.jpg", "image2.jpg", "image3.jpg" },
             },
             new Product
             {
@@ -134,7 +134,7 @@ public static class BenchmarkRuns
                 Description = "Pants",
                 Price = 10,
                 Category = "clothing",
-                Images = new List<string> { "image1.jpg", "image2.jpg", "image3.jpg" }
+                Images = new List<string> { "image1.jpg", "image2.jpg", "image3.jpg" },
             },
             new Product
             {
@@ -143,8 +143,8 @@ public static class BenchmarkRuns
                 Description = "Mobile phone",
                 Price = 600,
                 Category = "Electronics",
-                Images = new List<string> { "image.jpg", "image1.jpg", "image4.jpg" }
-            }
+                Images = new List<string> { "image.jpg", "image1.jpg", "image4.jpg" },
+            },
         };
 
         {

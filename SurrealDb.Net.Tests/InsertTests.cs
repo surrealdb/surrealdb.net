@@ -53,7 +53,7 @@ public class InsertTests
             var post = new Post
             {
                 Title = "A new article",
-                Content = "This is a new article created using the .NET SDK"
+                Content = "This is a new article created using the .NET SDK",
             };
 
             result = await client.Insert("post", new[] { post });
@@ -95,7 +95,7 @@ public class InsertTests
             {
                 Id = ("post", "another"),
                 Title = "A new article",
-                Content = "This is a new article created using the .NET SDK"
+                Content = "This is a new article created using the .NET SDK",
             };
 
             result = await client.Insert("post", new[] { post });
@@ -147,20 +147,20 @@ public class InsertTests
                 {
                     Id = ("post", "A"),
                     Title = "An article",
-                    Content = "This is a new article"
+                    Content = "This is a new article",
                 },
                 new Post
                 {
                     Id = ("post", "B"),
                     Title = "An article",
-                    Content = "This is a new article"
+                    Content = "This is a new article",
                 },
                 new Post
                 {
                     Id = ("post", "C"),
                     Title = "An article",
-                    Content = "This is a new article"
-                }
+                    Content = "This is a new article",
+                },
             };
 
             result = await client.Insert("post", posts);

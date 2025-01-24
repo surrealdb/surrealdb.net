@@ -94,7 +94,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                     handle = new RustGCHandle()
                     {
                         ptr = GCHandle.ToIntPtr(successHandle),
-                        drop_callback = &NativeBindings.DropGcHandle
+                        drop_callback = &NativeBindings.DropGcHandle,
                     },
                     callback = &NativeBindings.SuccessCallback,
                 };
@@ -104,7 +104,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                     handle = new RustGCHandle()
                     {
                         ptr = GCHandle.ToIntPtr(failureHandle),
-                        drop_callback = &NativeBindings.DropGcHandle
+                        drop_callback = &NativeBindings.DropGcHandle,
                     },
                     callback = &NativeBindings.FailureCallback,
                 };
@@ -287,7 +287,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 handle = new RustGCHandle()
                 {
                     ptr = GCHandle.ToIntPtr(successHandle),
-                    drop_callback = &NativeBindings.DropGcHandle
+                    drop_callback = &NativeBindings.DropGcHandle,
                 },
                 callback = &NativeBindings.SuccessCallback,
             };
@@ -297,7 +297,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 handle = new RustGCHandle()
                 {
                     ptr = GCHandle.ToIntPtr(failureHandle),
-                    drop_callback = &NativeBindings.DropGcHandle
+                    drop_callback = &NativeBindings.DropGcHandle,
                 },
                 callback = &NativeBindings.FailureCallback,
             };
@@ -968,7 +968,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 handle = new RustGCHandle()
                 {
                     ptr = GCHandle.ToIntPtr(successHandle),
-                    drop_callback = &NativeBindings.DropGcHandle
+                    drop_callback = &NativeBindings.DropGcHandle,
                 },
                 callback = &NativeBindings.SuccessCallback,
             };
@@ -978,7 +978,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 handle = new RustGCHandle()
                 {
                     ptr = GCHandle.ToIntPtr(failureHandle),
-                    drop_callback = &NativeBindings.DropGcHandle
+                    drop_callback = &NativeBindings.DropGcHandle,
                 },
                 callback = &NativeBindings.FailureCallback,
             };

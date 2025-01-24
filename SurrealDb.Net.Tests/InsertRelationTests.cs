@@ -36,7 +36,7 @@ public class InsertRelationTests
                     In = ("user", "u1"),
                     Out = ("post", "p1"),
                     CreatedAt = now,
-                    NumberOfPages = 144
+                    NumberOfPages = 144,
                 }
             );
         };
@@ -59,7 +59,7 @@ public class InsertRelationTests
                     In = ("user", "u1"),
                     Out = ("post", "p1"),
                     CreatedAt = now,
-                    NumberOfPages = 144
+                    NumberOfPages = 144,
                 }
             );
     }
@@ -90,7 +90,7 @@ public class InsertRelationTests
                     In = ("user", "u1"),
                     Out = ("post", "p1"),
                     CreatedAt = now,
-                    NumberOfPages = 144
+                    NumberOfPages = 144,
                 }
             );
         };
@@ -113,7 +113,7 @@ public class InsertRelationTests
                     In = ("user", "u1"),
                     Out = ("post", "p1"),
                     CreatedAt = now,
-                    NumberOfPages = 144
+                    NumberOfPages = 144,
                 }
             );
     }
@@ -143,7 +143,7 @@ public class InsertRelationTests
                     In = ("user", "u1"),
                     Out = ("post", "p1"),
                     CreatedAt = now,
-                    NumberOfPages = 144
+                    NumberOfPages = 144,
                 }
             );
         };
@@ -185,7 +185,7 @@ public class InsertRelationTests
                     In = ("user", "u1"),
                     Out = ("post", "p1"),
                     CreatedAt = now,
-                    NumberOfPages = 144
+                    NumberOfPages = 144,
                 }
             );
         };
@@ -213,7 +213,7 @@ public class InsertRelationTests
                     In = ("user", "u1"),
                     Out = ("post", "p1"),
                     CreatedAt = now,
-                    NumberOfPages = 144
+                    NumberOfPages = 144,
                 }
             );
     }
@@ -247,7 +247,7 @@ public class InsertRelationTests
                     In = ("user", "u1"),
                     Out = ("post", "p1"),
                     CreatedAt = now,
-                    NumberOfPages = 144
+                    NumberOfPages = 144,
                 }
             );
         };
