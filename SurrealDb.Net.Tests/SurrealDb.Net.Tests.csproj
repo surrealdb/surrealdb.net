@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <IsTestProject>true</IsTestProject>
         <OutputType>Exe</OutputType>
         <TargetFramework>net9.0</TargetFramework>
     </PropertyGroup>
@@ -8,14 +9,15 @@
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
       
-        <PackageReference Include="FluentAssertions" />
-        <PackageReference Include="Semver" />
-        <PackageReference Include="TUnit" />
-        <PackageReference Include="Verify.TUnit" />
         <PackageReference Include="coverlet.collector">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
+        <PackageReference Include="FluentAssertions" />
+        <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+        <PackageReference Include="Semver" />
+        <PackageReference Include="TUnit" />
+        <PackageReference Include="Verify.TUnit" />
     </ItemGroup>
 
     <ItemGroup>
