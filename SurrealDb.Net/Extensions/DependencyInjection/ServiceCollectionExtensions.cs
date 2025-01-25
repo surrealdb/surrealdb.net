@@ -32,40 +32,7 @@ public static class ServiceCollectionExtensions
         Action<CborOptions>? configureCborOptions = null
     )
     {
-        return AddSurreal<ISurrealDbClient>(
-            services,
-            connectionString,
-            lifetime,
-            configureCborOptions
-        );
-    }
-
-    /// <summary>
-    /// Registers SurrealDB services from a ConnectionString.
-    /// </summary>
-    /// <typeparam name="T">Type of <see cref="ISurrealDbClient"/> to register.</typeparam>
-    /// <param name="services">Service collection.</param>
-    /// <param name="connectionString">Connection string to a SurrealDB instance.</param>
-    /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
-    /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
-    /// <returns>Service collection</returns>
-    /// <exception cref="ArgumentException"></exception>
-    /// <exception cref="ArgumentOutOfRangeException"></exception>
-    /// <exception cref="ArgumentNullException"></exception>
-    public static SurrealDbBuilder AddSurreal<T>(
-        this IServiceCollection services,
-        string connectionString,
-        ServiceLifetime lifetime = ServiceLifetime.Singleton,
-        Action<CborOptions>? configureCborOptions = null
-    )
-        where T : ISurrealDbClient
-    {
-        var configuration = SurrealDbOptions
-            .Create()
-            .FromConnectionString(connectionString)
-            .Build();
-
-        return AddSurreal<T>(services, configuration, lifetime, configureCborOptions);
+        return AddSurreal(services, connectionString, lifetime, configureCborOptions);
     }
 
     /// <summary>
@@ -74,18 +41,20 @@ public static class ServiceCollectionExtensions
     /// <param name="services">Service collection.</param>
     /// <param name="configureOptions">A delegate that is used to configure a <see cref="SurrealDbOptionsBuilder"/>.</param>
     /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
+    /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <returns>Service collection</returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
     public static SurrealDbBuilder AddSurreal(
         this IServiceCollection services,
         Action<SurrealDbOptionsBuilder> configureOptions,
-        ServiceLifetime lifetime = ServiceLifetime.Singleton
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
+        Action<CborOptions>? configureCborOptions = null
     )
     {
         var options = SurrealDbOptions.Create();
         configureOptions(options);
-        return AddSurreal<ISurrealDbClient>(services, options.Build(), lifetime);
+        return AddSurreal(services, options.Build(), lifetime, configureCborOptions);
     }
 
     /// <summary>
@@ -104,33 +73,6 @@ public static class ServiceCollectionExtensions
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         Action<CborOptions>? configureCborOptions = null
     )
-    {
-        return AddSurreal<ISurrealDbClient>(
-            services,
-            configuration,
-            lifetime,
-            configureCborOptions
-        );
-    }
-
-    /// <summary>
-    /// Registers SurrealDB services with the specified configuration.
-    /// </summary>
-    /// <typeparam name="T">Type of <see cref="ISurrealDbClient"/> to register.</typeparam>
-    /// <param name="services">Service collection.</param>
-    /// <param name="configuration">Configuration options.</param>
-    /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
-    /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
-    /// <returns>Service collection</returns>
-    /// <exception cref="ArgumentOutOfRangeException"></exception>
-    /// <exception cref="ArgumentNullException"></exception>
-    public static SurrealDbBuilder AddSurreal<T>(
-        this IServiceCollection services,
-        SurrealDbOptions configuration,
-        ServiceLifetime lifetime = ServiceLifetime.Singleton,
-        Action<CborOptions>? configureCborOptions = null
-    )
-        where T : ISurrealDbClient
     {
         if (configuration.Endpoint is null)
             throw new ArgumentNullException(nameof(configuration), "The endpoint is required.");
@@ -143,31 +85,18 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IValidateOptions<SurrealDbOptions>, SurrealDbOptionsValidation>();
 
-        var classClientType = typeof(SurrealDbClient);
-        var interfaceClientType = typeof(ISurrealDbClient);
-        var type = typeof(T);
-
-        bool isBaseType = type == classClientType || type == interfaceClientType;
-
-        if (isBaseType)
-        {
-            RegisterSurrealDbClient<ISurrealDbClient>(
-                services,
-                configuration,
-                lifetime,
-                configureCborOptions
-            );
-            RegisterSurrealDbClient<SurrealDbClient>(
-                services,
-                configuration,
-                lifetime,
-                configureCborOptions
-            );
-        }
-        else
-        {
-            RegisterSurrealDbClient<T>(services, configuration, lifetime, configureCborOptions);
-        }
+        RegisterSurrealDbClient<ISurrealDbClient>(
+            services,
+            configuration,
+            lifetime,
+            configureCborOptions
+        );
+        RegisterSurrealDbClient<SurrealDbClient>(
+            services,
+            configuration,
+            lifetime,
+            configureCborOptions
+        );
 
         return new SurrealDbBuilder(services);
     }
@@ -197,13 +126,7 @@ public static class ServiceCollectionExtensions
             .FromConnectionString(connectionString)
             .Build();
 
-        return AddKeyedSurreal<ISurrealDbClient>(
-            services,
-            serviceKey,
-            configuration,
-            lifetime,
-            configureCborOptions
-        );
+        return AddKeyedSurreal(services, serviceKey, configuration, lifetime, configureCborOptions);
     }
 
     /// <summary>
@@ -213,28 +136,6 @@ public static class ServiceCollectionExtensions
     /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
     /// <param name="configureOptions">A delegate that is used to configure a <see cref="SurrealDbOptionsBuilder"/>.</param>
     /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
-    /// <returns>Service collection</returns>
-    /// <exception cref="ArgumentOutOfRangeException"></exception>
-    /// <exception cref="ArgumentNullException"></exception>
-    public static SurrealDbBuilder AddKeyedSurreal(
-        this IServiceCollection services,
-        object? serviceKey,
-        Action<SurrealDbOptionsBuilder> configureOptions,
-        ServiceLifetime lifetime = ServiceLifetime.Singleton
-    )
-    {
-        var options = SurrealDbOptions.Create();
-        configureOptions(options);
-        return AddKeyedSurreal<ISurrealDbClient>(services, serviceKey, options.Build(), lifetime);
-    }
-
-    /// <summary>
-    /// Registers keyed SurrealDB services with the specified configuration.
-    /// </summary>
-    /// <param name="services">Service collection.</param>
-    /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
-    /// <param name="configuration">Configuration options.</param>
-    /// <param name="lifetime">Service lifetime to register services under. Default value is <see cref="ServiceLifetime.Singleton"/>.</param>
     /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <returns>Service collection</returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
@@ -242,15 +143,17 @@ public static class ServiceCollectionExtensions
     public static SurrealDbBuilder AddKeyedSurreal(
         this IServiceCollection services,
         object? serviceKey,
-        SurrealDbOptions configuration,
+        Action<SurrealDbOptionsBuilder> configureOptions,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         Action<CborOptions>? configureCborOptions = null
     )
     {
-        return AddKeyedSurreal<ISurrealDbClient>(
+        var options = SurrealDbOptions.Create();
+        configureOptions(options);
+        return AddKeyedSurreal(
             services,
             serviceKey,
-            configuration,
+            options.Build(),
             lifetime,
             configureCborOptions
         );
@@ -259,7 +162,6 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Registers keyed SurrealDB services with the specified configuration.
     /// </summary>
-    /// <typeparam name="T">Type of <see cref="ISurrealDbClient"/> to register.</typeparam>
     /// <param name="services">Service collection.</param>
     /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
     /// <param name="configuration">Configuration options.</param>
@@ -268,14 +170,13 @@ public static class ServiceCollectionExtensions
     /// <returns>Service collection</returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
-    public static SurrealDbBuilder AddKeyedSurreal<T>(
+    public static SurrealDbBuilder AddKeyedSurreal(
         this IServiceCollection services,
         object? serviceKey,
         SurrealDbOptions configuration,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         Action<CborOptions>? configureCborOptions = null
     )
-        where T : ISurrealDbClient
     {
         if (configuration.Endpoint is null)
             throw new ArgumentNullException(nameof(configuration), "The endpoint is required.");
@@ -286,39 +187,20 @@ public static class ServiceCollectionExtensions
             RegisterHttpClient(services, configuration.Endpoint);
         }
 
-        var classClientType = typeof(SurrealDbClient);
-        var interfaceClientType = typeof(ISurrealDbClient);
-        var type = typeof(T);
-
-        bool isBaseType = type == classClientType || type == interfaceClientType;
-
-        if (isBaseType)
-        {
-            RegisterKeyedSurrealDbClient<ISurrealDbClient>(
-                services,
-                serviceKey,
-                configuration,
-                lifetime,
-                configureCborOptions
-            );
-            RegisterKeyedSurrealDbClient<SurrealDbClient>(
-                services,
-                serviceKey,
-                configuration,
-                lifetime,
-                configureCborOptions
-            );
-        }
-        else
-        {
-            RegisterKeyedSurrealDbClient<T>(
-                services,
-                serviceKey,
-                configuration,
-                lifetime,
-                configureCborOptions
-            );
-        }
+        RegisterKeyedSurrealDbClient<ISurrealDbClient>(
+            services,
+            serviceKey,
+            configuration,
+            lifetime,
+            configureCborOptions
+        );
+        RegisterKeyedSurrealDbClient<SurrealDbClient>(
+            services,
+            serviceKey,
+            configuration,
+            lifetime,
+            configureCborOptions
+        );
 
         return new SurrealDbBuilder(services);
     }
