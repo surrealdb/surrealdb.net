@@ -4,14 +4,14 @@ namespace SurrealDb.Net.Tests.Models;
 
 public class ImplicitRangeTests
 {
-    [Fact]
+    [Test]
     public void CreateRangeFromSystemAllRange()
     {
         var result = Range.FromRange(..);
         result.Should().BeEquivalentTo(new Range<int, int>());
     }
 
-    [Fact]
+    [Test]
     public void CreateRangeFromSystemStandardRange()
     {
         var result = Range.FromRange(2..10);
@@ -20,21 +20,21 @@ public class ImplicitRangeTests
             .BeEquivalentTo(new Range<int, int>(RangeBound.Inclusive(2), RangeBound.Exclusive(10)));
     }
 
-    [Fact]
+    [Test]
     public void CreateRangeFromSystemLeftOnlyRange()
     {
         var result = Range.FromRange(2..);
         result.Should().BeEquivalentTo(new Range<int, int>(RangeBound.Inclusive(2), default));
     }
 
-    [Fact]
+    [Test]
     public void CreateRangeFromSystemRightOnlyRange()
     {
         var result = Range.FromRange(..2);
         result.Should().BeEquivalentTo(new Range<int, int>(default, RangeBound.Exclusive(2)));
     }
 
-    [Fact]
+    [Test]
     public void ShouldFailToCreateFromSystemRangeWithEndFrom()
     {
         {

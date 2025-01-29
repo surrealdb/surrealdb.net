@@ -11,9 +11,8 @@ public class AuthParams : ScopeAuth
 
 public class SignInTests
 {
-    [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldSignInAsRootUser(string connectionString)
     {
         Func<Task> func = async () =>
@@ -27,10 +26,8 @@ public class SignInTests
         await func.Should().NotThrowAsync();
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
+    [Test]
+    [EmbeddedConnectionStringFixtureGenerator]
     public async Task SignInAsRootUserIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -46,9 +43,8 @@ public class SignInTests
             .WithMessage("Authentication is not enabled in embedded mode.");
     }
 
-    [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldSignInUsingNamespaceAuth(string connectionString)
     {
         Jwt? jwt = null;
@@ -69,7 +65,7 @@ public class SignInTests
                 {
                     Namespace = dbInfo.Namespace,
                     Username = "johndoe",
-                    Password = "password123"
+                    Password = "password123",
                 }
             );
         };
@@ -80,10 +76,8 @@ public class SignInTests
         jwt!.Value.Token.Should().BeValidJwt();
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
+    [Test]
+    [EmbeddedConnectionStringFixtureGenerator]
     public async Task SignInUsingNamespaceAuthIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -102,7 +96,7 @@ public class SignInTests
                 {
                     Namespace = dbInfo.Namespace,
                     Username = "johndoe",
-                    Password = "password123"
+                    Password = "password123",
                 }
             );
         };
@@ -112,9 +106,8 @@ public class SignInTests
             .WithMessage("Authentication is not enabled in embedded mode.");
     }
 
-    [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldSignInUsingDatabaseAuth(string connectionString)
     {
         Jwt? jwt = null;
@@ -136,7 +129,7 @@ public class SignInTests
                     Namespace = dbInfo.Namespace,
                     Database = dbInfo.Database,
                     Username = "johndoe",
-                    Password = "password123"
+                    Password = "password123",
                 }
             );
         };
@@ -147,10 +140,8 @@ public class SignInTests
         jwt!.Value.Token.Should().BeValidJwt();
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
+    [Test]
+    [EmbeddedConnectionStringFixtureGenerator]
     public async Task SignInUsingDatabaseAuthIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -170,7 +161,7 @@ public class SignInTests
                     Namespace = dbInfo.Namespace,
                     Database = dbInfo.Database,
                     Username = "johndoe",
-                    Password = "password123"
+                    Password = "password123",
                 }
             );
         };
@@ -180,9 +171,8 @@ public class SignInTests
             .WithMessage("Authentication is not enabled in embedded mode.");
     }
 
-    [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldSignInUsingScopeAuth(string connectionString)
     {
         Jwt? jwt = null;
@@ -195,14 +185,7 @@ public class SignInTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/user.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-            (await client.RawQuery(query)).EnsureAllOks();
+            await client.ApplySchemaAsync(SurrealSchemaFile.User);
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
@@ -213,7 +196,7 @@ public class SignInTests
                 Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
-                Password = "password123"
+                Password = "password123",
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -228,10 +211,8 @@ public class SignInTests
         jwt!.Value.Token.Should().BeValidJwt();
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
+    [Test]
+    [EmbeddedConnectionStringFixtureGenerator]
     public async Task SignInUsingScopeAuthIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -242,14 +223,7 @@ public class SignInTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/user.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-            (await client.RawQuery(query)).EnsureAllOks();
+            await client.ApplySchemaAsync(SurrealSchemaFile.User);
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
@@ -260,7 +234,7 @@ public class SignInTests
                 Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
-                Password = "password123"
+                Password = "password123",
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 

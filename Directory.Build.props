@@ -42,5 +42,10 @@
 	  <None Include="..\LICENSE" Pack="true" PackagePath="\" Visible="false" />
 	  <None Include="..\img\icon.png" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
+    
+  <!-- Used to enable build & tests for embedded modes (memory, rocksdb, surrealkv) -->
+  <PropertyGroup Label="Constants" Condition="true">
+    <DefineConstants>EMBEDDED_MODE</DefineConstants>
+  </PropertyGroup>
 
 </Project>

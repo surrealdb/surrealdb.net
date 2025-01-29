@@ -64,7 +64,7 @@ public class WeatherForecastController : ControllerBase
             Date = data.Date,
             Country = data.Country,
             TemperatureC = data.TemperatureC,
-            Summary = data.Summary
+            Summary = data.Summary,
         };
 
         return _surrealDbClient.Create(Table, weatherForecast, cancellationToken);

@@ -2,7 +2,7 @@ namespace SurrealDb.Net.Tests.Models;
 
 public class PropertiesDurationTests
 {
-    [Fact]
+    [Test]
     public void ZeroDurationShouldHaveZeroValue()
     {
         var duration = Duration.Zero;
@@ -18,7 +18,7 @@ public class PropertiesDurationTests
         duration.Years.Should().Be(0);
     }
 
-    [Fact]
+    [Test]
     public void ZeroDurationShouldBe0ns()
     {
         var duration = Duration.Zero;
@@ -26,7 +26,7 @@ public class PropertiesDurationTests
         duration.ToString().Should().Be("0ns");
     }
 
-    [Fact]
+    [Test]
     public void ZeroDurationShouldBeZeroTimeSpan()
     {
         var duration = Duration.Zero;

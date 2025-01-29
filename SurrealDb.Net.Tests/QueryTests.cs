@@ -7,12 +7,8 @@ namespace SurrealDb.Net.Tests;
 
 public class QueryTests
 {
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldQueryWithoutParam(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -25,17 +21,7 @@ public class QueryTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             response = await client.Query($"SELECT * FROM post;");
         };
@@ -53,12 +39,8 @@ public class QueryTests
         list.Should().NotBeNull().And.HaveCount(2);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldQueryWithOneParam(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -71,17 +53,7 @@ public class QueryTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             {
                 string status = "DRAFT";
@@ -102,12 +74,8 @@ public class QueryTests
         list.Should().NotBeNull().And.HaveCount(2);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldQueryWithMultipleParams(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -120,17 +88,7 @@ public class QueryTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             {
                 string status = "DRAFT";
@@ -160,12 +118,8 @@ AND created_at >= {threeMonthsAgo};
         list.Should().NotBeNull().And.HaveCount(2);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldHaveOneProtocolErrorResult(string connectionString)
     {
         var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
@@ -181,17 +135,7 @@ AND created_at >= {threeMonthsAgo};
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             response = await client.Query($"abc def;");
         };

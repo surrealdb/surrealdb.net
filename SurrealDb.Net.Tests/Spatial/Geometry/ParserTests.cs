@@ -19,29 +19,17 @@ public class GeometryCollectionRecord : Record<GeometryCollection> { }
 
 public class ParserTests
 {
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldParseGeometryPointFromTuple(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeometryPointRecord>(("geometry", "PointFromTuple"));
 
@@ -51,29 +39,17 @@ public class ParserTests
         record.Value!.Y.Should().Be(51.509865);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldParseGeometryPoint(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeometryPointRecord>(("geometry", "Point"));
 
@@ -83,29 +59,17 @@ public class ParserTests
         record.Value!.Y.Should().Be(51.509865);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldParseGeometryLineString(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeometryLineStringRecord>(("geometry", "LineString"));
 
@@ -122,29 +86,17 @@ public class ParserTests
         lastPoint.Y.Should().Be(11.9);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldParseGeometryPolygon(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeometryPolygonRecord>(("geometry", "Polygon"));
 
@@ -178,29 +130,17 @@ public class ParserTests
         lastPoint.Y.Should().Be(51.37692386);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldParseGeometryMultiPoint(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeometryMultiPointRecord>(("geometry", "MultiPoint"));
 
@@ -219,29 +159,17 @@ public class ParserTests
         lastPoint.Y.Should().Be(11.9);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldParseGeometryMultiLineString(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeometryMultiLineStringRecord>(
             ("geometry", "MultiLineString")
@@ -284,29 +212,17 @@ public class ParserTests
         }
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldParseGeometryMultiPolygon(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeometryMultiPolygonRecord>(("geometry", "MultiPolygon"));
 
@@ -365,29 +281,17 @@ public class ParserTests
         }
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldParseGeometryCollection(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/geometry.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Geometry);
 
         var record = await client.Select<GeometryCollectionRecord>(
             ("geometry", "GeometryCollection")

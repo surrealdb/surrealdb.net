@@ -13,9 +13,8 @@ public class User : SurrealDbRecord
 
 public class InfoTests
 {
-    [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldNotRetrieveInfoForRootUser(string connectionString)
     {
         User? currentUser = null;
@@ -36,9 +35,8 @@ public class InfoTests
         currentUser.Should().BeNull();
     }
 
-    [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldRetrieveInfoForScopedUser(string connectionString)
     {
         User? currentUser = null;
@@ -51,16 +49,7 @@ public class InfoTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/user.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.User);
 
             {
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -72,7 +61,7 @@ public class InfoTests
                     Access = "user_scope",
                     Username = "johndoe",
                     Email = "john.doe@example.com",
-                    Password = "password123"
+                    Password = "password123",
                 };
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -92,17 +81,15 @@ public class InfoTests
             Email = "john.doe@example.com",
             Password = string.Empty, // 💡 Forbid password retrieval
             Avatar = "https://www.gravatar.com/avatar/8eb1b522f60d11fa897de1dc6351b7e8",
-            RegisteredAt = currentUser?.RegisteredAt ?? default
+            RegisteredAt = currentUser?.RegisteredAt ?? default,
         };
 
         currentUser.Should().BeEquivalentTo(expected);
         currentUser?.Id.Should().NotBeNull();
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
+    [Test]
+    [EmbeddedConnectionStringFixtureGenerator]
     public async Task InfoIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>

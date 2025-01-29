@@ -22,14 +22,12 @@ internal sealed class RecordIdConverter : CborConverterBase<RecordId>
         {
             CborDataItemType.Null => default!,
             CborDataItemType.Array => ReadRecordIdFromArray(ref reader),
-            CborDataItemType.String
-                => throw new CborException(
-                    $"The type '{nameof(StringRecordId)}' was not expected here"
-                ),
-            _
-                => throw new CborException(
-                    "Expected a CBOR text data type, or a CBOR array with 2 elements"
-                )
+            CborDataItemType.String => throw new CborException(
+                $"The type '{nameof(StringRecordId)}' was not expected here"
+            ),
+            _ => throw new CborException(
+                "Expected a CBOR text data type, or a CBOR array with 2 elements"
+            ),
         };
     }
 
@@ -55,10 +53,11 @@ internal sealed class RecordIdConverter : CborConverterBase<RecordId>
         return idItemType switch
         {
             CborDataItemType.String => new RecordIdOfString(table, reader.ReadString()!),
-            CborDataItemType.Signed
-            or CborDataItemType.Unsigned
-                => new RecordIdOf<int>(table, reader.ReadInt32()),
-            _ => new RecordId(table, reader.ReadDataItemAsMemory(), _options)
+            CborDataItemType.Signed or CborDataItemType.Unsigned => new RecordIdOf<int>(
+                table,
+                reader.ReadInt32()
+            ),
+            _ => new RecordId(table, reader.ReadDataItemAsMemory(), _options),
         };
     }
 

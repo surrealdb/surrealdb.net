@@ -51,7 +51,7 @@ internal sealed class SurrealDbOptionsValidation : IValidateOptions<SurrealDbOpt
             EndpointConstants.Server.HTTP,
             EndpointConstants.Server.HTTPS,
             EndpointConstants.Server.WS,
-            EndpointConstants.Server.WSS
+            EndpointConstants.Server.WSS,
         ];
 
         return validServerEndpoints.Any(vse =>
@@ -65,7 +65,7 @@ internal sealed class SurrealDbOptionsValidation : IValidateOptions<SurrealDbOpt
         [
             EndpointConstants.Client.MEMORY,
             EndpointConstants.Client.ROCKSDB,
-            EndpointConstants.Client.SURREALKV
+            EndpointConstants.Client.SURREALKV,
         ];
 
         return validClientEndpoints.Any(vce =>
@@ -83,7 +83,7 @@ internal sealed class SurrealDbOptionsValidation : IValidateOptions<SurrealDbOpt
             NamingPolicyConstants.SNAKE_CASE_UPPER,
             NamingPolicyConstants.KEBAB_CASE,
             NamingPolicyConstants.KEBAB_CASE_LOWER,
-            NamingPolicyConstants.KEBAB_CASE_UPPER
+            NamingPolicyConstants.KEBAB_CASE_UPPER,
         ];
 
         return validNamingPolicies.Any(vnp =>

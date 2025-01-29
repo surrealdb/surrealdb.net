@@ -4,7 +4,7 @@ namespace SurrealDb.Net.Tests.Serializers.Cbor.Spatial;
 
 public class GeometryMultiPointConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         var factory = GeometryFactory.MultiPoint();
@@ -21,7 +21,7 @@ public class GeometryMultiPointConverterTests : BaseCborConverterTests
         result.Should().Be("d85b84d8588261306130d8588261316131d8588261316130d8588261306130");
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<GeometryMultiPoint>(

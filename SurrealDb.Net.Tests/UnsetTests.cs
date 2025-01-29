@@ -5,12 +5,8 @@ namespace SurrealDb.Net.Tests;
 
 public class UnsetTests
 {
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldUnsetParam(string connectionString)
     {
         SurrealDbResponse? response = null;
@@ -23,17 +19,7 @@ public class UnsetTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             await client.Set("status", "DRAFT");
             await client.Unset("status");
@@ -57,12 +43,8 @@ public class UnsetTests
         list.Should().BeEmpty();
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task KeyShouldNotBeNull(string connectionString)
     {
         Func<Task> func = async () =>
@@ -73,17 +55,7 @@ public class UnsetTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             await client.Set("status", "DRAFT");
             await client.Unset(null!);
@@ -94,12 +66,8 @@ public class UnsetTests
             .WithMessage("Value cannot be null. (Parameter 'key')");
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task KeyShouldBeAlphanumeric(string connectionString)
     {
         Func<Task> func = async () =>
@@ -110,17 +78,7 @@ public class UnsetTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             await client.Set("st at us", "DRAFT");
             await client.Unset(null!);

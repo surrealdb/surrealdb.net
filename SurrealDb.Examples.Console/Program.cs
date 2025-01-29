@@ -14,7 +14,7 @@ var person = new Person
 {
     Title = "Founder & CEO",
     Name = new() { FirstName = "Tobie", LastName = "Morgan Hitchcock" },
-    Marketing = true
+    Marketing = true,
 };
 var created = await db.Create(TABLE, person);
 Console.WriteLine(ToJsonString(created));
@@ -35,7 +35,7 @@ Console.WriteLine(ToJsonString(groups));
 
 static string ToJsonString(object? o)
 {
-    return JsonSerializer.Serialize(o, new JsonSerializerOptions { WriteIndented = true, });
+    return JsonSerializer.Serialize(o, new JsonSerializerOptions { WriteIndented = true });
 }
 
 public class Person : Record

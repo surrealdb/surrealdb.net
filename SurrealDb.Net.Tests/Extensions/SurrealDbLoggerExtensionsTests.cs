@@ -4,15 +4,15 @@ namespace SurrealDb.Net.Tests.Extensions;
 
 public class SurrealDbLoggerExtensionsTests
 {
-    [Theory]
-    [InlineData(null, false, "?")]
-    [InlineData(null, true, "null")]
-    [InlineData(true, false, "?")]
-    [InlineData(true, true, "'True'")]
-    [InlineData(34, false, "?")]
-    [InlineData(34, true, "'34'")]
-    [InlineData("Hello world", false, "?")]
-    [InlineData("Hello world", true, "'Hello world'")]
+    [Test]
+    [Arguments(null, false, "?")]
+    [Arguments(null, true, "null")]
+    [Arguments(true, false, "?")]
+    [Arguments(true, true, "'True'")]
+    [Arguments(34, false, "?")]
+    [Arguments(34, true, "'34'")]
+    [Arguments("Hello world", false, "?")]
+    [Arguments("Hello world", true, "'Hello world'")]
     public void ShouldFormatParameterValue(
         object? value,
         bool shouldLogParameterValue,
@@ -25,7 +25,7 @@ public class SurrealDbLoggerExtensionsTests
             .Be(expected);
     }
 
-    [Fact]
+    [Test]
     public void ShouldFormatRequestParametersWithSensitive()
     {
         string result = SurrealDbLoggerExtensions.FormatRequestParameters(
@@ -35,7 +35,7 @@ public class SurrealDbLoggerExtensionsTests
         result.Should().Be("[?, ?, ?]");
     }
 
-    [Fact]
+    [Test]
     public void ShouldFormatRequestParametersWithoutSensitive()
     {
         string result = SurrealDbLoggerExtensions.FormatRequestParameters(
@@ -45,7 +45,7 @@ public class SurrealDbLoggerExtensionsTests
         result.Should().Be("['1', 'Hello', 'test']");
     }
 
-    [Fact]
+    [Test]
     public void ShouldFormatQueryParametersWithSensitive()
     {
         string result = SurrealDbLoggerExtensions.FormatQueryParameters(
@@ -60,7 +60,7 @@ public class SurrealDbLoggerExtensionsTests
         result.Should().Be("$p0=?, $p1=?, $p2=?");
     }
 
-    [Fact]
+    [Test]
     public void ShouldFormatQueryParametersWithoutSensitive()
     {
         string result = SurrealDbLoggerExtensions.FormatQueryParameters(
@@ -75,14 +75,14 @@ public class SurrealDbLoggerExtensionsTests
         result.Should().Be("$p0='1', $p1='Hello', $p2='test'");
     }
 
-    [Fact]
+    [Test]
     public void ShouldFormatExecutionTimeAsSecond()
     {
         string result = SurrealDbLoggerExtensions.FormatExecutionTime(TimeSpan.FromSeconds(3));
         result.Should().Be("3s");
     }
 
-    [Fact]
+    [Test]
     public void ShouldFormatExecutionTimeAsMillisecond()
     {
         string result = SurrealDbLoggerExtensions.FormatExecutionTime(
@@ -92,7 +92,7 @@ public class SurrealDbLoggerExtensionsTests
     }
 
 #if NET7_0_OR_GREATER
-    [Fact]
+    [Test]
     public void ShouldFormatExecutionTimeAsMicrosecond()
     {
         string result = SurrealDbLoggerExtensions.FormatExecutionTime(

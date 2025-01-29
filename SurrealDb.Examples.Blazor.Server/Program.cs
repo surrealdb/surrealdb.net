@@ -53,7 +53,7 @@ async Task InitializeDbAsync()
     var tasks = new[]
     {
         GenerateWeatherForecastsAsync(surrealDbClient),
-        GenerateKanbanAsync(surrealDbClient)
+        GenerateKanbanAsync(surrealDbClient),
     };
 
     await Task.WhenAll(tasks);
@@ -92,13 +92,13 @@ async Task GenerateKanbanAsync(ISurrealDbClient surrealDbClient)
     var task3 = new TaskRecord
     {
         Title = "Update the project plan",
-        DueDate = DateTime.Now.AddDays(3)
+        DueDate = DateTime.Now.AddDays(3),
     };
     var task4 = new TaskRecord { Title = "Finish the proposal", DueDate = DateTime.Now.AddDays(2) };
     var task5 = new TaskRecord
     {
         Title = "Complete the presentation",
-        DueDate = DateTime.Now.AddDays(5)
+        DueDate = DateTime.Now.AddDays(5),
     };
 
     var taskTasks = new[] { task1, task2, task3, task4, task5 }.Select(t =>
@@ -111,19 +111,19 @@ async Task GenerateKanbanAsync(ISurrealDbClient surrealDbClient)
     {
         Name = "To Do",
         Order = 1,
-        Tasks = new[] { taskRecords[0].Id!, taskRecords[1].Id! }
+        Tasks = new[] { taskRecords[0].Id!, taskRecords[1].Id! },
     };
     var inProgressColumn = new ColumnRecord
     {
         Name = "In Progress",
         Order = 2,
-        Tasks = new[] { taskRecords[2].Id!, taskRecords[3].Id! }
+        Tasks = new[] { taskRecords[2].Id!, taskRecords[3].Id! },
     };
     var doneColumn = new ColumnRecord
     {
         Name = "Done",
         Order = 3,
-        Tasks = new[] { taskRecords[4].Id! }
+        Tasks = new[] { taskRecords[4].Id! },
     };
 
     var columnTasks = new[] { todoColumn, inProgressColumn, doneColumn }.Select(column =>

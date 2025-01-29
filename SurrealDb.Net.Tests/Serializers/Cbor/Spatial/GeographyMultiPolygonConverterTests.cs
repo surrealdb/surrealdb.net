@@ -4,7 +4,7 @@ namespace SurrealDb.Net.Tests.Serializers.Cbor.Spatial;
 
 public class GeographyMultiPolygonConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         var factory = GeographyFactory.MultiPolygon();
@@ -32,7 +32,7 @@ public class GeographyMultiPolygonConverterTests : BaseCborConverterTests
             );
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<GeographyMultiPolygon>(

@@ -2,12 +2,8 @@
 
 public class RunTests
 {
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldRunFunctionWithoutArgs(string connectionString)
     {
         DateTime? result = null;
@@ -29,12 +25,8 @@ public class RunTests
         result.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldRunFunctionWithArgs(string connectionString)
     {
         string? result = null;

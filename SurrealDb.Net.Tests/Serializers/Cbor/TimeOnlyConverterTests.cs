@@ -3,7 +3,7 @@ namespace SurrealDb.Net.Tests.Serializers.Cbor;
 
 public class TimeOnlyConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         var value = new TimeOnly(0, 28, 3, 58, 255);
@@ -13,7 +13,7 @@ public class TimeOnlyConverterTests : BaseCborConverterTests
         result.Should().Be("ce821906931a0378e698");
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<TimeOnly>("ce821906931a0378e698");

@@ -250,16 +250,26 @@ public class WeatherForecastController : ControllerBase
 Before contributing to this repository, please take note of the [Contributing](./CONTRIBUTING.md) guidelines. To contribute to this project, you will also need to install the following tools:
 
 * The .NET SDK, preferably the latest stable version which is available for [download here](https://dotnet.microsoft.com/download)
-* The [Rust programming language](https://www.rust-lang.org/learn/get-started)
+* The [Rust programming language](https://www.rust-lang.org/learn/get-started), in order to build the embedded providers
 
-The test and benchmark projects are highly dependent on the local Rust crate used by embedded providers. This crate is located in the [./rust-embedded](./rust-embedded) folder of this repository. To build the crate, make sure you installed the Rust toolchain on your machine and then follow these steps:
+#### Embedded mode
+
+The test and benchmark projects are dependent on the local Rust crate used by embedded providers. This crate is located in the [./rust-embedded](./rust-embedded) folder of this repository. To build the crate, make sure you installed the Rust toolchain on your machine and then follow these steps:
 
 ```sh
 cd ./rust-embedded
 cargo build
 ```
 
-If the command line was successful, the compiled libraries are generated in the target folder and automatically copied when the .NET projects are built. 
+If the command line was successful, the compiled libraries are generated in the target folder and automatically copied when the .NET projects are built.
+
+Note: you can manually disable the embedded mode by changing the value of the constant `EMBEDDED_MODE` located in the `Directory.Build.props` file like this:
+
+```xml
+<PropertyGroup Label="Constants" Condition="false">
+  <DefineConstants>EMBEDDED_MODE</DefineConstants>
+</PropertyGroup>
+```
 
 ### .NET release versions
 

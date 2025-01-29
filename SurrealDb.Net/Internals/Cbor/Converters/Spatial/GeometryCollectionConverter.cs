@@ -43,14 +43,12 @@ internal class GeometryCollectionConverter : CborConverterBase<GeometryCollectio
             switch (semanticTag)
             {
                 case CborTagConstants.TAG_GEOMETRY_POINT:
-
                     {
                         var point = _pointConverter.Read(ref reader);
                         geometryBuilder.Point(point.X, point.Y);
                     }
                     break;
                 case CborTagConstants.TAG_GEOMETRY_LINE:
-
                     {
                         var lineString = _lineStringConverter.Read(ref reader);
                         geometryBuilder.LineString();
@@ -61,7 +59,6 @@ internal class GeometryCollectionConverter : CborConverterBase<GeometryCollectio
                     }
                     break;
                 case CborTagConstants.TAG_GEOMETRY_POLYGON:
-
                     {
                         var polygon = _polygonConverter.Read(ref reader);
                         geometryBuilder.Polygon();
@@ -77,7 +74,6 @@ internal class GeometryCollectionConverter : CborConverterBase<GeometryCollectio
                     }
                     break;
                 case CborTagConstants.TAG_GEOMETRY_MULTIPOINT:
-
                     {
                         var multiPoint = _multiPointConverter.Read(ref reader);
                         geometryBuilder.MultiPoint();
@@ -88,7 +84,6 @@ internal class GeometryCollectionConverter : CborConverterBase<GeometryCollectio
                     }
                     break;
                 case CborTagConstants.TAG_GEOMETRY_MULTILINE:
-
                     {
                         var multiLineString = _multiLineStringConverter.Read(ref reader);
                         geometryBuilder.MultiLineString();
@@ -103,7 +98,6 @@ internal class GeometryCollectionConverter : CborConverterBase<GeometryCollectio
                     }
                     break;
                 case CborTagConstants.TAG_GEOMETRY_MULTIPOLYGON:
-
                     {
                         var multiPolygon = _multiPolygonConverter.Read(ref reader);
                         geometryBuilder.MultiPolygon();

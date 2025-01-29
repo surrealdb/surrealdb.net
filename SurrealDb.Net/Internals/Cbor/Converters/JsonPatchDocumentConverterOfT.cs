@@ -73,10 +73,9 @@ internal class JsonPatchDocumentConverter<T> : CborConverterBase<JsonPatchDocume
                         CborDataItemType.Null => reader.ReadNull(),
                         CborDataItemType.Boolean => reader.ReadBoolean(),
                         CborDataItemType.String => reader.ReadString(),
-                        CborDataItemType.Signed
-                        or CborDataItemType.Unsigned
-                            => reader.ReadDecimal(),
-                        _ => reader.ReadDataItemAsMemory()
+                        CborDataItemType.Signed or CborDataItemType.Unsigned =>
+                            reader.ReadDecimal(),
+                        _ => reader.ReadDataItemAsMemory(),
                     };
                     continue;
                 }

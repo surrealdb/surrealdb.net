@@ -4,7 +4,7 @@ namespace SurrealDb.Net.Tests.Serializers.Cbor;
 
 public class Vector2ConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         var value = new Vector2(14, 32);
@@ -14,7 +14,7 @@ public class Vector2ConverterTests : BaseCborConverterTests
         result.Should().Be("82f94b00f95000");
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<Vector2>("82f94b00f95000");

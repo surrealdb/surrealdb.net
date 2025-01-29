@@ -48,7 +48,7 @@
   </PropertyGroup>
   
   <!-- https://stackoverflow.com/a/48714896/7847252 -->
-  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+  <ItemGroup Condition="$(DefineConstants.Contains('EMBEDDED_MODE')) And '$(Configuration)' == 'Debug'">
     <Content Include="../rust-embedded/target/debug/surreal_rocksdb.dll" TargetPath="surreal_rocksdb.dll" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
     <Content Include="../rust-embedded/target/debug/surreal_rocksdb.pdb" TargetPath="surreal_rocksdb.pdb" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
 
@@ -66,7 +66,7 @@
     <Content Include="../rust-embedded/target/release/libsurreal_rocksdb.dylib" TargetPath="libsurreal_rocksdb.dylib" CopyToOutputDirectory="Always" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))'" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)' == 'Release' And !$(DefineConstants.Contains('BENCHMARK_MODE'))">
+  <ItemGroup Condition="$(DefineConstants.Contains('EMBEDDED_MODE')) And '$(Configuration)' == 'Release' And !$(DefineConstants.Contains('BENCHMARK_MODE'))">
     <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_rocksdb.dll" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_rocksdb.dll')" Pack="true" PackagePath="runtimes/win-x64/native/" />
     <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_rocksdb.pdb" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_rocksdb.pdb')" Pack="true" PackagePath="runtimes/win-x64/native/" />
 

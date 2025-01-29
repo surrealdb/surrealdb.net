@@ -7,7 +7,7 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 
 public class LiveTableTests : BaseLiveQueryTests
 {
-    [Fact]
+    [Test]
     public async Task ShouldNotBeSupportedOnHttpProtocol()
     {
         const string connectionString = "Endpoint=http://127.0.0.1:8000";
@@ -27,8 +27,8 @@ public class LiveTableTests : BaseLiveQueryTests
         await func.Should().ThrowAsync<NotSupportedException>();
     }
 
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldReceiveData(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();
@@ -102,8 +102,9 @@ public class LiveTableTests : BaseLiveQueryTests
         lastResult.Should().BeOfType<SurrealDbLiveQueryCloseResponse>();
     }
 
-    [Theory(Skip = "The DELETE event does not send a JsonPatchDocument at the moment")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Skip("The DELETE event does not send a JsonPatchDocument at the moment")]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldReceiveDataInJsonPatchFormat(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();

@@ -10,5 +10,5 @@ public enum DurationUnit
     Hour,
     Day,
     Week,
-    Year
+    Year,
 }

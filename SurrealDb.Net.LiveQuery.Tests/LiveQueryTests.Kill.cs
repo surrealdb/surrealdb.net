@@ -6,8 +6,8 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 
 public class KillLiveQueryTests
 {
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldAutomaticallyKillLiveQueryWhenDisposed(string connectionString)
     {
         var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
@@ -46,12 +46,12 @@ public class KillLiveQueryTests
 
         string errorMessage = version switch
         {
-            { Major: 1 }
-                => "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'",
-            { Major: 2, Minor: 0 }
-                => "There was a problem with the database: Can not execute KILL statement using id '$id'",
-            _
-                => $"There was a problem with the database: Can not execute KILL statement using id 'u'{liveQueryUuid}''"
+            { Major: 1 } =>
+                "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'",
+            { Major: 2, Minor: 0 } =>
+                "There was a problem with the database: Can not execute KILL statement using id '$id'",
+            _ =>
+                $"There was a problem with the database: Can not execute KILL statement using id 'u'{liveQueryUuid}''",
         };
 
         await liveQueryAlreadyKilledFunc
@@ -60,8 +60,8 @@ public class KillLiveQueryTests
             .WithMessage(errorMessage);
     }
 
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldManuallyKillLiveQuery(string connectionString)
     {
         var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
@@ -104,12 +104,12 @@ public class KillLiveQueryTests
 
         string errorMessage = version switch
         {
-            { Major: 1 }
-                => "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'",
-            { Major: 2, Minor: 0 }
-                => "There was a problem with the database: Can not execute KILL statement using id '$id'",
-            _
-                => $"There was a problem with the database: Can not execute KILL statement using id 'u'{liveQueryUuid}''"
+            { Major: 1 } =>
+                "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'",
+            { Major: 2, Minor: 0 } =>
+                "There was a problem with the database: Can not execute KILL statement using id '$id'",
+            _ =>
+                $"There was a problem with the database: Can not execute KILL statement using id 'u'{liveQueryUuid}''",
         };
 
         await liveQueryAlreadyKilledFunc

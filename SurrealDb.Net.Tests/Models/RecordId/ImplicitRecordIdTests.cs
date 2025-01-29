@@ -4,7 +4,7 @@ namespace SurrealDb.Net.Tests.Models;
 
 public class ImplicitRecordIdTests
 {
-    [Fact]
+    [Test]
     public void ShouldCreateRecordIdFromTupleImplicitly()
     {
         RecordId recordId = ("table", "id");
@@ -13,7 +13,7 @@ public class ImplicitRecordIdTests
         recordId.DeserializeId<string>().Should().Be("id");
     }
 
-    [Fact]
+    [Test]
     public void ShouldCreateRecordIdFromTupleWithIntegerIdImplicitly()
     {
         RecordId recordId = ("table", 844654);
@@ -22,12 +22,8 @@ public class ImplicitRecordIdTests
         recordId.DeserializeId<int>().Should().Be(844654);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldCreateRecordIdFromTupleOnClientMethodCall(string connectionString)
     {
         // Test taken from "SelectTests.cs" file
@@ -39,16 +35,10 @@ public class ImplicitRecordIdTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/recordId.surql"
-            );
-            string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-            string query = fileContent;
-
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            (await client.RawQuery(query)).EnsureAllOks();
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.RecordId);
 
             result = await client.Select<RecordIdRecord>(("recordId", 17493));
         };

@@ -8,10 +8,9 @@ internal static class TimeSpanParser
         {
             (null or 0, null or 0) => TimeSpan.Zero,
             (_, null or 0) => TimeSpan.FromSeconds((double)seconds),
-            _
-                => TimeSpan.FromTicks(
-                    (seconds!.Value * TimeSpan.TicksPerSecond) + (nanos!.Value / 100)
-                )
+            _ => TimeSpan.FromTicks(
+                (seconds!.Value * TimeSpan.TicksPerSecond) + (nanos!.Value / 100)
+            ),
         };
     }
 }

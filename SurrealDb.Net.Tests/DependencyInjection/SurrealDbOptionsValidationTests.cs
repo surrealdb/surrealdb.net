@@ -1,5 +1,4 @@
 #if NET8_0_OR_GREATER
-using FlakyTest.XUnit.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -10,7 +9,8 @@ namespace SurrealDb.Net.Tests.DependencyInjection;
 
 public class SurrealDbOptionsValidationTests
 {
-    [FlakyFact("May fail due to timeout")]
+    [Retry(5)]
+    // 💡 Flaky: "May fail due to timeout"
     public async Task EndpointShouldBeRequired()
     {
         var func = () => CreateHostRunner(_ => { });
@@ -20,7 +20,8 @@ public class SurrealDbOptionsValidationTests
             .WithMessage("Endpoint is required.");
     }
 
-    [FlakyFact("May fail due to timeout")]
+    [Retry(5)]
+    // 💡 Flaky: "May fail due to timeout"
     public async Task EndpointShouldBeAValidUrl()
     {
         var func = () =>
@@ -34,7 +35,8 @@ public class SurrealDbOptionsValidationTests
             .WithMessage("Endpoint should be a valid URL.");
     }
 
-    [FlakyFact("May fail due to timeout")]
+    [Retry(5)]
+    // 💡 Flaky: "May fail due to timeout"
     public async Task NamingPolicyShouldBeValid()
     {
         var func = () =>
@@ -49,7 +51,8 @@ public class SurrealDbOptionsValidationTests
             .WithMessage("Naming policy should be valid.");
     }
 
-    [FlakyFact("May fail due to timeout")]
+    [Retry(5)]
+    // 💡 Flaky: "May fail due to timeout"
     public async Task ShouldValidateSuccessfully()
     {
         var func = () =>

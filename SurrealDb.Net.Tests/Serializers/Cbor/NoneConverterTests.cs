@@ -2,7 +2,7 @@
 
 public class NoneConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         var value = new None();
@@ -12,7 +12,7 @@ public class NoneConverterTests : BaseCborConverterTests
         result.Should().Be("c6f6");
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<None>("c6f6");

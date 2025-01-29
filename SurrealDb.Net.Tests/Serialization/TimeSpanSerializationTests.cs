@@ -2,10 +2,8 @@
 
 public class TimeSpanSerializationTests
 {
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldSerializeAndThenDeserialize(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -34,7 +32,7 @@ public class TimeSpanSerializationTests
         {
             var result = await client.Create(
                 "timespan",
-                new TimeSpanRecord { Name = @case.ToString(), Value = @case.Value, }
+                new TimeSpanRecord { Name = @case.ToString(), Value = @case.Value }
             );
 
             result

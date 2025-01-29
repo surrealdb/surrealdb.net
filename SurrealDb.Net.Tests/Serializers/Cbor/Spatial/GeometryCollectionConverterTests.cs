@@ -50,7 +50,7 @@ public class GeometryCollectionConverterTests : BaseCborConverterTests
         _geometryCollection = factory.Build();
     }
 
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         string result = await SerializeCborBinaryAsHexaAsync(_geometryCollection);
@@ -62,7 +62,7 @@ public class GeometryCollectionConverterTests : BaseCborConverterTests
             );
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<GeometryCollection>(

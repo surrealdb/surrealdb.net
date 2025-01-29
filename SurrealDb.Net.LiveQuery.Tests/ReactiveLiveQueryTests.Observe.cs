@@ -1,5 +1,4 @@
 ﻿using System.Reactive.Linq;
-using FlakyTest.XUnit.Attributes;
 using Microsoft.Reactive.Testing;
 using SurrealDb.Net.LiveQuery.Tests.Abstract;
 using SurrealDb.Net.LiveQuery.Tests.Models;
@@ -9,8 +8,10 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 
 public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
 {
-    [FlakyTheory("May fail due to concurrency issues or timeout.")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Retry(5)]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    // 💡 May fail due to concurrency issues or timeout.
     public async Task ShouldObserveQuery(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();
@@ -87,8 +88,10 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
         lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse<TestRecord>>();
     }
 
-    [FlakyTheory("May fail due to concurrency issues or timeout.")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Retry(5)]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    // 💡 May fail due to concurrency issues or timeout.
     public async Task ShouldObserveRawQuery(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();
@@ -179,8 +182,10 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
         lastResult.Should().BeOfType<SurrealDbLiveQueryDeleteResponse<TestRecord>>();
     }
 
-    [FlakyTheory("May fail due to concurrency issues or timeout.")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Retry(5)]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    // 💡 May fail due to concurrency issues or timeout.
     public async Task ShouldObserveTable(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();

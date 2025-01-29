@@ -7,8 +7,8 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 
 public class FiltersLiveQueryTests : BaseLiveQueryTests
 {
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldExcludeCloseResultWithGetResults(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();
@@ -84,8 +84,8 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
         filteredResults.Should().HaveCount(3);
     }
 
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldGetCreatedRecords(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();
@@ -165,8 +165,8 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
         result.Value.Should().Be(1);
     }
 
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldGetUpdatedRecords(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();
@@ -246,8 +246,8 @@ public class FiltersLiveQueryTests : BaseLiveQueryTests
         result.Value.Should().Be(2);
     }
 
-    [Theory]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldGetDeletedRecords(string connectionString)
     {
         TestRecord? record = null;

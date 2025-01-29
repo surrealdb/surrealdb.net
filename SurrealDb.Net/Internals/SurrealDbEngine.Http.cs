@@ -59,7 +59,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var request = new SurrealDbHttpRequest
         {
             Method = "authenticate",
-            Parameters = [jwt.Token]
+            Parameters = [jwt.Token],
         };
 
         await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
@@ -246,7 +246,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var request = new SurrealDbHttpRequest
         {
             Method = "insert_relation",
-            Parameters = [null, data]
+            Parameters = [null, data],
         };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -275,7 +275,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var request = new SurrealDbHttpRequest
         {
             Method = "insert_relation",
-            Parameters = [table, data]
+            Parameters = [table, data],
         };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -401,7 +401,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var request = new SurrealDbHttpRequest
         {
             Method = "patch",
-            Parameters = [recordId, patches]
+            Parameters = [recordId, patches],
         };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -419,7 +419,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var request = new SurrealDbHttpRequest
         {
             Method = "patch",
-            Parameters = [recordId, patches]
+            Parameters = [recordId, patches],
         };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -466,7 +466,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var request = new SurrealDbHttpRequest
         {
             Method = "query",
-            Parameters = [query, allParameters]
+            Parameters = [query, allParameters],
         };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -504,7 +504,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var request = new SurrealDbHttpRequest
         {
             Method = "relate",
-            Parameters = [ins, table, outs, data]
+            Parameters = [ins, table, outs, data],
         };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -524,7 +524,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var request = new SurrealDbHttpRequest
         {
             Method = "relate",
-            Parameters = [@in, recordId, @out, data]
+            Parameters = [@in, recordId, @out, data],
         };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -542,7 +542,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var request = new SurrealDbHttpRequest
         {
             Method = "run",
-            Parameters = [name, version, args]
+            Parameters = [name, version, args],
         };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -1182,8 +1182,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return result switch
         {
             SurrealDbHttpOkResponse okResponse => okResponse,
-            SurrealDbHttpErrorResponse errorResponse
-                => throw new SurrealDbException(errorResponse.Error.Message),
+            SurrealDbHttpErrorResponse errorResponse => throw new SurrealDbException(
+                errorResponse.Error.Message
+            ),
             _ => throw new SurrealDbException("Unknown response type"),
         };
     }

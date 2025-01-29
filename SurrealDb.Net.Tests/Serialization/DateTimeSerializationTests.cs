@@ -4,10 +4,8 @@ namespace SurrealDb.Net.Tests.Serialization;
 
 public class DateTimeSerializationTests
 {
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldSerializeAndThenDeserialize(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
@@ -39,14 +37,14 @@ public class DateTimeSerializationTests
             ),
 #endif
             ("(1913, 6, 3, 14, 38, 30, 164)", new(1913, 6, 3, 14, 38, 30, 164)),
-            ("2024-11-08 12:29:58.6625489", DateTime.Parse("2024-11-08 12:29:58.6625489Z"))
+            ("2024-11-08 12:29:58.6625489", DateTime.Parse("2024-11-08 12:29:58.6625489Z")),
         ];
 
         foreach (var @case in cases)
         {
             var result = await client.Create(
                 "datetime",
-                new DateTimeRecord { Name = @case.Name, Value = @case.Value, }
+                new DateTimeRecord { Name = @case.Name, Value = @case.Value }
             );
 
             var expectedValue =

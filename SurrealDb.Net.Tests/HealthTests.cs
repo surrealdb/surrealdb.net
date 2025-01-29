@@ -2,12 +2,8 @@
 
 public class HealthTests
 {
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldBeTrueOnAValidEndpoint(string connectionString)
     {
         bool? response = null;
@@ -15,9 +11,7 @@ public class HealthTests
         Func<Task> func = async () =>
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
 
             response = await client.Health();
         };
@@ -27,9 +21,9 @@ public class HealthTests
         response.Should().BeTrue();
     }
 
-    [Theory]
-    [InlineData("Endpoint=http://localhost:1234")]
-    [InlineData("Endpoint=ws://localhost:1234/rpc")]
+    [Test]
+    [Arguments("Endpoint=http://localhost:1234")]
+    [Arguments("Endpoint=ws://localhost:1234/rpc")]
     public async Task ShouldBeFalseOnAnInvalidServer(string connectionString)
     {
         bool? response = null;
@@ -37,9 +31,7 @@ public class HealthTests
         Func<Task> func = async () =>
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
 
             response = await client.Health();
         };

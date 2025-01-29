@@ -6,29 +6,17 @@ namespace SurrealDb.Net.Tests;
 
 public class TypesTests
 {
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldSupportString(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/string.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.String);
 
         await client.Delete("string");
 
@@ -99,29 +87,17 @@ public class TypesTests
         }
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldSupportLong(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/number.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Number);
 
         await client.Delete("number");
 
@@ -160,29 +136,17 @@ public class TypesTests
         }
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
-    public async Task ShoulSupportDecimal(string connectionString)
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    public async Task ShouldSupportDecimal(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/decimal.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Decimal);
 
         await client.Delete("decimal");
 
@@ -202,7 +166,7 @@ public class TypesTests
             new DecimalRecord
             {
                 Name = "decimal-precision",
-                Value = 13.5719384719384719385639856394139476937756394756m
+                Value = 13.5719384719384719385639856394139476937756394756m,
             }
         );
         await client.Create(
@@ -210,7 +174,7 @@ public class TypesTests
             new DecimalRecord
             {
                 Name = "float",
-                Value = 13.5719384719384719385639856394139476937756394756m
+                Value = 13.5719384719384719385639856394139476937756394756m,
             }
         );
 
@@ -261,29 +225,17 @@ public class TypesTests
         }
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldSupportFloat(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/decimal.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Decimal);
 
         await client.Delete("decimal");
 
@@ -303,7 +255,7 @@ public class TypesTests
             new FloatRecord
             {
                 Name = "decimal-precision",
-                Value = (float)13.5719384719384719385639856394139476937756394756m
+                Value = (float)13.5719384719384719385639856394139476937756394756m,
             }
         );
         await client.Create(
@@ -311,7 +263,7 @@ public class TypesTests
             new FloatRecord
             {
                 Name = "float",
-                Value = (float)13.5719384719384719385639856394139476937756394756m
+                Value = (float)13.5719384719384719385639856394139476937756394756m,
             }
         );
 
@@ -362,29 +314,17 @@ public class TypesTests
         }
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldSupportDouble(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/decimal.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Decimal);
 
         await client.Delete("decimal");
 
@@ -404,7 +344,7 @@ public class TypesTests
             new DoubleRecord
             {
                 Name = "decimal-precision",
-                Value = 13.5719384719384719385639856394139476937756394756
+                Value = 13.5719384719384719385639856394139476937756394756,
             }
         );
         await client.Create(
@@ -412,7 +352,7 @@ public class TypesTests
             new DoubleRecord
             {
                 Name = "float",
-                Value = 13.5719384719384719385639856394139476937756394756
+                Value = 13.5719384719384719385639856394139476937756394756,
             }
         );
 
@@ -463,29 +403,17 @@ public class TypesTests
         }
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldSupportDuration(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/duration.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Duration);
 
         await client.Delete("duration");
 
@@ -623,29 +551,17 @@ public class TypesTests
     }
 
 #if NET7_0_OR_GREATER
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldSupportTimeSpan(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/duration.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Duration);
 
         await client.Delete("duration");
 
@@ -773,29 +689,17 @@ public class TypesTests
     }
 #endif
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldSupportDateTime(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/datetime.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Datetime);
 
         await client.Delete("datetime");
 
@@ -805,7 +709,7 @@ public class TypesTests
             new DateTimeRecord
             {
                 Name = "time",
-                Value = new DateTime(2022, 7, 3, 7, 18, 52).AsUtc()
+                Value = new DateTime(2022, 7, 3, 7, 18, 52).AsUtc(),
             }
         );
         await client.Create(
@@ -813,7 +717,7 @@ public class TypesTests
             new DateTimeRecord
             {
                 Name = "nano",
-                Value = new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(841_147_000).AsUtc()
+                Value = new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(841_147_000).AsUtc(),
             }
         );
         await client.Create(
@@ -825,7 +729,7 @@ public class TypesTests
                     .AddNanoseconds(841_147_000)
                     .AsUtc()
                     .WithOffset(TimeSpan.FromHours(2))
-                    .UtcDateTime
+                    .UtcDateTime,
             }
         );
         await client.Create(
@@ -833,7 +737,7 @@ public class TypesTests
             new DateTimeRecord
             {
                 Name = "time+duration",
-                Value = new DateTime(2022, 7, 17, 7, 18, 52).AsUtc()
+                Value = new DateTime(2022, 7, 17, 7, 18, 52).AsUtc(),
             }
         );
         await client.Create(
@@ -841,7 +745,7 @@ public class TypesTests
             new DateTimeRecord
             {
                 Name = "nano+duration",
-                Value = new DateTime(2022, 7, 3, 8, 49, 14).AddNanoseconds(191_147_000).AsUtc()
+                Value = new DateTime(2022, 7, 3, 8, 49, 14).AddNanoseconds(191_147_000).AsUtc(),
             }
         );
         await client.Create(
@@ -849,7 +753,7 @@ public class TypesTests
             new DateTimeRecord
             {
                 Name = "full-nano",
-                Value = new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(123_456_789).AsUtc()
+                Value = new DateTime(2022, 7, 3, 7, 18, 52).AddNanoseconds(123_456_789).AsUtc(),
             }
         );
 
@@ -911,29 +815,17 @@ public class TypesTests
         }
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldSupportVector2(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        string filePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Schemas/vector.surql"
-        );
-        string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-        string query = fileContent;
-
         using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-        (await client.RawQuery(query)).EnsureAllOks();
+        await client.ApplySchemaAsync(SurrealSchemaFile.Vector);
 
         await client.Delete("vector");
 
@@ -958,12 +850,8 @@ public class TypesTests
         }
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldSupportThing(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();

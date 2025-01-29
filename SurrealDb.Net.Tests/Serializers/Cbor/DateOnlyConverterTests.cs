@@ -2,7 +2,7 @@
 
 public class DateOnlyConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         string result = await SerializeCborBinaryAsHexaAsync(DateOnly.Parse("2024-03-24"));
@@ -10,7 +10,7 @@ public class DateOnlyConverterTests : BaseCborConverterTests
         result.Should().Be("cc821a65ff6d0000");
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<DateOnly>("cc821a65ff6d0000");

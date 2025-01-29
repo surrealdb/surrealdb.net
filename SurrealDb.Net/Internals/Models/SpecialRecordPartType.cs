@@ -5,5 +5,5 @@ internal enum SpecialRecordPartType
     None,
     JsonObject,
     JsonArray,
-    SerializedCbor
+    SerializedCbor,
 }

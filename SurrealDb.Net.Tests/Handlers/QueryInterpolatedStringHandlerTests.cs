@@ -11,7 +11,7 @@ public class QueryInterpolatedStringHandlerTests
         return (handler.FormattedText, handler.Parameters);
     }
 
-    [Fact]
+    [Test]
     public void ShouldReturnSameStringWithoutArguments()
     {
         var (query, @params) = HandleQuery($"DEFINE TABLE test;");
@@ -20,7 +20,7 @@ public class QueryInterpolatedStringHandlerTests
         @params.Should().BeEmpty();
     }
 
-    [Fact]
+    [Test]
     public void ShouldExtractQueryWithOneArgument()
     {
         int value = 10;
@@ -33,7 +33,7 @@ public class QueryInterpolatedStringHandlerTests
         @params.Should().BeEquivalentTo(expectedParams);
     }
 
-    [Fact]
+    [Test]
     public void ShouldExtractQueryWithMultipleArguments()
     {
         string table = "test";
@@ -47,7 +47,7 @@ public class QueryInterpolatedStringHandlerTests
         @params.Should().BeEquivalentTo(expectedParams);
     }
 
-    [Fact]
+    [Test]
     public void ShouldAvoidToDuplicateParamsWhenExtractingQueryParams()
     {
         string table = "test";
@@ -82,7 +82,7 @@ public class QueryInterpolatedStringHandlerTests
         {
             { "p0", table },
             { "p1", 5 },
-            { "p2", 10 }
+            { "p2", 10 },
         };
         @params.Should().BeEquivalentTo(expectedParams);
     }

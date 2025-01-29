@@ -4,7 +4,7 @@ namespace SurrealDb.Net.Tests.Extensions;
 
 public class FormattableStringExtensionsTests
 {
-    [Fact]
+    [Test]
     public void ShouldReturnSameStringWithoutArguments()
     {
         FormattableString formattableString = $"DEFINE TABLE test;";
@@ -15,7 +15,7 @@ public class FormattableStringExtensionsTests
         @params.Should().BeEmpty();
     }
 
-    [Fact]
+    [Test]
     public void ShouldExtractQueryWithOneArgument()
     {
         int value = 10;
@@ -29,7 +29,7 @@ public class FormattableStringExtensionsTests
         @params.Should().BeEquivalentTo(expectedParams);
     }
 
-    [Fact]
+    [Test]
     public void ShouldExtractQueryWithMultipleArguments()
     {
         string table = "test";
@@ -45,7 +45,7 @@ public class FormattableStringExtensionsTests
         @params.Should().BeEquivalentTo(expectedParams);
     }
 
-    [Fact]
+    [Test]
     public void ShouldAvoidToDuplicateParamsWhenExtractingQueryParams()
     {
         string table = "test";
@@ -79,7 +79,7 @@ public class FormattableStringExtensionsTests
         {
             { "p0", table },
             { "p1", 5 },
-            { "p2", 10 }
+            { "p2", 10 },
         };
         @params.Should().BeEquivalentTo(expectedParams);
     }

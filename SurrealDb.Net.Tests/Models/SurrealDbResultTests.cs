@@ -5,34 +5,40 @@ namespace SurrealDb.Net.Tests.Models;
 
 public class SurrealDbResultTests
 {
-    public static TheoryData<ISurrealDbResult, bool> IsOkResultCases =>
-        new()
+    public static class TestDataSources
+    {
+        public static IEnumerable<Func<(ISurrealDbResult, bool)>> IsOkResultCases()
         {
-            { new SurrealDbOkResult(TimeSpan.Zero, "OK", new ReadOnlyMemory<byte>(), null!), true },
-            { new SurrealDbErrorResult(TimeSpan.Zero, "KO", "Something went wrong..."), false },
-#if NET8_0_OR_GREATER
-            {
-                new SurrealDbProtocolErrorResult(HttpStatusCode.UnprocessableContent, "", "", ""),
-                false
-            },
-#else
-            {
-                new SurrealDbProtocolErrorResult(HttpStatusCode.UnprocessableEntity, "", "", ""),
-                false
-            },
-#endif
-            { new SurrealDbUnknownResult(), false },
-        };
+            yield return () =>
+                (
+                    new SurrealDbOkResult(TimeSpan.Zero, "OK", new ReadOnlyMemory<byte>(), null!),
+                    true
+                );
+            yield return () =>
+                (new SurrealDbErrorResult(TimeSpan.Zero, "KO", "Something went wrong..."), false);
+            yield return () =>
+                (
+                    new SurrealDbProtocolErrorResult(
+                        HttpStatusCode.UnprocessableContent,
+                        "",
+                        "",
+                        ""
+                    ),
+                    false
+                );
+            yield return () => (new SurrealDbUnknownResult(), false);
+        }
+    }
 
-    [Theory]
-    [MemberData(nameof(IsOkResultCases))]
+    [Test]
+    [MethodDataSource(typeof(TestDataSources), nameof(TestDataSources.IsOkResultCases))]
     public void ShouldTestIsOk(ISurrealDbResult value, bool expected)
     {
         value.IsOk.Should().Be(expected);
     }
 
-    [Theory]
-    [MemberData(nameof(IsOkResultCases))]
+    [Test]
+    [MethodDataSource(typeof(TestDataSources), nameof(TestDataSources.IsOkResultCases))]
     public void ShouldTestIsError(ISurrealDbResult value, bool expected)
     {
         value.IsError.Should().Be(!expected);

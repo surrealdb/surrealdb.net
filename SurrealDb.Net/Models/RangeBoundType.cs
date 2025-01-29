@@ -7,5 +7,5 @@ public enum RangeBoundType
 {
     Unknown = 0,
     Inclusive,
-    Exclusive
+    Exclusive,
 }

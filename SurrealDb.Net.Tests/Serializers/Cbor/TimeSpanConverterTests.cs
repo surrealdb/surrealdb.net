@@ -3,7 +3,7 @@ namespace SurrealDb.Net.Tests.Serializers.Cbor;
 
 public class TimeSpanConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         var value = new TimeSpan(267, 0, 28, 3, 58, 255);
@@ -13,7 +13,7 @@ public class TimeSpanConverterTests : BaseCborConverterTests
         result.Should().Be("ce821a016007131a0378e698");
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<TimeSpan>("ce821a016007131a0378e698");

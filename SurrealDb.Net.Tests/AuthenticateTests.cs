@@ -4,9 +4,8 @@ namespace SurrealDb.Net.Tests;
 
 public class AuthenticateTests
 {
-    [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldAuthenticate(string connectionString)
     {
         Jwt? jwt = null;
@@ -20,27 +19,8 @@ public class AuthenticateTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/user.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
-
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.User);
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
@@ -51,7 +31,7 @@ public class AuthenticateTests
                 Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
-                Password = "password123"
+                Password = "password123",
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -67,10 +47,8 @@ public class AuthenticateTests
         list.Should().NotBeNull().And.HaveCount(2);
     }
 
-    [Theory]
-    [InlineData("Endpoint=mem://")]
-    [InlineData("Endpoint=rocksdb://")]
-    [InlineData("Endpoint=surrealkv://")]
+    [Test]
+    [EmbeddedConnectionStringFixtureGenerator]
     public async Task InvalidateIsNotSupportedInEmbeddedMode(string connectionString)
     {
         Func<Task> func = async () =>
@@ -81,27 +59,8 @@ public class AuthenticateTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/user.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
-
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.User);
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
@@ -112,7 +71,7 @@ public class AuthenticateTests
                 Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
-                Password = "password123"
+                Password = "password123",
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -126,9 +85,8 @@ public class AuthenticateTests
             .WithMessage("Authentication is not enabled in embedded mode.");
     }
 
-    [Theory]
-    [InlineData("Endpoint=http://127.0.0.1:8000;User=root;Pass=root")]
-    [InlineData("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldFailWhenInvalidate(string connectionString)
     {
         Jwt? jwt = null;
@@ -142,27 +100,8 @@ public class AuthenticateTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/user.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
-
-            {
-                string filePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/post.surql"
-                );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-
-                string query = fileContent;
-                (await client.RawQuery(query)).EnsureAllOks();
-            }
+            await client.ApplySchemaAsync(SurrealSchemaFile.User);
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var authParams = new AuthParams
@@ -173,7 +112,7 @@ public class AuthenticateTests
                 Access = "user_scope",
                 Username = "johndoe",
                 Email = "john.doe@example.com",
-                Password = "password123"
+                Password = "password123",
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 

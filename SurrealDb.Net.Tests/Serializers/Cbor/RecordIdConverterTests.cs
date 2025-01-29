@@ -2,7 +2,7 @@
 
 public class RecordIdConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         var value = RecordId.From("post", "first");
@@ -12,7 +12,7 @@ public class RecordIdConverterTests : BaseCborConverterTests
         result.Should().Be("c88264706f7374656669727374");
     }
 
-    [Fact]
+    [Test]
     public async Task ShouldFailToDeserializeFromStringRecordId()
     {
         var func = async () =>
@@ -23,7 +23,7 @@ public class RecordIdConverterTests : BaseCborConverterTests
             .WithMessage("Cannot read StringRecordId from cbor...");
     }
 
-    [Fact]
+    [Test]
     public async Task DeserializeFromArrayWithStringId()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<RecordId>("c88264706f7374656669727374");
@@ -33,7 +33,7 @@ public class RecordIdConverterTests : BaseCborConverterTests
         result.Should().Be(expected);
     }
 
-    [Fact]
+    [Test]
     public async Task DeserializeFromArrayWithIntegerId()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<RecordId>("c88264706f7374193039");

@@ -4,7 +4,7 @@ namespace SurrealDb.Net.Tests.Serializers.Cbor.Spatial;
 
 public class GeometryPointConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         var value = GeometryPoint.Create(32.0, 64.0);
@@ -14,7 +14,7 @@ public class GeometryPointConverterTests : BaseCborConverterTests
         result.Should().Be("d85882623332623634");
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<GeometryPoint>("d85882623332623634");

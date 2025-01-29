@@ -2,7 +2,7 @@
 
 public class ConstructorsStringRecordIdTests
 {
-    [Fact]
+    [Test]
     public void ThrowExceptionIfNoValueProvided()
     {
         var act = () => new StringRecordId();
@@ -10,7 +10,7 @@ public class ConstructorsStringRecordIdTests
         act.Should().Throw<InvalidOperationException>().WithMessage("A value is required");
     }
 
-    [Fact]
+    [Test]
     public void ShouldCreateStringRecordId()
     {
         var recordId = new StringRecordId("table:id");

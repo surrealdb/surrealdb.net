@@ -2,7 +2,7 @@
 
 public class DurationConverterTests : BaseCborConverterTests
 {
-    [Fact]
+    [Test]
     public async Task Serialize()
     {
         var value = new Duration("38w1d28m3s58ms255µs");
@@ -12,7 +12,7 @@ public class DurationConverterTests : BaseCborConverterTests
         result.Should().Be("ce821a016007131a0378e698");
     }
 
-    [Fact]
+    [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<Duration>("ce821a016007131a0378e698");
