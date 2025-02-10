@@ -135,22 +135,19 @@ It will automatically create a new SurrealDB using the `Server endpoint` and con
 
 #### Multiple instances
 
-Having a default instance for a project is enough most of the time, but there may be times when you'd like to target multiple SurrealDB instances, either at different addresses or at the same address but inside different NS/DBs. You can use multiple instances as long as you provide 1 interface per client, as in the following example.
+Having a default instance for a project is enough most of the time, but there may be times when you'd like to target multiple SurrealDB instances, either at different addresses or at the same address but inside different NS/DBs. You can use multiple instances using Keyed service injection, as in the following example.
 
 ```csharp
-interface IBackupSurrealDbClient : ISurrealDbClient { }
-interface IMonitoringSurrealDbClient : ISurrealDbClient { }
-
 services.AddSurreal(configuration.GetConnectionString("SurrealDB.Main"));
-services.AddSurreal<IBackupSurrealDbClient>(configuration.GetConnectionString("SurrealDB.Backup"));
-services.AddSurreal<IMonitoringSurrealDbClient>(configuration.GetConnectionString("SurrealDB.Monitoring"));
+services.AddKeyedSurreal("backup", configuration.GetConnectionString("SurrealDB.Backup"));
+services.AddKeyedSurreal("monitoring", configuration.GetConnectionString("SurrealDB.Monitoring"));
 ```
 
 Here you will have 3 instances:
 
 - the default one, you can keep using `ISurrealDbClient` interface or `SurrealDbClient` class anywhere
-- a client for backup purpose, using the `IBackupSurrealDbClient` interface
-- a client for monitoring purpose, using the `IMonitoringSurrealDbClient` interface
+- a client for backup purpose, using the `[FromKeyedServices("backup")]` attribute
+- a client for monitoring purpose, using the `[FromKeyedServices("monitoring")]` attribute
 
 ### Use the client
 
