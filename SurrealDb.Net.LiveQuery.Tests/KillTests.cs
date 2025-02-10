@@ -78,8 +78,9 @@ public class KillTests
                 "There was a problem with the database: Can not execute KILL statement using id"
             )
             && (
-                ex.Message.Contains(liveQueryUuid.ToString())
-                || ex.Message.Contains("KILL statement uuid did not exist")
+                ex.Message.Contains(liveQueryUuid.ToString()) // >= 2.1
+                || ex.Message.Contains("KILL statement uuid did not exist") // 1.x
+                || ex.Message.Contains("Can not execute KILL statement using id '$id'") // 2.0.x
             );
 
         await func.Should().ThrowAsync<SurrealDbException>().Where(validErrorMessage);
