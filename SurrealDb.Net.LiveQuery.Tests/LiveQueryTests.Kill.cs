@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Exceptions;
+﻿using System.Linq.Expressions;
+using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
 
