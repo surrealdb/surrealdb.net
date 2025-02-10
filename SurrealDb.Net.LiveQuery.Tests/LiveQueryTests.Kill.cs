@@ -108,9 +108,10 @@ public class KillLiveQueryTests
                 "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'",
             { Major: 2, Minor: 0 } =>
                 "There was a problem with the database: Can not execute KILL statement using id '$id'",
-            _ =>
+            { Major: 2, Minor: 1 } =>
                 $"There was a problem with the database: Can not execute KILL statement using id 'u'{liveQueryUuid}''",
-        };
+            _ =>
+                $"There was a problem with the database: Can not execute KILL statement using id : u'{liveQueryUuid}'",       };
 
         await liveQueryAlreadyKilledFunc
             .Should()
