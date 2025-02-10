@@ -43,8 +43,13 @@ public class KillLiveQueryTests
         liveQueryUuid.Should().NotBeEmpty();
 
         Func<SurrealDbException, bool> validErrorMessage = ex =>
-            ex.Message.Contains("There was a problem with the database: Can not execute KILL statement using id") &&
-            (ex.Message.Contains(liveQueryUuid) || ex.Message.Contains("KILL statement uuid did not exist"));
+            ex.Message.Contains(
+                "There was a problem with the database: Can not execute KILL statement using id"
+            )
+            && (
+                ex.Message.Contains(liveQueryUuid)
+                || ex.Message.Contains("KILL statement uuid did not exist")
+            );
 
         await liveQueryAlreadyKilledFunc
             .Should()
@@ -93,8 +98,13 @@ public class KillLiveQueryTests
         await manuallyKillLiveQueryFunc.Should().NotThrowAsync();
 
         Func<SurrealDbException, bool> validErrorMessage = ex =>
-            ex.Message.Contains("There was a problem with the database: Can not execute KILL statement using id") &&
-            (ex.Message.Contains(liveQueryUuid) || ex.Message.Contains("KILL statement uuid did not exist"));
+            ex.Message.Contains(
+                "There was a problem with the database: Can not execute KILL statement using id"
+            )
+            && (
+                ex.Message.Contains(liveQueryUuid)
+                || ex.Message.Contains("KILL statement uuid did not exist")
+            );
 
         await liveQueryAlreadyKilledFunc
             .Should()
