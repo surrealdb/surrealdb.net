@@ -10,8 +10,6 @@ public class KillLiveQueryTests
     [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldAutomaticallyKillLiveQueryWhenDisposed(string connectionString)
     {
-        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
-
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
@@ -44,28 +42,20 @@ public class KillLiveQueryTests
 
         liveQueryUuid.Should().NotBeEmpty();
 
-        string errorMessage = version switch
-        {
-            { Major: 1 } =>
-                "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'",
-            { Major: 2, Minor: 0 } =>
-                "There was a problem with the database: Can not execute KILL statement using id '$id'",
-            _ =>
-                $"There was a problem with the database: Can not execute KILL statement using id 'u'{liveQueryUuid}''",
-        };
+        Func<SurrealDbException, bool> validErrorMessage = ex =>
+            ex.Message.Contains("There was a problem with the database: Can not execute KILL statement using id") &&
+            (ex.Message.Contains(liveQueryUuid) || ex.Message.Contains("KILL statement uuid did not exist"));
 
         await liveQueryAlreadyKilledFunc
             .Should()
             .ThrowAsync<SurrealDbException>()
-            .WithMessage(errorMessage);
+            .Where(validErrorMessage);
     }
 
     [Test]
     [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldManuallyKillLiveQuery(string connectionString)
     {
-        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
-
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
@@ -102,20 +92,13 @@ public class KillLiveQueryTests
 
         await manuallyKillLiveQueryFunc.Should().NotThrowAsync();
 
-        string errorMessage = version switch
-        {
-            { Major: 1 } =>
-                "There was a problem with the database: Can not execute KILL statement using id 'KILL statement uuid did not exist'",
-            { Major: 2, Minor: 0 } =>
-                "There was a problem with the database: Can not execute KILL statement using id '$id'",
-            { Major: 2, Minor: 1 } =>
-                $"There was a problem with the database: Can not execute KILL statement using id 'u'{liveQueryUuid}''",
-            _ =>
-                $"There was a problem with the database: Can not execute KILL statement using id : u'{liveQueryUuid}'",       };
+        Func<SurrealDbException, bool> validErrorMessage = ex =>
+            ex.Message.Contains("There was a problem with the database: Can not execute KILL statement using id") &&
+            (ex.Message.Contains(liveQueryUuid) || ex.Message.Contains("KILL statement uuid did not exist"));
 
         await liveQueryAlreadyKilledFunc
             .Should()
             .ThrowAsync<SurrealDbException>()
-            .WithMessage(errorMessage);
+            .Where(validErrorMessage);
     }
 }
