@@ -19,26 +19,26 @@ pub enum Method {
     InsertRelation = 17,
 }
 
-impl From<Method> for surrealdb::rpc::method::Method {
+impl From<Method> for surrealdb::rpc::Method {
     fn from(value: Method) -> Self {
         match value {
-            Method::Ping => surrealdb::rpc::method::Method::Ping,
-            Method::Use => surrealdb::rpc::method::Method::Use,
-            Method::Set => surrealdb::rpc::method::Method::Set,
-            Method::Unset => surrealdb::rpc::method::Method::Unset,
-            Method::Select => surrealdb::rpc::method::Method::Select,
-            Method::Insert => surrealdb::rpc::method::Method::Insert,
-            Method::Create => surrealdb::rpc::method::Method::Create,
-            Method::Update => surrealdb::rpc::method::Method::Update,
-            Method::Upsert => surrealdb::rpc::method::Method::Upsert,
-            Method::Merge => surrealdb::rpc::method::Method::Merge,
-            Method::Patch => surrealdb::rpc::method::Method::Patch,
-            Method::Delete => surrealdb::rpc::method::Method::Delete,
-            Method::Version => surrealdb::rpc::method::Method::Version,
-            Method::Query => surrealdb::rpc::method::Method::Query,
-            Method::Relate => surrealdb::rpc::method::Method::Relate,
-            Method::Run => surrealdb::rpc::method::Method::Run,
-            Method::InsertRelation => surrealdb::rpc::method::Method::InsertRelation,
+            Method::Ping => surrealdb::rpc::Method::Ping,
+            Method::Use => surrealdb::rpc::Method::Use,
+            Method::Set => surrealdb::rpc::Method::Set,
+            Method::Unset => surrealdb::rpc::Method::Unset,
+            Method::Select => surrealdb::rpc::Method::Select,
+            Method::Insert => surrealdb::rpc::Method::Insert,
+            Method::Create => surrealdb::rpc::Method::Create,
+            Method::Update => surrealdb::rpc::Method::Update,
+            Method::Upsert => surrealdb::rpc::Method::Upsert,
+            Method::Merge => surrealdb::rpc::Method::Merge,
+            Method::Patch => surrealdb::rpc::Method::Patch,
+            Method::Delete => surrealdb::rpc::Method::Delete,
+            Method::Version => surrealdb::rpc::Method::Version,
+            Method::Query => surrealdb::rpc::Method::Query,
+            Method::Relate => surrealdb::rpc::Method::Relate,
+            Method::Run => surrealdb::rpc::Method::Run,
+            Method::InsertRelation => surrealdb::rpc::Method::InsertRelation,
         }
     }
 }

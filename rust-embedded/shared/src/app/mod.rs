@@ -1,12 +1,14 @@
+use arc_swap::ArcSwap;
 use std::collections::BTreeMap;
+use std::sync::Arc;
 use surrealdb::dbs::Session;
 use surrealdb::kvs::export::Config;
 use surrealdb::kvs::Datastore;
 use surrealdb::rpc::format::cbor;
-use surrealdb::rpc::method::Method;
-use surrealdb::rpc::{Data, RpcContext};
+use surrealdb::rpc::Method;
+use surrealdb::rpc::{Data, RpcContext, RpcProtocolV2};
 use surrealdb::sql::Value;
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, Semaphore};
 use uuid::Uuid;
 
 pub use crate::err::Error;
@@ -64,11 +66,8 @@ impl SurrealEmbeddedEngine {
     pub async fn execute(&self, method: Method, params: Vec<u8>) -> Result<Vec<u8>, Error> {
         let params = crate::cbor::get_params(params)
             .map_err(|_| "Failed to deserialize params".to_string())?;
-        let res = self
-            .0
-            .write()
-            .await
-            .execute(method, params)
+        let rpc = self.0.write().await;
+        let res = RpcProtocolV2::execute(&*rpc, method, params)
             .await
             .map_err(|e| e.to_string())?;
         let out = cbor::res(res).map_err(|e| e.to_string())?;
@@ -84,8 +83,8 @@ impl SurrealEmbeddedEngine {
 
         let inner = SurrealEmbeddedEngineInner {
             kvs,
-            session: Session::default().with_rt(true),
-            vars: Default::default(),
+            lock: Arc::new(Semaphore::new(1)),
+            session: ArcSwap::from(Arc::new(Session::default().with_rt(true))),
         };
 
         Ok(SurrealEmbeddedEngine(RwLock::new(inner)))
@@ -101,7 +100,7 @@ impl SurrealEmbeddedEngine {
 
         inner
             .kvs
-            .export_with_config(&inner.session, tx, config)
+            .export_with_config(&inner.session(), tx, config)
             .await?
             .await?;
 
@@ -110,8 +109,8 @@ impl SurrealEmbeddedEngine {
             buffer.push(item);
         }
 
-		let result = String::from_utf8(buffer.concat()).map_err(|e| e.to_string())?;
-        
+        let result = String::from_utf8(buffer.concat()).map_err(|e| e.to_string())?;
+
         let out = cbor::res(result).map_err(|e| e.to_string())?;
         Ok(out)
     }
@@ -119,29 +118,27 @@ impl SurrealEmbeddedEngine {
 
 struct SurrealEmbeddedEngineInner {
     pub kvs: Datastore,
-    pub session: Session,
-    pub vars: BTreeMap<String, Value>,
+    pub lock: Arc<Semaphore>,
+    pub session: ArcSwap<Session>,
 }
+
+impl RpcProtocolV2 for SurrealEmbeddedEngineInner {}
 
 impl RpcContext for SurrealEmbeddedEngineInner {
     fn kvs(&self) -> &Datastore {
         &self.kvs
     }
 
-    fn session(&self) -> &Session {
-        &self.session
+    fn lock(&self) -> Arc<Semaphore> {
+        self.lock.clone()
     }
 
-    fn session_mut(&mut self) -> &mut Session {
-        &mut self.session
+    fn session(&self) -> Arc<Session> {
+        self.session.load_full()
     }
 
-    fn vars(&self) -> &BTreeMap<String, Value> {
-        &self.vars
-    }
-
-    fn vars_mut(&mut self) -> &mut BTreeMap<String, Value> {
-        &mut self.vars
+    fn set_session(&self, session: Arc<Session>) {
+        self.session.store(session);
     }
 
     fn version_data(&self) -> Data {
