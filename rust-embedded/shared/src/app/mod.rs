@@ -6,7 +6,7 @@ use surrealdb::kvs::export::Config;
 use surrealdb::kvs::Datastore;
 use surrealdb::rpc::format::cbor;
 use surrealdb::rpc::Method;
-use surrealdb::rpc::{Data, RpcContext, RpcProtocolV2};
+use surrealdb::rpc::{Data, RpcContext, RpcProtocolV1, RpcProtocolV2};
 use surrealdb::sql::Value;
 use tokio::sync::{RwLock, Semaphore};
 use uuid::Uuid;
@@ -67,7 +67,7 @@ impl SurrealEmbeddedEngine {
         let params = crate::cbor::get_params(params)
             .map_err(|_| "Failed to deserialize params".to_string())?;
         let rpc = self.0.write().await;
-        let res = RpcProtocolV2::execute(&*rpc, method, params)
+        let res = RpcContext::execute(&*rpc, None, method, params)
             .await
             .map_err(|e| e.to_string())?;
         let out = cbor::res(res).map_err(|e| e.to_string())?;
@@ -122,6 +122,7 @@ struct SurrealEmbeddedEngineInner {
     pub session: ArcSwap<Session>,
 }
 
+impl RpcProtocolV1 for SurrealEmbeddedEngineInner {}
 impl RpcProtocolV2 for SurrealEmbeddedEngineInner {}
 
 impl RpcContext for SurrealEmbeddedEngineInner {
