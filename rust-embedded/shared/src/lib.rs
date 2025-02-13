@@ -53,7 +53,7 @@ pub unsafe extern "C" fn execute(
     success: SuccessAction,
     failure: FailureAction,
 ) {
-    let method: surrealdb::rpc::method::Method = method.into();
+    let method: surrealdb::rpc::Method = method.into();
     let params_bytes = convert_csharp_to_rust_bytes(bytes, len);
 
     get_global_runtime().spawn(async move {

@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-4cores
     strategy:
       matrix:
-        surrealdb_version: ["v1.5.5", "v2.0.4", "v2.1.2"]
+        surrealdb_version: ["v1.5.5", "v2.0.4", "v2.1.4", "v2.2.0"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -129,7 +129,7 @@ jobs:
           --coverage-output-format cobertura
 
       - name: Upload Coverage
-        if: matrix.surrealdb_version == 'v2.1.2'
+        if: matrix.surrealdb_version == 'v2.2.0'
         uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: true
