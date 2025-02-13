@@ -33,6 +33,14 @@ impl SurrealEmbeddedEngines {
         engine.execute(method, params).await
     }
 
+    pub async fn import(&self, id: i32, input: String) -> Result<(), Error> {
+        let read_lock = self.0.read().await;
+        let Some(engine) = read_lock.get(&id) else {
+            return Err("Engine not found".into());
+        };
+        engine.import(input).await
+    }
+
     pub async fn export(&self, id: i32, params: Vec<u8>) -> Result<Vec<u8>, Error> {
         let read_lock = self.0.read().await;
         let Some(engine) = read_lock.get(&id) else {
@@ -66,7 +74,7 @@ impl SurrealEmbeddedEngine {
     pub async fn execute(&self, method: Method, params: Vec<u8>) -> Result<Vec<u8>, Error> {
         let params = crate::cbor::get_params(params)
             .map_err(|_| "Failed to deserialize params".to_string())?;
-        let rpc = self.0.write().await;
+        let rpc = self.0.read().await;
         let res = RpcContext::execute(&*rpc, None, method, params)
             .await
             .map_err(|e| e.to_string())?;
@@ -113,6 +121,13 @@ impl SurrealEmbeddedEngine {
 
         let out = cbor::res(result).map_err(|e| e.to_string())?;
         Ok(out)
+    }
+
+    pub async fn import(&self, input: String) -> Result<(), Error> {
+        let inner = self.0.read().await;
+        inner.kvs.import(&input, &inner.session()).await?;
+
+        Ok(())
     }
 }
 

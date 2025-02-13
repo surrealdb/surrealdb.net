@@ -167,6 +167,16 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task<bool> Health(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// This method imports data into a SurrealDB database.
+    /// </summary>
+    /// <remarks>
+    /// This method is only supported by SurrealDB v2.0.0 or higher.
+    /// </remarks>
+    /// <param name="input"></param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    Task Import(string input, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves information about the authenticated scope user.
     /// </summary>
     /// <typeparam name="T">The scope user type.</typeparam>
