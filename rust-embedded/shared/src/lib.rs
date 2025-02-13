@@ -70,6 +70,31 @@ pub unsafe extern "C" fn execute(
 
 /// # Safety
 ///
+/// Executes the "import" method of a SurrealDB engine (given its id).
+#[no_mangle]
+pub unsafe extern "C" fn import(
+    id: i32,
+    utf16_str: *const u16,
+    utf16_len: i32,
+    success: SuccessAction,
+    failure: FailureAction,
+) {
+    let input = convert_csharp_to_rust_string_utf16(utf16_str, utf16_len);
+
+    get_global_runtime().spawn(async move {
+        match ENGINES.import(id, input).await {
+            Ok(_) => {
+                send_success(vec![], success);
+            }
+            Err(error) => {
+                send_failure(error.as_str(), failure);
+            }
+        }
+    });
+}
+
+/// # Safety
+///
 /// Executes the "export" method of a SurrealDB engine (given its id).
 #[no_mangle]
 pub unsafe extern "C" fn export(

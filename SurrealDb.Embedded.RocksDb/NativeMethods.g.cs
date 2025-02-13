@@ -37,6 +37,14 @@ namespace SurrealDb.Embedded.Internals
         /// <summary>
         ///  # Safety
         ///
+        ///  Executes the "import" method of a SurrealDB engine (given its id).
+        /// </summary>
+        [DllImport(__DllName, EntryPoint = "import", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern void import(int id, ushort* utf16_str, int utf16_len, SuccessAction success, FailureAction failure);
+
+        /// <summary>
+        ///  # Safety
+        ///
         ///  Executes the "export" method of a SurrealDB engine (given its id).
         /// </summary>
         [DllImport(__DllName, EntryPoint = "export", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]

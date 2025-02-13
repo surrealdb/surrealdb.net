@@ -194,6 +194,16 @@ public interface ISurrealDbProviderEngine : ISurrealDbEngine
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>SurrealQL script as <see cref="String"/></returns>
     Task<string> Export(ExportOptions? options, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// This method imports data into a SurrealDB database.
+    /// </summary>
+    /// <remarks>
+    /// This method is only supported by SurrealDB v2.0.0 or higher.
+    /// </remarks>
+    /// <param name="input"></param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    Task Import(string input, CancellationToken cancellationToken = default);
 }
 
 public interface ISurrealDbInMemoryEngine : ISurrealDbProviderEngine { }
