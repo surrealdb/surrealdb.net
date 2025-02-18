@@ -43,8 +43,8 @@ internal class GeographyPointConverter : CborConverterBase<GeographyPoint>
 
         writer.WriteBeginArray(2);
 
-        writer.WriteString(value.Longitude.ToString());
-        writer.WriteString(value.Latitude.ToString());
+        writer.WriteDecimal((decimal)value.Longitude);
+        writer.WriteDecimal((decimal)value.Latitude);
 
         writer.WriteEndArray(2);
     }
