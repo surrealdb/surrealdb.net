@@ -18,14 +18,16 @@ public class GeographyMultiPointConverterTests : BaseCborConverterTests
 
         string result = await SerializeCborBinaryAsHexaAsync(value);
 
-        result.Should().Be("d85b84d8588261306130d8588261316131d8588261306131d8588261306130");
+        result
+            .Should()
+            .Be("d85b84d85882f90000f90000d85882f93c00f93c00d85882f90000f93c00d85882f90000f90000");
     }
 
     [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<GeographyMultiPoint>(
-            "d85b84d8588261306130d8588261316131d8588261306131d8588261306130"
+            "d85b84d85882f90000f90000d85882f93c00f93c00d85882f90000f93c00d85882f90000f90000"
         );
 
         var factory = GeographyFactory.MultiPoint();

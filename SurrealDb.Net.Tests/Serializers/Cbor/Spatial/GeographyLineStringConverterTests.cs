@@ -18,14 +18,16 @@ public class GeographyLineStringConverterTests : BaseCborConverterTests
 
         string result = await SerializeCborBinaryAsHexaAsync(value);
 
-        result.Should().Be("d85984d8588261306130d8588261316131d8588261306131d8588261306130");
+        result
+            .Should()
+            .Be("d85984d85882f90000f90000d85882f93c00f93c00d85882f90000f93c00d85882f90000f90000");
     }
 
     [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<GeographyLineString>(
-            "d85984d8588261306130d8588261316131d8588261306131d8588261306130"
+            "d85984d85882f90000f90000d85882f93c00f93c00d85882f90000f93c00d85882f90000f90000"
         );
 
         var factory = GeographyFactory.LineString();
