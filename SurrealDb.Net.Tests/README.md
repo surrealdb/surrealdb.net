@@ -36,7 +36,7 @@ This project was written following testing best practices:
 - a vast majority of tests are integration tests, ensuring compatibility with a concrete SurrealDB version
 - each integration test is using a separate SurrealDB namespace/database
 
-Unit/Integration tests are written using [xUnit](https://xunit.net/) and [FluentAssertions](https://fluentassertions.com/).
+Unit/Integration tests are written using [TUnit](https://thomhurst.github.io/TUnit/) and [FluentAssertions](https://fluentassertions.com/).
 
 You will need a local SurrealDB instance alongside the tests. Start one using the following command:
 
