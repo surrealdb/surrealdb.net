@@ -18,14 +18,18 @@ public class GeometryMultiLineStringConverterTests : BaseCborConverterTests
 
         string result = await SerializeCborBinaryAsHexaAsync(value);
 
-        result.Should().Be("d85c81d85984d8588261306130d8588261316131d8588261316130d8588261306130");
+        result
+            .Should()
+            .Be(
+                "d85c81d85984d85882f90000f90000d85882f93c00f93c00d85882f93c00f90000d85882f90000f90000"
+            );
     }
 
     [Test]
     public async Task Deserialize()
     {
         var result = await DeserializeCborBinaryAsHexaAsync<GeometryMultiLineString>(
-            "d85c81d85984d8588261306130d8588261316131d8588261316130d8588261306130"
+            "d85c81d85984d85882f90000f90000d85882f93c00f93c00d85882f93c00f90000d85882f90000f90000"
         );
 
         var factory = GeometryFactory.MultiLineString();
