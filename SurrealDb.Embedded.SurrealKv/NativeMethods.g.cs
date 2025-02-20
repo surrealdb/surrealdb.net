@@ -23,7 +23,7 @@ namespace SurrealDb.Embedded.Internals
         ///  💡 "connect" is a reserved keyword
         /// </summary>
         [DllImport(__DllName, EntryPoint = "apply_connect", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern void apply_connect(int id, ushort* utf16_str, int utf16_len, SuccessAction success, FailureAction failure);
+        internal static extern void apply_connect(int id, ushort* utf16_str, int utf16_len, byte* bytes, int len, SuccessAction success, FailureAction failure);
 
         /// <summary>
         ///  # Safety

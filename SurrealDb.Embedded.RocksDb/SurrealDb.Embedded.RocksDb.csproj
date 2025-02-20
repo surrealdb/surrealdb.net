@@ -12,8 +12,13 @@
 
   <ItemGroup>
     <Compile Include="..\SurrealDb.Embedded.Internals\ByteBuffer.cs" Link="Internals\ByteBuffer.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\Extensions\DependencyInjection\SurrealDbEmbeddedOptionsBuilder.cs" Link="Extensions\DependencyInjection\SurrealDbEmbeddedOptionsBuilder.cs" />
     <Compile Include="..\SurrealDb.Embedded.Internals\NativeBindings.cs" Link="Internals\NativeBindings.cs" />
     <Compile Include="..\SurrealDb.Embedded.Internals\NativeMethods.cs" Link="Internals\NativeMethods.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\Options\SurrealDbEmbeddedCapabilities.cs" Link="Options\SurrealDbEmbeddedCapabilities.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\Options\SurrealDbEmbeddedOptions.cs" Link="Options\SurrealDbEmbeddedOptions.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\Options\SurrealDbEmbeddedTargets.cs" Link="Options\SurrealDbEmbeddedTargets.cs" />
+    <Compile Include="..\SurrealDb.Embedded.Internals\Options\SurrealDbEmbeddedTargetsConfig.cs" Link="Options\SurrealDbEmbeddedTargetsConfig.cs" />
     <Compile Include="..\SurrealDb.Embedded.Internals\PlatformConfiguration.cs" Link="Internals\PlatformConfiguration.cs" />
     <Compile Include="..\SurrealDb.Embedded.Internals\SurrealDbEmbeddedEngine.cs" Link="Internals\SurrealDbEmbeddedEngine.cs" />
     <Compile Include="..\SurrealDb.Embedded.Internals\SurrealDbEmbeddedEngineConfig.cs" Link="Internals\SurrealDbEmbeddedEngineConfig.cs" />
@@ -40,6 +45,7 @@
     <Folder Include="Internals\Extensions\" />
     <Folder Include="Internals\Constants\" />
     <Folder Include="Internals\Stream\" />
+    <Folder Include="Options\" />
   </ItemGroup>
 
   <!-- Used to enable the consumption of the memory library during benchmarks (local or CI/CD) -->

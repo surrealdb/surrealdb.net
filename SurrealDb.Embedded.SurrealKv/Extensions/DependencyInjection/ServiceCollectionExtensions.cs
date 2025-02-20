@@ -1,4 +1,5 @@
 ﻿using SurrealDb.Embedded.Internals;
+using SurrealDb.Embedded.Options;
 using SurrealDb.Net.Internals;
 
 namespace Microsoft.Extensions.DependencyInjection;
