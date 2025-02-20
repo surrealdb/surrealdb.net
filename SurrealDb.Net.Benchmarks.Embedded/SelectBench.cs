@@ -17,9 +17,9 @@ public class SelectBench : BaseEmbeddedBenchmark
     [IterationSetup]
     public void Setup()
     {
-        _memoryClient = new(NamingPolicy);
-        _rocksDbClient = new("rocks/select.db", NamingPolicy);
-        _surrealKvClient = new("surrealkv/select.db", NamingPolicy);
+        _memoryClient = new(null, NamingPolicy);
+        _rocksDbClient = new("rocks/select.db", null, NamingPolicy);
+        _surrealKvClient = new("surrealkv/select.db", null, NamingPolicy);
 
         ISurrealDbClient[] clients = [_memoryClient, _rocksDbClient, _surrealKvClient];
 

@@ -18,9 +18,9 @@ public class UpsertBench : BaseEmbeddedBenchmark
     [IterationSetup]
     public void Setup()
     {
-        _memoryClient = new(NamingPolicy);
-        _rocksDbClient = new("rocks/upsert.db", NamingPolicy);
-        _surrealKvClient = new("surrealkv/upsert.db", NamingPolicy);
+        _memoryClient = new(null, NamingPolicy);
+        _rocksDbClient = new("rocks/upsert.db", null, NamingPolicy);
+        _surrealKvClient = new("surrealkv/upsert.db", null, NamingPolicy);
 
         ISurrealDbClient[] clients = [_memoryClient, _rocksDbClient, _surrealKvClient];
 

@@ -12,6 +12,7 @@ use tokio::sync::{RwLock, Semaphore};
 use uuid::Uuid;
 
 pub use crate::err::Error;
+use crate::models::connection_options::ConnectionOptions;
 
 pub struct SurrealEmbeddedEngines(RwLock<BTreeMap<i32, SurrealEmbeddedEngine>>);
 
@@ -74,12 +75,27 @@ impl SurrealEmbeddedEngine {
         Ok(out)
     }
 
-    pub async fn connect(endpoint: String) -> Result<SurrealEmbeddedEngine, Error> {
+    pub async fn connect(
+        endpoint: String,
+        options: Vec<u8>,
+    ) -> Result<SurrealEmbeddedEngine, Error> {
         let endpoint = match &endpoint {
             s if s.starts_with("mem:") => "memory",
             s => s,
         };
-        let kvs = Datastore::new(endpoint).await?.with_notifications();
+
+        let in_options = cbor::parse_value(options).map_err(|e| e.to_string())?;
+        let options = ConnectionOptions::try_from(&in_options).map_err(|e| e.to_string())?;
+
+        let kvs = Datastore::new(endpoint)
+            .await?
+            .with_notifications()
+            .with_capabilities(
+                options
+                    .capabilities
+                    .map_or(Ok(Default::default()), |a| a.try_into())?,
+            )
+            .with_strict_mode(options.strict.map_or(Default::default(), |s| s));
 
         let inner = SurrealEmbeddedEngineInner {
             kvs,
@@ -95,7 +111,7 @@ impl SurrealEmbeddedEngine {
 
         let inner = self.0.read().await;
 
-        let in_config = cbor::parse_value(config.to_vec()).map_err(|e| e.to_string())?;
+        let in_config = cbor::parse_value(config).map_err(|e| e.to_string())?;
         let config = Config::try_from(&in_config).map_err(|e| e.to_string())?;
 
         inner

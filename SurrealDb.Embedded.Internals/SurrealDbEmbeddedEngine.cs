@@ -3,6 +3,8 @@ using System.Reactive;
 using System.Runtime.InteropServices;
 using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using SurrealDb.Embedded.Options;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
@@ -23,6 +25,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     private static int _globalId;
 
     private SurrealDbOptions? _parameters;
+    private readonly SurrealDbEmbeddedOptions? _options;
     private Action<CborOptions>? _configureCborOptions;
     private ISurrealDbLoggerFactory? _surrealDbLoggerFactory;
 
@@ -41,6 +44,15 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     {
         _id = Interlocked.Increment(ref _globalId);
     }
+
+    public SurrealDbEmbeddedEngine(SurrealDbEmbeddedOptions? options)
+        : this()
+    {
+        _options = options;
+    }
+
+    public SurrealDbEmbeddedEngine(IOptions<SurrealDbEmbeddedOptions> options)
+        : this(options.Value) { }
 
     public void Initialize(
         SurrealDbOptions parameters,
@@ -69,9 +81,21 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
             PreConnect();
 
+            await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
+
+            await CborSerializer
+                .SerializeAsync(_options, stream, GetCborOptions(), cancellationToken)
+                .ConfigureAwait(false);
+
+            bool canGetBuffer = stream.TryGetBuffer(out var bytes);
+            if (!canGetBuffer)
+            {
+                throw new SurrealDbException("Failed to retrieve serialized buffer.");
+            }
+
             var taskCompletionSource = new TaskCompletionSource<bool>();
 
-            Action<ByteBuffer> success = (byteBuffer) =>
+            Action<ByteBuffer> success = (_) =>
             {
                 taskCompletionSource.SetResult(true);
             };
@@ -110,11 +134,14 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 };
 
                 fixed (char* p = _parameters!.Endpoint)
+                fixed (byte* payload = bytes.AsSpan())
                 {
                     NativeMethods.apply_connect(
                         _id,
                         (ushort*)p,
                         _parameters.Endpoint!.Length,
+                        payload,
+                        bytes.Count,
                         successAction,
                         failureAction
                     );
