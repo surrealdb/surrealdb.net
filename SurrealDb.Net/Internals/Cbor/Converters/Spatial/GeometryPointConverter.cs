@@ -7,11 +7,11 @@ namespace SurrealDb.Net.Internals.Cbor.Converters.Spatial;
 
 internal class GeometryPointConverter : CborConverterBase<GeometryPoint>
 {
-    private readonly ICborConverter<decimal> _decimalConverter;
+    private readonly ICborConverter<double> _doubleConverter;
 
     public GeometryPointConverter(CborOptions options)
     {
-        _decimalConverter = options.Registry.ConverterRegistry.Lookup<decimal>();
+        _doubleConverter = options.Registry.ConverterRegistry.Lookup<double>();
     }
 
     public override GeometryPoint Read(ref CborReader reader)
@@ -25,10 +25,10 @@ internal class GeometryPointConverter : CborConverterBase<GeometryPoint>
             throw new CborException("Expected a CBOR array with 2 elements");
         }
 
-        var x = _decimalConverter.Read(ref reader);
-        var y = _decimalConverter.Read(ref reader);
+        var x = _doubleConverter.Read(ref reader);
+        var y = _doubleConverter.Read(ref reader);
 
-        return GeometryPoint.Create((double)x, (double)y);
+        return GeometryPoint.Create(x, y);
     }
 
     public override void Write(ref CborWriter writer, GeometryPoint value)
@@ -43,8 +43,8 @@ internal class GeometryPointConverter : CborConverterBase<GeometryPoint>
 
         writer.WriteBeginArray(2);
 
-        writer.WriteString(value.X.ToString());
-        writer.WriteString(value.Y.ToString());
+        writer.WriteDouble(value.X);
+        writer.WriteDouble(value.Y);
 
         writer.WriteEndArray(2);
     }

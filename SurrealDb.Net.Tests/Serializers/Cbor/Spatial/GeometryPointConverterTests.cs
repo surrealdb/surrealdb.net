@@ -11,13 +11,13 @@ public class GeometryPointConverterTests : BaseCborConverterTests
 
         string result = await SerializeCborBinaryAsHexaAsync(value);
 
-        result.Should().Be("d85882623332623634");
+        result.Should().Be("d85882f95000f95400");
     }
 
     [Test]
     public async Task Deserialize()
     {
-        var result = await DeserializeCborBinaryAsHexaAsync<GeometryPoint>("d85882623332623634");
+        var result = await DeserializeCborBinaryAsHexaAsync<GeometryPoint>("d85882f95000f95400");
 
         var expected = GeometryPoint.Create(32.0, 64.0);
 
