@@ -35,8 +35,11 @@ public class GeographyMultiPolygonConverterTests : BaseCborConverterTests
     [Test]
     public async Task Deserialize()
     {
+        AssertionOptions.FormattingOptions.MaxDepth = 10;
+        AssertionOptions.FormattingOptions.MaxLines = 200;
+
         var result = await DeserializeCborBinaryAsHexaAsync<GeographyMultiPolygon>(
-            "d85d81d85a82d85984d85882f90000f90000d85882f93c00f93c00d85882f93c00f90000d85882f90000f90000d85984d85882f94400f94400d85882f90000f90000d85882f94000f94000d85882f94400f94400"
+            "d85d81d85a82d85984d85882f90000f90000d85882f93c00f93c00d85882f90000f93c00d85882f90000f90000d85984d85882f94400f94400d85882f90000f90000d85882f94000f94000d85882f94400f94400"
         );
 
         var factory = GeographyFactory.MultiPolygon();
