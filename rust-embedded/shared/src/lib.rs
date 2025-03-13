@@ -22,13 +22,16 @@ pub unsafe extern "C" fn apply_connect(
     id: i32,
     utf16_str: *const u16,
     utf16_len: i32,
+    bytes: *const u8,
+    len: i32,
     success: SuccessAction,
     failure: FailureAction,
 ) {
     let endpoint = convert_csharp_to_rust_string_utf16(utf16_str, utf16_len);
+    let opts_bytes = convert_csharp_to_rust_bytes(bytes, len);
 
     get_global_runtime().spawn(async move {
-        match SurrealEmbeddedEngine::connect(endpoint).await {
+        match SurrealEmbeddedEngine::connect(endpoint, opts_bytes).await {
             Ok(engine) => {
                 ENGINES.insert(id, engine).await;
                 send_success(vec![], success);
