@@ -364,6 +364,83 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         }
     }
 
+    public async Task Import(string input, CancellationToken cancellationToken)
+    {
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        cancellationToken.Register(timeoutCts.Cancel);
+
+        var taskCompletionSource = new TaskCompletionSource<Unit>();
+        timeoutCts.Token.Register(() =>
+        {
+            taskCompletionSource.TrySetCanceled();
+        });
+
+        Action<ByteBuffer> success = (_) =>
+        {
+            try
+            {
+                taskCompletionSource.SetResult(default);
+            }
+            catch (Exception e)
+            {
+                taskCompletionSource.SetException(e);
+            }
+        };
+        Action<ByteBuffer> fail = (byteBuffer) =>
+        {
+            string error = CborSerializer.Deserialize<string>(
+                byteBuffer.AsReadOnly(),
+                GetCborOptions()
+            );
+            taskCompletionSource.SetException(new SurrealDbException(error));
+        };
+
+        var successHandle = GCHandle.Alloc(success);
+        var failureHandle = GCHandle.Alloc(fail);
+
+        unsafe
+        {
+            var successAction = new SuccessAction()
+            {
+                handle = new RustGCHandle()
+                {
+                    ptr = GCHandle.ToIntPtr(successHandle),
+                    drop_callback = &NativeBindings.DropGcHandle,
+                },
+                callback = &NativeBindings.SuccessCallback,
+            };
+
+            var failureAction = new FailureAction()
+            {
+                handle = new RustGCHandle()
+                {
+                    ptr = GCHandle.ToIntPtr(failureHandle),
+                    drop_callback = &NativeBindings.DropGcHandle,
+                },
+                callback = &NativeBindings.FailureCallback,
+            };
+
+            fixed (char* p = input.AsSpan())
+            {
+                NativeMethods.import(_id, (ushort*)p, input.Length, successAction, failureAction);
+            }
+        }
+
+        try
+        {
+            await taskCompletionSource.Task.ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                throw new TimeoutException();
+            }
+
+            throw;
+        }
+    }
+
     public Task<T> Info<T>(CancellationToken cancellationToken)
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
