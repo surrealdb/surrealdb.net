@@ -7,11 +7,11 @@ namespace SurrealDb.Net.Internals.Cbor.Converters.Spatial;
 
 internal class GeographyPointConverter : CborConverterBase<GeographyPoint>
 {
-    private readonly ICborConverter<decimal> _decimalConverter;
+    private readonly ICborConverter<double> _doubleConverter;
 
     public GeographyPointConverter(CborOptions options)
     {
-        _decimalConverter = options.Registry.ConverterRegistry.Lookup<decimal>();
+        _doubleConverter = options.Registry.ConverterRegistry.Lookup<double>();
     }
 
     public override GeographyPoint Read(ref CborReader reader)
@@ -25,10 +25,10 @@ internal class GeographyPointConverter : CborConverterBase<GeographyPoint>
             throw new CborException("Expected a CBOR array with 2 elements");
         }
 
-        var longitude = _decimalConverter.Read(ref reader);
-        var latitude = _decimalConverter.Read(ref reader);
+        var longitude = _doubleConverter.Read(ref reader);
+        var latitude = _doubleConverter.Read(ref reader);
 
-        return GeographyPoint.Create((double)latitude, (double)longitude);
+        return GeographyPoint.Create(latitude, longitude);
     }
 
     public override void Write(ref CborWriter writer, GeographyPoint value)
@@ -43,8 +43,8 @@ internal class GeographyPointConverter : CborConverterBase<GeographyPoint>
 
         writer.WriteBeginArray(2);
 
-        writer.WriteString(value.Longitude.ToString());
-        writer.WriteString(value.Latitude.ToString());
+        writer.WriteDouble(value.Longitude);
+        writer.WriteDouble(value.Latitude);
 
         writer.WriteEndArray(2);
     }
