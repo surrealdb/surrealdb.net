@@ -65,17 +65,20 @@ internal class JsonPatchDocumentConverter<T> : CborConverterBase<JsonPatchDocume
 
                 if (key.SequenceEqual("value"u8))
                 {
-                    // TODO : Handle Semantic Tag
-                    var itemType = reader.GetCurrentDataItemType();
+                    var valueDataItem = reader.ReadDataItem();
+
+                    // TODO : MoveToPreviousDataItem method?
+                    var valueReader = new CborReader(valueDataItem);
+                    var itemType = valueReader.GetCurrentDataItemType();
 
                     value = itemType switch
                     {
-                        CborDataItemType.Null => reader.ReadNull(),
-                        CborDataItemType.Boolean => reader.ReadBoolean(),
-                        CborDataItemType.String => reader.ReadString(),
+                        CborDataItemType.Null => valueReader.ReadNull(),
+                        CborDataItemType.Boolean => valueReader.ReadBoolean(),
+                        CborDataItemType.String => valueReader.ReadString(),
                         CborDataItemType.Signed or CborDataItemType.Unsigned =>
-                            reader.ReadDecimal(),
-                        _ => reader.ReadDataItemAsMemory(),
+                            valueReader.ReadDecimal(),
+                        _ => valueDataItem.ToMemory(),
                     };
                     continue;
                 }
