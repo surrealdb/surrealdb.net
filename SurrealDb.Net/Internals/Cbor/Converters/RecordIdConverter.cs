@@ -48,16 +48,20 @@ internal sealed class RecordIdConverter : CborConverterBase<RecordId>
             reader.ReadString()
             ?? throw new CborException("Expected a string as the first element of the array");
 
-        var idItemType = reader.GetCurrentDataItemType();
+        var idDataItem = reader.ReadDataItem();
+
+        // TODO : MoveToPreviousDataItem method?
+        var idReader = new CborReader(idDataItem);
+        var idItemType = idReader.GetCurrentDataItemType();
 
         return idItemType switch
         {
-            CborDataItemType.String => new RecordIdOfString(table, reader.ReadString()!),
+            CborDataItemType.String => new RecordIdOfString(table, idReader.ReadString()!),
             CborDataItemType.Signed or CborDataItemType.Unsigned => new RecordIdOf<int>(
                 table,
-                reader.ReadInt32()
+                idReader.ReadInt32()
             ),
-            _ => new RecordId(table, reader.ReadDataItemAsMemory(), _options),
+            _ => new RecordId(table, idDataItem.ToMemory(), _options),
         };
     }
 
