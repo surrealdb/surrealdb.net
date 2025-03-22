@@ -791,6 +791,20 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<T>();
     }
 
+    public async Task<IEnumerable<TOutput>> Update<TData, TOutput>(
+        string table,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : IRecord
+    {
+        var request = new SurrealDbHttpRequest { Method = "update", Parameters = [table, data] };
+
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.DeserializeEnumerable<TOutput>();
+    }
+
     public async Task<TOutput> Update<TData, TOutput>(
         RecordId recordId,
         TData data,
@@ -858,6 +872,23 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
+    }
+
+    public async Task<IEnumerable<TOutput>> Upsert<TData, TOutput>(
+        string table,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : IRecord
+    {
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        string method = _version?.Major > 1 ? "upsert" : "update";
+        var request = new SurrealDbHttpRequest { Method = method, Parameters = [table, data] };
+
+        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+            .ConfigureAwait(false);
+        return dbResponse.DeserializeEnumerable<TOutput>();
     }
 
     public async Task<TOutput> Upsert<TData, TOutput>(
