@@ -1088,6 +1088,23 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<T>();
     }
 
+    public async Task<IEnumerable<TOutput>> Update<TData, TOutput>(
+        string table,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : IRecord
+    {
+        var dbResponse = await SendRequestAsync(
+                "update",
+                [table, data],
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        return dbResponse.DeserializeEnumerable<TOutput>();
+    }
+
     public async Task<TOutput> Update<TData, TOutput>(
         RecordId recordId,
         TData data,
@@ -1167,6 +1184,26 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
+    }
+
+    public async Task<IEnumerable<TOutput>> Upsert<TData, TOutput>(
+        string table,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : IRecord
+    {
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        string method = _version?.Major > 1 ? "upsert" : "update";
+        var dbResponse = await SendRequestAsync(
+                method,
+                [table, data],
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        return dbResponse.DeserializeEnumerable<TOutput>();
     }
 
     public async Task<TOutput> Upsert<TData, TOutput>(

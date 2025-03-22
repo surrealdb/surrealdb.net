@@ -150,6 +150,13 @@ public interface ISurrealDbEngine : IDisposable, IAsyncDisposable
         where TOutput : IRecord;
     Task<IEnumerable<T>> Update<T>(string table, T data, CancellationToken cancellationToken)
         where T : class;
+
+    Task<IEnumerable<TOutput>> Update<TData, TOutput>(
+        string table,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : IRecord;
     Task<TOutput> Update<TData, TOutput>(
         RecordId recordId,
         TData data,
@@ -166,6 +173,12 @@ public interface ISurrealDbEngine : IDisposable, IAsyncDisposable
         where TOutput : IRecord;
     Task<IEnumerable<T>> Upsert<T>(string table, T data, CancellationToken cancellationToken)
         where T : class;
+    Task<IEnumerable<TOutput>> Upsert<TData, TOutput>(
+        string table,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : IRecord;
     Task<TOutput> Upsert<TData, TOutput>(
         RecordId recordId,
         TData data,
@@ -203,7 +216,7 @@ public interface ISurrealDbProviderEngine : ISurrealDbEngine
     /// </remarks>
     /// <param name="input"></param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-    Task Import(string input, CancellationToken cancellationToken = default);
+    Task Import(string input, CancellationToken cancellationToken);
 }
 
 public interface ISurrealDbInMemoryEngine : ISurrealDbProviderEngine { }
