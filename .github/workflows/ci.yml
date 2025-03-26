@@ -13,7 +13,7 @@ on:
       - '**.md'
 jobs:
   build-remote:
-    runs-on: ubuntu-4cores
+    runs-on: ubuntu-latest-4-cores
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,7 +40,7 @@ jobs:
 
   build:
     needs: [embedded-build]
-    runs-on: ubuntu-4cores
+    runs-on: ubuntu-latest-4-cores
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -72,7 +72,7 @@ jobs:
 
   test:
     needs: [embedded-build]
-    runs-on: ubuntu-4cores
+    runs-on: ubuntu-latest-4-cores
     strategy:
       matrix:
         surrealdb_version: ["v1.5.5", "v2.0.4", "v2.1.4", "v2.2.1"]
@@ -136,7 +136,7 @@ jobs:
           files: "**/*.cobertura.xml"
 
   embedded-build:
-    runs-on: ubuntu-4cores
+    runs-on: ubuntu-latest-4-cores
     steps:
       - name: Checkout
         uses: actions/checkout@v4
