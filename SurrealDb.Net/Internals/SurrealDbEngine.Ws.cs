@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Reactive.Concurrency;
@@ -1310,10 +1310,10 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         if (!_wsClient.IsStarted || (requireInitialized && !_isInitialized))
         {
+            await _semaphoreConnect.WaitAsync(cancellationToken).ConfigureAwait(false);
+
             try
             {
-                await _semaphoreConnect.WaitAsync(cancellationToken).ConfigureAwait(false);
-
                 if (!_wsClient.IsStarted)
                 {
                     await Connect(cancellationToken).ConfigureAwait(false);
