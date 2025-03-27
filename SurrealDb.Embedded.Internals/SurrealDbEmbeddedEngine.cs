@@ -857,6 +857,21 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             .ConfigureAwait(false);
     }
 
+    public async Task<IEnumerable<TOutput>> Update<TData, TOutput>(
+        string table,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : IRecord
+    {
+        return await SendRequestAsync<IEnumerable<TOutput>>(
+                Method.Update,
+                [table, data],
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+    }
+
     public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
         where T : IRecord
     {
@@ -886,6 +901,21 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         where T : class
     {
         return await SendRequestAsync<IEnumerable<T>>(
+                Method.Upsert,
+                [table, data],
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+    }
+
+    public async Task<IEnumerable<TOutput>> Upsert<TData, TOutput>(
+        string table,
+        TData data,
+        CancellationToken cancellationToken
+    )
+        where TOutput : IRecord
+    {
+        return await SendRequestAsync<IEnumerable<TOutput>>(
                 Method.Upsert,
                 [table, data],
                 cancellationToken

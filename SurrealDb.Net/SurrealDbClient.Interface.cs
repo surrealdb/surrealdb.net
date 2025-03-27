@@ -909,6 +909,29 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where T : class;
 
     /// <summary>
+    /// Updates all records in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/update">
+    /// `Update` on surrealdb.com/docs
+    /// </see>
+    /// </summary>
+    /// <typeparam name="TData">The type of data contained in the record.</typeparam>
+    /// <typeparam name="TOutput">The type of the record updated.</typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="data">The record data to update.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The list of updated records.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<IEnumerable<TOutput>> Update<TData, TOutput>(
+        string table,
+        TData data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : IRecord;
+
+    /// <summary>
     /// Updates the specified record in the database.
     /// </summary>
     /// <typeparam name="TData">The type of data contained in the record.</typeparam>
@@ -963,7 +986,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : IRecord;
 
     /// <summary>
-    /// Creates a random record in the database.
+    /// Updates or creates records in the database.
     /// Prior to SurrealDB v2.1.0, this method would update or create all records in the database.
     /// </summary>
     /// <typeparam name="T">The type of the record to upsert.</typeparam>
@@ -981,6 +1004,30 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         CancellationToken cancellationToken = default
     )
         where T : class; // TODO : Change return type from "IEnumerable<T>" to "T" in the future
+
+    /// <summary>
+    /// Updates or creates a record in the database.
+    /// Prior to SurrealDB v2.1.0, this method would update or create all records in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/upsert">
+    /// `Upsert` on surrealdb.com/docs
+    /// </see>
+    /// </summary>
+    /// <typeparam name="TData"></typeparam>
+    /// <typeparam name="TOutput"></typeparam>
+    /// <param name="table">The name of the database table.</param>
+    /// <param name="data">The record to create or update.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The list of created or updated records.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<IEnumerable<TOutput>> Upsert<TData, TOutput>(
+        string table,
+        TData data,
+        CancellationToken cancellationToken = default
+    )
+        where TOutput : IRecord;
 
     /// <summary>
     /// Updates or creates the specified record in the database.

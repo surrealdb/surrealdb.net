@@ -17,6 +17,19 @@ public class Post : SurrealDbRecord
     public string? Status { get; set; }
 }
 
+public class Person : SurrealDbRecord
+{
+    public string Title { get; set; } = string.Empty;
+    public PersonName Name { get; set; }
+    public bool Marketing { get; set; }
+}
+
+public struct PersonName
+{
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+}
+
 public class ObjectTableId
 {
     [CborProperty("location")]
