@@ -28,7 +28,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     string? NamingPolicy { get; }
 
     /// <summary>
-    /// Authenticates the current connection with a JWT.
+    /// Authenticates the current connection with a JWT.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/authenticate">
+    /// `Authenticate` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="jwt">The JWT holder of the token.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -39,11 +42,27 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task Authenticate(Jwt jwt, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Connects to the SurrealDB instance. This can improve performance to avoid cold starts.<br /><br />
-    ///
-    /// * Using HTTP(S) protocol: initializes a new HTTP connection<br />
-    /// * Using WS(S) protocol: will start a websocket connection so that further calls will be triggered immediately
+    /// Connects to the SurrealDB instance. This can improve performance to avoid cold starts.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/connect">
+    /// `Connect` on surrealdb.com/docs
+    /// </see>
     /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>
+    /// <term>Using HTTP(S) protocol:</term>
+    /// <description>
+    /// initializes a new HTTP connection
+    /// </description>
+    /// </item>
+    /// <item>
+    /// <term>Using WS(S) protocol:</term>
+    /// <description>
+    /// will start a websocket connection so that further calls will be triggered immediately
+    /// </description>
+    /// </item>
+    /// </list>
+    /// </remarks>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
@@ -51,7 +70,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task Connect(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Creates the specific record in the database.
+    /// Creates the specific record in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/create">
+    /// `Create` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <remarks>
     /// Note: This method creates only a single record. If the record already exist, it will throw an error.
@@ -68,7 +90,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where T : IRecord;
 
     /// <summary>
-    /// Creates a record in a table in the database.
+    /// Creates a record in a table in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/create">
+    /// `Create` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record to create.</typeparam>
     /// <param name="table">The table name where the record will be stored.</param>
@@ -86,7 +111,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     );
 
     /// <summary>
-    /// Creates the specific record in the database.
+    /// Creates the specific record in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/create">
+    /// `Create` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TData">The type of data contained in the record.</typeparam>
     /// <typeparam name="TOutput">The type of the record created.</typeparam>
@@ -106,7 +134,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : IRecord;
 
     /// <summary>
-    /// Deletes all records in a table from the database.
+    /// Deletes all records in a table from the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/delete">
+    /// `Delete` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="table">The name of the database table</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -117,7 +148,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task Delete(string table, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deletes the specified record from the database.
+    /// Deletes the specified record from the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/delete">
+    /// `Delete` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="recordId">The record id.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -129,7 +163,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task<bool> Delete(RecordId recordId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deletes the specified record from the database.
+    /// Deletes the specified record from the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/delete">
+    /// `Delete` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="recordId">The record id.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -141,7 +178,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Export the database as a SurrealQL script.
+    /// Export the database as a SurrealQL script.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/export">
+    /// `Export` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="options">Export configuration options.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -156,7 +196,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     );
 
     /// <summary>
-    /// Checks the status of the database server and storage engine.
+    /// Checks the status of the database server and storage engine.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/health">
+    /// `Health` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>Returns true if the database server and storage engine are healthy.</returns>
@@ -167,17 +210,23 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task<bool> Health(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// This method imports data into a SurrealDB database.
+    /// This method imports data into a SurrealDB database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/import">
+    /// `Import` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <remarks>
     /// This method is only supported by SurrealDB v2.0.0 or higher.
     /// </remarks>
-    /// <param name="input"></param>
+    /// <param name="input">The SurrealQL script used to import data in the database.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     Task Import(string input, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves information about the authenticated scope user.
+    /// Retrieves information about the authenticated scope user.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/info">
+    /// `Info` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The scope user type.</typeparam>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -185,7 +234,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task<T> Info<T>(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Inserts a collection of records in the database.
+    /// Inserts a collection of records in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/insert">
+    /// `Insert` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <remarks>
     /// Note: This method allows you to create multiple records at once.
@@ -208,7 +260,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where T : IRecord;
 
     /// <summary>
-    /// Inserts a new relation record in the database.
+    /// Inserts a new relation record in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/insert_relation">
+    /// `InsertRelation` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record to create.</typeparam>
     /// <param name="data">The record data used to create the record.</param>
@@ -218,7 +273,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where T : IRelationRecord;
 
     /// <summary>
-    /// Inserts a new relation record in the database.
+    /// Inserts a new relation record in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/insert_relation">
+    /// `InsertRelation` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record to create.</typeparam>
     /// <param name="table">The table name where the records will be stored.</param>
@@ -229,7 +287,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where T : IRelationRecord;
 
     /// <summary>
-    /// Invalidates the authentication for the current connection.
+    /// Invalidates the authentication for the current connection.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/invalidate">
+    /// `Invalidate` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <exception cref="OperationCanceledException"></exception>
@@ -239,21 +300,24 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task Invalidate(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Kills an active live query.<br /><br />
-    ///
-    /// Not supported on HTTP(S) protocol.
+    /// Kills an active live query.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/kill">
+    /// `Kill` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="queryUuid">The UUID of the live query to kill.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <exception cref="NotSupportedException"></exception>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="SurrealDbException"></exception>
+    /// <remarks>Not supported on HTTP(S) protocol.</remarks>
     Task Kill(Guid queryUuid, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Listen for live query responses, using live query UUID.<br /><br />
-    ///
-    /// Not supported on HTTP(S) protocol.
+    /// Listen for live query responses, using live query UUID.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/listen_live">
+    /// `ListenLive` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the data returned by the live query.</typeparam>
     /// <param name="queryUuid">The UUID of the live query to consume.</param>
@@ -261,12 +325,14 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// <exception cref="NotSupportedException"></exception>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="SurrealDbException"></exception>
+    /// <remarks>Not supported on HTTP(S) protocol.</remarks>
     SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid);
 
     /// <summary>
-    /// Initiates a live query from an interpolated string representing a SurrealQL query.<br /><br />
-    ///
-    /// Not supported on HTTP(S) protocol.
+    /// Initiates a live query from an interpolated string representing a SurrealQL query.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/live_query">
+    /// `LiveQuery` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the data returned by the live query.</typeparam>
     /// <param name="query">The SurrealQL query.</param>
@@ -275,6 +341,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// <exception cref="NotSupportedException"></exception>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="SurrealDbException"></exception>
+    /// <remarks>Not supported on HTTP(S) protocol.</remarks>
     Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
 #if NET6_0_OR_GREATER
         QueryInterpolatedStringHandler query,
@@ -285,9 +352,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     );
 
     /// <summary>
-    /// Initiates a live query from a raw SurrealQL query.<br /><br />
-    ///
-    /// Not supported on HTTP(S) protocol.
+    /// Initiates a live query from a raw SurrealQL query.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/live_raw_query">
+    /// `LiveRawQuery` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the data returned by the live query.</typeparam>
     /// <param name="query">The SurrealQL query.</param>
@@ -297,6 +365,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// <exception cref="NotSupportedException"></exception>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="SurrealDbException"></exception>
+    /// <remarks>Not supported on HTTP(S) protocol.</remarks>
     Task<SurrealDbLiveQuery<T>> LiveRawQuery<T>(
         string query,
         IReadOnlyDictionary<string, object?>? parameters = null,
@@ -304,9 +373,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     );
 
     /// <summary>
-    /// Initiates a live query on a table.<br /><br />
-    ///
-    /// Not supported on HTTP(S) protocol.
+    /// Initiates a live query on a table.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/live_table">
+    /// `LiveTable` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the data returned by the live query.</typeparam>
     /// <param name="table">The name of the database table to watch.</param>
@@ -319,6 +389,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// <exception cref="NotSupportedException"></exception>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="SurrealDbException"></exception>
+    /// <remarks>Not supported on HTTP(S) protocol.</remarks>
     Task<SurrealDbLiveQuery<T>> LiveTable<T>(
         string table,
         bool diff = false,
@@ -326,7 +397,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     );
 
     /// <summary>
-    /// Modifies the specified record in the database.
+    /// Modifies the specified record in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/merge">
+    /// `Merge` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TMerge">The type of the merge update.</typeparam>
     /// <typeparam name="TOutput">The type of the record updated.</typeparam>
@@ -341,7 +415,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TMerge : IRecord;
 
     /// <summary>
-    /// Modifies the specified record in the database.
+    /// Modifies the specified record in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/merge">
+    /// `Merge` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record updated.</typeparam>
     /// <param name="recordId">The record id.</param>
@@ -359,7 +436,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     );
 
     /// <summary>
-    /// Modifies the specified record in the database.
+    /// Modifies the specified record in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/merge">
+    /// `Merge` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record updated.</typeparam>
     /// <param name="recordId">The record id.</param>
@@ -377,7 +457,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     );
 
     /// <summary>
-    /// Modifies all records in the database.
+    /// Modifies all records in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/merge">
+    /// `Merge` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TMerge">The type of the merge update.</typeparam>
     /// <typeparam name="TOutput">The type of the record updated.</typeparam>
@@ -397,7 +480,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TMerge : class;
 
     /// <summary>
-    /// Modifies all records in the database.
+    /// Modifies all records in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/merge">
+    /// `Merge` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record updated.</typeparam>
     /// <param name="table">The name of the database table.</param>
@@ -415,7 +501,11 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     );
 
     /// <summary>
-    /// Modifies the specified record in the database, using JSON Patch specification (https://jsonpatch.com/).
+    /// Modifies the specified record in the database,
+    /// using JSON Patch specification (https://jsonpatch.com/).<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/patch">
+    /// `Patch` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record updated.</typeparam>
     /// <param name="recordId">The record id.</param>
@@ -430,7 +520,11 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where T : class;
 
     /// <summary>
-    /// Modifies the specified record in the database, using JSON Patch specification (https://jsonpatch.com/).
+    /// Modifies the specified record in the database,
+    /// using JSON Patch specification (https://jsonpatch.com/).<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/patch">
+    /// `Patch` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record updated.</typeparam>
     /// <param name="recordId">The record id.</param>
@@ -445,7 +539,11 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where T : class;
 
     /// <summary>
-    /// Modifies all records in the database, using JSON Patch specification (https://jsonpatch.com/).
+    /// Modifies all records in the database,
+    /// using JSON Patch specification (https://jsonpatch.com/).<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/patch">
+    /// `Patch` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record updated.</typeparam>
     /// <param name="table">The name of the database table</param>
@@ -460,7 +558,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where T : class;
 
     /// <summary>
-    /// Executes SurrealQL queries based on an interpolated string representing a SurrealQL query.
+    /// Executes SurrealQL queries based on an interpolated string representing a SurrealQL query.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/query">
+    /// `Query` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="query">The SurrealQL query.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -479,7 +580,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     );
 
     /// <summary>
-    /// Executes SurrealQL queries based on a raw SurrealQL query.
+    /// Executes SurrealQL queries based on a raw SurrealQL query.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/raw-query">
+    /// `RawQuery` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="query">The SurrealQL query.</param>
     /// <param name="parameters">A list of parameters to be used inside the SurrealQL query.</param>
@@ -496,7 +600,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     );
 
     /// <summary>
-    /// Creates a relation between two records.
+    /// Creates a relation between two records.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/relate">
+    /// `Relate` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
     /// <param name="table">The name of the database table.</param>
@@ -513,7 +620,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : class;
 
     /// <summary>
-    /// Creates a relation between two records.
+    /// Creates a relation between two records.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/relate">
+    /// `Relate` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
     /// <typeparam name="TData">The type of the additional data to add to the relation record.</typeparam>
@@ -533,7 +643,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : class;
 
     /// <summary>
-    /// Creates relations between records.
+    /// Creates relations between records.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/relate">
+    /// `Relate` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
     /// <param name="table">The name of the database table.</param>
@@ -550,7 +663,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : class;
 
     /// <summary>
-    /// Creates relations between records.
+    /// Creates relations between records.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/relate">
+    /// `Relate` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
     /// <typeparam name="TData">The type of the additional data to add to the relation record.</typeparam>
@@ -570,7 +686,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : class;
 
     /// <summary>
-    /// Creates relations between records.
+    /// Creates relations between records.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/relate">
+    /// `Relate` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
     /// <param name="table">The name of the database table.</param>
@@ -587,7 +706,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : class;
 
     /// <summary>
-    /// Creates relations between records.
+    /// Creates relations between records.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/relate">
+    /// `Relate` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
     /// <typeparam name="TData">The type of the additional data to add to the relation record.</typeparam>
@@ -607,7 +729,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : class;
 
     /// <summary>
-    /// Creates relations between records.
+    /// Creates relations between records.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/relate">
+    /// `Relate` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
     /// <param name="table">The name of the database table.</param>
@@ -624,7 +749,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : class;
 
     /// <summary>
-    /// Creates relations between records.
+    /// Creates relations between records.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/relate">
+    /// `Relate` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
     /// <typeparam name="TData">The type of the additional data to add to the relation record.</typeparam>
@@ -644,7 +772,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : class;
 
     /// <summary>
-    /// Creates a relation between two records.
+    /// Creates a relation between two records.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/relate">
+    /// `Relate` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
     /// <param name="recordId">The record id.</param>
@@ -661,7 +792,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : class;
 
     /// <summary>
-    /// Creates a relation between two records.
+    /// Creates a relation between two records.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/relate">
+    /// `Relate` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TOutput">The type of the ouput record created.</typeparam>
     /// <typeparam name="TData">The type of the additional data to add to the relation record.</typeparam>
@@ -681,7 +815,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : class;
 
     /// <summary>
-    /// Runs a SurrealQL function.
+    /// Runs a SurrealQL function.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/run">
+    /// `Run` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the output of the function called.</typeparam>
     /// <param name="name">The full name of the function.</param>
@@ -695,7 +832,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     );
 
     /// <summary>
-    /// Runs a versioned SurrealQL function.
+    /// Runs a versioned SurrealQL function.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/run">
+    /// `Run` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the output of the function called.</typeparam>
     /// <param name="name">The full name of the function.</param>
@@ -711,7 +851,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     );
 
     /// <summary>
-    /// Selects all records in a table.
+    /// Selects all records in a table.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/select">
+    /// `Select` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of record to extract</typeparam>
     /// <param name="table">The name of the database table</param>
@@ -724,7 +867,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Selects a single record.
+    /// Selects a single record.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/select">
+    /// `Select` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record</typeparam>
     /// <param name="recordId">The record id.</param>
@@ -737,7 +883,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Selects a single record.
+    /// Selects a single record.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/select">
+    /// `Select` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record</typeparam>
     /// <param name="recordId">The record id.</param>
@@ -750,7 +899,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Selects a range of records.
+    /// Selects a range of records.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/select">
+    /// `Select` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TStart">The type of the left/start bound range limit</typeparam>
     /// <typeparam name="TEnd">The type of the right/end bound range limit</typeparam>
@@ -768,7 +920,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     );
 
     /// <summary>
-    /// Assigns a value as a parameter for this connection.
+    /// Assigns a value as a parameter for this connection.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/set">
+    /// `Set` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="key">The name of the parameter.</param>
     /// <param name="value">The value of the parameter.</param>
@@ -782,7 +937,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task Set(string key, object value, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Sign in as a root user.
+    /// Sign in as a root user.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/signin">
+    /// `SignIn` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="root">Credentials to sign in as a root user</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -793,7 +951,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task SignIn(RootAuth root, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Sign in as a namespace user.
+    /// Sign in as a namespace user.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/signin">
+    /// `SignIn` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="nsAuth">Credentials to sign in as a namespace user</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -804,7 +965,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Sign in as a database user.
+    /// Sign in as a database user.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/signin">
+    /// `SignIn` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="dbAuth">Credentials to sign in as a database user</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -815,7 +979,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task<Jwt> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Sign in as a scoped user.
+    /// Sign in as a scoped user.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/signin">
+    /// `SignIn` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">Type of the params used in the SIGNIN scope function</typeparam>
     /// <param name="scopeAuth">Credentials to sign in as a scoped user</param>
@@ -829,7 +996,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where T : ScopeAuth;
 
     /// <summary>
-    /// Sign up a new scoped user.
+    /// Sign up a new scoped user.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/signup">
+    /// `SignUp` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">Type of the params used in the SIGNUP scope function</typeparam>
     /// <param name="scopeAuth">Credentials to sign up as a scoped user</param>
@@ -843,7 +1013,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where T : ScopeAuth;
 
     /// <summary>
-    /// Removes a parameter from this connection.
+    /// Removes a parameter from this connection.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/unset">
+    /// `Unset` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="key">The name of the parameter.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -856,7 +1029,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task Unset(string key, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates the specified record in the database.
+    /// Updates the specified record in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/update">
+    /// `Update` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record to update.</typeparam>
     /// <param name="data">The record to update.</param>
@@ -870,7 +1046,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where T : IRecord;
 
     /// <summary>
-    /// Updates the specified record in the database.
+    /// Updates the specified record in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/update">
+    /// `Update` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TData">The type of data contained in the record.</typeparam>
     /// <typeparam name="TOutput">The type of the record updated.</typeparam>
@@ -890,7 +1069,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : IRecord;
 
     /// <summary>
-    /// Updates all records in the database.
+    /// Updates all records in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/update">
+    /// `Update` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record to update.</typeparam>
     /// <param name="table">The name of the database table.</param>
@@ -932,7 +1114,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : IRecord;
 
     /// <summary>
-    /// Updates the specified record in the database.
+    /// Updates the specified record in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/update">
+    /// `Update` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TData">The type of data contained in the record.</typeparam>
     /// <typeparam name="TOutput">The type of the record updated.</typeparam>
@@ -952,7 +1137,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : IRecord;
 
     /// <summary>
-    /// Updates or creates the specified record in the database.
+    /// Updates or creates the specified record in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/upsert">
+    /// `Upsert` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record to create.</typeparam>
     /// <param name="data">The record to create or update.</param>
@@ -966,7 +1154,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where T : IRecord;
 
     /// <summary>
-    /// Updates or creates the specified record in the database.
+    /// Updates or creates the specified record in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/upsert">
+    /// `Upsert` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TData">The type of data contained in the record.</typeparam>
     /// <typeparam name="TOutput">The type of the record created.</typeparam>
@@ -987,7 +1178,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
 
     /// <summary>
     /// Updates or creates records in the database.
-    /// Prior to SurrealDB v2.1.0, this method would update or create all records in the database.
+    /// Prior to SurrealDB v2.1.0, this method would update or create all records in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/upsert">
+    /// `Upsert` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="T">The type of the record to upsert.</typeparam>
     /// <param name="table">The name of the database table.</param>
@@ -1030,7 +1224,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : IRecord;
 
     /// <summary>
-    /// Updates or creates the specified record in the database.
+    /// Updates or creates the specified record in the database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/upsert">
+    /// `Upsert` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <typeparam name="TData">The type of data contained in the record.</typeparam>
     /// <typeparam name="TOutput">The type of the record created.</typeparam>
@@ -1050,7 +1247,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
         where TOutput : IRecord;
 
     /// <summary>
-    /// Switch to a specific namespace and database.
+    /// Switch to a specific namespace and database.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/use">
+    /// `Use` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="ns">Name of the namespace</param>
     /// <param name="db">Name of the database</param>
@@ -1062,7 +1262,10 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Task Use(string ns, string db, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieve the version of the SurrealDB instance.
+    /// Retrieve the version of the SurrealDB instance.<br />
+    /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/version">
+    /// `Version` on surrealdb.com/docs
+    /// </see>
     /// </summary>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>The version of the SurrealDB instance</returns>
