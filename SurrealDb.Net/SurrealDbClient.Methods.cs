@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Text;
+using Semver;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
@@ -105,7 +106,9 @@ public abstract partial class BaseSurrealDbClient
             options ?? new()
         );
 
-        bool shouldUsePostRequest = wrapper.Version is { Major: >= 2, Minor: >= 1 };
+        bool shouldUsePostRequest =
+            wrapper.Version is not null
+            && wrapper.Version.Satisfies(SemVersionRange.AtLeast(new(2, 1), true));
 
         var httpRequestTask = shouldUsePostRequest
             ? wrapper.HttpClient.PostAsync(exportUri, httpContent, cancellationToken)
