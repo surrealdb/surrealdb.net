@@ -10,8 +10,7 @@ public sealed class SinceSurrealVersionAttribute(string version)
         var expectedVersion = SemVersion.Parse(version, SemVersionStyles.Any);
 
         int index = context
-            .TestDetails.MethodInfo.GetParameters()
-            .Index()
+            .TestDetails.TestMethod.Parameters.Index()
             .First(x => x.Item.Name == "connectionString")
             .Index;
 

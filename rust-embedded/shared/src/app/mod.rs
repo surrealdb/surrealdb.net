@@ -79,7 +79,8 @@ impl SurrealEmbeddedEngine {
         let res = RpcContext::execute(&*rpc, None, method, params)
             .await
             .map_err(|e| e.to_string())?;
-        let out = cbor::res(res).map_err(|e| e.to_string())?;
+        let value: Value = res.try_into().map_err(|e: surrealdb::err::Error| e.to_string())?;
+        let out = cbor::res(value).map_err(|e| e.to_string())?;
         Ok(out)
     }
 
