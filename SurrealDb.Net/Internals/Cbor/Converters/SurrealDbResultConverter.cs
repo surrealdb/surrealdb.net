@@ -34,6 +34,7 @@ internal class SurrealDbResultConverter : CborConverterBase<ISurrealDbResult>
         string? information = null;
         short? code = null;
         ReadOnlyMemory<byte>? result = null;
+        var type = SurrealDbResponseType.Other;
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
@@ -93,8 +94,17 @@ internal class SurrealDbResultConverter : CborConverterBase<ISurrealDbResult>
                 continue;
             }
 
+            if (key.SequenceEqual("type"u8))
+            {
+                var typeString = reader.ReadString();
+                type =
+                    SurrealDbResponseTypeExtensions.From(typeString)
+                    ?? throw new CborException($"'{typeString}' is not a valid result type.");
+                continue;
+            }
+
             throw new CborException(
-                $"{Encoding.Unicode.GetString(key)} is not a valid property of {nameof(ISurrealDbResult)}."
+                $"{Encoding.UTF8.GetString(key)} is not a valid property of {nameof(ISurrealDbResult)}."
             );
         }
 
@@ -102,7 +112,7 @@ internal class SurrealDbResultConverter : CborConverterBase<ISurrealDbResult>
         {
             if (status == SurrealDbResultConstants.OkStatus && result.HasValue)
             {
-                return new SurrealDbOkResult(time, status, result.Value, _options);
+                return new SurrealDbOkResult(time, status, type, result.Value, _options);
             }
 
             if (result.HasValue)

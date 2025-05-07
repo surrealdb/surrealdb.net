@@ -11,7 +11,13 @@ public class SurrealDbResultTests
         {
             yield return () =>
                 (
-                    new SurrealDbOkResult(TimeSpan.Zero, "OK", new ReadOnlyMemory<byte>(), null!),
+                    new SurrealDbOkResult(
+                        TimeSpan.Zero,
+                        "OK",
+                        SurrealDbResponseType.Other,
+                        new ReadOnlyMemory<byte>(),
+                        null!
+                    ),
                     true
                 );
             yield return () =>

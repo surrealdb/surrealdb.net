@@ -20,17 +20,24 @@ public sealed class SurrealDbOkResult : ISurrealDbResult
     /// </summary>
     public string Status { get; }
 
+    /// <summary>
+    /// Type of the result response.
+    /// </summary>
+    public SurrealDbResponseType Type { get; }
+
     public bool IsOk => true;
 
     internal SurrealDbOkResult(
         TimeSpan time,
         string status,
+        SurrealDbResponseType type,
         ReadOnlyMemory<byte> binaryResult,
         CborOptions cborOptions
     )
     {
         Time = time;
         Status = status;
+        Type = type;
         _binaryResult = binaryResult;
         _cborOptions = cborOptions;
     }

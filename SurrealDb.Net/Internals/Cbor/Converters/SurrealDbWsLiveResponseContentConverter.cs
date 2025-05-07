@@ -63,7 +63,7 @@ internal sealed class SurrealDbWsLiveResponseContentConverter
             }
 
             throw new CborException(
-                $"{Encoding.Unicode.GetString(key)} is not a valid property of {nameof(SurrealDbWsLiveResponseContent)}."
+                $"{Encoding.UTF8.GetString(key)} is not a valid property of {nameof(SurrealDbWsLiveResponseContent)}."
             );
         }
 
