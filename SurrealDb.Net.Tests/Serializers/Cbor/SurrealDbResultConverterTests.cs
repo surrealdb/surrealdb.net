@@ -11,6 +11,7 @@ public class SurrealDbResultConverterTests : BaseCborConverterTests
         ISurrealDbResult value = new SurrealDbOkResult(
             TimeSpan.Zero,
             "OK",
+            SurrealDbResponseType.Other,
             new([0xc6, 0xf6]),
             SurrealDbCborOptions.Default
         );

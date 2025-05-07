@@ -2,6 +2,7 @@
 using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
+using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Ws;
 
@@ -53,7 +54,7 @@ internal class SurrealDbWsResponseConverter : CborConverterBase<ISurrealDbWsResp
             }
 
             throw new CborException(
-                $"{Encoding.Unicode.GetString(key)} is not a valid property of {nameof(ISurrealDbWsResponse)}."
+                $"{Encoding.UTF8.GetString(key)} is not a valid property of {nameof(ISurrealDbWsResponse)}."
             );
         }
 
@@ -78,6 +79,12 @@ internal class SurrealDbWsResponseConverter : CborConverterBase<ISurrealDbWsResp
                 result.Value.Span,
                 _options
             );
+
+            if (content.Action == LiveQueryConstants.KILLED)
+            {
+                return new SurrealDbWsKilledResponse();
+            }
+
             return new SurrealDbWsLiveResponse(content);
         }
 

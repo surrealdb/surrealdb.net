@@ -247,6 +247,13 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
                     surrealDbWsLiveResponse.Result.GetValue<T>()!
                 );
             }
+
+            if (surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.KILLED)
+            {
+                return new SurrealDbLiveQueryCloseResponse(
+                    SurrealDbLiveQueryClosureReason.QueryKilled
+                );
+            }
         }
 
         if (response is SurrealDbWsClosedLiveResponse surrealDbWsClosedLiveResponse)

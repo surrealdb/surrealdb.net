@@ -46,7 +46,7 @@ internal class SurrealDbHttpResponseConverter : CborConverterBase<ISurrealDbHttp
             }
 
             throw new CborException(
-                $"{Encoding.Unicode.GetString(key)} is not a valid property of {nameof(ISurrealDbHttpResponse)}."
+                $"{Encoding.UTF8.GetString(key)} is not a valid property of {nameof(ISurrealDbHttpResponse)}."
             );
         }
 
