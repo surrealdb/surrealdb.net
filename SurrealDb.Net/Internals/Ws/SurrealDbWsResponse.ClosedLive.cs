@@ -2,7 +2,7 @@
 
 namespace SurrealDb.Net.Internals.Ws;
 
-internal class SurrealDbWsClosedLiveResponse : ISurrealDbWsLiveResponse
+internal sealed class SurrealDbWsClosedLiveResponse : ISurrealDbWsLiveResponse
 {
     public SurrealDbLiveQueryClosureReason Reason { get; set; }
 }
