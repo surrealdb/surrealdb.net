@@ -2,6 +2,7 @@
 using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
+using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Ws;
 using SurrealDb.Net.Models;
@@ -38,6 +39,9 @@ internal sealed class SurrealDbWsLiveResponseContentConverter
         {
             ReadOnlySpan<byte> key = reader.ReadRawString();
 
+            if (key.IsEmpty)
+                continue;
+
             if (key.SequenceEqual("id"u8))
             {
                 id = _guidConverter.Read(ref reader);
@@ -67,15 +71,29 @@ internal sealed class SurrealDbWsLiveResponseContentConverter
             );
         }
 
-        if (result.HasValue && id.HasValue && action is not null)
+        if (id.HasValue && action is not null)
         {
-            return new SurrealDbWsLiveResponseContent(
-                id.Value,
-                action!,
-                result.Value,
-                record,
-                _options
-            );
+            if (action == LiveQueryConstants.KILLED)
+            {
+                return new SurrealDbWsLiveResponseContent(
+                    id.Value,
+                    action!,
+                    null!,
+                    record,
+                    _options
+                );
+            }
+
+            if (result.HasValue)
+            {
+                return new SurrealDbWsLiveResponseContent(
+                    id.Value,
+                    action!,
+                    result.Value,
+                    record,
+                    _options
+                );
+            }
         }
 
         throw new CborException("Expected a valid response content");
