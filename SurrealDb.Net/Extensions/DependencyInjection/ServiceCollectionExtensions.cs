@@ -32,7 +32,11 @@ public static class ServiceCollectionExtensions
         Action<CborOptions>? configureCborOptions = null
     )
     {
-        return AddSurreal(services, connectionString, lifetime, configureCborOptions);
+        var configuration = SurrealDbOptions
+            .Create()
+            .FromConnectionString(connectionString)
+            .Build();
+        return AddSurreal(services, configuration, lifetime, configureCborOptions);
     }
 
     /// <summary>
