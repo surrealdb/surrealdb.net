@@ -52,13 +52,19 @@ internal sealed class RecordIdOfTConverter<T> : CborConverterBase<RecordIdOf<T>>
 
     public override void Write(ref CborWriter writer, RecordIdOf<T> value)
     {
-        writer.WriteSemanticTag(CborTagConstants.TAG_RECORDID);
-
         if (value is null)
         {
             writer.WriteNull();
             return;
         }
+
+        if (value is RecordIdOfString recordIdOfString)
+        {
+            RecordIdOfStringConverter.WriteRecordIdOfString(ref writer, recordIdOfString);
+            return;
+        }
+
+        writer.WriteSemanticTag(CborTagConstants.TAG_RECORDID);
 
         writer.WriteBeginArray(2);
 
