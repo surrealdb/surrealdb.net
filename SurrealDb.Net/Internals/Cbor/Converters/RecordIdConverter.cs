@@ -67,6 +67,12 @@ internal sealed class RecordIdConverter : CborConverterBase<RecordId>
 
     public override void Write(ref CborWriter writer, RecordId value)
     {
+        if (value is null)
+        {
+            writer.WriteNull();
+            return;
+        }
+
         if (value is RecordIdOfString recordIdOfString)
         {
             RecordIdOfStringConverter.WriteRecordIdOfString(ref writer, recordIdOfString);
