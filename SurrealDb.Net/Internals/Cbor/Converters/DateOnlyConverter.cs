@@ -7,23 +7,21 @@ using SurrealDb.Net.Internals.Parsers;
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
 
-internal class DateOnlyConverter : CborConverterBase<DateOnly>
+internal sealed class DateOnlyConverter : CborConverterBase<DateOnly>
 {
-    private const int CBOR_ARRAY_SIZE = 2;
-
     public override DateOnly Read(ref CborReader reader)
     {
         reader.ReadBeginArray();
 
         int size = reader.ReadSize();
 
-        if (size != CBOR_ARRAY_SIZE)
+        if (size > 2)
         {
-            throw new CborException("Expected a CBOR array with 2 elements");
+            throw new CborException("Expected a CBOR array with at most 2 elements");
         }
 
-        long seconds = reader.ReadInt64();
-        int nanos = reader.ReadInt32();
+        long seconds = size >= 1 ? reader.ReadInt64() : 0;
+        int nanos = size >= 2 ? reader.ReadInt32() : 0;
 
         return DateOnlyParser.Convert(seconds, nanos);
     }
@@ -34,12 +32,12 @@ internal class DateOnlyConverter : CborConverterBase<DateOnly>
 
         long seconds = DateOnlyFormatter.Convert(value);
 
-        writer.WriteBeginArray(CBOR_ARRAY_SIZE);
+        writer.WriteBeginArray(2);
 
         writer.WriteInt64(seconds);
         writer.WriteInt32(0);
 
-        writer.WriteEndArray(CBOR_ARRAY_SIZE);
+        writer.WriteEndArray(2);
     }
 }
 #endif
