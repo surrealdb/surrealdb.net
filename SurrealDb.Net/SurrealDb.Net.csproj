@@ -17,6 +17,7 @@
 	<PackageReference Include="Microsoft.Spatial" />
 	<PackageReference Include="Semver" />
 	<PackageReference Include="System.Collections.Immutable" />
+	<PackageReference Include="System.Linq.Async" />
 	<PackageReference Include="SystemTextJsonPatch" />
 	<PackageReference Include="Websocket.Client" />
   </ItemGroup>

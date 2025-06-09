@@ -2,7 +2,7 @@
 
 namespace SurrealDb.Net.Internals.Ws;
 
-internal class SurrealDbWsRequest
+internal sealed class SurrealDbWsRequest
 {
     [CborProperty("id")]
     public string Id { get; set; } = string.Empty;
