@@ -21,7 +21,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            await using var client = surrealDbClientGenerator.Create(connectionString);
+            var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -47,24 +47,43 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                 .OfType<SurrealDbLiveQueryOpenResponse>()
                 .Take(1)
                 .Select(_ =>
-                    Observable.FromAsync(async () =>
-                    {
-                        var record = await client.Create("test", new TestRecord { Value = 1 });
-                        await WaitLiveQueryNotificationAsync();
+                    Observable.FromAsync(
+                        async (cancellationToken) =>
+                        {
+                            var record = await client.Create(
+                                "test",
+                                new TestRecord { Value = 1 },
+                                cancellationToken
+                            );
+                            await WaitLiveQueryNotificationAsync();
 
-                        await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
-                        await WaitLiveQueryNotificationAsync();
+                            await client.Upsert(
+                                new TestRecord { Id = record.Id, Value = 2 },
+                                cancellationToken
+                            );
+                            await WaitLiveQueryNotificationAsync();
 
-                        await client.Delete(record.Id!);
-                        await WaitLiveQueryNotificationAsync();
-                    })
+                            await client.Delete(record.Id!, cancellationToken);
+                            await WaitLiveQueryNotificationAsync();
+                        }
+                    )
                 )
                 .Merge()
                 .SubscribeOn(testScheduler)
-                .Subscribe(_ =>
-                {
-                    completionSource.SetResult(true);
-                });
+                .Subscribe(
+                    _ =>
+                    {
+                        completionSource.SetResult(true);
+                    },
+                    e =>
+                    {
+                        e.Should().BeNull();
+                    },
+                    () =>
+                    {
+                        client.Dispose();
+                    }
+                );
 
             testScheduler.Start();
 
@@ -101,7 +120,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            await using var client = surrealDbClientGenerator.Create(connectionString);
+            var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -135,17 +154,26 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                 .OfType<SurrealDbLiveQueryOpenResponse>()
                 .Take(1)
                 .Select(_ =>
-                    Observable.FromAsync(async () =>
-                    {
-                        var record = await client.Create("test", new TestRecord { Value = 1 });
-                        await WaitLiveQueryNotificationAsync();
+                    Observable.FromAsync(
+                        async (cancellationToken) =>
+                        {
+                            var record = await client.Create(
+                                "test",
+                                new TestRecord { Value = 1 },
+                                cancellationToken
+                            );
+                            await WaitLiveQueryNotificationAsync();
 
-                        await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
-                        await WaitLiveQueryNotificationAsync();
+                            await client.Upsert(
+                                new TestRecord { Id = record.Id, Value = 2 },
+                                cancellationToken
+                            );
+                            await WaitLiveQueryNotificationAsync();
 
-                        await client.Delete(record.Id!);
-                        await WaitLiveQueryNotificationAsync();
-                    })
+                            await client.Delete(record.Id!, cancellationToken);
+                            await WaitLiveQueryNotificationAsync();
+                        }
+                    )
                 )
                 .Merge()
                 .SubscribeOn(testScheduler)
@@ -157,6 +185,10 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                     e =>
                     {
                         e.Should().BeNull();
+                    },
+                    () =>
+                    {
+                        client.Dispose();
                     }
                 );
 
@@ -195,7 +227,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            await using var client = surrealDbClientGenerator.Create(connectionString);
+            var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
@@ -226,17 +258,26 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                 .OfType<SurrealDbLiveQueryOpenResponse>()
                 .Take(1)
                 .Select(_ =>
-                    Observable.FromAsync(async () =>
-                    {
-                        var record = await client.Create("test", new TestRecord { Value = 1 });
-                        await WaitLiveQueryNotificationAsync();
+                    Observable.FromAsync(
+                        async (cancellationToken) =>
+                        {
+                            var record = await client.Create(
+                                "test",
+                                new TestRecord { Value = 1 },
+                                cancellationToken
+                            );
+                            await WaitLiveQueryNotificationAsync();
 
-                        await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
-                        await WaitLiveQueryNotificationAsync();
+                            await client.Upsert(
+                                new TestRecord { Id = record.Id, Value = 2 },
+                                cancellationToken
+                            );
+                            await WaitLiveQueryNotificationAsync();
 
-                        await client.Delete(record.Id!);
-                        await WaitLiveQueryNotificationAsync();
-                    })
+                            await client.Delete(record.Id!, cancellationToken);
+                            await WaitLiveQueryNotificationAsync();
+                        }
+                    )
                 )
                 .Merge()
                 .SubscribeOn(testScheduler)
@@ -248,6 +289,10 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                     e =>
                     {
                         e.Should().BeNull();
+                    },
+                    () =>
+                    {
+                        client.Dispose();
                     }
                 );
 

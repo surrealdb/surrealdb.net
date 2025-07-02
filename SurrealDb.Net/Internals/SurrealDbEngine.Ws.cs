@@ -1425,8 +1425,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         long executionStartTime = Stopwatch.GetTimestamp();
 
-        var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        cancellationToken.Register(timeoutCts.Cancel);
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        await using var registration = cancellationToken.Register(timeoutCts.Cancel);
 
         bool requireInitialized = priority == SurrealDbWsRequestPriority.Normal;
 
@@ -1436,8 +1436,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         }
         catch (OperationCanceledException)
         {
-            timeoutCts.Dispose();
-
             if (!cancellationToken.IsCancellationRequested)
                 throw new TimeoutException();
 
@@ -1454,7 +1452,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             priority
         );
 #endif
-        timeoutCts.Token.Register(() =>
+        await using var cancelRegistration = timeoutCts.Token.Register(() =>
         {
             taskCompletionSource.TrySetCanceled();
         });
@@ -1547,7 +1545,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 #else
             _responseTaskHandler.TryRemove(id, out _);
 #endif
-            timeoutCts.Dispose();
         }
     }
 
