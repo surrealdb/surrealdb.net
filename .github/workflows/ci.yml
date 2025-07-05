@@ -144,8 +144,8 @@ jobs:
           sparse-checkout: |
             rust-embedded
 
-      - name: Install 1.81 toolchain
-        uses: dtolnay/rust-toolchain@1.81
+      - name: Install 1.85.0 toolchain
+        uses: dtolnay/rust-toolchain@1.85.0
       
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
@@ -172,8 +172,8 @@ jobs:
           sparse-checkout: |
             rust-embedded
 
-      - name: Install 1.81 toolchain
-        uses: dtolnay/rust-toolchain@1.81
+      - name: Install 1.85.0 toolchain
+        uses: dtolnay/rust-toolchain@1.85.0
         with:
           components: clippy, rustfmt
 

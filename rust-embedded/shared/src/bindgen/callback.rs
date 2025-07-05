@@ -28,7 +28,7 @@ impl SuccessAction {
     ///
     /// Invokes the expected Success action.
     pub unsafe fn invoke(&self, value: *mut ByteBuffer) {
-        (self.callback)(self.handle.ptr, value);
+        unsafe { (self.callback)(self.handle.ptr, value); }
     }
 }
 
@@ -43,7 +43,7 @@ impl FailureAction {
     ///
     /// Invokes the expected Failure action.
     pub unsafe fn invoke(&self, value: *mut ByteBuffer) {
-        (self.callback)(self.handle.ptr, value);
+        unsafe { (self.callback)(self.handle.ptr, value); }
     }
 }
 
@@ -58,9 +58,7 @@ fn value_to_buffer(value: Value) -> Result<*mut ByteBuffer, ()> {
 
 pub fn send_success(bytes: Vec<u8>, success: SuccessAction) {
     let buffer = alloc_u8_buffer(bytes);
-    unsafe {
-        success.invoke(buffer);
-    }
+    unsafe { success.invoke(buffer) };
 }
 
 pub fn send_failure(error: &str, action: FailureAction) {
