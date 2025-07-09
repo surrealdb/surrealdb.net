@@ -93,7 +93,9 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 throw new SurrealDbException("Failed to retrieve serialized buffer.");
             }
 
-            var taskCompletionSource = new TaskCompletionSource<bool>();
+            var taskCompletionSource = new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously
+            );
 
             Action<ByteBuffer> success = (_) =>
             {
@@ -274,7 +276,9 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             throw new SurrealDbException("Failed to retrieve serialized buffer.");
         }
 
-        var taskCompletionSource = new TaskCompletionSource<string>();
+        var taskCompletionSource = new TaskCompletionSource<string>(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
         timeoutCts.Token.Register(() =>
         {
             taskCompletionSource.TrySetCanceled();
@@ -369,7 +373,9 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         cancellationToken.Register(timeoutCts.Cancel);
 
-        var taskCompletionSource = new TaskCompletionSource<Unit>();
+        var taskCompletionSource = new TaskCompletionSource<Unit>(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
         timeoutCts.Token.Register(() =>
         {
             taskCompletionSource.TrySetCanceled();
@@ -1053,7 +1059,9 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             throw new SurrealDbException("Failed to retrieve serialized buffer.");
         }
 
-        var taskCompletionSource = new TaskCompletionSource<T>();
+        var taskCompletionSource = new TaskCompletionSource<T>(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
         timeoutCts.Token.Register(() =>
         {
             taskCompletionSource.TrySetCanceled();
