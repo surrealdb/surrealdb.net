@@ -32,18 +32,18 @@ internal sealed class RecordIdOfStringConverter : CborConverterBase<RecordIdOfSt
 
     public override void Write(ref CborWriter writer, RecordIdOfString value)
     {
+        if (value is null)
+        {
+            writer.WriteNull();
+            return;
+        }
+
         WriteRecordIdOfString(ref writer, value);
     }
 
     internal static void WriteRecordIdOfString(ref CborWriter writer, RecordIdOfString value)
     {
         writer.WriteSemanticTag(CborTagConstants.TAG_RECORDID);
-
-        if (value is null)
-        {
-            writer.WriteNull();
-            return;
-        }
 
         writer.WriteBeginArray(2);
 

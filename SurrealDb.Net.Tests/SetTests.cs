@@ -1,5 +1,4 @@
-﻿using System.Text;
-using SurrealDb.Net.Models.Response;
+﻿using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Tests;
 
@@ -180,5 +179,91 @@ public class SetTests
         var list = okResult!.GetValue<List<Post>>();
 
         list.Should().NotBeNull().And.HaveCount(2);
+    }
+
+    private class ValueSetObject
+    {
+        public RecordId? Id { get; set; }
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    public async Task ShouldSetObjectParam(string connectionString)
+    {
+        SurrealDbResponse? response = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
+
+            await client.Set("value", new ValueSetObject());
+
+            {
+                string query = "RETURN $value;";
+                response = (await client.RawQuery(query)).EnsureAllOks();
+            }
+        };
+
+        await func.Should().NotThrowAsync();
+
+        response.Should().NotBeNull().And.HaveCount(1);
+
+        var firstResult = response![0];
+        firstResult.Should().BeOfType<SurrealDbOkResult>();
+
+        var okResult = firstResult as SurrealDbOkResult;
+        var outputValue = okResult!.GetValue<ValueSetObject>();
+
+        outputValue.Should().NotBeNull();
+        outputValue!.Id.Should().BeNull();
+    }
+
+    private class ValueSetObject2
+    {
+        public RecordIdOf<string>? Id { get; set; }
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    public async Task ShouldSetObjectParam2(string connectionString)
+    {
+        SurrealDbResponse? response = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
+
+            await client.Set("value", new ValueSetObject2());
+
+            {
+                string query = "RETURN $value;";
+                response = (await client.RawQuery(query)).EnsureAllOks();
+            }
+        };
+
+        await func.Should().NotThrowAsync();
+
+        response.Should().NotBeNull().And.HaveCount(1);
+
+        var firstResult = response![0];
+        firstResult.Should().BeOfType<SurrealDbOkResult>();
+
+        var okResult = firstResult as SurrealDbOkResult;
+        var outputValue = okResult!.GetValue<ValueSetObject2>();
+
+        outputValue.Should().NotBeNull();
+        outputValue!.Id.Should().BeNull();
     }
 }
