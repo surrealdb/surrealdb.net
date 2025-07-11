@@ -17,7 +17,7 @@ pub mod runtime;
 ///
 /// Apply connection for the SurrealDB engine (given its id).
 /// 💡 "connect" is a reserved keyword
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn apply_connect(
     id: i32,
     utf16_str: *const u16,
@@ -27,8 +27,8 @@ pub unsafe extern "C" fn apply_connect(
     success: SuccessAction,
     failure: FailureAction,
 ) {
-    let endpoint = convert_csharp_to_rust_string_utf16(utf16_str, utf16_len);
-    let opts_bytes = convert_csharp_to_rust_bytes(bytes, len);
+    let endpoint = unsafe { convert_csharp_to_rust_string_utf16(utf16_str, utf16_len) };
+    let opts_bytes = unsafe { convert_csharp_to_rust_bytes(bytes, len) };
 
     get_global_runtime().spawn(async move {
         match SurrealEmbeddedEngine::connect(endpoint, opts_bytes).await {
@@ -47,7 +47,7 @@ pub unsafe extern "C" fn apply_connect(
 ///
 /// Executes a specific method of a SurrealDB engine (given its id).
 /// To execute a method, you should pass down the Method, the params and the callback functions (success, failure).
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn execute(
     id: i32,
     method: Method,
@@ -57,7 +57,7 @@ pub unsafe extern "C" fn execute(
     failure: FailureAction,
 ) {
     let method: surrealdb::rpc::Method = method.into();
-    let params_bytes = convert_csharp_to_rust_bytes(bytes, len);
+    let params_bytes = unsafe { convert_csharp_to_rust_bytes(bytes, len) };
 
     get_global_runtime().spawn(async move {
         match ENGINES.execute(id, method, params_bytes).await {
@@ -74,7 +74,7 @@ pub unsafe extern "C" fn execute(
 /// # Safety
 ///
 /// Executes the "import" method of a SurrealDB engine (given its id).
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn import(
     id: i32,
     utf16_str: *const u16,
@@ -82,7 +82,7 @@ pub unsafe extern "C" fn import(
     success: SuccessAction,
     failure: FailureAction,
 ) {
-    let input = convert_csharp_to_rust_string_utf16(utf16_str, utf16_len);
+    let input = unsafe { convert_csharp_to_rust_string_utf16(utf16_str, utf16_len) };
 
     get_global_runtime().spawn(async move {
         match ENGINES.import(id, input).await {
@@ -99,7 +99,7 @@ pub unsafe extern "C" fn import(
 /// # Safety
 ///
 /// Executes the "export" method of a SurrealDB engine (given its id).
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn export(
     id: i32,
     bytes: *const u8,
@@ -107,7 +107,7 @@ pub unsafe extern "C" fn export(
     success: SuccessAction,
     failure: FailureAction,
 ) {
-    let params_bytes = convert_csharp_to_rust_bytes(bytes, len);
+    let params_bytes = unsafe { convert_csharp_to_rust_bytes(bytes, len) };
 
     get_global_runtime().spawn(async move {
         match ENGINES.export(id, params_bytes).await {
