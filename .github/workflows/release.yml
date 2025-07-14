@@ -119,18 +119,25 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         if: matrix.target == 'aarch64-linux-android'
 
-      - name: Install arm-linux-gnueabihf-gcc
-        run: sudo apt-get install arm-linux-gnueabihf-gcc
+      - name: Install g++-arm-linux-gnueabihf
+        run: sudo apt-get install g++-arm-linux-gnueabihf
         if: matrix.target == 'arm-unknown-linux-gnueabihf'
+
+      - name: Set IPHONEOS_DEPLOYMENT_TARGET env variable
+        run: echo "IPHONEOS_DEPLOYMENT_TARGET=10.0" >> $GITHUB_ENV
+        shell: bash
+        if: matrix.target == 'aarch64-apple-ios'
+
+      - name: Set CARGO_FEATURE_NO_NEON env variable
+        run: echo "CARGO_FEATURE_NO_NEON=1" >> $GITHUB_ENV
+        shell: bash
+        if: matrix.target == 'aarch64-apple-ios'
 
       - name: Install 1.85.0 toolchain
         uses: dtolnay/rust-toolchain@1.85.0
         with:
           toolchain: 1.85.0 # must match the version in the `rust-embedded/rust-toolchain` file
           target: ${{ matrix.target }}
-      
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
 
       - name: Build "memory" library
         working-directory: ./rust-embedded/memory
