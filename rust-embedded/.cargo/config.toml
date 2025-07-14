@@ -1,5 +1,14 @@
 [net]
 git-fetch-with-cli = true
 
+[target.aarch64-apple-ios]
+rustflags = ["-C", "link-arg=-miphoneos-version-min=17.5"]
+
 [target.aarch64-linux-android]
 linker = "aarch64-linux-android29-clang"
+
+[target.aarch64-unknown-linux-gnu]
+linker = "aarch64-linux-gnu-gcc"
+
+[target.arm-unknown-linux-gnueabihf]
+linker = "arm-linux-gnueabihf-gcc"
