@@ -98,6 +98,12 @@ internal static partial class SurrealDbLoggerExtensions
         string executionTime
     );
 
+    [LoggerMessage(Level = LogLevel.Debug, Message = "CBOR data serialized: {data}")]
+    public static partial void LogSerializationDataSerialized(this ILogger logger, string data);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "CBOR data deserialized: {data}")]
+    public static partial void LogSerializationDataDeserialized(this ILogger logger, string data);
+
     public static string FormatRequestParameters(
         object?[]? parameters,
         bool shouldLogParameterValues

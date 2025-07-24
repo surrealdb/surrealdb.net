@@ -103,7 +103,8 @@ public abstract partial class BaseSurrealDbClient
         using var httpContent = SurrealDbHttpEngine.CreateBodyContent(
             null,
             wrapper.ConfigureCborOptions,
-            options ?? new()
+            options ?? new(),
+            null
         );
 
         bool shouldUsePostRequest =

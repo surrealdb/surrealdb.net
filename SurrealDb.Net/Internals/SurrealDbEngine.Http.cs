@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Semver;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Extensions;
@@ -190,7 +191,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var body = CreateBodyContent(
             _parameters.NamingPolicy,
             _configureCborOptions,
-            new SurrealDbHttpRequest { Method = "ping" }
+            new SurrealDbHttpRequest { Method = "ping" },
+            null
         );
 
         try
@@ -1107,7 +1109,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     internal static HttpContent CreateBodyContent<T>(
         string? namingPolicy,
         Action<CborOptions>? configureCborOptions,
-        T data
+        T data,
+        ISurrealDbLoggerFactory? surrealDbLoggerFactory
     )
     {
         var writer = new ArrayBufferWriter<byte>();
@@ -1117,6 +1120,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             GetCborSerializerOptions(namingPolicy, configureCborOptions)
         );
         var payload = writer.WrittenSpan.ToArray();
+
+        if (surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
+        {
+            string cborData = CborDebugHelper.CborBinaryToHexa(payload);
+            surrealDbLoggerFactory?.Serialization?.LogSerializationDataSerialized(cborData);
+        }
 
         var content = new ByteArrayContent(payload);
         content.Headers.ContentType = new MediaTypeHeaderValue("application/cbor");
@@ -1148,7 +1157,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var body = CreateBodyContent(
             _parameters.NamingPolicy,
             _configureCborOptions,
-            request
+            request,
+            _surrealDbLoggerFactory
         );
 
         using var response = await wrapper
@@ -1187,13 +1197,19 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .Content.ReadAsStreamAsync(cancellationToken)
             .ConfigureAwait(false);
 #else
-        using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        await using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 #endif
 
         var cborSerializerOptions = GetCborSerializerOptions(
             _parameters.NamingPolicy,
             _configureCborOptions
         );
+
+        if (_surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
+        {
+            string cborData = CborDebugHelper.CborBinaryToHexa(stream);
+            _surrealDbLoggerFactory?.Serialization?.LogSerializationDataDeserialized(cborData);
+        }
 
         var result = await CborSerializer
             .DeserializeAsync<ISurrealDbHttpResponse>(
