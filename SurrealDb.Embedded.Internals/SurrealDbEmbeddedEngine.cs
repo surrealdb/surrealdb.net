@@ -3,6 +3,7 @@ using System.Reactive;
 using System.Runtime.InteropServices;
 using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SurrealDb.Embedded.Options;
 using SurrealDb.Net.Exceptions;
@@ -10,6 +11,7 @@ using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Cbor;
 using SurrealDb.Net.Internals.Extensions;
+using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Internals.Stream;
 using SurrealDb.Net.Models;
@@ -87,6 +89,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 .SerializeAsync(_options, stream, GetCborOptions(), cancellationToken)
                 .ConfigureAwait(false);
 
+            if (_surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
+            {
+                string cborData = CborDebugHelper.CborBinaryToHexa(stream);
+                _surrealDbLoggerFactory?.Serialization?.LogSerializationDataSerialized(cborData);
+            }
+
             bool canGetBuffer = stream.TryGetBuffer(out var bytes);
             if (!canGetBuffer)
             {
@@ -103,6 +111,14 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             };
             Action<ByteBuffer> fail = (byteBuffer) =>
             {
+                if (_surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
+                {
+                    string cborData = CborDebugHelper.CborBinaryToHexa(byteBuffer.AsReadOnly());
+                    _surrealDbLoggerFactory?.Serialization?.LogSerializationDataDeserialized(
+                        cborData
+                    );
+                }
+
                 string error = CborSerializer.Deserialize<string>(
                     byteBuffer.AsReadOnly(),
                     GetCborOptions()
@@ -270,6 +286,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             throw;
         }
 
+        if (_surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
+        {
+            string cborData = CborDebugHelper.CborBinaryToHexa(stream);
+            _surrealDbLoggerFactory?.Serialization?.LogSerializationDataSerialized(cborData);
+        }
+
         bool canGetBuffer = stream.TryGetBuffer(out var bytes);
         if (!canGetBuffer)
         {
@@ -286,6 +308,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
         Action<ByteBuffer> success = (byteBuffer) =>
         {
+            if (_surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
+            {
+                string cborData = CborDebugHelper.CborBinaryToHexa(byteBuffer.AsReadOnly());
+                _surrealDbLoggerFactory?.Serialization?.LogSerializationDataDeserialized(cborData);
+            }
+
             try
             {
                 var result = CborSerializer.Deserialize<string>(
@@ -301,6 +329,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         };
         Action<ByteBuffer> fail = (byteBuffer) =>
         {
+            if (_surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
+            {
+                string cborData = CborDebugHelper.CborBinaryToHexa(byteBuffer.AsReadOnly());
+                _surrealDbLoggerFactory?.Serialization?.LogSerializationDataDeserialized(cborData);
+            }
+
             string error = CborSerializer.Deserialize<string>(
                 byteBuffer.AsReadOnly(),
                 GetCborOptions()
@@ -394,6 +428,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         };
         Action<ByteBuffer> fail = (byteBuffer) =>
         {
+            if (_surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
+            {
+                string cborData = CborDebugHelper.CborBinaryToHexa(byteBuffer.AsReadOnly());
+                _surrealDbLoggerFactory?.Serialization?.LogSerializationDataDeserialized(cborData);
+            }
+
             string error = CborSerializer.Deserialize<string>(
                 byteBuffer.AsReadOnly(),
                 GetCborOptions()
@@ -1049,6 +1089,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             throw;
         }
 
+        if (_surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
+        {
+            string cborData = CborDebugHelper.CborBinaryToHexa(stream);
+            _surrealDbLoggerFactory?.Serialization?.LogSerializationDataSerialized(cborData);
+        }
+
         bool canGetBuffer = stream.TryGetBuffer(out var bytes);
         if (!canGetBuffer)
         {
@@ -1073,6 +1119,14 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         {
             if (expectOutput)
             {
+                if (_surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
+                {
+                    string cborData = CborDebugHelper.CborBinaryToHexa(byteBuffer.AsReadOnly());
+                    _surrealDbLoggerFactory?.Serialization?.LogSerializationDataDeserialized(
+                        cborData
+                    );
+                }
+
                 try
                 {
                     var result = CborSerializer.Deserialize<T>(
@@ -1093,6 +1147,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         };
         Action<ByteBuffer> fail = (byteBuffer) =>
         {
+            if (_surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
+            {
+                string cborData = CborDebugHelper.CborBinaryToHexa(byteBuffer.AsReadOnly());
+                _surrealDbLoggerFactory?.Serialization?.LogSerializationDataDeserialized(cborData);
+            }
+
             string error = CborSerializer.Deserialize<string>(
                 byteBuffer.AsReadOnly(),
                 GetCborOptions()

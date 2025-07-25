@@ -8,6 +8,7 @@ public interface ISurrealDbLoggerFactory
     ILogger? Connection { get; }
     ILogger? Method { get; }
     ILogger? Query { get; }
+    ILogger? Serialization { get; }
 }
 
 internal sealed class SurrealDbLoggerFactory : ISurrealDbLoggerFactory
@@ -15,11 +16,13 @@ internal sealed class SurrealDbLoggerFactory : ISurrealDbLoggerFactory
     public ILogger? Connection { get; }
     public ILogger? Method { get; }
     public ILogger? Query { get; }
+    public ILogger? Serialization { get; }
 
     public SurrealDbLoggerFactory(ILoggerFactory loggerFactory)
     {
         Connection = loggerFactory.CreateLogger(DbLoggerCategory.Connection.Name);
         Method = loggerFactory.CreateLogger(DbLoggerCategory.Method.Name);
         Query = loggerFactory.CreateLogger(DbLoggerCategory.Query.Name);
+        Serialization = loggerFactory.CreateLogger(DbLoggerCategory.Serialization.Name);
     }
 }

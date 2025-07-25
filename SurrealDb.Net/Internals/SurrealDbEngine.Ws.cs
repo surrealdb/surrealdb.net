@@ -6,6 +6,7 @@ using System.Reactive.Linq;
 using ConcurrentCollections;
 using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Semver;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Extensions;
@@ -131,6 +132,17 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                                 ?? MemoryStreamProvider.MemoryStreamManager.GetStream(
                                     message.Binary!
                                 );
+
+                            if (
+                                _surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug)
+                                == true
+                            )
+                            {
+                                string cborData = CborDebugHelper.CborBinaryToHexa(stream);
+                                _surrealDbLoggerFactory?.Serialization?.LogSerializationDataDeserialized(
+                                    cborData
+                                );
+                            }
 
                             response = await CborSerializer
                                 .DeserializeAsync<ISurrealDbWsResponse>(
@@ -1571,6 +1583,14 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         {
             request.CompletionSource.SetException(ex);
             return;
+        }
+
+        if (wsEngine._surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
+        {
+            string cborData = CborDebugHelper.CborBinaryToHexa(request.Stream);
+            wsEngine._surrealDbLoggerFactory?.Serialization?.LogSerializationDataSerialized(
+                cborData
+            );
         }
 
         bool canGetBuffer = request.Stream.TryGetBuffer(out var payload);

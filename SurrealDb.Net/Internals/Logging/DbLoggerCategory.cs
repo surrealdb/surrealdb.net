@@ -35,4 +35,10 @@ internal static class DbLoggerCategory
     /// </summary>
 #endif
     public sealed class Query : LoggerCategory<Query>;
+
+    /// <summary>
+    /// Logger category for data serialization and deserialization,
+    /// e.g. hexa CBOR format exchanged between the client and a SurrealDB instance.
+    /// </summary>
+    public sealed class Serialization : LoggerCategory<Serialization>;
 }
