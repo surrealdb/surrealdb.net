@@ -35,7 +35,7 @@ internal class SurrealDbWsEngineConfig
         Auth = new NoAuth();
     }
 
-    private void Reset(SurrealDbOptions options)
+    public void Reset(SurrealDbOptions options)
     {
         Ns = options.Namespace;
         Db = options.Database;

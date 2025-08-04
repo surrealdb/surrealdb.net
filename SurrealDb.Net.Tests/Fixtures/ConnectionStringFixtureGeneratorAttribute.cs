@@ -32,11 +32,32 @@ public class ConnectionStringFixtureGeneratorAttribute : DataSourceGeneratorAttr
 
 public class RemoteConnectionStringFixtureGeneratorAttribute : DataSourceGeneratorAttribute<string>
 {
+    private static readonly WebsocketConnectionStringFixtureGeneratorAttribute _websocketConnectionStringFixtureGeneratorAttribute =
+        new();
+
     public override IEnumerable<Func<string>> GenerateDataSources(
         DataGeneratorMetadata dataGeneratorMetadata
     )
     {
         yield return () => "Endpoint=http://127.0.0.1:8000;User=root;Pass=root";
+        foreach (
+            var cs in _websocketConnectionStringFixtureGeneratorAttribute.GenerateDataSources(
+                dataGeneratorMetadata
+            )
+        )
+        {
+            yield return cs;
+        }
+    }
+}
+
+public class WebsocketConnectionStringFixtureGeneratorAttribute
+    : DataSourceGeneratorAttribute<string>
+{
+    public override IEnumerable<Func<string>> GenerateDataSources(
+        DataGeneratorMetadata dataGeneratorMetadata
+    )
+    {
         yield return () => "Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root";
     }
 }
