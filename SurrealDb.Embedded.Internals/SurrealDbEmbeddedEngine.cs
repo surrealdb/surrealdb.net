@@ -41,6 +41,11 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     private bool _isConnected;
     private bool _isInitialized;
 
+#if DEBUG
+    public string Id => _id.ToString();
+#endif
+    public Uri Uri { get; private set; } = new("unknown://");
+
     static SurrealDbEmbeddedEngine()
     {
         NativeMethods.create_global_runtime();
@@ -66,6 +71,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         ISurrealDbLoggerFactory? surrealDbLoggerFactory
     )
     {
+        Uri = new Uri(parameters.Endpoint!);
         _parameters = parameters;
         _configureCborOptions = configureCborOptions;
         _surrealDbLoggerFactory = surrealDbLoggerFactory;
@@ -844,6 +850,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id)
     {
         throw new NotSupportedException();
+    }
+
+    public Task<bool> TryResetAsync()
+    {
+        // 💡 No reuse needed when embedded
+        return Task.FromResult(false);
     }
 
     public async Task Unset(string key, CancellationToken cancellationToken)

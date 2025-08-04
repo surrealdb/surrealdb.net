@@ -10,7 +10,7 @@ namespace SurrealDb.Net;
 /// The entry point to communicate with a SurrealDB instance.
 /// Authenticate, use namespace/database, execute queries, etc...
 /// </summary>
-public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
+public class SurrealDbClient : BaseSurrealDbClient
 {
     /// <summary>
     /// Creates a new SurrealDbClient, with the defined endpoint.
@@ -59,12 +59,14 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
         IServiceProvider? serviceProvider,
         IHttpClientFactory? httpClientFactory = null,
         Action<CborOptions>? configureCborOptions = null,
-        ILoggerFactory? loggerFactory = null
+        ILoggerFactory? loggerFactory = null,
+        Func<Task>? poolTask = null
     )
     {
         if (configuration.Endpoint is null)
             throw new ArgumentNullException(nameof(configuration), "The endpoint is required.");
 
+        _poolTask = poolTask;
         Uri = new Uri(configuration.Endpoint);
         if (Uri.Scheme is "ws" or "wss" && !Uri.AbsolutePath.EndsWith("/rpc"))
         {
@@ -76,7 +78,7 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
 
         var protocol = Uri.Scheme;
 
-        _engine = protocol switch
+        Engine = protocol switch
         {
             "http" or "https" => new SurrealDbHttpEngine(
                 configuration,
@@ -118,6 +120,18 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
                 ),
             _ => throw new NotSupportedException($"The protocol '{protocol}' is not supported."),
         };
+    }
+
+    internal SurrealDbClient(
+        SurrealDbOptions configuration,
+        ISurrealDbEngine engine,
+        Func<Task>? poolTask = null
+    )
+    {
+        Uri = new Uri(configuration.Endpoint!);
+
+        Engine = engine;
+        _poolTask = poolTask;
     }
 
     private T? ResolveEmbeddedProvider<T>(
