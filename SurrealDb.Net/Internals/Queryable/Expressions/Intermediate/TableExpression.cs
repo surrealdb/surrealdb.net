@@ -2,8 +2,6 @@
 
 namespace SurrealDb.Net.Internals.Queryable.Expressions.Intermediate;
 
-// internal abstract class TableExpression : IntermediateExpression;
-
 internal sealed class TableExpression : IntermediateExpression
 {
     public string TableName { get; }
@@ -18,5 +16,3 @@ internal sealed class TableExpression : IntermediateExpression
         return this;
     }
 }
-//
-// internal sealed class UnknownTableExpression : TableExpression;

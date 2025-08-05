@@ -8,8 +8,6 @@ internal abstract class IntermediateExpression : Expression
 
     public override ExpressionType NodeType { get; }
 
-    //public override bool CanReduce => true;
-
     protected IntermediateExpression()
     {
         Type = null!;
@@ -19,9 +17,4 @@ internal abstract class IntermediateExpression : Expression
     {
         Type = type;
     }
-
-    // public override Expression Reduce()
-    // {
-    //     return this;
-    // }
 }

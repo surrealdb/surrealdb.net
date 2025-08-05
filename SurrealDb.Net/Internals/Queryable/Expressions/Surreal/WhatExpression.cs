@@ -12,25 +12,4 @@ internal sealed class WhatExpression : SurrealExpression
     {
         return new WhatExpression { Values = [value] };
     }
-    // public static WhatExpression From(Intermediate.SourceExpression sourceExpression)
-    // {
-    //     if (sourceExpression is Intermediate.TableSourceExpression tableSourceExpression)
-    //     {
-    //         return new WhatExpression
-    //         {
-    //             Values = [new TableValueExpression(tableSourceExpression.Table.TableName)],
-    //         };
-    //     }
-    //     if (sourceExpression is Intermediate.SelectSourceExpression selectSourceExpression)
-    //     {
-    //         return new WhatExpression
-    //         {
-    //             Values = [new SubqueryValueExpression(selectSourceExpression.Table.TableName)],
-    //         };
-    //     }
-    //
-    //     throw new InvalidCastException(
-    //         $"Failed to convert source expression of type '{sourceExpression.Type.Name}' to WhatExpression."
-    //     );
-    // }
 }
