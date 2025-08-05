@@ -1,13 +1,22 @@
-﻿using System.Text;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SurrealDb.Net.Tests;
 
 public class User : SurrealDbRecord
 {
+    [Column("username")]
     public string Username { get; set; } = string.Empty;
+
+    [Column("email")]
     public string Email { get; set; } = string.Empty;
+
+    [Column("password")]
     public string Password { get; set; } = string.Empty;
+
+    [Column("avatar")]
     public string Avatar { get; set; } = string.Empty;
+
+    [Column("registered_at")]
     public DateTime RegisteredAt { get; set; }
 }
 

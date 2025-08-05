@@ -15,9 +15,9 @@ public class ScenarioBench : BaseEmbeddedBenchmark
     [IterationSetup]
     public void Setup()
     {
-        _memoryClient = new(null, NamingPolicy);
-        _rocksDbClient = new("rocks/scenario.db", null, NamingPolicy);
-        _surrealKvClient = new("surrealkv/scenario.db", null, NamingPolicy);
+        _memoryClient = new(null);
+        _rocksDbClient = new("rocks/scenario.db", null);
+        _surrealKvClient = new("surrealkv/scenario.db", null);
 
         ISurrealDbClient[] clients = [_memoryClient, _rocksDbClient, _surrealKvClient];
 

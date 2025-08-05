@@ -15,7 +15,6 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
     protected ISurrealDbEngine _engine { get; set; } = null!;
 
     public Uri Uri { get; protected set; } = null!;
-    public string? NamingPolicy { get; protected set; }
 
     protected void InitializeProviderEngine(
         ISurrealDbProviderEngine engine,

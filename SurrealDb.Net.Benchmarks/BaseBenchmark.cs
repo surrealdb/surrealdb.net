@@ -5,8 +5,6 @@ namespace SurrealDb.Net.Benchmarks;
 
 public class BaseBenchmark
 {
-    protected string NamingPolicy { get; } = "SnakeCase";
-
     protected BaseBenchmark()
     {
         bool isNativeAotRuntime = !string.IsNullOrWhiteSpace(

@@ -16,14 +16,9 @@ public class SurrealDbRocksDbClient : BaseSurrealDbClient
     /// </summary>
     /// <param name="filePath">The path to the database file.</param>
     /// <param name="options">The configuration of the embedded engine.</param>
-    /// <param name="namingPolicy">The naming policy to use for serialization.</param>
     /// <exception cref="ArgumentException"></exception>
-    public SurrealDbRocksDbClient(
-        string filePath,
-        SurrealDbEmbeddedOptions? options = null,
-        string? namingPolicy = null
-    )
-        : this(new SurrealDbOptions($"{BASE_ENDPOINT}{filePath}", namingPolicy), options) { }
+    public SurrealDbRocksDbClient(string filePath, SurrealDbEmbeddedOptions? options = null)
+        : this(new SurrealDbOptions($"{BASE_ENDPOINT}{filePath}"), options) { }
 
     /// <summary>
     /// Creates a new <see cref="SurrealDbRocksDbClient"/> using a specific configuration.
@@ -51,7 +46,6 @@ public class SurrealDbRocksDbClient : BaseSurrealDbClient
         }
 
         Uri = new Uri(parameters.Endpoint);
-        NamingPolicy = parameters.NamingPolicy;
 
         var engine = new SurrealDbEmbeddedEngine(options);
         InitializeProviderEngine(engine, parameters, configureCborOptions, loggerFactory);

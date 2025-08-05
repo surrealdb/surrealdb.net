@@ -12,7 +12,7 @@ public class SurrealDbWsResponseConverterTests : BaseCborConverterTests
         ISurrealDbWsResponse value = new SurrealDbWsOkResponse(
             "7df5d2a9",
             new([0xc6, 0xf6]),
-            SurrealDbCborOptions.Default
+            SurrealDbCborOptions.Default.Value
         );
 
         Func<Task> act = () => SerializeCborBinaryAsHexaAsync(value);

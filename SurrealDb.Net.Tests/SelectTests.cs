@@ -1,32 +1,48 @@
-﻿using System.Text;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using Dahomey.Cbor.Attributes;
 
 namespace SurrealDb.Net.Tests;
 
+[Table("empty")]
 public class Empty : SurrealDbRecord { }
 
+[Table("post")]
 public class Post : SurrealDbRecord
 {
+    [Column("title")]
     public string Title { get; set; } = string.Empty;
+
+    [Column("content")]
     public string Content { get; set; } = string.Empty;
 
+    [Column("created_at")]
     [CborIgnoreIfDefault]
     public DateTime? CreatedAt { get; set; }
 
+    [Column("status")]
     [CborIgnoreIfDefault]
     public string? Status { get; set; }
 }
 
+[Table("person")]
 public class Person : SurrealDbRecord
 {
+    [Column("title")]
     public string Title { get; set; } = string.Empty;
+
+    [Column("name")]
     public PersonName Name { get; set; }
+
+    [Column("marketing")]
     public bool Marketing { get; set; }
 }
 
 public struct PersonName
 {
+    [Column("first_name")]
     public string FirstName { get; set; }
+
+    [Column("last_name")]
     public string LastName { get; set; }
 }
 

@@ -64,10 +64,10 @@ else
 
 @code {
 
-    private MudDropContainer<DisplayableTask>? _dropContainer = null;
+    private MudDropContainer<DisplayableTask>? _dropContainer;
 
     private bool _loading = true;
-    private IEnumerable<DisplayableColumn> _columns = Array.Empty<DisplayableColumn>();
+    private IEnumerable<DisplayableColumn> _columns = [];
     private IEnumerable<DisplayableTask> _tasks => _columns.SelectMany(c => c.Tasks);
 
     private IDisposable? _subscription;

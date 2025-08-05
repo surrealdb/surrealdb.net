@@ -11,7 +11,7 @@ public abstract class BaseCborConverterTests
     protected async Task<string> SerializeCborBinaryAsHexaAsync<T>(T value)
     {
         using var stream = new MemoryStream();
-        await CborSerializer.SerializeAsync(value, stream, SurrealDbCborOptions.Default);
+        await CborSerializer.SerializeAsync(value, stream, SurrealDbCborOptions.Default.Value);
 
         var bytes = stream.ToArray();
         return ByteArrayToString(bytes);
@@ -33,7 +33,7 @@ public abstract class BaseCborConverterTests
     {
         var bytes = StringToByteArray(binaryAsHexa);
         using var stream = new MemoryStream(bytes);
-        return CborSerializer.DeserializeAsync<T>(stream, SurrealDbCborOptions.Default);
+        return CborSerializer.DeserializeAsync<T>(stream, SurrealDbCborOptions.Default.Value);
     }
 
     public static byte[] StringToByteArray(string binaryAsHexa)

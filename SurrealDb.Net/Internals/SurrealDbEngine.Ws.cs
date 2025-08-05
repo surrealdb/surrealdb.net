@@ -1319,10 +1319,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
     private CborOptions GetCborOptions()
     {
-        return SurrealDbCborOptions.GetCborSerializerOptions(
-            _parameters.NamingPolicy,
-            _configureCborOptions
-        );
+        return SurrealDbCborOptions.GetCborSerializerOptions(_configureCborOptions);
     }
 
     private async Task ApplyConfigurationAsync(CancellationToken cancellationToken)

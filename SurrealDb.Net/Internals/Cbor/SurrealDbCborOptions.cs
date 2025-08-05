@@ -1,10 +1,7 @@
-﻿using System.Collections.Concurrent;
-using Dahomey.Cbor;
-using Dahomey.Cbor.Serialization.Conventions;
+﻿using Dahomey.Cbor;
 using SurrealDb.Net.Internals.Cbor.Converters;
 using SurrealDb.Net.Internals.Cbor.Converters.Numerics;
 using SurrealDb.Net.Internals.Cbor.Converters.Spatial;
-using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Http;
 using SurrealDb.Net.Internals.Ws;
 using SurrealDb.Net.Models.Response;
@@ -13,22 +10,14 @@ namespace SurrealDb.Net.Internals.Cbor;
 
 public static class SurrealDbCborOptions
 {
-    private static readonly string DefaultKey = string.Empty;
+    internal static Lazy<CborOptions> Default => new(CreateCborSerializerOptions());
 
-    private static readonly ConcurrentDictionary<
-        string,
-        CborOptions
-    > DefaultSerializerOptionsCache = new();
-
-    internal static CborOptions Default =>
-        DefaultSerializerOptionsCache.GetValueOrDefault(
-            DefaultKey,
-            CreateCborSerializerOptions(null)
-        )!;
-
-    private static CborOptions CreateCborSerializerOptions(INamingConvention? namingConvention)
+    private static CborOptions CreateCborSerializerOptions()
     {
-        var options = new CborOptions { DefaultNamingConvention = namingConvention };
+        var options = new CborOptions
+        {
+            DefaultNamingConvention = new SurrealDbCborNamingConvention(),
+        };
 
         options.Registry.ConverterRegistry.RegisterConverterProvider(
             new PrimitiveConverterProvider()
@@ -58,68 +47,17 @@ public static class SurrealDbCborOptions
         return options;
     }
 
-    private static (string key, INamingConvention? namingConvention) DetectNamingConvention(
-        string? namingPolicy
-    )
+    public static CborOptions GetCborSerializerOptions(Action<CborOptions>? configureCborOptions)
     {
-        INamingConvention? namingConvention = (namingPolicy?.ToLowerInvariant()) switch
-        {
-            NamingPolicyConstants.CAMEL_CASE => new CamelCaseNamingConvention(),
-            NamingPolicyConstants.SNAKE_CASE or NamingPolicyConstants.SNAKE_CASE_LOWER =>
-                new SnakeCaseNamingConvention(),
-            NamingPolicyConstants.SNAKE_CASE_UPPER => new UpperSnakeCaseNamingConvention(),
-            NamingPolicyConstants.KEBAB_CASE or NamingPolicyConstants.KEBAB_CASE_LOWER =>
-                new KebabCaseNamingConvention(),
-            NamingPolicyConstants.KEBAB_CASE_UPPER => new UpperKebabCaseNamingConvention(),
-            _ => null,
-        };
-
-        string key = namingConvention?.GetType().FullName ?? DefaultKey;
-
-        return (key, namingConvention);
-    }
-
-    private static readonly ConcurrentDictionary<
-        string,
-        (string key, INamingConvention? namingConvention)
-    > DetectedNamingConventions = new();
-
-    public static CborOptions GetCborSerializerOptions(
-        string? namingPolicy,
-        Action<CborOptions>? configureCborOptions
-    )
-    {
-        var (key, jsonNamingPolicy) = DetectedNamingConventions.GetOrAdd(
-            namingPolicy ?? string.Empty,
-            DetectNamingConvention(namingPolicy)
-        );
-
         if (configureCborOptions is not null)
         {
-            var cborOptions = CreateCborSerializerOptions(jsonNamingPolicy);
+            var cborOptions = CreateCborSerializerOptions();
             configureCborOptions(cborOptions);
 
             return cborOptions;
         }
 
-        return GetDefaultSerializerFromPolicy(key, jsonNamingPolicy);
-    }
-
-    private static CborOptions GetDefaultSerializerFromPolicy(INamingConvention? namingConvention)
-    {
-        string key = namingConvention?.GetType().FullName ?? DefaultKey;
-        return GetDefaultSerializerFromPolicy(key, namingConvention);
-    }
-
-    private static CborOptions GetDefaultSerializerFromPolicy(
-        string key,
-        INamingConvention? namingConvention
-    )
-    {
-        return DefaultSerializerOptionsCache.GetOrAdd(
-            key,
-            CreateCborSerializerOptions(namingConvention)
-        );
+        return Default.Value;
     }
 
     private static void RegisterWsEngineConverters(CborOptions options)

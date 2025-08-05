@@ -15,13 +15,9 @@ public class SurrealDbMemoryClient : BaseSurrealDbClient
     /// Creates a new <see cref="SurrealDbMemoryClient"/>.
     /// </summary>
     /// <param name="options">The configuration of the embedded engine.</param>
-    /// <param name="namingPolicy">The naming policy to use for serialization.</param>
     /// <exception cref="ArgumentException"></exception>
-    public SurrealDbMemoryClient(
-        SurrealDbEmbeddedOptions? options = null,
-        string? namingPolicy = null
-    )
-        : this(new SurrealDbOptions(ENDPOINT, namingPolicy), options) { }
+    public SurrealDbMemoryClient(SurrealDbEmbeddedOptions? options = null)
+        : this(new SurrealDbOptions(ENDPOINT), options) { }
 
     /// <summary>
     /// Creates a new <see cref="SurrealDbMemoryClient"/> using a specific configuration.
@@ -44,7 +40,6 @@ public class SurrealDbMemoryClient : BaseSurrealDbClient
     )
     {
         Uri = new Uri(ENDPOINT);
-        NamingPolicy = parameters.NamingPolicy;
 
         var engine = new SurrealDbEmbeddedEngine(options);
         InitializeProviderEngine(engine, parameters, configureCborOptions, loggerFactory);

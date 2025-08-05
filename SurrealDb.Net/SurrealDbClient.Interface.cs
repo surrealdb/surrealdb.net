@@ -22,12 +22,6 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     Uri Uri { get; }
 
     /// <summary>
-    /// The naming policy used to serialize and deserialize data (eg. JSON for table name and record field names).
-    /// Default: PascalCase.
-    /// </summary>
-    string? NamingPolicy { get; }
-
-    /// <summary>
     /// Authenticates the current connection with a JWT.<br />
     /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/authenticate">
     /// `Authenticate` on surrealdb.com/docs
