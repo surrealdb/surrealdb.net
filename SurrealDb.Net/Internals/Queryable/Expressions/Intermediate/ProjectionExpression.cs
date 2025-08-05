@@ -217,23 +217,3 @@ internal sealed class AggregationFieldProjectionExpression : ProjectionExpressio
         throw new NotSupportedException();
     }
 }
-
-// /// <summary>
-// ///
-// /// </summary>
-// internal sealed class SelfProjectionExpression : ProjectionExpression
-// {
-//     public ParameterExpression Expression { get; }
-//     public override Expression? InnerExpression => Expression;
-//
-//     public SelfProjectionExpression(ParameterExpression expression, bool canBeSingle = false)
-//         : base(expression.Type, canBeSingle)
-//     {
-//         Expression = expression;
-//     }
-//
-//     public override ProjectionExpression Unsingle()
-//     {
-//         throw new NotImplementedException();
-//     }
-// }

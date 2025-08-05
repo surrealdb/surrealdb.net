@@ -52,8 +52,6 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
 
             if (IsExternalParameter(node.Member.DeclaringType))
             {
-                // var x = Expression.MakeMemberAccess(constantExpression, node.Member);
-                //var objectParameter = Expression.Constant(constantExpression.Value);
                 object? value = constantExpression
                     .Value?.GetType()
                     .GetField(node.Member.Name)
@@ -64,7 +62,6 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
             }
         }
 
-        //return base.VisitMember(node);
         var innerExpression = Visit(node.Expression);
         if (innerExpression != node.Expression)
         {
@@ -73,15 +70,6 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
 
         return node;
     }
-
-    // private static object GetValue(MemberExpression member)
-    // {
-    //     var objectMember = Expression.Convert(member, typeof(object));
-    //     var getterLambda = Expression.Lambda<Func<object>>(objectMember);
-    //     var getter = getterLambda.Compile();
-    //
-    //     return getter();
-    // }
 
     private static bool IsExternalParameter(Type type)
     {
@@ -94,7 +82,6 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
     protected override Expression VisitParameter(ParameterExpression node)
     {
         return node;
-        //return _sourceExpressionParameters.GetValueOrDefault(node, node);
     }
 
     protected override Expression VisitLambda<T>(Expression<T> node)
@@ -108,14 +95,11 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
         // TODO
-        if (node.Method.DeclaringType == typeof(System.Linq.Queryable)
-        //|| node.Method.DeclaringType == typeof(System.Linq.Enumerable)
-        )
+        if (node.Method.DeclaringType == typeof(System.Linq.Queryable))
         {
             return BindQueryableMethodCall(node);
         }
 
-        //return node;
         return base.VisitMethodCall(node);
     }
 
@@ -430,7 +414,6 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
     {
         var sourceSelect = (SelectExpression)Visit(source);
 
-        // var genericSubqueryType = typeof(FlattenProjector<>).MakeGenericType(resultType);
         var genericSubqueryType = typeof(FlattenProjector<>).MakeGenericType(
             resultType.GenericTypeArguments[0]
         );
@@ -440,15 +423,6 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
 
         var collectionExpression = Visit(collectionSelector.Body);
 
-        // ProjectionExpression innerProjection = collectionExpression
-        //     is SelectExpression innerSelectExpression
-        //     ? new SubqueryExpression(innerSelectExpression)
-        //     : new AggregationFieldProjectionExpression(
-        //         genericSubqueryType,
-        //         AggregationType.Flatten,
-        //         collectionExpression,
-        //         alias: memberPropertyName
-        //     );
         ProjectionExpression innerProjection = new AggregationFieldProjectionExpression(
             genericSubqueryType,
             AggregationType.Flatten,
@@ -479,10 +453,7 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
     {
         var sourceSelect = (SelectExpression)Visit(source);
 
-        _sourceExpressionParameters.Add(
-            predicate.Parameters[0],
-            sourceSelect.Projection //?? new SelfProjectionExpression(predicate.Parameters[0])
-        );
+        _sourceExpressionParameters.Add(predicate.Parameters[0], sourceSelect.Projection);
 
         var whereExpression = Visit(predicate.Body);
 

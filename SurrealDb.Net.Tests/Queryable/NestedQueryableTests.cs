@@ -72,24 +72,4 @@ public class NestedQueryableTests : BaseQueryableTests
                 """
             );
     }
-
-    // [Test]
-    // [Skip("TODO")]
-    // public void ParentQueryAlt2()
-    // {
-    //     // string query = ToSurql(
-    //     //     Orders.Where(o => o.Products.Contains(Products.FirstOrDefault())).Select(o => o.Status)
-    //     // );
-    //     string query = ToSurql(
-    //         Orders.Where(o => o.Products.Contains(Products.FirstOrDefault())).Select(o => o.Status)
-    //     );
-    //
-    //     query
-    //         .Should()
-    //         .Be(
-    //             """
-    //             SELECT Status FROM order WHERE !!(SELECT * FROM product WHERE id == array::first($parent.Products))
-    //             """
-    //         );
-    // }
 }
