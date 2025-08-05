@@ -16,13 +16,10 @@ public sealed class SurrealDbQueryable<T>
         IOrderedQueryable<T>,
         IAsyncEnumerable<T>
 {
-    //private readonly WeakReference<ISurrealDbEngine> _surrealDbEngine;
-    //private readonly string _fromTable;
-
     public Type ElementType => typeof(T);
     public Type EnumerableElementType => typeof(IEnumerable<T>);
-    public Expression Expression { get; private set; }
-    public IQueryProvider Provider { get; private set; }
+    public Expression Expression { get; }
+    public IQueryProvider Provider { get; }
 
     private readonly string? _fromTable;
     public string FromTable =>
@@ -41,28 +38,14 @@ public sealed class SurrealDbQueryable<T>
         _fromTable = fromTable;
     }
 
-    //public SurrealDbQueryable(ISurrealDbEngine surrealDbEngine, string _table)
-    //{
-    //    _surrealDbEngine = new WeakReference<ISurrealDbEngine>(surrealDbEngine);
-    //    _fromTable = _table;
-    //}
-
     public IEnumerator<T> GetEnumerator()
     {
         return Provider.Execute<IEnumerable<T>>(Expression).GetEnumerator();
-        //return _surrealDbEngine.TryGetTarget(out var engine)
-        //    ? engine.SelectAll<T>(_fromTable, _cancellationToken).Result.GetEnumerator()
-        //    : Enumerable.Empty<T>().GetEnumerator();
-        //return _defaultSelector(_fromTable, _cancellationToken).Result.GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
     {
         return Provider.Execute<IEnumerable>(Expression).GetEnumerator();
-        //return _surrealDbEngine.TryGetTarget(out var engine)
-        //    ? engine.SelectAll<T>(_fromTable, _cancellationToken).Result.GetEnumerator()
-        //    : Enumerable.Empty<T>().GetEnumerator();
-        //return _defaultSelector(_fromTable, _cancellationToken).Result.GetEnumerator();
     }
 
     public async IAsyncEnumerator<T> GetAsyncEnumerator(

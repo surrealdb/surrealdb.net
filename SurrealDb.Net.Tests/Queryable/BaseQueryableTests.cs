@@ -28,12 +28,7 @@ public abstract class BaseQueryableTests
 
     protected IQueryable<Post> Posts => _lazyPosts.Value;
     protected IQueryable<Models.User> Users => _lazyUsers.Value;
-    protected IQueryable<Models.Address> Addresses =>
-        // new SurrealDbQueryable<Models.Address>(
-        //     new SurrealDbQueryProvider<Models.Address>(null!),
-        //     AddressTableName
-        // );
-        _lazyAddresses.Value;
+    protected IQueryable<Models.Address> Addresses => _lazyAddresses.Value;
     protected IQueryable<Models.Order> Orders => _lazyOrders.Value;
     protected IQueryable<Models.Product> Products => _lazyProducts.Value;
 
@@ -58,8 +53,6 @@ public abstract class BaseQueryableTests
         }
 
         return ToSurql(queryable.Expression);
-        //return SurrealDbQueryProvider<Unit>.Translate(queryable.Expression);
-        //return new QueryGeneratorExpressionVisitor().Translate(queryable.Expression, tableName);
     }
 
     protected string ToSurql(Expression expression)

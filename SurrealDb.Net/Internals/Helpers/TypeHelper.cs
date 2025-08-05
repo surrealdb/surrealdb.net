@@ -247,66 +247,64 @@ internal static class TypeHelper
         {
             return TypeCode.Boolean;
         }
-        else if (type == typeof(byte))
+        if (type == typeof(byte))
         {
             return TypeCode.Byte;
         }
-        else if (type == typeof(sbyte))
+        if (type == typeof(sbyte))
         {
             return TypeCode.SByte;
         }
-        else if (type == typeof(short))
+        if (type == typeof(short))
         {
             return TypeCode.Int16;
         }
-        else if (type == typeof(ushort))
+        if (type == typeof(ushort))
         {
             return TypeCode.UInt16;
         }
-        else if (type == typeof(int))
+        if (type == typeof(int))
         {
             return TypeCode.Int32;
         }
-        else if (type == typeof(uint))
+        if (type == typeof(uint))
         {
             return TypeCode.UInt32;
         }
-        else if (type == typeof(long))
+        if (type == typeof(long))
         {
             return TypeCode.Int64;
         }
-        else if (type == typeof(ulong))
+        if (type == typeof(ulong))
         {
             return TypeCode.UInt64;
         }
-        else if (type == typeof(float))
+        if (type == typeof(float))
         {
             return TypeCode.Single;
         }
-        else if (type == typeof(double))
+        if (type == typeof(double))
         {
             return TypeCode.Double;
         }
-        else if (type == typeof(decimal))
+        if (type == typeof(decimal))
         {
             return TypeCode.Decimal;
         }
-        else if (type == typeof(string))
+        if (type == typeof(string))
         {
             return TypeCode.String;
         }
-        else if (type == typeof(char))
+        if (type == typeof(char))
         {
             return TypeCode.Char;
         }
-        else if (type == typeof(DateTime))
+        if (type == typeof(DateTime))
         {
             return TypeCode.DateTime;
         }
-        else
-        {
-            return TypeCode.Object;
-        }
+
+        return TypeCode.Object;
     }
 
     /// <summary>
@@ -316,242 +314,4 @@ internal static class TypeHelper
     {
         return type.GetTypeInfo().IsAssignableFrom(otherType.GetTypeInfo());
     }
-
-    ///// <summary>
-    ///// Gets the data members of the type (non-static properties and fields)
-    ///// </summary>
-    //public static IEnumerable<MemberInfo> GetDataMembers(
-    //    this Type type,
-    //    string? name = null,
-    //    bool includeNonPublic = false
-    //)
-    //{
-    //    return GetInheritedProperites(type)
-    //        .Where(p =>
-    //            p.CanRead
-    //            && !p.GetMethod.IsStatic
-    //            && (p.GetMethod.IsPublic || includeNonPublic)
-    //            && (name == null || p.Name == name)
-    //        )
-    //        .Cast<MemberInfo>()
-    //        .Concat(
-    //            GetInheritedFields(type)
-    //                .Where(f =>
-    //                    !f.IsStatic
-    //                    && (f.IsPublic || includeNonPublic)
-    //                    && (name == null || f.Name == name)
-    //                )
-    //        );
-    //}
-
-    ///// <summary>
-    ///// Gets the data member with the specified name (non-static properties and fields).
-    ///// </summary>
-    //public static MemberInfo? GetDataMember(
-    //    this Type type,
-    //    string name,
-    //    bool includeNonPublic = false
-    //)
-    //{
-    //    return GetDataMembers(type, name, includeNonPublic).FirstOrDefault();
-    //}
-
-    //    /// <summary>
-    //    /// Finds the matching method declared on the specified type, or inherited from a base type.
-    //    /// </summary>
-    //#if NET7_0_OR_GREATER
-    //    [RequiresDynamicCode("Calls System.Reflection.MethodInfo.MakeGenericMethod(params Type[])")]
-    //#endif
-    //    public static MethodInfo? FindMethod(
-    //        this Type type,
-    //        string name,
-    //        Type[] typeArguments,
-    //        Type[] parameterTypes
-    //    )
-    //    {
-    //        int typeArgumentCount = typeArguments != null ? typeArguments.Length : 0;
-
-    //        foreach (var method in type.GetInheritedMethods())
-    //        {
-    //            if (method.IsGenericMethodDefinition != (typeArgumentCount > 0))
-    //                continue;
-
-    //            if (method.Name != name)
-    //                continue;
-
-    //            if (method.IsGenericMethodDefinition)
-    //            {
-    //                if (method.GetGenericArguments().Length != typeArgumentCount)
-    //                    continue;
-
-    //                var constructedMethod = method.MakeGenericMethod(typeArguments);
-
-    //                if (ParametersMatch(constructedMethod.GetParameters(), parameterTypes))
-    //                {
-    //                    return constructedMethod;
-    //                }
-    //            }
-
-    //            if (ParametersMatch(method.GetParameters(), parameterTypes))
-    //            {
-    //                return method;
-    //            }
-    //        }
-
-    //        return null;
-    //    }
-
-    //    /// <summary>
-    //    /// Finds the matching constructor declared on the specified type.
-    //    /// </summary>
-    //    public static ConstructorInfo? FindConstructor(this Type type, Type[] parameterTypes)
-    //    {
-    //        foreach (var constructor in type.GetTypeInfo().DeclaredConstructors)
-    //        {
-    //            if (ParametersMatch(constructor.GetParameters(), parameterTypes))
-    //            {
-    //                return constructor;
-    //            }
-    //        }
-
-    //        return null;
-    //    }
-
-    private static bool TypesMatch(Type[] a, Type[] b)
-    {
-        if (a.Length != b.Length)
-            return false;
-
-        for (int i = 0; i < a.Length; i++)
-        {
-            if (a[i] != b[i])
-                return false;
-        }
-
-        return true;
-    }
-
-    private static bool ParametersMatch(ParameterInfo[] parameters, Type[] parameterTypes)
-    {
-        if (parameters.Length != parameterTypes.Length)
-        {
-            return false;
-        }
-
-        for (int i = 0; i < parameters.Length; i++)
-        {
-            if (parameters[i].ParameterType != parameterTypes[i])
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    ///// <summary>
-    ///// Gets a list of the type and all its base types (recursive)
-    ///// </summary>
-    //private static IEnumerable<TypeInfo> GetInheritedTypeInfos(this Type type)
-    //{
-    //    var info = type.GetTypeInfo();
-
-    //    yield return info;
-
-    //    // interfaces include their inherited interfaces
-    //    // todo: remove duplicates
-    //    if (info.IsInterface)
-    //    {
-    //        foreach (var ii in info.ImplementedInterfaces)
-    //        {
-    //            foreach (var iface in GetInheritedTypeInfos(ii))
-    //            {
-    //                yield return iface;
-    //            }
-    //        }
-    //    }
-    //    else
-    //    {
-    //        for (var i = info.BaseType?.GetTypeInfo(); i != null; i = i.BaseType?.GetTypeInfo())
-    //        {
-    //            yield return i;
-    //        }
-    //    }
-    //}
-
-    ///// <summary>
-    ///// Gets a list of all properties, including inherited properties.
-    ///// </summary>
-    //public static IEnumerable<PropertyInfo> GetInheritedProperites(this Type type)
-    //{
-    //    // to do: remove duplicates
-    //    foreach (var info in GetInheritedTypeInfos(type))
-    //    {
-    //        foreach (var p in info.DeclaredProperties)
-    //        {
-    //            yield return p;
-    //        }
-    //    }
-    //}
-
-    ///// <summary>
-    ///// Gets a list of all fields, including inherited fields.
-    ///// </summary>
-    //public static IEnumerable<FieldInfo> GetInheritedFields(this Type type)
-    //{
-    //    // to do: remove duplicates
-    //    foreach (var info in GetInheritedTypeInfos(type))
-    //    {
-    //        foreach (var p in info.DeclaredFields)
-    //        {
-    //            yield return p;
-    //        }
-    //    }
-    //}
-
-    ///// <summary>
-    ///// Gets a list of all methods, including inherited methods.
-    ///// </summary>
-    //public static IEnumerable<MethodInfo> GetInheritedMethods(this Type type)
-    //{
-    //    // to do: remove duplicates
-    //    foreach (var info in GetInheritedTypeInfos(type))
-    //    {
-    //        foreach (var p in info.DeclaredMethods)
-    //        {
-    //            yield return p;
-    //        }
-    //    }
-    //}
-
-    //// holds a delegate to the runtime implemented API
-    //private static Func<Type, object>? fnGetUninitializedObject;
-
-    ///// <summary>
-    ///// Gets an unitialized instance of an object of the specified type.
-    ///// </summary>
-    //public static object GetUninitializedObject(this Type type)
-    //{
-    //    if (fnGetUninitializedObject is null)
-    //    {
-    //        var a = typeof(RuntimeHelpers).GetTypeInfo().Assembly;
-    //        var fs = a.DefinedTypes.FirstOrDefault(t =>
-    //            t.FullName == "System.Runtime.Serialization.FormatterServices"
-    //        );
-    //        var guo = fs?.DeclaredMethods.FirstOrDefault(m =>
-    //            m.Name == nameof(GetUninitializedObject)
-    //        );
-    //        if (guo == null)
-    //            throw new NotSupportedException(
-    //                $"The runtime does not support the '{nameof(GetUninitializedObject)}' API."
-    //            );
-    //        Interlocked.CompareExchange(
-    //            ref fnGetUninitializedObject,
-    //            (Func<Type, object>)guo.CreateDelegate(typeof(Func<Type, object>)),
-    //            null
-    //        );
-    //    }
-
-    //    return fnGetUninitializedObject(type);
-    //}
 }
