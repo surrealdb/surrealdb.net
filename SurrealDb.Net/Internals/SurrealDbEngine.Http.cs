@@ -1201,15 +1201,13 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-#if NET6_0_OR_GREATER
 #pragma warning disable MA0004
-        await using var stream = await response
-            .Content.ReadAsStreamAsync(cancellationToken)
-            .ConfigureAwait(false);
-#pragma warning restore MA0004
-#else
-        await using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        await using var stream = await response.Content.ReadAsStreamAsync(
+#if NET6_0_OR_GREATER
+                cancellationToken
 #endif
+        ).ConfigureAwait(false);
+#pragma warning restore MA0004
 
         var cborSerializerOptions = GetCborSerializerOptions(
             _parameters.NamingPolicy,
