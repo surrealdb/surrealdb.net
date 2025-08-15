@@ -220,13 +220,15 @@ public class DataTypesValueTests : BaseQueryableTests
     [Test]
     public void DateTimeType()
     {
-        string query = ToSurql(Expression.Constant(new DateTime(2025, 5, 15)));
+        string query = ToSurql(
+            Expression.Constant(new DateTime(2025, 5, 15, 0, 0, 0, DateTimeKind.Utc))
+        );
 
         query
             .Should()
             .Be(
                 """
-                d"2025-05-14T22:00:00.0000000Z"
+                d"2025-05-15T00:00:00.0000000Z"
                 """
             );
     }
