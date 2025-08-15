@@ -22,4 +22,9 @@ internal sealed class SingleFieldExpression : FieldExpression
         var newAlias = string.IsNullOrWhiteSpace(alias) ? null : alias.ToFieldIdiom();
         return new SingleFieldExpression(Expression, newAlias);
     }
+
+    public FieldExpression WithoutAlias()
+    {
+        return Alias is null ? this : new SingleFieldExpression(Expression, null);
+    }
 }
