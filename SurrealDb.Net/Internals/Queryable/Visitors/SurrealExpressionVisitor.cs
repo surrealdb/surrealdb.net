@@ -98,6 +98,53 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         var limit = (LimitExpression?)Visit(selectExpression.Take);
         var start = (StartExpression?)Visit(selectExpression.Skip);
 
+        var fieldsIdioms = fields.Fields.Select(f =>
+            ((SingleFieldExpression)f).Expression.ToIdiom()
+        );
+
+        var requiredIdioms = ExtractIdioms(grouping, ordering).ToImmutableArray();
+        bool areAllIdiomsRequiredPresents = requiredIdioms.All(idiom =>
+            fieldsIdioms.Any(fi => fi.IsSame(idiom))
+        );
+        bool shouldSplitInSubquery = !areAllIdiomsRequiredPresents;
+
+        if (shouldSplitInSubquery)
+        {
+            var innerFields = fields
+                .Fields.Select(f => ((SingleFieldExpression)f).WithoutAlias())
+                .Concat(
+                    requiredIdioms.Select(ri => new SingleFieldExpression(
+                        ri.ToValue(),
+                        alias: null
+                    ))
+                )
+                .ToImmutableArray();
+
+            var subquery = new SubqueryValueExpression(
+                new SelectStatementExpression(
+                    new FieldsExpression(innerFields),
+                    what,
+                    cond,
+                    grouping,
+                    ordering,
+                    limit,
+                    start,
+                    false
+                )
+            );
+
+            return new SelectStatementExpression(
+                fields,
+                WhatExpression.From(subquery),
+                cond: null,
+                group: null,
+                order: null,
+                limit: null,
+                start: null,
+                selectExpression.SingleValue
+            );
+        }
+
         return new SelectStatementExpression(
             fields,
             what,
@@ -613,7 +660,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             }
             right ??= new ValuePartExpression(rightValueExpression);
 
-            // TODO : Array indexed access, giving "left[right]"
+            // 💡 Array indexed access, giving "left[right]"
             return IdiomExpression.Chain(left, right);
         }
 
@@ -3098,5 +3145,18 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 }),
             ]
         );
+    }
+
+    private static IEnumerable<IdiomExpression> ExtractIdioms(
+        GroupingExpression? grouping,
+        OrderingExpression? ordering
+    )
+    {
+        var orderingIdioms = ordering is ListOrderingExpression listOrderingExpression
+            ? listOrderingExpression.Orders.Select(o => o.Value)
+            : [];
+        var groupingIdioms = grouping?.Fields ?? [];
+
+        return orderingIdioms.Concat(groupingIdioms);
     }
 }

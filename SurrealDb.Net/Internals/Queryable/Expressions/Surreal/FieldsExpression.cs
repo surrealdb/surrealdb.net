@@ -1,7 +1,4 @@
 ﻿using System.Collections.Immutable;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Reflection;
-using Dahomey.Cbor.Attributes;
 using SurrealDb.Net.Internals.Extensions;
 
 namespace SurrealDb.Net.Internals.Queryable.Expressions.Surreal;

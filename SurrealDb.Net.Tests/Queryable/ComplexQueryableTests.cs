@@ -1,12 +1,9 @@
-﻿using System.Text;
-
-namespace SurrealDb.Net.Tests.Queryable;
+﻿namespace SurrealDb.Net.Tests.Queryable;
 
 public class ComplexQueryableTests
 {
     [Test]
     [RemoteConnectionStringFixtureGenerator]
-    [Skip("TODO")]
     public async Task ShouldSelectWithComplexQuery(string connectionString)
     {
         IEnumerable<string>? result = null;
@@ -16,17 +13,10 @@ public class ComplexQueryableTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Schemas/post.surql"
-            );
-            string fileContent = await File.ReadAllTextAsync(filePath, Encoding.UTF8);
-
-            string query = fileContent;
-
             await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
-            await client.RawQuery(query);
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
             result = await client
                 .Select<Post>("post")
@@ -41,6 +31,7 @@ public class ComplexQueryableTests
 
         await func.Should().NotThrowAsync();
 
-        result.Should().NotBeNull().And.HaveCount(2);
+        // 2 (DRAFT) - (1 skipped) = 1
+        result.Should().NotBeNull().And.HaveCount(1);
     }
 }
