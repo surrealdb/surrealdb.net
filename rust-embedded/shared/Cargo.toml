@@ -19,7 +19,7 @@ uuid = "1.13.1"
 
 [build-dependencies]
 cargo-lock = "10.1.0"
-csbindgen = "1.9.1"
+csbindgen = "1.9.5"
 
 [features]
 memory = ["surrealdb/kv-mem"]
