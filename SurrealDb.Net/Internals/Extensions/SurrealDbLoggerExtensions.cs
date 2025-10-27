@@ -41,6 +41,26 @@ internal static partial class SurrealDbLoggerExtensions
 
     [LoggerMessage(
         Level = LogLevel.Information,
+        Message = "Connection signed as namespace user, user={username}, password={password}."
+    )]
+    public static partial void LogConnectionSignedAsNamespaceUser(
+        this ILogger logger,
+        string username,
+        string password
+    );
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Connection signed as database user, user={username}, password={password}."
+    )]
+    public static partial void LogConnectionSignedAsDatabaseUser(
+        this ILogger logger,
+        string username,
+        string password
+    );
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
         Message = "Connection signed via token, token={token}."
     )]
     public static partial void LogConnectionSignedViaJwt(this ILogger logger, string token);

@@ -145,10 +145,36 @@ public class SurrealDbOptionsBuilderTests
     }
 
     [Test]
+    [Arguments("Root")]
+    [Arguments("Namespace")]
+    [Arguments("Database")]
+    public void ShouldCreateWithAuthLevel(string authLevel)
+    {
+        var options = new SurrealDbOptionsBuilder().WithAuthLevel(authLevel).Build();
+
+        options.Endpoint.Should().BeNull();
+        options.Namespace.Should().BeNull();
+        options.Database.Should().BeNull();
+        options.Username.Should().BeNull();
+        options.Password.Should().BeNull();
+        options.Token.Should().BeNull();
+        options.NamingPolicy.Should().BeNull();
+        options.AuthLevel.Should().Be(authLevel);
+    }
+
+    [Test]
+    public void ShouldFailToCreateWithIncorrectAuthLevel()
+    {
+        Action act = () => new SurrealDbOptionsBuilder().WithAuthLevel("test").Build();
+
+        act.Should().Throw<ArgumentException>().WithParameterName("authLevel");
+    }
+
+    [Test]
     public void ShouldCreateFromConnectionString()
     {
         string connectionString =
-            "Server=http://127.0.0.1:8000;Namespace=test;Database=test;Username=root;Password=root;NamingPolicy=CamelCase";
+            "Server=http://127.0.0.1:8000;Namespace=test;Database=test;Username=root;Password=root;NamingPolicy=CamelCase;AuthLevel=Namespace";
 
         var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
 
@@ -159,6 +185,7 @@ public class SurrealDbOptionsBuilderTests
         options.Password.Should().Be("root");
         options.Token.Should().BeNull();
         options.NamingPolicy.Should().Be("CamelCase");
+        options.AuthLevel.Should().Be("Namespace");
     }
 
     [Test]

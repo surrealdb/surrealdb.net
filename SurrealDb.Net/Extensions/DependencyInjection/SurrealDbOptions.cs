@@ -1,5 +1,6 @@
 ﻿using SurrealDb.Net;
 using SurrealDb.Net.Extensions.DependencyInjection;
+using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Internals.Constants;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -47,6 +48,18 @@ public sealed class SurrealDbOptions
     public string? NamingPolicy { get; set; }
 
     /// <summary>
+    /// Auth level when connecting to the SurrealDB instance.
+    /// Valid options are "Root", "Namespace" or "Database".
+    /// Defaults to "Root".
+    /// </summary>
+    public string? AuthLevel { get; set; }
+
+    internal SystemAuthLevel SystemAuthLevel =>
+        string.IsNullOrWhiteSpace(AuthLevel)
+            ? SystemAuthLevel.Root
+            : Enum.Parse<SystemAuthLevel>(AuthLevel);
+
+    /// <summary>
     /// Indicates if the options are made to use a SurrealDB instance in embedded mode.
     /// Supported embedded modes are <c>mem://</c>, <c>rocksdb://</c> and <c>surrealkv://</c>.
     /// </summary>
@@ -71,6 +84,7 @@ public sealed class SurrealDbOptions
         Password = clone.Password;
         Token = clone.Token;
         NamingPolicy = clone.NamingPolicy;
+        AuthLevel = clone.AuthLevel;
         Logging = clone.Logging;
     }
 

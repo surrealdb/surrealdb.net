@@ -665,7 +665,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
 
-        _config.SetBasicAuth(rootAuth.Username, rootAuth.Password);
+        _config.SetSystemAuth(rootAuth);
     }
 
     public async Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken)
@@ -676,7 +676,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
         var token = dbResponse.GetValue<string>();
 
-        _config.SetBearerAuth(token!);
+        _config.SetSystemAuth(nsAuth);
 
         return new Jwt(token!);
     }
@@ -689,7 +689,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
         var token = dbResponse.GetValue<string>();
 
-        _config.SetBearerAuth(token!);
+        _config.SetSystemAuth(dbAuth);
 
         return new Jwt(token!);
     }
@@ -1053,10 +1053,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
                     bearerAuth.Token
                 );
                 break;
-            case BasicAuth basicAuth:
+            case InternalSystemAuth systemAuth:
             {
                 string credentials = Convert.ToBase64String(
-                    Encoding.ASCII.GetBytes($"{basicAuth.Username}:{basicAuth.Password}")
+                    Encoding.ASCII.GetBytes(
+                        $"{systemAuth.Auth.Username}:{systemAuth.Auth.Password}"
+                    )
                 );
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
                     AuthConstants.BASIC,

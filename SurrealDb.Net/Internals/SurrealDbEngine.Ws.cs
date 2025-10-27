@@ -975,15 +975,15 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     }
 
     private async Task SignIn(
-        RootAuth rootAuth,
+        SystemAuth systemAuth,
         SurrealDbWsRequestPriority priority,
         CancellationToken cancellationToken
     )
     {
-        await SendRequestAsync("signin", [rootAuth], priority, cancellationToken)
+        await SendRequestAsync("signin", [systemAuth], priority, cancellationToken)
             .ConfigureAwait(false);
 
-        _config.SetBasicAuth(rootAuth.Username, rootAuth.Password);
+        _config.SetSystemAuth(systemAuth);
     }
 
     public async Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken)
@@ -997,7 +997,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             .ConfigureAwait(false);
         var token = dbResponse.GetValue<string>();
 
-        _config.SetBearerAuth(token!);
+        _config.SetSystemAuth(nsAuth);
 
         return new Jwt(token!);
     }
@@ -1013,7 +1013,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             .ConfigureAwait(false);
         var token = dbResponse.GetValue<string>();
 
-        _config.SetBearerAuth(token!);
+        _config.SetSystemAuth(dbAuth);
 
         return new Jwt(token!);
     }
@@ -1345,25 +1345,56 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             }
         }
 
-        if (_config.Auth is BasicAuth basicAuth)
+        if (_config.Auth is InternalSystemAuth systemAuth)
         {
-            await SignIn(
-                    new RootAuth { Username = basicAuth.Username, Password = basicAuth.Password! },
-                    SurrealDbWsRequestPriority.High,
-                    cancellationToken
-                )
-                .ConfigureAwait(false);
+            if (systemAuth.Auth is RootAuth rootAuth)
+            {
+                await SignIn(rootAuth, SurrealDbWsRequestPriority.High, cancellationToken)
+                    .ConfigureAwait(false);
 
-            _surrealDbLoggerFactory?.Connection?.LogConnectionSignedAsRoot(
-                SurrealDbLoggerExtensions.FormatParameterValue(
-                    basicAuth.Username,
-                    _parameters.Logging.SensitiveDataLoggingEnabled
-                ),
-                SurrealDbLoggerExtensions.FormatParameterValue(
-                    basicAuth.Password,
-                    _parameters.Logging.SensitiveDataLoggingEnabled
-                )
-            );
+                _surrealDbLoggerFactory?.Connection?.LogConnectionSignedAsRoot(
+                    SurrealDbLoggerExtensions.FormatParameterValue(
+                        rootAuth.Username,
+                        _parameters.Logging.SensitiveDataLoggingEnabled
+                    ),
+                    SurrealDbLoggerExtensions.FormatParameterValue(
+                        rootAuth.Password,
+                        _parameters.Logging.SensitiveDataLoggingEnabled
+                    )
+                );
+            }
+            if (systemAuth.Auth is NamespaceAuth nsAuth)
+            {
+                await SignIn(nsAuth, SurrealDbWsRequestPriority.High, cancellationToken)
+                    .ConfigureAwait(false);
+
+                _surrealDbLoggerFactory?.Connection?.LogConnectionSignedAsNamespaceUser(
+                    SurrealDbLoggerExtensions.FormatParameterValue(
+                        nsAuth.Username,
+                        _parameters.Logging.SensitiveDataLoggingEnabled
+                    ),
+                    SurrealDbLoggerExtensions.FormatParameterValue(
+                        nsAuth.Password,
+                        _parameters.Logging.SensitiveDataLoggingEnabled
+                    )
+                );
+            }
+            if (systemAuth.Auth is DatabaseAuth dbAuth)
+            {
+                await SignIn(dbAuth, SurrealDbWsRequestPriority.High, cancellationToken)
+                    .ConfigureAwait(false);
+
+                _surrealDbLoggerFactory?.Connection?.LogConnectionSignedAsDatabaseUser(
+                    SurrealDbLoggerExtensions.FormatParameterValue(
+                        dbAuth.Username,
+                        _parameters.Logging.SensitiveDataLoggingEnabled
+                    ),
+                    SurrealDbLoggerExtensions.FormatParameterValue(
+                        dbAuth.Password,
+                        _parameters.Logging.SensitiveDataLoggingEnabled
+                    )
+                );
+            }
         }
 
         if (_config.Auth is BearerAuth bearerAuth)
