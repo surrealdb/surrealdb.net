@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 	  <IsAotCompatible>false</IsAotCompatible>
-    
+
     <IsPackable>false</IsPackable>
     <Version>0.9.0</Version>
     <Authors>surrealdb</Authors>
@@ -42,7 +42,7 @@
 	  <None Include="..\LICENSE" Pack="true" PackagePath="\" Visible="false" />
 	  <None Include="..\img\icon.png" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
-    
+
   <!-- Used to enable build & tests for embedded modes (memory, rocksdb, surrealkv) -->
   <PropertyGroup Label="Constants" Condition="true">
     <DefineConstants>EMBEDDED_MODE</DefineConstants>

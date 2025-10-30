@@ -1,9 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals.Auth;
+using SurrealDb.Net.Models.Auth;
 
 namespace SurrealDb.Net.Internals.Ws;
 
-internal class SurrealDbWsEngineConfig
+internal sealed class SurrealDbWsEngineConfig
 {
     public IAuth Auth { get; private set; } = new NoAuth();
     public string? Ns { get; private set; }
@@ -20,9 +21,32 @@ internal class SurrealDbWsEngineConfig
         Db = db;
     }
 
-    public void SetBasicAuth(string username, string? password)
+    public void SetSystemAuth(SystemAuth auth)
     {
-        Auth = new BasicAuth(username, password);
+        Auth = new InternalSystemAuth(auth);
+    }
+
+    private void SetSystemAuth(string username, string? password, SystemAuthLevel systemAuthLevel)
+    {
+        SystemAuth auth = systemAuthLevel switch
+        {
+            SystemAuthLevel.Root => new RootAuth { Username = username, Password = password! },
+            SystemAuthLevel.Namespace => new NamespaceAuth
+            {
+                Username = username,
+                Password = password!,
+                Namespace = Ns!,
+            },
+            SystemAuthLevel.Database => new DatabaseAuth
+            {
+                Username = username,
+                Password = password!,
+                Namespace = Ns!,
+                Database = Db!,
+            },
+            _ => throw new ArgumentOutOfRangeException(nameof(systemAuthLevel)),
+        };
+        SetSystemAuth(auth);
     }
 
     public void SetBearerAuth(string token)
@@ -41,7 +65,7 @@ internal class SurrealDbWsEngineConfig
         Db = options.Database;
         if (options.Username is not null)
         {
-            SetBasicAuth(options.Username, options.Password);
+            SetSystemAuth(options.Username, options.Password, options.SystemAuthLevel);
         }
         else if (options.Token is not null)
         {

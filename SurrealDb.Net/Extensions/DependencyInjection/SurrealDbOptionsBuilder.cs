@@ -12,6 +12,7 @@ public sealed class SurrealDbOptionsBuilder
     private string? _password;
     private string? _token;
     private string? _namingPolicy;
+    private string? _authLevel;
     private bool _sensitiveDataLoggingEnabled;
 
     /// <summary>
@@ -215,6 +216,12 @@ public sealed class SurrealDbOptionsBuilder
                 EnsuresCorrectNamingPolicy(value, nameof(connectionString));
                 _namingPolicy = value;
             }
+            if (key.Equals("authLevel", StringComparison.OrdinalIgnoreCase))
+            {
+                string value = valueSpan.ToString();
+                EnsuresCorrectAuthLevel(value, nameof(connectionString));
+                _authLevel = value;
+            }
         }
 
         void ResetForNextIteration()
@@ -358,6 +365,29 @@ public sealed class SurrealDbOptionsBuilder
         throw new ArgumentException($"Invalid naming policy: {namingPolicy}", argumentName);
     }
 
+    public SurrealDbOptionsBuilder WithAuthLevel(string authLevel)
+    {
+        EnsuresCorrectAuthLevel(authLevel, nameof(authLevel));
+
+        _authLevel = authLevel;
+        return this;
+    }
+
+    private static void EnsuresCorrectAuthLevel(string authLevel, string argumentName)
+    {
+        if (string.IsNullOrWhiteSpace(authLevel))
+        {
+            return;
+        }
+
+        if (SurrealDbOptionsValidation.IsValidAuthLevel(authLevel))
+        {
+            return;
+        }
+
+        throw new ArgumentException($"Invalid auth level: {authLevel}", argumentName);
+    }
+
     /// <summary>
     /// Enables application data to be included in logs.
     /// This typically include parameter values set for SURQL queries, and parameters sent via any client methods.
@@ -384,6 +414,7 @@ public sealed class SurrealDbOptionsBuilder
             Password = _password,
             Token = _token,
             NamingPolicy = _namingPolicy,
+            AuthLevel = _authLevel,
             Logging = new() { SensitiveDataLoggingEnabled = _sensitiveDataLoggingEnabled },
         };
     }

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Internals.Constants;
 
 namespace SurrealDb.Net.Extensions.DependencyInjection;
@@ -89,5 +90,10 @@ internal sealed class SurrealDbOptionsValidation : IValidateOptions<SurrealDbOpt
         return validNamingPolicies.Any(vnp =>
             vnp.Equals(namingPolicy, StringComparison.OrdinalIgnoreCase)
         );
+    }
+
+    internal static bool IsValidAuthLevel(string authMode)
+    {
+        return Enum.TryParse<SystemAuthLevel>(authMode, out _);
     }
 }
