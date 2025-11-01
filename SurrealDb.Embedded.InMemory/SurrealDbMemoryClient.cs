@@ -48,7 +48,5 @@ public class SurrealDbMemoryClient : BaseSurrealDbClient
 
         var engine = new SurrealDbEmbeddedEngine(options);
         InitializeProviderEngine(engine, parameters, configureCborOptions, loggerFactory);
-
-        _engine = engine;
     }
 }

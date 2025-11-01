@@ -12,7 +12,8 @@ namespace SurrealDb.Net;
 
 public abstract partial class BaseSurrealDbClient : ISurrealDbClient
 {
-    protected ISurrealDbEngine _engine { get; set; } = null!;
+    protected Func<Task>? _poolTask { get; set; }
+    internal ISurrealDbEngine Engine { get; set; } = null!;
 
     public Uri Uri { get; protected set; } = null!;
     public string? NamingPolicy { get; protected set; }
@@ -29,6 +30,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
             configureCborOptions,
             loggerFactory is not null ? new SurrealDbLoggerFactory(loggerFactory) : null
         );
+        Engine = engine;
     }
 
     private async Task<CommonHttpWrapper> CreateCommonHttpWrapperAsync(
@@ -41,7 +43,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
         IAuth? auth;
         Action<CborOptions>? configureCborOptions;
 
-        switch (_engine)
+        switch (Engine)
         {
             case SurrealDbHttpEngine httpEngine:
                 // 💡 Ensures underlying engine is started to retrieve some information

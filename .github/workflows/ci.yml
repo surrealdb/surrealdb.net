@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest-4-cores
     strategy:
       matrix:
-        surrealdb_version: ["v1.5.5", "v2.0.4", "v2.1.4", "v2.2.1"]
+        surrealdb_version: ["v1.5.6", "v2.0.5", "v2.1.8", "v2.2.7", "v2.3.7"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -91,7 +91,7 @@ jobs:
 
       - name: Run SurrealDB root
         run: |
-          if [ "${{ matrix.surrealdb_version }}" == "v1.5.5" ]; then
+          if [ "${{ matrix.surrealdb_version }}" == "v1.5.6" ]; then
             surreal start --user root --pass root memory --auth --allow-guests &
           else
             surreal start --user root --pass root memory --allow-guests &
@@ -129,7 +129,7 @@ jobs:
           --coverage-output-format cobertura
 
       - name: Upload Coverage
-        if: matrix.surrealdb_version == 'v2.2.1'
+        if: matrix.surrealdb_version == 'v2.3.7'
         uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: true
