@@ -16,7 +16,7 @@ dotnet add package SurrealDb.Embedded.SurrealKv
 
 ### Constructing a new SurrealDB client
 
-You can easily create a new SurrealDB client which will provide a file instance of SurrealDB, backed by SurrealKV. 
+You can easily create a new SurrealDB client which will provide a file instance of SurrealDB, backed by SurrealKV.
 
 ```csharp
 using var db = new SurrealDbKvClient("data.db");
@@ -224,10 +224,8 @@ Note that the support for .NET standard 2.1 will be maintained until further not
 | Version           | Description | Release Date      | End of Support    |
 | ----------------- | ----------- | ----------------- | ----------------- |
 | .NET Standard 2.1 |             | June 27, 2016     | N/A               |
-| .NET 6            | LTS         | November 8, 2021  | November 12, 2024 |
-| .NET 7            | STS         | November 8, 2022  | May 14, 2024      |
 | .NET 8            | Current LTS | November 14, 2023 | November 10, 2026 |
-| .NET 9            | STS         | November 12, 2024 | May 12, 2026      |
+| .NET 9            | STS         | November 12, 2024 | November 10, 2026 |
 
 ### Formatting
 
@@ -252,4 +250,4 @@ The list of command-line options is available here: https://csharpier.com/docs/C
 
 #### IDE integration
 
-CSharpier supports [multiple code editors](https://csharpier.com/docs/Editors), including Visual Studio, Jetbrains Rider, VSCode and Neovim. You will be able to run format on file save after configuring the settings in your IDE. 
+CSharpier supports [multiple code editors](https://csharpier.com/docs/Editors), including Visual Studio, Jetbrains Rider, VSCode and Neovim. You will be able to run format on file save after configuring the settings in your IDE.

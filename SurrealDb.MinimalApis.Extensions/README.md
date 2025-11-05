@@ -59,10 +59,8 @@ Note that the support for .NET standard 2.1 will be maintained until further not
 | Version           | Description | Release Date      | End of Support    |
 | ----------------- | ----------- | ----------------- | ----------------- |
 | .NET Standard 2.1 |             | June 27, 2016     | N/A               |
-| .NET 6            | LTS         | November 8, 2021  | November 12, 2024 |
-| .NET 7            | STS         | November 8, 2022  | May 14, 2024      |
 | .NET 8            | Current LTS | November 14, 2023 | November 10, 2026 |
-| .NET 9            | STS         | November 12, 2024 | May 12, 2026      |
+| .NET 9            | STS         | November 12, 2024 | November 10, 2026 |
 
 ### Formatting
 
