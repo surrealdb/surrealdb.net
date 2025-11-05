@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
 
     <IsPackable>true</IsPackable>
     <PackageId>SurrealDb.Net</PackageId>
@@ -17,7 +17,7 @@
 	<PackageReference Include="Microsoft.Spatial" />
 	<PackageReference Include="Semver" />
 	<PackageReference Include="System.Collections.Immutable" />
-	<PackageReference Include="System.Linq.Async" />
+	<PackageReference Include="System.Linq.AsyncEnumerable" />
 	<PackageReference Include="SystemTextJsonPatch" />
 	<PackageReference Include="Websocket.Client" />
   </ItemGroup>

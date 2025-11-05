@@ -63,18 +63,22 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 #if NET9_0_OR_GREATER
     static SurrealDbWsEngine()
     {
-        // sender subscriptions
-        _sendRequestChannel
-            .ReadAllAsync()
-            .ToObservable()
-            .ObserveOn(TaskPoolScheduler.Default)
-            .Select(request =>
-                Observable.FromAsync(
-                    async () => await SendInnerRequestAsync(request).ConfigureAwait(false)
-                )
-            )
-            .Merge()
-            .Subscribe();
+        // Sender subscriptions
+        Task.Run(async () =>
+        {
+            try
+            {
+                await foreach (var request in _sendRequestChannel.ReadAllAsync())
+                {
+                    await SendInnerRequestAsync(request).ConfigureAwait(false);
+                }
+            }
+            catch
+            {
+                // TODO : Retry on failure?
+                // TODO : Log the exception?
+            }
+        });
     }
 #endif
 
