@@ -2,8 +2,13 @@
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
 using SurrealDb.Net.Internals.Extensions;
+#if NET10_0_OR_GREATER
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson.Operations;
+#else
 using SystemTextJsonPatch;
 using SystemTextJsonPatch.Operations;
+#endif
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
 
@@ -106,68 +111,70 @@ internal class JsonPatchDocumentConverter<T> : CborConverterBase<JsonPatchDocume
         return document;
     }
 
-    public override void Write(ref CborWriter writer, JsonPatchDocument<T> value)
+    public override void Write(ref CborWriter writer, JsonPatchDocument<T> document)
     {
-        if (value is null)
+        if (document is null)
         {
             writer.WriteNull();
             return;
         }
 
-        writer.WriteBeginArray(value.Operations.Count);
+        writer.WriteBeginArray(document.Operations.Count);
 
-        foreach (var operation in value.Operations)
+        foreach (var operation in document.Operations)
         {
+#if NET10_0_OR_GREATER
+            var op = operation.op;
+            var path = operation.path;
+            var from = operation.from;
+            var value = operation.value;
+#else
+            var op = operation.Op;
+            var path = operation.Path;
+            var from = operation.From;
+            var value = operation.Value;
+#endif
             const int jsonPatchPropertiesCount = 4;
 
             writer.WriteBeginMap(jsonPatchPropertiesCount);
 
             writer.WriteString("op"u8);
-            writer.WriteString(operation.Op!);
+            writer.WriteString(op!);
 
             writer.WriteString("path"u8);
-            if (operation.Path is null)
+            if (path is null)
             {
                 writer.WriteNull();
             }
             else
             {
-                writer.WriteString(operation.Path);
+                writer.WriteString(path);
             }
 
             writer.WriteString("from"u8);
-            if (operation.From is null)
+            if (from is null)
             {
                 writer.WriteNull();
             }
             else
             {
-                writer.WriteString(operation.From);
+                writer.WriteString(from);
             }
 
             writer.WriteString("value"u8);
-            if (operation.Value is null)
+            if (value is null)
             {
                 writer.WriteNull();
             }
             else
             {
-                if (operation.Value is null)
-                {
-                    writer.WriteNull();
-                }
-                else
-                {
-                    var converter = _options.Registry.ConverterRegistry.Lookup(
-                        operation.Value.GetType()
-                    );
-                    converter.Write(ref writer, operation.Value);
-                }
+                var converter = _options.Registry.ConverterRegistry.Lookup(value.GetType());
+                converter.Write(ref writer, value);
             }
 
             writer.WriteEndMap(jsonPatchPropertiesCount);
         }
 
-        writer.WriteEndArray(value.Operations.Count);
+        writer.WriteEndArray(document.Operations.Count);
     }
 }

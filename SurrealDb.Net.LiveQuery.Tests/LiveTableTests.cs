@@ -1,7 +1,7 @@
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using SurrealDb.Net.LiveQuery.Tests.Abstract;
 using SurrealDb.Net.LiveQuery.Tests.Models;
 using SurrealDb.Net.Models.LiveQuery;
-using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.LiveQuery.Tests;
 

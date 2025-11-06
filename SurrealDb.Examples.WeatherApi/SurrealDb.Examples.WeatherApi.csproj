@@ -7,8 +7,8 @@
 
   <ItemGroup>
     <PackageReference Include="Bogus" />
+    <PackageReference Include="Microsoft.AspNetCore.JsonPatch.SystemTextJson" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
-    <PackageReference Include="SystemTextJsonPatch" />
   </ItemGroup>
 
   <ItemGroup>

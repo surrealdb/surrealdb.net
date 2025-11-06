@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using Microsoft.AspNetCore.Mvc;
 using SurrealDb.Examples.WeatherApi.Models;
 using SurrealDb.Net;
-using SystemTextJsonPatch;
 
 namespace SurrealDb.Examples.WeatherApi.Controllers;
 

@@ -12,12 +12,13 @@
     <PackageVersion Include="Dahomey.Cbor" Version="1.25.1" />
     <PackageVersion Include="DotNet.ReproducibleBuilds" Version="1.2.25" />
     <PackageVersion Include="FluentAssertions" Version="7.2.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.JsonPatch.SystemTextJson" Version="10.0.0-rc.2.25502.107" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
-    <PackageVersion Include="Semver" Version="3.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="8.0.0" Condition="'$(TargetFramework)' != 'net9.0'" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="8.0.0" Condition="'$(TargetFramework)' != 'net9.0' AND '$(TargetFramework)' != 'net10.0'" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.4" Condition="'$(TargetFramework)' == 'net9.0'" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0-rc.2.25502.107" Condition="'$(TargetFramework)' == 'net10.0'" />
     <PackageVersion Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
     <PackageVersion Include="Microsoft.Reactive.Testing" Version="6.0.1" />
     <PackageVersion Include="Microsoft.Spatial" Version="7.18.0" />
@@ -25,6 +26,7 @@
     <PackageVersion Include="MudBlazor" Version="6.11.2" />
     <PackageVersion Include="Pidgin" Version="3.2.3" />
     <PackageVersion Include="Scalar.AspNetCore" Version="1.2.36" />
+    <PackageVersion Include="Semver" Version="3.0.0" />
     <PackageVersion Include="Superpower" Version="3.0.0" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="7.0.0" />

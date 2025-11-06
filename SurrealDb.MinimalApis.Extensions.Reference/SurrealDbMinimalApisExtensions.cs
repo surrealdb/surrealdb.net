@@ -7,7 +7,11 @@ using System.Reflection;
 using SurrealDb.MinimalApis.Extensions;
 using SurrealDb.Net;
 using SurrealDb.Net.Models;
+#if NET10_0_OR_GREATER
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+#else
 using SystemTextJsonPatch;
+#endif
 using System.Text.Json;
 
 namespace Microsoft.AspNetCore.Builder;
