@@ -21,7 +21,11 @@ using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
+#if NET10_0_OR_GREATER
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+#else
 using SystemTextJsonPatch;
+#endif
 
 namespace SurrealDb.Net.Internals;
 
