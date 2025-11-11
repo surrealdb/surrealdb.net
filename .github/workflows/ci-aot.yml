@@ -5,25 +5,25 @@ on:
     branches:
       - main
     paths-ignore:
-      - '**.md'
+      - "**.md"
   pull_request:
     branches:
       - main
     paths-ignore:
-      - '**.md'
+      - "**.md"
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Setup dotnet 9.0
-        uses: actions/setup-dotnet@v4
+      - name: Setup dotnet 10.0
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Publish AOT test app, assert static analysis warning count, and run the app
         shell: pwsh
-        run: .\build\test-aot-compatibility.ps1 net9.0
+        run: .\build\test-aot-compatibility.ps1 net10.0
         continue-on-error: true # TODO : The SDK is not yet AoT compatible

@@ -5,23 +5,23 @@ on:
     branches:
       - main
     paths-ignore:
-      - '**.md'
+      - "**.md"
   pull_request:
     branches:
       - main
     paths-ignore:
-      - '**.md'
+      - "**.md"
 jobs:
   build-remote:
     runs-on: ubuntu-latest-4-cores
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Setup dotnet 9.0
-        uses: actions/setup-dotnet@v4
+      - name: Setup dotnet 10.0
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Install .NET tools
         run: dotnet tool restore
@@ -33,7 +33,7 @@ jobs:
         run: dotnet restore
 
       - name: Disable embedded mode
-        run: sudo bash disable_embedded_mode.sh 
+        run: sudo bash disable_embedded_mode.sh
 
       - name: Build
         run: dotnet build --no-restore
@@ -43,18 +43,18 @@ jobs:
     runs-on: ubuntu-latest-4-cores
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      
+        uses: actions/checkout@v5
+
       - name: Download embedded artifacts
         uses: actions/download-artifact@v4
         with:
           name: embedded
           path: ./rust-embedded/target/debug
 
-      - name: Setup dotnet 9.0
-        uses: actions/setup-dotnet@v4
+      - name: Setup dotnet 10.0
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Install .NET tools
         run: dotnet tool restore
@@ -78,8 +78,8 @@ jobs:
         surrealdb_version: ["v1.5.5", "v2.0.4", "v2.1.4", "v2.2.1"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      
+        uses: actions/checkout@v5
+
       - name: Download embedded artifacts
         uses: actions/download-artifact@v4
         with:
@@ -97,10 +97,10 @@ jobs:
             surreal start --user root --pass root memory --allow-guests &
           fi
 
-      - name: Setup dotnet 9.0
-        uses: actions/setup-dotnet@v4
+      - name: Setup dotnet 10.0
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Install dependencies
         run: dotnet restore
@@ -110,7 +110,7 @@ jobs:
 
       - name: Test library
         run: >
-          dotnet test 
+          dotnet test
           ./SurrealDb.Net.Tests/SurrealDb.Net.Tests.csproj
           --no-restore
           --no-build
@@ -120,7 +120,7 @@ jobs:
 
       - name: Test Live Query feature
         run: >
-          dotnet test 
+          dotnet test
           ./SurrealDb.Net.LiveQuery.Tests/SurrealDb.Net.LiveQuery.Tests.csproj
           --no-restore
           --no-build
@@ -139,21 +139,21 @@ jobs:
     runs-on: ubuntu-latest-4-cores
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: |
             rust-embedded
 
       - name: Install 1.85.0 toolchain
         uses: dtolnay/rust-toolchain@1.85.0
-      
+
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
       - name: Build libraries
         working-directory: ./rust-embedded
         run: cargo build
-      
+
       - name: Publish embedded artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -167,7 +167,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: |
             rust-embedded
@@ -207,7 +207,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: |
             rust-embedded
@@ -215,4 +215,3 @@ jobs:
       - uses: EmbarkStudios/cargo-deny-action@v1
         with:
           manifest-path: ${{ matrix.manifests }}
-      
