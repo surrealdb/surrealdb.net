@@ -6,36 +6,37 @@ using Microsoft.CodeAnalysis.Text;
 namespace SurrealDb.MinimalApis.Extensions;
 
 [Generator]
-public class SurrealDbMinimalApisExtensionsGenerator : ISourceGenerator
+public class SurrealDbMinimalApisExtensionsGenerator : IIncrementalGenerator
 {
-    public void Execute(GeneratorExecutionContext context)
+    public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var embeddedGeneratedFiles = new Dictionary<string, string>
+        context.RegisterPostInitializationOutput(context =>
         {
+            var embeddedGeneratedFiles = new Dictionary<string, string>
             {
-                "SurrealDb.MinimalApis.Extensions.SurrealDbMinimalApisExtensions.cs",
-                "SurrealDbMinimalApisExtensions.g.cs"
-            },
+                {
+                    "SurrealDb.MinimalApis.Extensions.SurrealDbMinimalApisExtensions.cs",
+                    "SurrealDbMinimalApisExtensions.g.cs"
+                },
+                {
+                    "SurrealDb.MinimalApis.Extensions.SurrealDbMinimalApisOptions.cs",
+                    "SurrealDbMinimalApisOptions.g.cs"
+                },
+            };
+
+            var assembly = Assembly.GetExecutingAssembly();
+
+            foreach (var item in embeddedGeneratedFiles)
             {
-                "SurrealDb.MinimalApis.Extensions.SurrealDbMinimalApisOptions.cs",
-                "SurrealDbMinimalApisOptions.g.cs"
-            },
-        };
+                string resourceName = item.Key;
+                string generatedFileName = item.Value;
 
-        var assembly = Assembly.GetExecutingAssembly();
+                using var stream = assembly.GetManifestResourceStream(resourceName);
+                using var reader = new StreamReader(stream);
+                string generatedCode = reader.ReadToEnd();
 
-        foreach (var item in embeddedGeneratedFiles)
-        {
-            string resourceName = item.Key;
-            string generatedFileName = item.Value;
-
-            using var stream = assembly.GetManifestResourceStream(resourceName);
-            using var reader = new StreamReader(stream);
-            string generatedCode = reader.ReadToEnd();
-
-            context.AddSource(generatedFileName, SourceText.From(generatedCode, Encoding.UTF8));
-        }
+                context.AddSource(generatedFileName, SourceText.From(generatedCode, Encoding.UTF8));
+            }
+        });
     }
-
-    public void Initialize(GeneratorInitializationContext context) { }
 }
