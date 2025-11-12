@@ -8,7 +8,7 @@ using BenchmarkDotNet.Running;
 using SurrealDb.Net.Benchmarks.Helpers;
 
 var config = DefaultConfig
-    .Instance.AddJob(Job.Default.WithRuntime(CoreRuntime.Core80))
+    .Instance.AddJob(Job.Default.WithRuntime(CoreRuntime.Core10_0))
     .AddDiagnoser(MemoryDiagnoser.Default)
     .AddExporter(JsonExporter.Full)
     .HideColumns(Column.EnvironmentVariables);
