@@ -1,8 +1,12 @@
 ﻿using System.Text.Json;
-using SystemTextJsonPatch;
-using SystemTextJsonPatch.Operations;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson.Operations;
 
 namespace SurrealDb.Net.Tests.Serializers.Cbor;
+
+[JsonSerializable(typeof(Post))]
+public partial class JsonPatchDocumentConverterTestsJsonContext : JsonSerializerContext;
 
 public class JsonPatchDocumentConverterTests : BaseCborConverterTests
 {
@@ -11,7 +15,7 @@ public class JsonPatchDocumentConverterTests : BaseCborConverterTests
     {
         var value = new JsonPatchDocument
         {
-            Options = new JsonSerializerOptions
+            SerializerOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             },
@@ -49,17 +53,17 @@ public class JsonPatchDocumentConverterTests : BaseCborConverterTests
             var operation = result.Operations[index];
             var expectedOperation = expected.Operations[index];
 
-            operation.Op.Should().Be(expectedOperation.Op);
-            operation.Path.Should().Be(expectedOperation.Path);
-            operation.From.Should().Be(expectedOperation.From);
+            operation.op.Should().Be(expectedOperation.op);
+            operation.path.Should().Be(expectedOperation.path);
+            operation.from.Should().Be(expectedOperation.from);
 
             var operationValue =
-                operation.Value is ReadOnlyMemory<byte>
-                    ? (ReadOnlyMemory<byte>)operation.Value
+                operation.value is ReadOnlyMemory<byte>
+                    ? (ReadOnlyMemory<byte>)operation.value
                     : default;
             var expectedValue =
-                expectedOperation.Value is ReadOnlyMemory<byte>
-                    ? (ReadOnlyMemory<byte>)expectedOperation.Value
+                expectedOperation.value is ReadOnlyMemory<byte>
+                    ? (ReadOnlyMemory<byte>)expectedOperation.value
                     : default;
             operationValue.ToArray().Should().BeEquivalentTo(expectedValue.ToArray());
         }
@@ -70,9 +74,10 @@ public class JsonPatchDocumentConverterTests : BaseCborConverterTests
     {
         var value = new JsonPatchDocument<Post>
         {
-            Options = new JsonSerializerOptions
+            SerializerOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                TypeInfoResolver = JsonPatchDocumentConverterTestsJsonContext.Default,
             },
         };
         value.Replace(x => x.Content, "[Edit] Oops");
@@ -95,9 +100,10 @@ public class JsonPatchDocumentConverterTests : BaseCborConverterTests
 
         var expected = new JsonPatchDocument<Post>
         {
-            Options = new JsonSerializerOptions
+            SerializerOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                TypeInfoResolver = JsonPatchDocumentConverterTestsJsonContext.Default,
             },
         };
         expected.Replace(x => x.Content, "[Edit] Oops");

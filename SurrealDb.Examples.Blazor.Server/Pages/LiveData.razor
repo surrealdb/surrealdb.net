@@ -62,7 +62,7 @@ else
         
         await foreach (var record in liveQuery.GetCreatedRecords().TakeWhile(_ => !_isDisposed))
         {
-            _forecasts = new[] { record }.Concat(_forecasts).Take(QueryConstants.WEATHER_FORECAST_LIMIT);
+            _forecasts = new WeatherForecast[] { record }.Concat(_forecasts).Take(QueryConstants.WEATHER_FORECAST_LIMIT);
             StateHasChanged();
         }
     }

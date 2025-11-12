@@ -40,7 +40,9 @@ public class CreateBench : BaseEmbeddedBenchmark
 
         foreach (var client in clients)
         {
+#pragma warning disable CA2025
             DropPostTable(client, DefaultDatabaseInfo).GetAwaiter().GetResult();
+#pragma warning restore CA2025
             client.Dispose();
         }
     }

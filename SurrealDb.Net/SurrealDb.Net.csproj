@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
-    
+    <TargetFrameworks>netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
+
     <IsPackable>true</IsPackable>
     <PackageId>SurrealDb.Net</PackageId>
     <Description>The official SurrealDB library for .NET</Description>
@@ -12,13 +12,14 @@
   <ItemGroup>
 	<PackageReference Include="ConcurrentHashSet" />
 	<PackageReference Include="Dahomey.Cbor" />
+	<PackageReference Include="Microsoft.AspNetCore.JsonPatch.SystemTextJson" Condition="'$(TargetFramework)' == 'net10.0'" />
 	<PackageReference Include="Microsoft.Extensions.Http" />
 	<PackageReference Include="Microsoft.IO.RecyclableMemoryStream" />
 	<PackageReference Include="Microsoft.Spatial" />
 	<PackageReference Include="Semver" />
 	<PackageReference Include="System.Collections.Immutable" />
-	<PackageReference Include="System.Linq.Async" />
-	<PackageReference Include="SystemTextJsonPatch" />
+	<PackageReference Include="System.Linq.AsyncEnumerable" />
+	<PackageReference Include="SystemTextJsonPatch" Condition="'$(TargetFramework)' != 'net10.0'" />
 	<PackageReference Include="Websocket.Client" />
   </ItemGroup>
 

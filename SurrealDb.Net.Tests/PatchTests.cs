@@ -1,9 +1,12 @@
 ﻿#if NET8_0_OR_GREATER
-using System.Text;
 using System.Text.Json;
-using SystemTextJsonPatch;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 
 namespace SurrealDb.Net.Tests;
+
+[JsonSerializable(typeof(Post))]
+public partial class PatchTestsJsonContext : JsonSerializerContext;
 
 public class PatchTests
 {
@@ -26,9 +29,10 @@ public class PatchTests
 
             var jsonPatchDocument = new JsonPatchDocument<Post>
             {
-                Options = new JsonSerializerOptions
+                SerializerOptions = new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+                    TypeInfoResolver = PatchAllTestsJsonContext.Default,
                 },
             };
             jsonPatchDocument.Replace(x => x.Content, "[Edit] This is my first article");
@@ -68,9 +72,10 @@ public class PatchTests
 
             var jsonPatchDocument = new JsonPatchDocument<Post>
             {
-                Options = new JsonSerializerOptions
+                SerializerOptions = new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+                    TypeInfoResolver = PatchAllTestsJsonContext.Default,
                 },
             };
             jsonPatchDocument.Replace(x => x.Content, "[Edit] This is my first article");
