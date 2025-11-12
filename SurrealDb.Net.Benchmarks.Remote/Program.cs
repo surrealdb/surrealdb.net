@@ -10,13 +10,13 @@ using SurrealDb.Net.Benchmarks.Helpers;
 
 const bool enableNativeAotBenchmarks = false;
 
-var config = DefaultConfig.Instance.AddJob(Job.Default.WithRuntime(CoreRuntime.Core90));
+var config = DefaultConfig.Instance.AddJob(Job.Default.WithRuntime(CoreRuntime.Core10_0));
 
 if (enableNativeAotBenchmarks)
 {
 #pragma warning disable CS0162 // Unreachable code detected
     config = config.AddJob(
-        Job.Default.WithRuntime(NativeAotRuntime.Net80)
+        Job.Default.WithRuntime(NativeAotRuntime.Net10_0)
             .WithEnvironmentVariable(EnvVariablesConstants.NativeAotRuntime, "true")
     );
 #pragma warning restore CS0162 // Unreachable code detected
