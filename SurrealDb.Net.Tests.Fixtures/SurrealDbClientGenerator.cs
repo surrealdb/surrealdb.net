@@ -68,12 +68,19 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
         _folderPath = _filePathFaker.Generate().Path;
     }
 
-    public SurrealDbClient Create(string connectionString, string? ns = null, string? db = null)
+    public SurrealDbClient Create(
+        string connectionString,
+        string? ns = null,
+        string? db = null,
+        string? namingPolicy = "SnakeCase"
+    )
     {
-        var optionsBuilder = SurrealDbOptions
-            .Create()
-            .FromConnectionString(connectionString)
-            .WithNamingPolicy("SnakeCase");
+        var optionsBuilder = SurrealDbOptions.Create().FromConnectionString(connectionString);
+
+        if (!string.IsNullOrWhiteSpace(namingPolicy))
+        {
+            optionsBuilder = optionsBuilder.WithNamingPolicy(namingPolicy);
+        }
 
         var temporaryOptions = optionsBuilder.Build();
 
@@ -81,11 +88,9 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
         {
             GenerateRandomFilePath();
 
-            optionsBuilder = SurrealDbOptions
-                .Create()
-                .FromConnectionString(connectionString)
-                .WithNamingPolicy("SnakeCase")
-                .WithEndpoint($"{temporaryOptions.Endpoint}{_folderPath}");
+            optionsBuilder = optionsBuilder.WithEndpoint(
+                $"{temporaryOptions.Endpoint}{_folderPath}"
+            );
         }
 
         if (ns is not null)

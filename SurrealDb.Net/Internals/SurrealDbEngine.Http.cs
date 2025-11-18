@@ -17,6 +17,7 @@ using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Http;
 using SurrealDb.Net.Internals.Models.LiveQuery;
+using SurrealDb.Net.Internals.Queryable;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -552,13 +553,21 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return dbResponse.GetValue<T>()!;
     }
 
-    public async Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken)
+    public async Task<IEnumerable<T>> SelectAll<T>(
+        string table,
+        CancellationToken cancellationToken
+    )
     {
         var request = new SurrealDbHttpRequest { Method = "select", Parameters = [table] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
+    }
+
+    public IQueryable<T> Select<T>(string? table = null)
+    {
+        return new SurrealDbQueryable<T>(new SurrealDbQueryProvider<T>(this), table);
     }
 
     public async Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken)
@@ -1194,13 +1203,13 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
+#pragma warning disable MA0004
+        await using var stream = await response.Content.ReadAsStreamAsync(
 #if NET6_0_OR_GREATER
-        await using var stream = await response
-            .Content.ReadAsStreamAsync(cancellationToken)
-            .ConfigureAwait(false);
-#else
-        await using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                cancellationToken
 #endif
+        ).ConfigureAwait(false);
+#pragma warning restore MA0004
 
         var cborSerializerOptions = GetCborSerializerOptions(
             _parameters.NamingPolicy,

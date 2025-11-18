@@ -22,8 +22,8 @@ public class FactoryTests
             await client1.Create("data", new Post { Content = "First post" });
             await client2.Create("data", new Post { Content = "Second post" });
 
-            list1 = await client1.Select<Post>("data");
-            list2 = await client2.Select<Post>("data");
+            list1 = await client1.Select<Post>("data").ToListAsync();
+            list2 = await client2.Select<Post>("data").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();

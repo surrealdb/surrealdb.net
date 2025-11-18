@@ -1,0 +1,6 @@
+﻿{
+  Title: Another article,
+  Content: This is a new article created using the .NET SDK,
+  CreatedAt: DateTime_1,
+  Status: DRAFT
+}

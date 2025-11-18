@@ -80,7 +80,10 @@ internal sealed class RecordIdConverter : CborConverterBase<RecordId>
         }
 
         var type = value.GetType();
-        if (type.Namespace == "SurrealDb.Net.Models" && type.Name == "RecordIdOf`1")
+        if (
+            string.Equals(type.Namespace, "SurrealDb.Net.Models", StringComparison.Ordinal)
+            && string.Equals(type.Name, "RecordIdOf`1", StringComparison.Ordinal)
+        )
         {
             var idType = type.GenericTypeArguments[0];
             WriteGenericRecordId(

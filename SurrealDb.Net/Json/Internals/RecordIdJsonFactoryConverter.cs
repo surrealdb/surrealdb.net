@@ -22,8 +22,8 @@ internal sealed class RecordIdJsonFactoryConverter : JsonConverterFactory
             return true;
 
         if (
-            typeToConvert.Namespace == "SurrealDb.Net.Models"
-            && typeToConvert.Name == "RecordIdOf`1"
+            string.Equals(typeToConvert.Namespace, "SurrealDb.Net.Models", StringComparison.Ordinal)
+            && string.Equals(typeToConvert.Name, "RecordIdOf`1", StringComparison.Ordinal)
         )
             return true;
 

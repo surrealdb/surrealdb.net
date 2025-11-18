@@ -28,9 +28,9 @@ public class WeatherForecastController : ControllerBase
     /// Get all weather forecasts.
     /// </summary>
     [HttpGet]
-    public Task<IEnumerable<WeatherForecast>> GetAll(CancellationToken cancellationToken)
+    public async Task<IEnumerable<WeatherForecast>> GetAll(CancellationToken cancellationToken)
     {
-        return _surrealDbClient.Select<WeatherForecast>(Table, cancellationToken);
+        return await _surrealDbClient.Select<WeatherForecast>(Table).ToListAsync(cancellationToken);
     }
 
     /// <summary>

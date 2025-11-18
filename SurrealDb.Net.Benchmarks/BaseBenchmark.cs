@@ -70,7 +70,7 @@ public class BaseBenchmark
 
     protected async Task<Post> GetFirstPost(ISurrealDbClient client, DatabaseInfo databaseInfo)
     {
-        var posts = await client.Select<Post>("post");
+        var posts = await client.Select<Post>("post").ToListAsync();
         return posts.First();
     }
 

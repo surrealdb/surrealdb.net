@@ -500,12 +500,9 @@ public abstract partial class BaseSurrealDbClient
         return _engine.Run<T>(name, version, args, cancellationToken);
     }
 
-    public Task<IEnumerable<T>> Select<T>(
-        string table,
-        CancellationToken cancellationToken = default
-    )
+    public IQueryable<T> Select<T>(string? table = null)
     {
-        return _engine.Select<T>(table, cancellationToken);
+        return _engine.Select<T>(table);
     }
 
     public Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken = default)

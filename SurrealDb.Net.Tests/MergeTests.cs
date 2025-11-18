@@ -39,7 +39,7 @@ public class MergeTests
 
             result = await client.Merge<PostMergeRecord, Post>(merge);
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -77,7 +77,7 @@ public class MergeTests
 
             result = await client.Merge<Post>(("post", "first"), data);
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -115,7 +115,7 @@ public class MergeTests
 
             result = await client.Merge<Post>(new StringRecordId("post:first"), data);
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();

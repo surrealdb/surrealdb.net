@@ -15,7 +15,7 @@ public class ReadOnlyRecordIdJsonConverter<T> : JsonConverter<RecordIdOf<T>>
         JsonSerializerOptions options
     )
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
 #if NET7_0_OR_GREATER

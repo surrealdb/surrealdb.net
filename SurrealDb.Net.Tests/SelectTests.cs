@@ -1,19 +1,25 @@
-﻿using System.Text;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using Dahomey.Cbor.Attributes;
 
 namespace SurrealDb.Net.Tests;
 
 public class Empty : SurrealDbRecord { }
 
+[Table("post")]
 public class Post : SurrealDbRecord
 {
+    [Column("title")]
     public string Title { get; set; } = string.Empty;
+
+    [Column("content")]
     public string Content { get; set; } = string.Empty;
 
     [CborIgnoreIfDefault]
+    [Column("created_at")]
     public DateTime? CreatedAt { get; set; }
 
     [CborIgnoreIfDefault]
+    [Column("status")]
     public string? Status { get; set; }
 }
 
@@ -55,7 +61,7 @@ public class SelectTests
             using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            result = await client.Select<Empty>("empty");
+            result = await client.Select<Empty>("empty").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -79,7 +85,7 @@ public class SelectTests
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
-            result = await client.Select<Post>("post");
+            result = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -378,5 +384,89 @@ public class SelectTests
         result
             .Should()
             .BeEquivalentTo([new Empty { Id = ("empty", "b") }, new Empty { Id = ("empty", "c") }]);
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    public async Task ShouldSelectFromGenericTypeNameTable(string connectionString)
+    {
+        IEnumerable<Post>? result = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            await using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
+
+            result = await client.Select<Post>().ToListAsync();
+        };
+
+        await func.Should().NotThrowAsync();
+
+        result.Should().NotBeNull().And.HaveCount(2);
+
+        var list = result!.ToList();
+
+        var firstPost = list.FirstOrDefault(p => p.Id! == ("post", "first"));
+
+        firstPost.Should().NotBeNull();
+        firstPost!.Title.Should().Be("First article");
+        firstPost!.Content.Should().Be("This is my first article");
+        firstPost!.CreatedAt.Should().NotBeNull();
+        firstPost!.Status.Should().Be("DRAFT");
+
+        var secondPost = list.First(p => p != firstPost);
+
+        secondPost.Should().NotBeNull();
+        secondPost!.Title.Should().Be("Second article");
+        secondPost!.Content.Should().Be("Another article");
+        secondPost!.CreatedAt.Should().NotBeNull();
+        secondPost!.Status.Should().Be("DRAFT");
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    public async Task ShouldSelectFromGenericTypeNameTableSynchronous(string connectionString)
+    {
+        IEnumerable<Post>? result = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            await using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
+
+            result = client.Select<Post>().ToList();
+        };
+
+        await func.Should().NotThrowAsync();
+
+        result.Should().NotBeNull().And.HaveCount(2);
+
+        var list = result!.ToList();
+
+        var firstPost = list.FirstOrDefault(p => p.Id! == ("post", "first"));
+
+        firstPost.Should().NotBeNull();
+        firstPost!.Title.Should().Be("First article");
+        firstPost!.Content.Should().Be("This is my first article");
+        firstPost!.CreatedAt.Should().NotBeNull();
+        firstPost!.Status.Should().Be("DRAFT");
+
+        var secondPost = list.First(p => p != firstPost);
+
+        secondPost.Should().NotBeNull();
+        secondPost!.Title.Should().Be("Second article");
+        secondPost!.Content.Should().Be("Another article");
+        secondPost!.CreatedAt.Should().NotBeNull();
+        secondPost!.Status.Should().Be("DRAFT");
     }
 }

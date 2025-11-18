@@ -71,10 +71,10 @@ else
     private IEnumerable<DisplayableTask> _tasks => _columns.SelectMany(c => c.Tasks);
 
     private IDisposable? _subscription;
-    
+
     protected override async Task OnInitializedAsync()
     {
-        _columns = await Client.Select<DisplayableColumn>(DisplayableColumn.Table);
+        _columns = await Client.Select<DisplayableColumn>(DisplayableColumn.Table).ToListAsync();
         _loading = false;
 
         _subscription = Client.ObserveTable<DisplayableColumn>(DisplayableColumn.Table)
