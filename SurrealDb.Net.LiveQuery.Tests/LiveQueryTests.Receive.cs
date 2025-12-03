@@ -1,4 +1,4 @@
-﻿using SurrealDb.Net.LiveQuery.Tests.Abstract;
+using SurrealDb.Net.LiveQuery.Tests.Abstract;
 using SurrealDb.Net.LiveQuery.Tests.Models;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
@@ -31,7 +31,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
             await using var liveQuery = client.ListenLive<TestRecord>(liveQueryUuid);
 
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
 
             _ = Task.Run(async () =>
             {
@@ -40,7 +40,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
                 await client.Create("test", new TestRecord { Value = 1 });
                 await WaitLiveQueryNotificationAsync();
 
-                cts.Cancel();
+                await cts.CancelAsync();
             });
 
             _ = Task.Run(async () =>
@@ -55,7 +55,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
             if (!cts.IsCancellationRequested)
             {
-                cts.Cancel();
+                await cts.CancelAsync();
                 throw new Exception("Timeout");
             }
         };
@@ -102,7 +102,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
             await using var liveQuery = client.ListenLive<TestRecord>(liveQueryUuid);
 
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
 
             _ = Task.Run(async () =>
             {
@@ -111,7 +111,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
                 await client.Upsert(new TestRecord { Id = record.Id, Value = 2 });
                 await WaitLiveQueryNotificationAsync();
 
-                cts.Cancel();
+                await cts.CancelAsync();
             });
 
             _ = Task.Run(async () =>
@@ -126,7 +126,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
             if (!cts.IsCancellationRequested)
             {
-                cts.Cancel();
+                await cts.CancelAsync();
                 throw new Exception("Timeout");
             }
         };
@@ -175,7 +175,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
             await using var liveQuery = client.ListenLive<TestRecord>(liveQueryUuid);
 
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
 
             _ = Task.Run(async () =>
             {
@@ -184,7 +184,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
                 await client.Delete(record.Id!);
                 await WaitLiveQueryNotificationAsync();
 
-                cts.Cancel();
+                await cts.CancelAsync();
             });
 
             _ = Task.Run(async () =>
@@ -199,7 +199,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
             if (!cts.IsCancellationRequested)
             {
-                cts.Cancel();
+                await cts.CancelAsync();
                 throw new Exception("Timeout");
             }
         };
@@ -248,7 +248,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
             var liveQuery = client.ListenLive<TestRecord>(liveQueryUuid);
 
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
 
             _ = Task.Run(async () =>
             {
@@ -257,7 +257,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
                 client.Dispose();
                 await WaitLiveQueryNotificationAsync();
 
-                cts.Cancel();
+                await cts.CancelAsync();
             });
 
             _ = Task.Run(async () =>
@@ -272,7 +272,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
             if (!cts.IsCancellationRequested)
             {
-                cts.Cancel();
+                await cts.CancelAsync();
                 throw new Exception("Timeout");
             }
         };
@@ -323,7 +323,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
             var liveQuery = client.ListenLive<TestRecord>(liveQueryUuid);
 
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
 
             _ = Task.Run(async () =>
             {
@@ -332,7 +332,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
                 await liveQuery.KillAsync();
                 await WaitLiveQueryNotificationAsync();
 
-                cts.Cancel();
+                await cts.CancelAsync();
             });
 
             _ = Task.Run(async () =>
@@ -347,7 +347,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
 
             if (!cts.IsCancellationRequested)
             {
-                cts.Cancel();
+                await cts.CancelAsync();
                 throw new Exception("Timeout");
             }
         };

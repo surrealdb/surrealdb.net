@@ -44,7 +44,7 @@
   </ItemGroup>
 
   <!-- Used to enable build & tests for embedded modes (memory, rocksdb, surrealkv) -->
-  <PropertyGroup Label="Constants" Condition="true">
+  <PropertyGroup Label="Constants" Condition="false">
     <DefineConstants>EMBEDDED_MODE</DefineConstants>
   </PropertyGroup>
 

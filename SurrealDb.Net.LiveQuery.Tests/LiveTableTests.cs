@@ -1,4 +1,4 @@
-﻿using SurrealDb.Net.LiveQuery.Tests.Abstract;
+using SurrealDb.Net.LiveQuery.Tests.Abstract;
 using SurrealDb.Net.LiveQuery.Tests.Models;
 using SurrealDb.Net.Models.LiveQuery;
 using SystemTextJsonPatch;
@@ -44,7 +44,7 @@ public class LiveTableTests : BaseLiveQueryTests
 
             var liveQuery = await client.LiveTable<TestRecord>("test");
 
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
 
             _ = Task.Run(async () =>
             {
@@ -70,14 +70,14 @@ public class LiveTableTests : BaseLiveQueryTests
                 await liveQuery.KillAsync();
                 await WaitLiveQueryNotificationAsync();
 
-                cts.Cancel();
+                await cts.CancelAsync();
             });
 
             await Task.Delay(Timeout);
 
             if (!cts.IsCancellationRequested)
             {
-                cts.Cancel();
+                await cts.CancelAsync();
                 throw new Exception("Timeout");
             }
         };
@@ -120,7 +120,7 @@ public class LiveTableTests : BaseLiveQueryTests
 
             var liveQuery = await client.LiveTable<JsonPatchDocument<TestRecord>>("test", true);
 
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
 
             _ = Task.Run(async () =>
             {
@@ -146,14 +146,14 @@ public class LiveTableTests : BaseLiveQueryTests
                 await liveQuery.KillAsync();
                 await WaitLiveQueryNotificationAsync();
 
-                cts.Cancel();
+                await cts.CancelAsync();
             });
 
             await Task.Delay(Timeout);
 
             if (!cts.IsCancellationRequested)
             {
-                cts.Cancel();
+                await cts.CancelAsync();
                 throw new Exception("Timeout");
             }
         };
