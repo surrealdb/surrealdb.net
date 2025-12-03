@@ -7,12 +7,12 @@ public class ConnectionStringFixtureGeneratorAttribute : DataSourceGeneratorAttr
     private static readonly RemoteConnectionStringFixtureGeneratorAttribute _remoteConnectionStringFixtureGeneratorAttribute =
         new();
 
-    public override IEnumerable<Func<string>> GenerateDataSources(
+    protected override IEnumerable<Func<string>> GenerateDataSources(
         DataGeneratorMetadata dataGeneratorMetadata
     )
     {
         foreach (
-            var cs in _embeddedConnectionStringFixtureGeneratorAttribute.GenerateDataSources(
+            var cs in _embeddedConnectionStringFixtureGeneratorAttribute.GenerateDataSourcesPublicly(
                 dataGeneratorMetadata
             )
         )
@@ -20,7 +20,7 @@ public class ConnectionStringFixtureGeneratorAttribute : DataSourceGeneratorAttr
             yield return cs;
         }
         foreach (
-            var cs in _remoteConnectionStringFixtureGeneratorAttribute.GenerateDataSources(
+            var cs in _remoteConnectionStringFixtureGeneratorAttribute.GenerateDataSourcesPublicly(
                 dataGeneratorMetadata
             )
         )
@@ -32,7 +32,14 @@ public class ConnectionStringFixtureGeneratorAttribute : DataSourceGeneratorAttr
 
 public class RemoteConnectionStringFixtureGeneratorAttribute : DataSourceGeneratorAttribute<string>
 {
-    public override IEnumerable<Func<string>> GenerateDataSources(
+    protected override IEnumerable<Func<string>> GenerateDataSources(
+        DataGeneratorMetadata dataGeneratorMetadata
+    )
+    {
+        return GenerateDataSourcesPublicly(dataGeneratorMetadata);
+    }
+
+    public IEnumerable<Func<string>> GenerateDataSourcesPublicly(
         DataGeneratorMetadata dataGeneratorMetadata
     )
     {
@@ -44,7 +51,14 @@ public class RemoteConnectionStringFixtureGeneratorAttribute : DataSourceGenerat
 public class EmbeddedConnectionStringFixtureGeneratorAttribute
     : DataSourceGeneratorAttribute<string>
 {
-    public override IEnumerable<Func<string>> GenerateDataSources(
+    protected override IEnumerable<Func<string>> GenerateDataSources(
+        DataGeneratorMetadata dataGeneratorMetadata
+    )
+    {
+        return GenerateDataSourcesPublicly(dataGeneratorMetadata);
+    }
+
+    public IEnumerable<Func<string>> GenerateDataSourcesPublicly(
         DataGeneratorMetadata dataGeneratorMetadata
     )
     {

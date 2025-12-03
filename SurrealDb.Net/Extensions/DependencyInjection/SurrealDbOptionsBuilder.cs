@@ -76,6 +76,23 @@ public sealed class SurrealDbOptionsBuilder
                         '{' => '}',
                         _ => throw new InvalidOperationException(),
                     };
+
+                    // 💡 If no "final" char is matched in the next part of the string, then avoid doing it
+                    isPossibleSurroundedPassword = span[(index + 1)..]
+                        .Contains([expectedPasswordLastChar.Value], StringComparison.Ordinal);
+                    if (!isPossibleSurroundedPassword)
+                    {
+                        expectedPasswordLastChar = null;
+                    }
+                }
+
+                // 💡 Ignore if empty value
+                if (currentChar == ';')
+                {
+                    currentPropertyValueEndIndex = index - 1;
+
+                    TrySetProperty(ref span);
+                    ResetForNextIteration();
                 }
 
                 index++;
