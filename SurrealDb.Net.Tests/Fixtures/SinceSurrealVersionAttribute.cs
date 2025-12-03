@@ -5,12 +5,12 @@ namespace SurrealDb.Net.Tests.Fixtures;
 public sealed class SinceSurrealVersionAttribute(string version)
     : SkipAttribute($"This test is only supported with Surreal v{version} or later.")
 {
-    public override async Task<bool> ShouldSkip(BeforeTestContext context)
+    public override async Task<bool> ShouldSkip(TestRegisteredContext context)
     {
         var expectedVersion = SemVersion.Parse(version, SemVersionStyles.Any);
 
         int index = context
-            .TestDetails.TestMethod.Parameters.Index()
+            .TestDetails.MethodMetadata.Parameters.Index()
             .First(x => x.Item.Name == "connectionString")
             .Index;
 

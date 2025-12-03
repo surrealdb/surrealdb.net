@@ -5,12 +5,12 @@ on:
     branches:
       - main
     paths-ignore:
-      - '**.md'
+      - "**.md"
   pull_request:
     branches:
       - main
     paths-ignore:
-      - '**.md'
+      - "**.md"
 jobs:
   build-remote:
     runs-on: ubuntu-latest-4-cores
@@ -33,7 +33,7 @@ jobs:
         run: dotnet restore
 
       - name: Disable embedded mode
-        run: sudo bash disable_embedded_mode.sh 
+        run: sudo bash disable_embedded_mode.sh
 
       - name: Build
         run: dotnet build --no-restore
@@ -44,7 +44,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Download embedded artifacts
         uses: actions/download-artifact@v4
         with:
@@ -75,11 +75,11 @@ jobs:
     runs-on: ubuntu-latest-4-cores
     strategy:
       matrix:
-        surrealdb_version: ["v1.5.5", "v2.0.4", "v2.1.4", "v2.2.1"]
+        surrealdb_version: ["v1.5.6", "v2.0.5", "v2.1.9", "v2.2.8", "v2.3.10"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Download embedded artifacts
         uses: actions/download-artifact@v4
         with:
@@ -91,7 +91,7 @@ jobs:
 
       - name: Run SurrealDB root
         run: |
-          if [ "${{ matrix.surrealdb_version }}" == "v1.5.5" ]; then
+          if [ "${{ matrix.surrealdb_version }}" == "v1.5.6" ]; then
             surreal start --user root --pass root memory --auth --allow-guests &
           else
             surreal start --user root --pass root memory --allow-guests &
@@ -110,7 +110,7 @@ jobs:
 
       - name: Test library
         run: >
-          dotnet test 
+          dotnet test
           ./SurrealDb.Net.Tests/SurrealDb.Net.Tests.csproj
           --no-restore
           --no-build
@@ -120,7 +120,7 @@ jobs:
 
       - name: Test Live Query feature
         run: >
-          dotnet test 
+          dotnet test
           ./SurrealDb.Net.LiveQuery.Tests/SurrealDb.Net.LiveQuery.Tests.csproj
           --no-restore
           --no-build
@@ -129,7 +129,7 @@ jobs:
           --coverage-output-format cobertura
 
       - name: Upload Coverage
-        if: matrix.surrealdb_version == 'v2.2.1'
+        if: matrix.surrealdb_version == 'v2.3.10'
         uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: true
@@ -146,14 +146,14 @@ jobs:
 
       - name: Install 1.85.0 toolchain
         uses: dtolnay/rust-toolchain@1.85.0
-      
+
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
       - name: Build libraries
         working-directory: ./rust-embedded
         run: cargo build
-      
+
       - name: Publish embedded artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -215,4 +215,3 @@ jobs:
       - uses: EmbarkStudios/cargo-deny-action@v1
         with:
           manifest-path: ${{ matrix.manifests }}
-      
