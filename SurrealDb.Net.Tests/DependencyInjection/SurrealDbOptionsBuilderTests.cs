@@ -332,13 +332,15 @@ public class SurrealDbOptionsBuilderTests
     [Arguments("'with;semi-colon'", "with;semi-colon")]
     [Arguments("\"cn$r;'d^u_s4dm%^zr!frxqf\"", "cn$r;'d^u_s4dm%^zr!frxqf")]
     [Arguments("{cn$r;'d^u_s4dm%^zr!frxqf}", "cn$r;'d^u_s4dm%^zr!frxqf")]
+    [Arguments("{UjX{N9n4e0p)Q.)_yhkKq", "{UjX{N9n4e0p)Q.)_yhkKq")]
+    [Arguments("'{UjX{N9n4e0p)Q.)_yhkKq'", "{UjX{N9n4e0p)Q.)_yhkKq")]
     public void ShouldParseConnectionStringWithSpecialCharsInPassword(
         string passwordInput,
         string? expectedPassword
     )
     {
         string connectionString =
-            $"Endpoint=http://127.0.0.1:8000;NS=test;DB=test;User=root;Password={passwordInput}";
+            $"Endpoint=http://127.0.0.1:8000;User=root;Password={passwordInput};NS=test;DB=test";
 
         var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
 
