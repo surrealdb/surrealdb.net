@@ -69,9 +69,24 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             .ToObservable()
             .ObserveOn(TaskPoolScheduler.Default)
             .Select(request =>
-                Observable.FromAsync(
-                    async () => await SendInnerRequestAsync(request).ConfigureAwait(false)
-                )
+                Observable.FromAsync(async () =>
+                {
+                    try
+                    {
+                        await SendInnerRequestAsync(request).ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        // Prevent sender from failure & log error
+                        if (request.WsEngine.TryGetTarget(out var engine))
+                        {
+                            engine._surrealDbLoggerFactory?.Method?.LogRequestFailed(
+                                request.Content.Id,
+                                e.Message
+                            );
+                        }
+                    }
+                })
             )
             .Merge()
             .Subscribe();
