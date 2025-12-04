@@ -1,4 +1,4 @@
-﻿using System.Reactive.Linq;
+using System.Reactive.Linq;
 using Microsoft.Reactive.Testing;
 using SurrealDb.Net.LiveQuery.Tests.Abstract;
 using SurrealDb.Net.LiveQuery.Tests.Models;
@@ -33,7 +33,7 @@ public class ReactiveOperatorsLiveQueryTests : BaseLiveQueryTests
 
             var liveQuery = client.ListenLive<TestRecord>(liveQueryUuid);
 
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             cts.CancelAfter(Timeout);
 
             var testScheduler = new TestScheduler();
@@ -121,7 +121,7 @@ public class ReactiveOperatorsLiveQueryTests : BaseLiveQueryTests
 
             var liveQuery = client.ListenLive<TestRecord>(liveQueryUuid);
 
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             cts.CancelAfter(Timeout);
 
             var testScheduler = new TestScheduler();

@@ -17,9 +17,9 @@ public class CreateBench : BaseEmbeddedBenchmark
     [IterationSetup]
     public void Setup()
     {
-        _memoryClient = new(null, NamingPolicy);
-        _rocksDbClient = new("rocks/create.db", null, NamingPolicy);
-        _surrealKvClient = new("surrealkv/create.db", null, NamingPolicy);
+        _memoryClient = new(null);
+        _rocksDbClient = new("rocks/create.db", null);
+        _surrealKvClient = new("surrealkv/create.db", null);
 
         ISurrealDbClient[] clients = [_memoryClient, _rocksDbClient, _surrealKvClient];
 

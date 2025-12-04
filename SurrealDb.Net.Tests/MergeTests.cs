@@ -1,14 +1,16 @@
-﻿using System.Text;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SurrealDb.Net.Tests;
 
 public class PostMergeData
 {
+    [Column("content")]
     public string Content { get; set; } = string.Empty;
 }
 
 public class PostMergeRecord : SurrealDbRecord
 {
+    [Column("content")]
     public string Content { get; set; } = string.Empty;
 }
 

@@ -29,14 +29,6 @@ internal sealed class SurrealDbOptionsValidation : IValidateOptions<SurrealDbOpt
             return ValidateOptionsResult.Fail("Endpoint should be a valid URL.");
         }
 
-        if (
-            !string.IsNullOrWhiteSpace(options.NamingPolicy)
-            && !IsValidNamingPolicy(options.NamingPolicy)
-        )
-        {
-            return ValidateOptionsResult.Fail("Naming policy should be valid.");
-        }
-
         return ValidateOptionsResult.Success;
     }
 
@@ -71,24 +63,6 @@ internal sealed class SurrealDbOptionsValidation : IValidateOptions<SurrealDbOpt
 
         return validClientEndpoints.Any(vce =>
             endpoint.StartsWith(vce, StringComparison.OrdinalIgnoreCase)
-        );
-    }
-
-    internal static bool IsValidNamingPolicy(string namingPolicy)
-    {
-        string[] validNamingPolicies =
-        [
-            NamingPolicyConstants.CAMEL_CASE,
-            NamingPolicyConstants.SNAKE_CASE,
-            NamingPolicyConstants.SNAKE_CASE_LOWER,
-            NamingPolicyConstants.SNAKE_CASE_UPPER,
-            NamingPolicyConstants.KEBAB_CASE,
-            NamingPolicyConstants.KEBAB_CASE_LOWER,
-            NamingPolicyConstants.KEBAB_CASE_UPPER,
-        ];
-
-        return validNamingPolicies.Any(vnp =>
-            vnp.Equals(namingPolicy, StringComparison.OrdinalIgnoreCase)
         );
     }
 

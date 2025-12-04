@@ -996,10 +996,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
     private CborOptions GetCborOptions()
     {
-        return SurrealDbCborOptions.GetCborSerializerOptions(
-            _parameters!.NamingPolicy,
-            _configureCborOptions
-        );
+        return SurrealDbCborOptions.GetCborSerializerOptions(_configureCborOptions);
     }
 
     private readonly SemaphoreSlim _semaphoreConnect = new(1, 1);

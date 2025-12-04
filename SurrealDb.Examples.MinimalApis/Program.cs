@@ -3,6 +3,8 @@ using SurrealDb.Examples.MinimalApis.Models;
 using SurrealDb.Net;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
+// 💡 Be sure to set properties/columns to "camelCase" for PATCH methods to work as expected.
+
 var builder = WebApplication.CreateBuilder(args);
 
 var services = builder.Services;
@@ -23,7 +25,6 @@ services
         );
     });
 
-// 💡 Be sure to have "NamingPolicy=CamelCase" in your connection string for PATCH methods to work as expected.
 services.AddSurreal(configuration.GetConnectionString("SurrealDB")!);
 
 var app = builder.Build();

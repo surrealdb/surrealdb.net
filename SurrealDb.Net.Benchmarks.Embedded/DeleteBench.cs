@@ -17,9 +17,9 @@ public class DeleteBench : BaseEmbeddedBenchmark
     [IterationSetup]
     public void Setup()
     {
-        _memoryClient = new(null, NamingPolicy);
-        _rocksDbClient = new("rocks/delete.db", null, NamingPolicy);
-        _surrealKvClient = new("surrealkv/delete.db", null, NamingPolicy);
+        _memoryClient = new(null);
+        _rocksDbClient = new("rocks/delete.db", null);
+        _surrealKvClient = new("surrealkv/delete.db", null);
 
         ISurrealDbClient[] clients = [_memoryClient, _rocksDbClient, _surrealKvClient];
 

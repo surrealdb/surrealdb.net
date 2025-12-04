@@ -33,7 +33,7 @@
 
     private async Task DecrementCountAsync()
     {
-        var response = await Client.Query($"UPDATE counter:default SET value -= 1;");
+        var response = await Client.Query($"UPSERT counter:default SET value -= 1;");
 
         var record = response.FirstOk!.GetValues<CounterRecord>().Single();
         _currentCount = record.Value;
@@ -41,7 +41,7 @@
 
     private async Task IncrementCountAsync()
     {
-        var response = await Client.Query($"UPDATE counter:default SET value += 1;");
+        var response = await Client.Query($"UPSERT counter:default SET value += 1;");
         
         var record = response.FirstOk!.GetValues<CounterRecord>().Single();
         _currentCount = record.Value;

@@ -8,5 +8,5 @@ using TUnit.Core.Interfaces;
 
 public record CustomParallelLimit : IParallelLimit
 {
-    public int Limit => 2;
+    public int Limit => 4;
 }

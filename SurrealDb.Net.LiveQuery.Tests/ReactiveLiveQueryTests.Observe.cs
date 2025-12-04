@@ -1,4 +1,4 @@
-﻿using System.Reactive.Linq;
+using System.Reactive.Linq;
 using Microsoft.Reactive.Testing;
 using SurrealDb.Net.LiveQuery.Tests.Abstract;
 using SurrealDb.Net.LiveQuery.Tests.Models;
@@ -25,7 +25,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             cts.CancelAfter(Timeout);
 
             var testScheduler = new TestScheduler();
@@ -124,7 +124,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             cts.CancelAfter(Timeout);
 
             var testScheduler = new TestScheduler();
@@ -231,7 +231,7 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             cts.CancelAfter(Timeout);
 
             var testScheduler = new TestScheduler();

@@ -37,29 +37,12 @@ public class SurrealDbOptionsValidationTests
 
     [Retry(5)]
     // 💡 Flaky: "May fail due to timeout"
-    public async Task NamingPolicyShouldBeValid()
-    {
-        var func = () =>
-            CreateHostRunner(options =>
-            {
-                options.Endpoint = "https://localhost:5001";
-                options.NamingPolicy = "abcd";
-            });
-
-        await func.Should()
-            .ThrowAsync<OptionsValidationException>()
-            .WithMessage("Naming policy should be valid.");
-    }
-
-    [Retry(5)]
-    // 💡 Flaky: "May fail due to timeout"
     public async Task ShouldValidateSuccessfully()
     {
         var func = () =>
             CreateHostRunner(options =>
             {
                 options.Endpoint = "https://localhost:5001";
-                options.NamingPolicy = "camelCase";
             });
 
         await func.Should().NotThrowAsync();
@@ -85,7 +68,7 @@ public class SurrealDbOptionsValidationTests
             }
         );
 
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromMilliseconds(500));
 
         await builder.RunConsoleAsync(cts.Token);

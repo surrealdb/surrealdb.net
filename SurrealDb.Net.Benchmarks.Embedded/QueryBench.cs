@@ -17,9 +17,9 @@ public class QueryBench : BaseEmbeddedBenchmark
     [IterationSetup]
     public void Setup()
     {
-        _memoryClient = new(null, NamingPolicy);
-        _rocksDbClient = new("rocks/query.db", null, NamingPolicy);
-        _surrealKvClient = new("surrealkv/query.db", null, NamingPolicy);
+        _memoryClient = new(null);
+        _rocksDbClient = new("rocks/query.db", null);
+        _surrealKvClient = new("surrealkv/query.db", null);
 
         ISurrealDbClient[] clients = [_memoryClient, _rocksDbClient, _surrealKvClient];
 

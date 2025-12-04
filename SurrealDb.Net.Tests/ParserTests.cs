@@ -1,22 +1,26 @@
 ﻿using System.Numerics;
 using System.Text;
 using Dahomey.Cbor;
+using Dahomey.Cbor.Attributes;
 using FluentAssertions.Extensions;
 
 namespace SurrealDb.Net.Tests;
 
 public abstract class BaseRecord
 {
+    [CborProperty("name")]
     public string? Name { get; set; }
 }
 
 public class Record<T> : BaseRecord
 {
+    [CborProperty("value")]
     public T? Value { get; set; }
 }
 
 public class RecordIdRecord : BaseRecord
 {
+    [CborProperty("id")]
     public RecordId? Id { get; set; }
 }
 

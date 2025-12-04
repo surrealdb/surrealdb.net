@@ -58,7 +58,6 @@ public class KillTests
     [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldFailToKillInexistantLiveQueryOnWsProtocol(string connectionString)
     {
-        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
         var liveQueryUuid = Guid.NewGuid();
 
         Func<Task> func = async () =>

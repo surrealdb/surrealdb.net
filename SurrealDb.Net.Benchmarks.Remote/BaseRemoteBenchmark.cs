@@ -48,7 +48,7 @@ public class BaseRemoteBenchmark : BaseBenchmark
 
     private async Task<SurrealDbClient> CreateClient(string url, DatabaseInfo databaseInfo)
     {
-        var client = new SurrealDbClient(url, NamingPolicy);
+        var client = new SurrealDbClient(url);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(databaseInfo.Namespace, databaseInfo.Database);
 
