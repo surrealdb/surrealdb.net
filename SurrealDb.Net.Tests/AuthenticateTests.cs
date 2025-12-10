@@ -39,7 +39,7 @@ public class AuthenticateTests
 
             await client.Authenticate(jwt.Value);
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -120,7 +120,7 @@ public class AuthenticateTests
 
             await client.Invalidate();
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();

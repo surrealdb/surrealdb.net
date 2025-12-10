@@ -5,7 +5,18 @@
 /// </summary>
 public enum RangeBoundType
 {
-    Unknown = 0,
+    /// <summary>
+    /// An infinite endpoint. Indicates that there is no bound in this direction.
+    /// </summary>
+    Unbounded = 0,
+
+    /// <summary>
+    /// An inclusive bound.
+    /// </summary>
     Inclusive,
+
+    /// <summary>
+    /// An exclusive bound.
+    /// </summary>
     Exclusive,
 }

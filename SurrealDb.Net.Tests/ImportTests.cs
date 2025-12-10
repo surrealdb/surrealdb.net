@@ -36,10 +36,10 @@ public class ImportTests
         await func.Should().NotThrowAsync();
 
         // Check imported query by querying the db
-        var fooRecords = await client.Select<object>("foo");
+        var fooRecords = await client.Select<object>("foo").ToListAsync();
         fooRecords.Should().NotBeNull().And.HaveCount(1);
 
-        var barRecords = await client.Select<object>("bar");
+        var barRecords = await client.Select<object>("bar").ToListAsync();
         barRecords.Should().NotBeNull().And.HaveCount(1);
 
         var fnResult = await client.Run<string>("fn::foo");

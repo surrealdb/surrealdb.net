@@ -45,7 +45,7 @@ public class TypesTests
             new StringRecord { Name = "multiline", Value = multilineStringBuilder.ToString() }
         );
 
-        var records = await client.Select<StringRecord>("string");
+        var records = await client.Select<StringRecord>("string").ToListAsync();
 
         {
             var noneRecord = records.First(r => r.Name == "none");
@@ -109,7 +109,7 @@ public class TypesTests
         await client.Create("number", new LongRecord { Name = "max", Value = 9223372036854775807 });
         await client.Create("number", new LongRecord { Name = "zero", Value = 0 });
 
-        var records = await client.Select<LongRecord>("number");
+        var records = await client.Select<LongRecord>("number").ToListAsync();
 
         {
             var noneRecord = records.First(r => r.Name == "none");
@@ -178,7 +178,7 @@ public class TypesTests
             }
         );
 
-        var records = await client.Select<DecimalRecord>("decimal");
+        var records = await client.Select<DecimalRecord>("decimal").ToListAsync();
 
         {
             var noneRecord = records.First(r => r.Name == "none");
@@ -267,7 +267,7 @@ public class TypesTests
             }
         );
 
-        var records = await client.Select<FloatRecord>("decimal");
+        var records = await client.Select<FloatRecord>("decimal").ToListAsync();
 
         {
             var noneRecord = records.First(r => r.Name == "none");
@@ -356,7 +356,7 @@ public class TypesTests
             }
         );
 
-        var records = await client.Select<DoubleRecord>("decimal");
+        var records = await client.Select<DoubleRecord>("decimal").ToListAsync();
 
         {
             var noneRecord = records.First(r => r.Name == "none");
@@ -463,7 +463,7 @@ public class TypesTests
             new DurationRecord { Name = "complex", Value = new Duration("1h30m20s1350ms") }
         );
 
-        var records = await client.Select<DurationRecord>("duration");
+        var records = await client.Select<DurationRecord>("duration").ToListAsync();
 
         {
             var noneRecord = records.First(r => r.Name == "none");
@@ -613,7 +613,7 @@ public class TypesTests
             new TimeSpanRecord { Name = "complex", Value = complexDuration }
         );
 
-        var records = await client.Select<TimeSpanRecord>("duration");
+        var records = await client.Select<TimeSpanRecord>("duration").ToListAsync();
 
         {
             var noneRecord = records.First(r => r.Name == "none");
@@ -757,7 +757,7 @@ public class TypesTests
             }
         );
 
-        var records = await client.Select<DateTimeRecord>("datetime");
+        var records = await client.Select<DateTimeRecord>("datetime").ToListAsync();
 
         {
             var noneRecord = records.First(r => r.Name == "none");
@@ -835,7 +835,7 @@ public class TypesTests
             new Vector2Record { Name = "vector2", Value = new Vector2(2.5f, 0.5f) }
         );
 
-        var records = (await client.Select<Vector2Record>("vector")).ToList();
+        var records = await client.Select<Vector2Record>("vector").ToListAsync();
 
         {
             var noneRecord = records.Find(r => r.Name == "none");
@@ -865,7 +865,7 @@ public class TypesTests
             new ThingRecord { Name = "custom", Value = ("person", "tobie") }
         );
 
-        var records = (await client.Select<ThingRecord>("thing")).ToList();
+        var records = await client.Select<ThingRecord>("thing").ToListAsync();
 
         {
             var customRecord = records.Find(r => r.Name == "custom");
