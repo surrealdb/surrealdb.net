@@ -144,8 +144,8 @@ jobs:
           sparse-checkout: |
             rust-embedded
 
-      - name: Install 1.85.0 toolchain
-        uses: dtolnay/rust-toolchain@1.85.0
+      - name: Install 1.91.0 toolchain
+        uses: dtolnay/rust-toolchain@1.91.0
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
@@ -172,8 +172,8 @@ jobs:
           sparse-checkout: |
             rust-embedded
 
-      - name: Install 1.85.0 toolchain
-        uses: dtolnay/rust-toolchain@1.85.0
+      - name: Install 1.91.0 toolchain
+        uses: dtolnay/rust-toolchain@1.91.0
         with:
           components: clippy, rustfmt
 
@@ -207,11 +207,11 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: |
             rust-embedded
 
-      - uses: EmbarkStudios/cargo-deny-action@v1
+      - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           manifest-path: ${{ matrix.manifests }}
