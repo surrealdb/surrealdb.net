@@ -35,7 +35,6 @@ public class ScenarioBench : BaseRemoteBenchmark
                             .WithDatabase(dbInfo.Database)
                             .WithUsername("root")
                             .WithPassword("root")
-                            .WithNamingPolicy(NamingPolicy)
                             .Build()
                     );
                     await _surrealdbHttpClient.Connect();
@@ -55,7 +54,6 @@ public class ScenarioBench : BaseRemoteBenchmark
                             .WithDatabase(dbInfo.Database)
                             .WithUsername("root")
                             .WithPassword("root")
-                            .WithNamingPolicy(NamingPolicy)
                             .Build()
                     );
                     await _surrealdbWsBinaryClient.Connect();

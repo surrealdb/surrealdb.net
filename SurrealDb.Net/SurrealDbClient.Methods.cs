@@ -101,7 +101,6 @@ public abstract partial class BaseSurrealDbClient
             .ConfigureAwait(false);
 
         using var httpContent = SurrealDbHttpEngine.CreateBodyContent(
-            null,
             wrapper.ConfigureCborOptions,
             options ?? new(),
             null

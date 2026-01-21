@@ -46,7 +46,6 @@ public class ColdStartBench : BaseRemoteBenchmark
             .WithDatabase(_databaseInfo!.Database)
             .WithUsername("root")
             .WithPassword("root")
-            .WithNamingPolicy(NamingPolicy)
             .Build();
 
         var client = new SurrealDbClient(
@@ -67,7 +66,6 @@ public class ColdStartBench : BaseRemoteBenchmark
             .WithDatabase(_databaseInfo!.Database)
             .WithUsername("root")
             .WithPassword("root")
-            .WithNamingPolicy(NamingPolicy)
             .Build();
 
         var client = new SurrealDbClient(options);

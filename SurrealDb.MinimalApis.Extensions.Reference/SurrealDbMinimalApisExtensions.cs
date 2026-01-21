@@ -2,6 +2,8 @@
 
 #nullable enable
 
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Reflection;
 using SurrealDb.MinimalApis.Extensions;
 using SurrealDb.Net;
 using SurrealDb.Net.Models;
@@ -60,7 +62,7 @@ public static class SurrealDbMinimalApisExtensions
         string pattern,
         SurrealDbMinimalApisOptions? options = null
     )
-        where TEntity : Record
+        where TEntity : class, IRecord
     {
         return endpoints.MapSurrealEndpoints<TEntity, ISurrealDbClient>(pattern, options);
     }
@@ -114,7 +116,7 @@ public static class SurrealDbMinimalApisExtensions
         string pattern,
         SurrealDbMinimalApisOptions? options = null
     )
-        where TEntity : Record
+        where TEntity : class, IRecord
         where TDbClient : ISurrealDbClient
     {
         string entityName = typeof(TEntity).Name;
@@ -133,7 +135,7 @@ public static class SurrealDbMinimalApisExtensions
                     "/",
                     (TDbClient surrealDbClient, CancellationToken cancellationToken) =>
                     {
-                        string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
+                        string tableName = options?.TableName ?? GetDefaultTableName(typeof(TEntity));
                         return surrealDbClient.Select<TEntity>(tableName, cancellationToken);
                     }
                 )
@@ -154,7 +156,7 @@ public static class SurrealDbMinimalApisExtensions
                         CancellationToken cancellationToken
                     ) =>
                     {
-                        string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
+                        string tableName = options?.TableName ?? GetDefaultTableName(typeof(TEntity));
                         var data = await surrealDbClient.Select<TEntity>(
                             (tableName, id),
                             cancellationToken
@@ -184,7 +186,7 @@ public static class SurrealDbMinimalApisExtensions
                         CancellationToken cancellationToken
                     ) =>
                     {
-                        string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
+                        string tableName = options?.TableName ?? GetDefaultTableName(typeof(TEntity));
                         return surrealDbClient.Create(tableName, data, cancellationToken);
                     }
                 )
@@ -225,7 +227,7 @@ public static class SurrealDbMinimalApisExtensions
                         CancellationToken cancellationToken
                     ) =>
                     {
-                        string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
+                        string tableName = options?.TableName ?? GetDefaultTableName(typeof(TEntity));
                         return surrealDbClient.Patch(tableName, patches, cancellationToken);
                     }
                 )
@@ -247,7 +249,7 @@ public static class SurrealDbMinimalApisExtensions
                         CancellationToken cancellationToken
                     ) =>
                     {
-                        string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
+                        string tableName = options?.TableName ?? GetDefaultTableName(typeof(TEntity));
                         return surrealDbClient.Patch((tableName, id), patches, cancellationToken);
                     }
                 )
@@ -264,7 +266,7 @@ public static class SurrealDbMinimalApisExtensions
                     "/",
                     (TDbClient surrealDbClient, CancellationToken cancellationToken) =>
                     {
-                        string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
+                        string tableName = options?.TableName ?? GetDefaultTableName(typeof(TEntity));
                         return surrealDbClient.Delete(tableName, cancellationToken);
                     }
                 )
@@ -285,7 +287,7 @@ public static class SurrealDbMinimalApisExtensions
                         CancellationToken cancellationToken
                     ) =>
                     {
-                        string tableName = options?.TableName ?? GetDefaultTableName(entityName, surrealDbClient.NamingPolicy);
+                        string tableName = options?.TableName ?? GetDefaultTableName(typeof(TEntity));
                         bool success = await surrealDbClient.Delete(
                             (tableName, id),
                             cancellationToken
@@ -306,48 +308,15 @@ public static class SurrealDbMinimalApisExtensions
 
         return endpoints;
     }
-
-    private static string GetDefaultTableName(string entityName, string? namingPolicy)
+    
+    private static string GetDefaultTableName(Type entityType)
     {
-#if NET8_0_OR_GREATER
-        return (namingPolicy?.ToLowerInvariant()) switch
+        var tableAttribute = entityType.GetCustomAttribute(typeof(TableAttribute)) as TableAttribute;
+        if (tableAttribute is not null)
         {
-            "camelcase" => entityName.ToCamelCase(),
-            "snakecase" or "snakecaselower" => entityName.ToSnakeCaseLower(),
-            "snakecaseupper" => entityName.ToSnakeCaseUpper(),
-            "kebabcase" or "kebabcaselower" => entityName.ToKebabCaseLower(),
-            "kebabcaseupper" => entityName.ToKebabCaseUpper(),
-            _ => entityName
-        };
-#else
-        return entityName.ToCamelCase();
-#endif
+            return tableAttribute.Name;
+        }
+        
+        return entityType.Name;
     }
-
-    private static string ToCamelCase(this string str)
-    {
-        return JsonNamingPolicy.CamelCase.ConvertName(str);
-    }
-
-#if NET8_0_OR_GREATER
-    private static string ToSnakeCaseLower(this string str)
-    {
-        return JsonNamingPolicy.SnakeCaseLower.ConvertName(str);
-    }
-
-    private static string ToSnakeCaseUpper(this string str)
-    {
-        return JsonNamingPolicy.SnakeCaseUpper.ConvertName(str);
-    }
-
-    private static string ToKebabCaseLower(this string str)
-    {
-        return JsonNamingPolicy.KebabCaseLower.ConvertName(str);
-    }
-
-    private static string ToKebabCaseUpper(this string str)
-    {
-        return JsonNamingPolicy.KebabCaseUpper.ConvertName(str);
-    }
-#endif
 }

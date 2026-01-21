@@ -16,7 +16,6 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
     /// Creates a new SurrealDbClient, with the defined endpoint.
     /// </summary>
     /// <param name="endpoint">The endpoint to access a SurrealDB instance.</param>
-    /// <param name="namingPolicy">The naming policy to use for serialization.</param>
     /// <param name="httpClientFactory">An IHttpClientFactory instance, or none.</param>
     /// <param name="configureCborOptions">An optional action to configure <see cref="CborOptions"/>.</param>
     /// <param name="loggerFactory">
@@ -25,13 +24,12 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
     /// <exception cref="ArgumentException"></exception>
     public SurrealDbClient(
         string endpoint,
-        string? namingPolicy = null,
         IHttpClientFactory? httpClientFactory = null,
         Action<CborOptions>? configureCborOptions = null,
         ILoggerFactory? loggerFactory = null
     )
         : this(
-            new SurrealDbOptions(endpoint, namingPolicy),
+            new SurrealDbOptions(endpoint),
             httpClientFactory,
             configureCborOptions,
             loggerFactory
@@ -75,8 +73,6 @@ public class SurrealDbClient : BaseSurrealDbClient, ISurrealDbClient
                 : Uri.AbsolutePath;
             Uri = new Uri(Uri, $"{absoluteNakedPath}/rpc");
         }
-
-        NamingPolicy = configuration.NamingPolicy;
 
         var protocol = Uri.Scheme;
 

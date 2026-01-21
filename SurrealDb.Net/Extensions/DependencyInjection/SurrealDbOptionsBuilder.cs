@@ -11,7 +11,6 @@ public sealed class SurrealDbOptionsBuilder
     private string? _username;
     private string? _password;
     private string? _token;
-    private string? _namingPolicy;
     private string? _authLevel;
     private bool _sensitiveDataLoggingEnabled;
 
@@ -227,12 +226,6 @@ public sealed class SurrealDbOptionsBuilder
                 _token = valueSpan.ToString();
                 return;
             }
-            if (key.Equals("namingPolicy", StringComparison.OrdinalIgnoreCase))
-            {
-                string value = valueSpan.ToString();
-                EnsuresCorrectNamingPolicy(value, nameof(connectionString));
-                _namingPolicy = value;
-            }
             if (key.Equals("authLevel", StringComparison.OrdinalIgnoreCase))
             {
                 string value = valueSpan.ToString();
@@ -359,29 +352,6 @@ public sealed class SurrealDbOptionsBuilder
         return this;
     }
 
-    public SurrealDbOptionsBuilder WithNamingPolicy(string namingPolicy)
-    {
-        EnsuresCorrectNamingPolicy(namingPolicy, nameof(namingPolicy));
-
-        _namingPolicy = namingPolicy;
-        return this;
-    }
-
-    private static void EnsuresCorrectNamingPolicy(string namingPolicy, string argumentName)
-    {
-        if (string.IsNullOrWhiteSpace(namingPolicy))
-        {
-            return;
-        }
-
-        if (SurrealDbOptionsValidation.IsValidNamingPolicy(namingPolicy))
-        {
-            return;
-        }
-
-        throw new ArgumentException($"Invalid naming policy: {namingPolicy}", argumentName);
-    }
-
     public SurrealDbOptionsBuilder WithAuthLevel(string authLevel)
     {
         EnsuresCorrectAuthLevel(authLevel, nameof(authLevel));
@@ -430,7 +400,6 @@ public sealed class SurrealDbOptionsBuilder
             Username = _username,
             Password = _password,
             Token = _token,
-            NamingPolicy = _namingPolicy,
             AuthLevel = _authLevel,
             Logging = new() { SensitiveDataLoggingEnabled = _sensitiveDataLoggingEnabled },
         };

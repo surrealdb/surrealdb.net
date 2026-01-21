@@ -70,10 +70,7 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
 
     public SurrealDbClient Create(string connectionString, string? ns = null, string? db = null)
     {
-        var optionsBuilder = SurrealDbOptions
-            .Create()
-            .FromConnectionString(connectionString)
-            .WithNamingPolicy("SnakeCase");
+        var optionsBuilder = SurrealDbOptions.Create().FromConnectionString(connectionString);
 
         var temporaryOptions = optionsBuilder.Build();
 
@@ -84,7 +81,6 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
             optionsBuilder = SurrealDbOptions
                 .Create()
                 .FromConnectionString(connectionString)
-                .WithNamingPolicy("SnakeCase")
                 .WithEndpoint($"{temporaryOptions.Endpoint}{_folderPath}");
         }
 
@@ -132,11 +128,16 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
     {
         if (_options is not null && !_options.IsEmbedded && _databaseInfo is not null)
         {
-            await using var client = new SurrealDbClient("ws://127.0.0.1:8000/rpc", "SnakeCase");
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" });
-            await client.Use(_databaseInfo.Namespace, _databaseInfo.Database);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
 
-            await client.RawQuery($"REMOVE DATABASE `{_databaseInfo.Database}`;");
+            await using var client = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
+            await client.SignIn(new RootAuth { Username = "root", Password = "root" }, cts.Token);
+            await client.Use(_databaseInfo.Namespace, _databaseInfo.Database, cts.Token);
+
+            await client.RawQuery(
+                $"REMOVE DATABASE `{_databaseInfo.Database}`;",
+                cancellationToken: cts.Token
+            );
         }
 
         if (_serviceProvider is not null)
