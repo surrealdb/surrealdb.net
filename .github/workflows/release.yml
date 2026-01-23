@@ -133,10 +133,10 @@ jobs:
         shell: bash
         if: matrix.target == 'aarch64-apple-ios'
 
-      - name: Install 1.85.0 toolchain
-        uses: dtolnay/rust-toolchain@1.85.0
+      - name: Install 1.91.0 toolchain
+        uses: dtolnay/rust-toolchain@1.91.0
         with:
-          toolchain: 1.85.0 # must match the version in the `rust-embedded/rust-toolchain` file
+          toolchain: 1.91.0 # must match the version in the `rust-embedded/rust-toolchain` file
           target: ${{ matrix.target }}
 
       - name: Build "memory" library
@@ -150,7 +150,7 @@ jobs:
       - name: Build "surrealkv" library
         working-directory: ./rust-embedded/surrealkv
         run: cargo build --release --target ${{ matrix.target }}
-    
+
       - name: Publish embedded artifacts
         uses: actions/upload-artifact@v4
         with:
