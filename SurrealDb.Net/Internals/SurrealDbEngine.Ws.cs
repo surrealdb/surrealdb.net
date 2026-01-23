@@ -23,8 +23,12 @@ using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
-using SystemTextJsonPatch;
 using Websocket.Client;
+#if NET10_0_OR_GREATER
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+#else
+using SystemTextJsonPatch;
+#endif
 
 namespace SurrealDb.Net.Internals;
 
@@ -63,13 +67,12 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 #if NET9_0_OR_GREATER
     static SurrealDbWsEngine()
     {
-        // sender subscriptions
-        _sendRequestChannel
-            .ReadAllAsync()
-            .ToObservable()
-            .ObserveOn(TaskPoolScheduler.Default)
-            .Select(request =>
-                Observable.FromAsync(async () =>
+        // Sender subscriptions
+        Task.Run(async () =>
+        {
+            try
+            {
+                await foreach (var request in _sendRequestChannel.ReadAllAsync())
                 {
                     try
                     {
@@ -86,10 +89,14 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                             );
                         }
                     }
-                })
-            )
-            .Merge()
-            .Subscribe();
+                }
+            }
+            catch
+            {
+                // TODO : Retry on failure?
+                // TODO : Log the exception?
+            }
+        });
     }
 #endif
 

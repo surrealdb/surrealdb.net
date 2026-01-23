@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <IsPackable>true</IsPackable>
@@ -54,7 +54,7 @@
   <PropertyGroup Label="Constants" Condition="false">
     <DefineConstants>BENCHMARK_MODE</DefineConstants>
   </PropertyGroup>
-  
+
   <!-- https://stackoverflow.com/a/48714896/7847252 -->
   <ItemGroup Condition="$(DefineConstants.Contains('EMBEDDED_MODE')) And '$(Configuration)' == 'Debug'">
     <Content Include="../rust-embedded/target/debug/surreal_surrealkv.dll" TargetPath="surreal_surrealkv.dll" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
@@ -64,7 +64,7 @@
 
     <Content Include="../rust-embedded/target/debug/libsurreal_surrealkv.dylib" TargetPath="libsurreal_surrealkv.dylib" CopyToOutputDirectory="Always" Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))'" />
   </ItemGroup>
-  
+
   <ItemGroup Condition="$(DefineConstants.Contains('BENCHMARK_MODE'))">
     <Content Include="../rust-embedded/target/release/surreal_surrealkv.dll" TargetPath="surreal_surrealkv.dll" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />
     <Content Include="../rust-embedded/target/release/surreal_surrealkv.pdb" TargetPath="surreal_surrealkv.pdb" CopyToOutputDirectory="Always" Condition="'$(OS)' == 'Windows_NT'" />

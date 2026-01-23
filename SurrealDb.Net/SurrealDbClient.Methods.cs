@@ -6,7 +6,11 @@ using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
+#if NET10_0_OR_GREATER
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+#else
 using SystemTextJsonPatch;
+#endif
 #if NET6_0_OR_GREATER
 using SurrealDb.Net.Handlers;
 #else
@@ -110,11 +114,9 @@ public abstract partial class BaseSurrealDbClient
             wrapper.Version is not null
             && wrapper.Version.Satisfies(SemVersionRange.AtLeast(new(2, 1), true));
 
-        var httpRequestTask = shouldUsePostRequest
-            ? wrapper.HttpClient.PostAsync(exportUri, httpContent, cancellationToken)
-            : wrapper.HttpClient.GetAsync(exportUri, cancellationToken);
-
-        using var response = await httpRequestTask.ConfigureAwait(false);
+        using var response = shouldUsePostRequest
+            ? await wrapper.HttpClient.PostAsync(exportUri, httpContent, cancellationToken)
+            : await wrapper.HttpClient.GetAsync(exportUri, cancellationToken);
         response.EnsureSuccessStatusCode();
 
 #if NET6_0_OR_GREATER

@@ -16,12 +16,12 @@ jobs:
     runs-on: ubuntu-latest-4-cores
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Setup dotnet 9.0
-        uses: actions/setup-dotnet@v4
+      - name: Setup dotnet 10.0
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Install .NET tools
         run: dotnet tool restore
@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest-4-cores
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download embedded artifacts
         uses: actions/download-artifact@v4
@@ -51,10 +51,10 @@ jobs:
           name: embedded
           path: ./rust-embedded/target/debug
 
-      - name: Setup dotnet 9.0
-        uses: actions/setup-dotnet@v4
+      - name: Setup dotnet 10.0
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Install .NET tools
         run: dotnet tool restore
@@ -75,10 +75,11 @@ jobs:
     runs-on: ubuntu-latest-4-cores
     strategy:
       matrix:
-        surrealdb_version: ["v1.5.6", "v2.0.5", "v2.1.9", "v2.2.8", "v2.3.10"]
+        surrealdb_version:
+          ["v1.5.6", "v2.0.5", "v2.1.9", "v2.2.8", "v2.3.10", "v2.4.0"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download embedded artifacts
         uses: actions/download-artifact@v4
@@ -97,10 +98,10 @@ jobs:
             surreal start --user root --pass root memory --allow-guests &
           fi
 
-      - name: Setup dotnet 9.0
-        uses: actions/setup-dotnet@v4
+      - name: Setup dotnet 10.0
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Install dependencies
         run: dotnet restore
@@ -109,27 +110,25 @@ jobs:
         run: dotnet build --no-restore
 
       - name: Test library
+        working-directory: SurrealDb.Net.Tests
         run: >
-          dotnet test
-          ./SurrealDb.Net.Tests/SurrealDb.Net.Tests.csproj
+          dotnet run
+          --project SurrealDb.Net.Tests.csproj
           --no-restore
-          --no-build
-          --
           --coverage
           --coverage-output-format cobertura
 
       - name: Test Live Query feature
+        working-directory: SurrealDb.Net.LiveQuery.Tests
         run: >
-          dotnet test
-          ./SurrealDb.Net.LiveQuery.Tests/SurrealDb.Net.LiveQuery.Tests.csproj
+          dotnet run
+          --project SurrealDb.Net.LiveQuery.Tests.csproj
           --no-restore
-          --no-build
-          --
           --coverage
           --coverage-output-format cobertura
 
       - name: Upload Coverage
-        if: matrix.surrealdb_version == 'v2.3.10'
+        if: matrix.surrealdb_version == 'v2.4.0'
         uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: true
@@ -139,7 +138,7 @@ jobs:
     runs-on: ubuntu-latest-4-cores
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: |
             rust-embedded
@@ -167,7 +166,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: |
             rust-embedded
