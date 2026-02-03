@@ -1485,6 +1485,13 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
+        var activity = Activity.Current;
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.AddTag("network.protocol.name", "ws");
+        }
+
         long executionStartTime = Stopwatch.GetTimestamp();
 
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));

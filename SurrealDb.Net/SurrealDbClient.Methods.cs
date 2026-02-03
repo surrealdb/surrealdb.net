@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Text;
 using Semver;
 using SurrealDb.Net.Internals;
@@ -34,7 +35,20 @@ public abstract partial class BaseSurrealDbClient
     public Task<T> Create<T>(T data, CancellationToken cancellationToken = default)
         where T : IRecord
     {
-        return _engine.Create(data, cancellationToken);
+        var activity = SurrealTelemetry.StartActivity(Uri, "create");
+        try
+        {
+            return _engine.Create(data, cancellationToken);
+        }
+        catch (Exception exc)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, exc.Message);
+            throw;
+        }
+        finally
+        {
+            activity?.Stop();
+        }
     }
 
     public Task<T> Create<T>(
@@ -43,7 +57,20 @@ public abstract partial class BaseSurrealDbClient
         CancellationToken cancellationToken = default
     )
     {
-        return _engine.Create(table, data, cancellationToken);
+        var activity = SurrealTelemetry.StartActivity(Uri, "create", table);
+        try
+        {
+            return _engine.Create(table, data, cancellationToken);
+        }
+        catch (Exception exc)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, exc.Message);
+            throw;
+        }
+        finally
+        {
+            activity?.Stop();
+        }
     }
 
     public Task<TOutput> Create<TData, TOutput>(
@@ -53,7 +80,20 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : IRecord
     {
-        return _engine.Create<TData, TOutput>(recordId, data, cancellationToken);
+        var activity = SurrealTelemetry.StartActivity(Uri, "create");
+        try
+        {
+            return _engine.Create<TData, TOutput>(recordId, data, cancellationToken);
+        }
+        catch (Exception exc)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, exc.Message);
+            throw;
+        }
+        finally
+        {
+            activity?.Stop();
+        }
     }
 
     public Task Delete(string table, CancellationToken cancellationToken = default)

@@ -1143,6 +1143,15 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
+        var activity = Activity.Current;
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.AddTag("network.protocol.name", "http");
+        }
+
+        try
+        {
         long executionStartTime = Stopwatch.GetTimestamp();
 
         if (_version == null && request.Method != "version")
@@ -1177,6 +1186,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         );
 
         return surrealDbResponse;
+    }
+        catch (Exception)
+        {
+            //will enable additional tags to be added to the activity if desired
+            throw;
+        }
     }
 
     private async Task<SurrealDbHttpOkResponse> DeserializeDbResponseAsync(
