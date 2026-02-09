@@ -13,4 +13,8 @@ internal sealed class SurrealDbWsRequest
     [CborProperty("params")]
     [CborIgnoreIfDefault]
     public object?[]? Parameters { get; set; }
+
+    [CborProperty("traceparent")]
+    [CborIgnoreIfDefault]
+    public string? TraceParent { get; set; }
 }

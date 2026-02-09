@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
-using ConcurrentCollections;
 using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -23,7 +22,14 @@ using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
+using SurrealDb.Net.Telemetry;
+using SurrealDb.Net.Telemetry.Events;
+using SurrealDb.Net.Telemetry.Events.Data;
 using Websocket.Client;
+#if NET9_0_OR_GREATER
+using ConcurrentCollections;
+#endif
+
 #if NET10_0_OR_GREATER
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 #else
@@ -74,35 +80,29 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     static SurrealDbWsEngine()
     {
         // Sender subscriptions
-        Task.Run(async () =>
+        Task _ = Task.Factory.StartNew(ProcessSendRequestsAsync, TaskCreationOptions.LongRunning);
+    }
+
+    private static async Task ProcessSendRequestsAsync()
+    {
+        await foreach (var request in _sendRequestChannel.ReadAllAsync().ConfigureAwait(false))
         {
             try
             {
-                await foreach (var request in _sendRequestChannel.ReadAllAsync())
+                await SendInnerRequestAsync(request).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                // Prevent sender from failure & log error
+                if (request.WsEngine.TryGetTarget(out var engine))
                 {
-                    try
-                    {
-                        await SendInnerRequestAsync(request).ConfigureAwait(false);
-                    }
-                    catch (Exception e)
-                    {
-                        // Prevent sender from failure & log error
-                        if (request.WsEngine.TryGetTarget(out var engine))
-                        {
-                            engine._surrealDbLoggerFactory?.Method?.LogRequestFailed(
-                                request.Content.Id,
-                                e.Message
-                            );
-                        }
-                    }
+                    engine._surrealDbLoggerFactory?.Method?.LogRequestFailed(
+                        request.Content.Id,
+                        e.Message
+                    );
                 }
             }
-            catch
-            {
-                // TODO : Retry on failure?
-                // TODO : Log the exception?
-            }
-        });
+        }
     }
 #endif
 
@@ -1580,6 +1580,18 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         bool requireInitialized = priority == SurrealDbWsRequestPriority.Normal;
 
+        var transientTraceData = new TransientTraceData();
+        await SurrealDbTelemetryChannel
+            .WriteAsync(
+                new SurrealDbExecuteMethod
+                {
+                    Data = transientTraceData,
+                    Namespace = _config.Ns,
+                    Database = _config.Db,
+                }
+            )
+            .ConfigureAwait(false);
+
         try
         {
             await InternalConnectAsync(requireInitialized, timeoutCts.Token).ConfigureAwait(false);
@@ -1587,7 +1599,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         catch (OperationCanceledException)
         {
             if (!cancellationToken.IsCancellationRequested)
+            {
                 throw new TimeoutException();
+            }
 
             throw;
         }
@@ -1629,6 +1643,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             Id = id,
             Method = method,
             Parameters = shouldSendParamsInRequest ? parameters : null,
+            TraceParent = transientTraceData.Traceparent,
         };
 
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();

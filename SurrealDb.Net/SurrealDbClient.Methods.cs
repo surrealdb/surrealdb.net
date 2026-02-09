@@ -23,18 +23,18 @@ public abstract partial class BaseSurrealDbClient
 {
     public Task Authenticate(Jwt jwt, CancellationToken cancellationToken = default)
     {
-        return Engine.Authenticate(jwt, cancellationToken);
+        return RunWithTelemetryAsync(Engine.Authenticate(jwt, cancellationToken), "authenticate");
     }
 
     public Task Connect(CancellationToken cancellationToken = default)
     {
-        return Engine.Connect(cancellationToken);
+        return RunWithTelemetryAsync(Engine.Connect(cancellationToken), "connect");
     }
 
     public Task<T> Create<T>(T data, CancellationToken cancellationToken = default)
         where T : IRecord
     {
-        return Engine.Create(data, cancellationToken);
+        return RunWithTelemetryAsync(Engine.Create(data, cancellationToken), "create");
     }
 
     public Task<T> Create<T>(
@@ -43,7 +43,11 @@ public abstract partial class BaseSurrealDbClient
         CancellationToken cancellationToken = default
     )
     {
-        return Engine.Create(table, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Create(table, data, cancellationToken),
+            "create",
+            table
+        );
     }
 
     public Task<TOutput> Create<TData, TOutput>(
@@ -53,22 +57,29 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : IRecord
     {
-        return Engine.Create<TData, TOutput>(recordId, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Create<TData, TOutput>(recordId, data, cancellationToken),
+            "create"
+        );
     }
 
     public Task Delete(string table, CancellationToken cancellationToken = default)
     {
-        return Engine.Delete(table, cancellationToken);
+        return RunWithTelemetryAsync(Engine.Delete(table, cancellationToken), "delete", table);
     }
 
     public Task<bool> Delete(RecordId recordId, CancellationToken cancellationToken = default)
     {
-        return Engine.Delete(recordId, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Delete(recordId, cancellationToken),
+            "delete",
+            recordId.Table
+        );
     }
 
     public Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken = default)
     {
-        return Engine.Delete(recordId, cancellationToken);
+        return RunWithTelemetryAsync(Engine.Delete(recordId, cancellationToken), "delete");
     }
 
     public void Dispose()
@@ -88,9 +99,17 @@ public abstract partial class BaseSurrealDbClient
         await Engine.DisposeAsync();
     }
 
-    public async Task<string> Export(
-        ExportOptions? options = default,
+    public Task<string> Export(
+        ExportOptions? options = null,
         CancellationToken cancellationToken = default
+    )
+    {
+        return RunWithTelemetryAsync(InternalExport(options, cancellationToken), "export");
+    }
+
+    private async Task<string> InternalExport(
+        ExportOptions? options,
+        CancellationToken cancellationToken
     )
     {
         if (Engine is ISurrealDbProviderEngine providerEngine)
@@ -135,10 +154,15 @@ public abstract partial class BaseSurrealDbClient
 
     public Task<bool> Health(CancellationToken cancellationToken = default)
     {
-        return Engine.Health(cancellationToken);
+        return RunWithTelemetryAsync(Engine.Health(cancellationToken), "health");
     }
 
-    public async Task Import(string input, CancellationToken cancellationToken = default)
+    public Task Import(string input, CancellationToken cancellationToken = default)
+    {
+        return RunWithTelemetryAsync(InternalImport(input, cancellationToken), "import");
+    }
+
+    private async Task InternalImport(string input, CancellationToken cancellationToken)
     {
         if (Engine is ISurrealDbProviderEngine providerEngine)
         {
@@ -169,7 +193,7 @@ public abstract partial class BaseSurrealDbClient
 
     public Task<T> Info<T>(CancellationToken cancellationToken = default)
     {
-        return Engine.Info<T>(cancellationToken);
+        return RunWithTelemetryAsync(Engine.Info<T>(cancellationToken), "info");
     }
 
     public Task<IEnumerable<T>> Insert<T>(
@@ -179,13 +203,20 @@ public abstract partial class BaseSurrealDbClient
     )
         where T : IRecord
     {
-        return Engine.Insert(table, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Insert(table, data, cancellationToken),
+            "insert",
+            table
+        );
     }
 
     public Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken = default)
         where T : IRelationRecord
     {
-        return Engine.InsertRelation(data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.InsertRelation(data, cancellationToken),
+            "insertrelation"
+        );
     }
 
     public Task<T> InsertRelation<T>(
@@ -195,20 +226,23 @@ public abstract partial class BaseSurrealDbClient
     )
         where T : IRelationRecord
     {
-        return Engine.InsertRelation(table, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.InsertRelation(table, data, cancellationToken),
+            "insertrelation",
+            table
+        );
     }
 
     public Task Invalidate(CancellationToken cancellationToken = default)
     {
-        return Engine.Invalidate(cancellationToken);
+        return RunWithTelemetryAsync(Engine.Invalidate(cancellationToken), "invalidate");
     }
 
     public Task Kill(Guid queryUuid, CancellationToken cancellationToken = default)
     {
-        return Engine.Kill(
-            queryUuid,
-            SurrealDbLiveQueryClosureReason.QueryKilled,
-            cancellationToken
+        return RunWithTelemetryAsync(
+            Engine.Kill(queryUuid, SurrealDbLiveQueryClosureReason.QueryKilled, cancellationToken),
+            "kill"
         );
     }
 
@@ -264,7 +298,10 @@ public abstract partial class BaseSurrealDbClient
     )
         where TMerge : IRecord
     {
-        return Engine.Merge<TMerge, TOutput>(data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Merge<TMerge, TOutput>(data, cancellationToken),
+            "merge"
+        );
     }
 
     public Task<T> Merge<T>(
@@ -273,7 +310,11 @@ public abstract partial class BaseSurrealDbClient
         CancellationToken cancellationToken = default
     )
     {
-        return Engine.Merge<T>(recordId, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Merge<T>(recordId, data, cancellationToken),
+            "merge",
+            recordId.Table
+        );
     }
 
     public Task<T> Merge<T>(
@@ -282,7 +323,7 @@ public abstract partial class BaseSurrealDbClient
         CancellationToken cancellationToken = default
     )
     {
-        return Engine.Merge<T>(recordId, data, cancellationToken);
+        return RunWithTelemetryAsync(Engine.Merge<T>(recordId, data, cancellationToken), "merge");
     }
 
     public Task<IEnumerable<TOutput>> Merge<TMerge, TOutput>(
@@ -292,7 +333,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where TMerge : class
     {
-        return Engine.Merge<TMerge, TOutput>(table, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Merge<TMerge, TOutput>(table, data, cancellationToken),
+            "merge",
+            table
+        );
     }
 
     public Task<IEnumerable<T>> Merge<T>(
@@ -301,7 +346,11 @@ public abstract partial class BaseSurrealDbClient
         CancellationToken cancellationToken = default
     )
     {
-        return Engine.Merge<T>(table, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Merge<T>(table, data, cancellationToken),
+            "merge",
+            table
+        );
     }
 
     public Task<T> Patch<T>(
@@ -311,7 +360,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where T : class
     {
-        return Engine.Patch(recordId, patches, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Patch(recordId, patches, cancellationToken),
+            "patch",
+            recordId.Table
+        );
     }
 
     public Task<T> Patch<T>(
@@ -321,7 +374,7 @@ public abstract partial class BaseSurrealDbClient
     )
         where T : class
     {
-        return Engine.Patch(recordId, patches, cancellationToken);
+        return RunWithTelemetryAsync(Engine.Patch(recordId, patches, cancellationToken), "patch");
     }
 
     public Task<IEnumerable<T>> Patch<T>(
@@ -331,7 +384,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where T : class
     {
-        return Engine.Patch(table, patches, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Patch(table, patches, cancellationToken),
+            "patch",
+            table
+        );
     }
 
 #if NET6_0_OR_GREATER
@@ -340,7 +397,11 @@ public abstract partial class BaseSurrealDbClient
         CancellationToken cancellationToken = default
     )
     {
-        return Engine.RawQuery(query.FormattedText, query.Parameters, cancellationToken);
+        return RunQueryWithTelemetryAsync(
+            Engine.RawQuery(query.FormattedText, query.Parameters, cancellationToken),
+            query.FormattedText,
+            query.Parameters
+        );
     }
 #else
     public Task<SurrealDbResponse> Query(
@@ -349,7 +410,11 @@ public abstract partial class BaseSurrealDbClient
     )
     {
         var (formattedQuery, parameters) = query.ExtractRawQueryParams();
-        return Engine.RawQuery(formattedQuery, parameters, cancellationToken);
+        return RunQueryWithTelemetryAsync(
+            Engine.RawQuery(formattedQuery, parameters, cancellationToken),
+            formattedQuery,
+            parameters
+        );
     }
 #endif
 
@@ -359,10 +424,11 @@ public abstract partial class BaseSurrealDbClient
         CancellationToken cancellationToken = default
     )
     {
-        return Engine.RawQuery(
+        var @params = parameters ?? ImmutableDictionary<string, object?>.Empty;
+        return RunQueryWithTelemetryAsync(
+            Engine.RawQuery(query, @params, cancellationToken),
             query,
-            parameters ?? ImmutableDictionary<string, object?>.Empty,
-            cancellationToken
+            @params
         );
     }
 
@@ -374,10 +440,15 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : class
     {
-        var outputs = await Engine
-            .Relate<TOutput, object>(table, new[] { @in }, new[] { @out }, null, cancellationToken)
-            .ConfigureAwait(false);
+        var task = Engine.Relate<TOutput, object>(
+            table,
+            new[] { @in },
+            new[] { @out },
+            null,
+            cancellationToken
+        );
 
+        var outputs = await RunWithTelemetryAsync(task, "relate", table).ConfigureAwait(false);
         return outputs.Single();
     }
 
@@ -390,10 +461,15 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : class
     {
-        var outputs = await Engine
-            .Relate<TOutput, TData>(table, new[] { @in }, new[] { @out }, data, cancellationToken)
-            .ConfigureAwait(false);
+        var task = Engine.Relate<TOutput, TData>(
+            table,
+            new[] { @in },
+            new[] { @out },
+            data,
+            cancellationToken
+        );
 
+        var outputs = await RunWithTelemetryAsync(task, "relate", table).ConfigureAwait(false);
         return outputs.Single();
     }
 
@@ -405,7 +481,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : class
     {
-        return Engine.Relate<TOutput, object>(table, ins, new[] { @out }, null, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Relate<TOutput, object>(table, ins, new[] { @out }, null, cancellationToken),
+            "relate",
+            table
+        );
     }
 
     public Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
@@ -417,7 +497,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : class
     {
-        return Engine.Relate<TOutput, TData>(table, ins, new[] { @out }, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Relate<TOutput, TData>(table, ins, new[] { @out }, data, cancellationToken),
+            "relate",
+            table
+        );
     }
 
     public Task<IEnumerable<TOutput>> Relate<TOutput>(
@@ -428,7 +512,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : class
     {
-        return Engine.Relate<TOutput, object>(table, new[] { @in }, outs, null, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Relate<TOutput, object>(table, new[] { @in }, outs, null, cancellationToken),
+            "relate",
+            table
+        );
     }
 
     public Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
@@ -440,7 +528,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : class
     {
-        return Engine.Relate<TOutput, TData>(table, new[] { @in }, outs, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Relate<TOutput, TData>(table, new[] { @in }, outs, data, cancellationToken),
+            "relate",
+            table
+        );
     }
 
     public Task<IEnumerable<TOutput>> Relate<TOutput>(
@@ -451,7 +543,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : class
     {
-        return Engine.Relate<TOutput, object>(table, ins, outs, null, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Relate<TOutput, object>(table, ins, outs, null, cancellationToken),
+            "relate",
+            table
+        );
     }
 
     public Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
@@ -463,7 +559,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : class
     {
-        return Engine.Relate<TOutput, TData>(table, ins, outs, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Relate<TOutput, TData>(table, ins, outs, data, cancellationToken),
+            "relate",
+            table
+        );
     }
 
     public Task<TOutput> Relate<TOutput>(
@@ -474,7 +574,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : class
     {
-        return Engine.Relate<TOutput, object>(recordId, @in, @out, null, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Relate<TOutput, object>(recordId, @in, @out, null, cancellationToken),
+            "relate",
+            recordId.Table
+        );
     }
 
     public Task<TOutput> Relate<TOutput, TData>(
@@ -486,7 +590,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : class
     {
-        return Engine.Relate<TOutput, TData>(recordId, @in, @out, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Relate<TOutput, TData>(recordId, @in, @out, data, cancellationToken),
+            "relate",
+            recordId.Table
+        );
     }
 
     public Task<T> Run<T>(
@@ -495,7 +603,11 @@ public abstract partial class BaseSurrealDbClient
         CancellationToken cancellationToken = default
     )
     {
-        return Engine.Run<T>(name, null, args, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Run<T>(name, null, args, cancellationToken),
+            "run",
+            name
+        );
     }
 
     public Task<T> Run<T>(
@@ -505,7 +617,11 @@ public abstract partial class BaseSurrealDbClient
         CancellationToken cancellationToken = default
     )
     {
-        return Engine.Run<T>(name, version, args, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Run<T>(name, version, args, cancellationToken),
+            "run",
+            name
+        );
     }
 
     public Task<IEnumerable<T>> Select<T>(
@@ -513,12 +629,16 @@ public abstract partial class BaseSurrealDbClient
         CancellationToken cancellationToken = default
     )
     {
-        return Engine.Select<T>(table, cancellationToken);
+        return RunWithTelemetryAsync(Engine.Select<T>(table, cancellationToken), "select", table);
     }
 
     public Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken = default)
     {
-        return Engine.Select<T?>(recordId, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Select<T?>(recordId, cancellationToken),
+            "select",
+            recordId.Table
+        );
     }
 
     public Task<T?> Select<T>(
@@ -526,7 +646,7 @@ public abstract partial class BaseSurrealDbClient
         CancellationToken cancellationToken = default
     )
     {
-        return Engine.Select<T?>(recordId, cancellationToken);
+        return RunWithTelemetryAsync(Engine.Select<T?>(recordId, cancellationToken), "select");
     }
 
     public Task<IEnumerable<TOutput>> Select<TStart, TEnd, TOutput>(
@@ -534,50 +654,53 @@ public abstract partial class BaseSurrealDbClient
         CancellationToken cancellationToken = default
     )
     {
-        return Engine.Select<TStart, TEnd, TOutput>(recordIdRange, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Select<TStart, TEnd, TOutput>(recordIdRange, cancellationToken),
+            "select"
+        );
     }
 
     public Task Set(string key, object value, CancellationToken cancellationToken = default)
     {
-        return Engine.Set(key, value, cancellationToken);
+        return RunWithTelemetryAsync(Engine.Set(key, value, cancellationToken), "set");
     }
 
     public Task SignIn(RootAuth root, CancellationToken cancellationToken = default)
     {
-        return Engine.SignIn(root, cancellationToken);
+        return RunWithTelemetryAsync(Engine.SignIn(root, cancellationToken), "signin");
     }
 
     public Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken = default)
     {
-        return Engine.SignIn(nsAuth, cancellationToken);
+        return RunWithTelemetryAsync(Engine.SignIn(nsAuth, cancellationToken), "signin");
     }
 
     public Task<Jwt> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken = default)
     {
-        return Engine.SignIn(dbAuth, cancellationToken);
+        return RunWithTelemetryAsync(Engine.SignIn(dbAuth, cancellationToken), "signin");
     }
 
     public Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken = default)
         where T : ScopeAuth
     {
-        return Engine.SignIn(scopeAuth, cancellationToken);
+        return RunWithTelemetryAsync(Engine.SignIn(scopeAuth, cancellationToken), "signin");
     }
 
     public Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken = default)
         where T : ScopeAuth
     {
-        return Engine.SignUp(scopeAuth, cancellationToken);
+        return RunWithTelemetryAsync(Engine.SignUp(scopeAuth, cancellationToken), "signup");
     }
 
     public Task Unset(string key, CancellationToken cancellationToken = default)
     {
-        return Engine.Unset(key, cancellationToken);
+        return RunWithTelemetryAsync(Engine.Unset(key, cancellationToken), "unset");
     }
 
     public Task<T> Update<T>(T data, CancellationToken cancellationToken = default)
         where T : IRecord
     {
-        return Engine.Update(data, cancellationToken);
+        return RunWithTelemetryAsync(Engine.Update(data, cancellationToken), "update");
     }
 
     public Task<TOutput> Update<TData, TOutput>(
@@ -587,7 +710,10 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : IRecord
     {
-        return Engine.Update<TData, TOutput>(recordId, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Update<TData, TOutput>(recordId, data, cancellationToken),
+            "update"
+        );
     }
 
     public Task<IEnumerable<T>> Update<T>(
@@ -597,7 +723,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where T : class
     {
-        return Engine.Update(table, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Update(table, data, cancellationToken),
+            "update",
+            table
+        );
     }
 
     public Task<IEnumerable<TOutput>> Update<TData, TOutput>(
@@ -607,7 +737,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : IRecord
     {
-        return Engine.Update<TData, TOutput>(table, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Update<TData, TOutput>(table, data, cancellationToken),
+            "update",
+            table
+        );
     }
 
     public Task<TOutput> Update<TData, TOutput>(
@@ -617,13 +751,17 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : IRecord
     {
-        return Engine.Update<TData, TOutput>(recordId, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Update<TData, TOutput>(recordId, data, cancellationToken),
+            "update",
+            recordId.Table
+        );
     }
 
     public Task<T> Upsert<T>(T data, CancellationToken cancellationToken = default)
         where T : IRecord
     {
-        return Engine.Upsert(data, cancellationToken);
+        return RunWithTelemetryAsync(Engine.Upsert(data, cancellationToken), "upsert");
     }
 
     public Task<TOutput> Upsert<TData, TOutput>(
@@ -633,7 +771,10 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : IRecord
     {
-        return Engine.Upsert<TData, TOutput>(recordId, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Upsert<TData, TOutput>(recordId, data, cancellationToken),
+            "upsert"
+        );
     }
 
     public Task<IEnumerable<T>> Upsert<T>(
@@ -643,7 +784,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where T : class
     {
-        return Engine.Upsert(table, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Upsert(table, data, cancellationToken),
+            "upsert",
+            table
+        );
     }
 
     public Task<IEnumerable<TOutput>> Upsert<TData, TOutput>(
@@ -653,7 +798,11 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : IRecord
     {
-        return Engine.Upsert<TData, TOutput>(table, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Upsert<TData, TOutput>(table, data, cancellationToken),
+            "upsert",
+            table
+        );
     }
 
     public Task<TOutput> Upsert<TData, TOutput>(
@@ -663,16 +812,20 @@ public abstract partial class BaseSurrealDbClient
     )
         where TOutput : IRecord
     {
-        return Engine.Upsert<TData, TOutput>(recordId, data, cancellationToken);
+        return RunWithTelemetryAsync(
+            Engine.Upsert<TData, TOutput>(recordId, data, cancellationToken),
+            "upsert",
+            recordId.Table
+        );
     }
 
     public Task Use(string ns, string db, CancellationToken cancellationToken = default)
     {
-        return Engine.Use(ns, db, cancellationToken);
+        return RunWithTelemetryAsync(Engine.Use(ns, db, cancellationToken), "use");
     }
 
     public Task<string> Version(CancellationToken cancellationToken = default)
     {
-        return Engine.Version(cancellationToken);
+        return RunWithTelemetryAsync(Engine.Version(cancellationToken), "version");
     }
 }

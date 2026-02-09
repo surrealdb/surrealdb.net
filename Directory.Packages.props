@@ -16,13 +16,18 @@
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.2" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.1" />
-    <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="9.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.2" />
     <PackageVersion Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
     <PackageVersion Include="Microsoft.Reactive.Testing" Version="6.1.0" />
     <PackageVersion Include="Microsoft.Spatial" Version="7.22.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.3.1" />
     <PackageVersion Include="MudBlazor" Version="6.11.2" />
+    <PackageVersion Include="OpenTelemetry.Api" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="1.15.0" />
     <PackageVersion Include="Pidgin" Version="3.2.3" />
     <PackageVersion Include="Scalar.AspNetCore" Version="1.2.36" />
     <PackageVersion Include="Semver" Version="3.0.0" />
@@ -34,6 +39,7 @@
     <PackageVersion Include="System.Linq.Async" Version="6.0.1" />
     <PackageVersion Include="System.Linq.AsyncEnumerable" Version="10.0.1" />
     <PackageVersion Include="SystemTextJsonPatch" Version="4.2.0" />
+    <PackageVersion Include="ThisAssembly.Project" Version="2.1.2" />
     <PackageVersion Include="TUnit" Version="0.90.45" />
     <PackageVersion Include="Ulid" Version="1.4.1" />
     <PackageVersion Include="Verify.TUnit" Version="31.4.3" />

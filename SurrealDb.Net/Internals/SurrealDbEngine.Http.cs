@@ -21,6 +21,9 @@ using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
+using SurrealDb.Net.Telemetry;
+using SurrealDb.Net.Telemetry.Events;
+using SurrealDb.Net.Telemetry.Events.Data;
 #if NET10_0_OR_GREATER
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 #else
@@ -1176,6 +1179,18 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
     {
         long executionStartTime = Stopwatch.GetTimestamp();
+
+        var transientTraceData = new TransientTraceData();
+        await SurrealDbTelemetryChannel
+            .WriteAsync(
+                new SurrealDbExecuteMethod
+                {
+                    Data = transientTraceData,
+                    Namespace = _config.Ns,
+                    Database = _config.Db,
+                }
+            )
+            .ConfigureAwait(false);
 
         if (_version == null && request.Method != "version")
         {
