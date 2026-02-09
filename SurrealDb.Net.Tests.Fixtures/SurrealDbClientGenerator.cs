@@ -68,7 +68,19 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
         _folderPath = _filePathFaker.Generate().Path;
     }
 
+    // TODO : Remove to simplify with Configure()/ctor + GetSingleton()
     public SurrealDbClient Create(string connectionString, string? ns = null, string? db = null)
+    {
+        Configure(connectionString, ns, db);
+        return _serviceProvider!.GetRequiredService<SurrealDbClient>();
+    }
+
+    public SurrealDbClientGenerator Configure(
+        string connectionString,
+        string? ns = null,
+        string? db = null,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton
+    )
     {
         var optionsBuilder = SurrealDbOptions.Create().FromConnectionString(connectionString);
 
@@ -96,13 +108,18 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
         _options = optionsBuilder.Build();
 
         _serviceProvider = new ServiceCollection()
-            .AddSurreal(_options)
+            .AddSurreal(_options, lifetime: lifetime)
             .AddInMemoryProvider()
             .AddRocksDbProvider()
             .AddSurrealKvProvider()
             .And.BuildServiceProvider(validateScopes: true);
 
-        return _serviceProvider.GetRequiredService<SurrealDbClient>();
+        return this;
+    }
+
+    public IServiceScope? CreateScope()
+    {
+        return _serviceProvider?.CreateScope();
     }
 
     public DatabaseInfo GenerateDatabaseInfo()

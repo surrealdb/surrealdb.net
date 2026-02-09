@@ -100,7 +100,7 @@ public class MyClass
 }
 ```
 
-Note that the default lifetime of this service is `Singleton`. You can override this as follows:
+Note that the default lifetime of this service is `Scoped`. You can override this as follows:
 
 ```csharp
 services.AddSurreal(options, ServiceLifetime.Scoped);

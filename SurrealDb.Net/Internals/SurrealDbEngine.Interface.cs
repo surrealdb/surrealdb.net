@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals.Models.LiveQuery;
+using SurrealDb.Net.Internals.ObjectPool;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -14,8 +15,10 @@ using SystemTextJsonPatch;
 
 namespace SurrealDb.Net.Internals;
 
-public interface ISurrealDbEngine : IDisposable, IAsyncDisposable
+public interface ISurrealDbEngine : IDisposable, IAsyncDisposable, IAsyncResettable
 {
+    Uri Uri { get; }
+
     Task Authenticate(Jwt jwt, CancellationToken cancellationToken);
     Task Connect(CancellationToken cancellationToken);
     Task<T> Create<T>(T data, CancellationToken cancellationToken)

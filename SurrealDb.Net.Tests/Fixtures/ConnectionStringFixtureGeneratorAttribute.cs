@@ -32,6 +32,9 @@ public class ConnectionStringFixtureGeneratorAttribute : DataSourceGeneratorAttr
 
 public class RemoteConnectionStringFixtureGeneratorAttribute : DataSourceGeneratorAttribute<string>
 {
+    private static readonly WebsocketConnectionStringFixtureGeneratorAttribute _websocketConnectionStringFixtureGeneratorAttribute =
+        new();
+
     protected override IEnumerable<Func<string>> GenerateDataSources(
         DataGeneratorMetadata dataGeneratorMetadata
     )
@@ -44,6 +47,31 @@ public class RemoteConnectionStringFixtureGeneratorAttribute : DataSourceGenerat
     )
     {
         yield return () => "Endpoint=http://127.0.0.1:8000;User=root;Pass=root";
+        foreach (
+            var cs in _websocketConnectionStringFixtureGeneratorAttribute.GenerateDataSourcesPublicly(
+                dataGeneratorMetadata
+            )
+        )
+        {
+            yield return cs;
+        }
+    }
+}
+
+public class WebsocketConnectionStringFixtureGeneratorAttribute
+    : DataSourceGeneratorAttribute<string>
+{
+    protected override IEnumerable<Func<string>> GenerateDataSources(
+        DataGeneratorMetadata dataGeneratorMetadata
+    )
+    {
+        return GenerateDataSourcesPublicly(dataGeneratorMetadata);
+    }
+
+    public IEnumerable<Func<string>> GenerateDataSourcesPublicly(
+        DataGeneratorMetadata dataGeneratorMetadata
+    )
+    {
         yield return () => "Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root";
     }
 }

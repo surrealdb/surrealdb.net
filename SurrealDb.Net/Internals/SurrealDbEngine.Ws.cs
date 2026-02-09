@@ -40,6 +40,10 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     internal Action<CborOptions>? _configureCborOptions { get; }
     internal SurrealDbWsEngineConfig _config { get; }
 
+#if DEBUG
+    public string Id => _id;
+#endif
+
     private readonly string _id;
     private readonly SurrealDbOptions _parameters;
     private readonly ISurrealDbLoggerFactory? _surrealDbLoggerFactory;
@@ -63,6 +67,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 #endif
 
     private bool _isInitialized;
+
+    public Uri Uri { get; }
 
 #if NET9_0_OR_GREATER
     static SurrealDbWsEngine()
@@ -114,6 +120,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             id = RandomHelper.CreateRandomId();
         } while (!_wsEngines.TryAdd(id, this));
 
+        Uri = new Uri(parameters.Endpoint!);
         _id = id;
         _parameters = parameters;
         _configureCborOptions = configureCborOptions;
@@ -484,7 +491,6 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             _responseTasks.TryRemove(key, out _);
             value.TrySetCanceled();
         }
-
 #else
         foreach (var (key, value) in _responseTaskHandler)
         {
@@ -1090,6 +1096,88 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         _liveQueryChannelSubscriptions.Add(liveQueryChannel);
 
         return liveQueryChannel;
+    }
+
+    public async Task<bool> TryResetAsync()
+    {
+        var minVersion = SemVersion.Parse("2.2.0");
+        if (_version is null || !_version.Satisfies(SemVersionRange.AtLeast(minVersion, true)))
+        {
+            return false;
+        }
+
+        try
+        {
+            // Cancel all response tasks
+#if NET9_0_OR_GREATER
+            foreach (var (key, value) in _responseTasks)
+            {
+                _responseTasks.TryRemove(key, out _);
+                value.TrySetCanceled();
+            }
+#else
+            foreach (var (key, value) in _responseTaskHandler)
+            {
+                _responseTaskHandler.TryRemove(key, out _);
+                value.TrySetCanceled();
+            }
+#endif
+
+            // Clear server context
+            await SendRequestAsync(
+                    "reset",
+                    null,
+                    SurrealDbWsRequestPriority.Normal,
+                    CancellationToken.None
+                )
+                .ConfigureAwait(false);
+
+            // Reset configuration
+            _config.Reset(_parameters);
+
+            // Apply configuration for connection reuse (neutral state)
+            await ApplyConfigurationAsync(CancellationToken.None).ConfigureAwait(false);
+
+            // Close Live Queries
+            var endChannelsTasks = new List<Task>();
+
+            foreach (var (key, value) in _liveQueryChannelSubscriptionsPerQuery)
+            {
+                if (
+                    value.WsEngineId == _id
+                    && _liveQueryChannelSubscriptionsPerQuery.TryRemove(
+                        key,
+                        out var liveQueryChannelSubscriptions
+                    )
+                )
+                {
+                    foreach (var liveQueryChannel in liveQueryChannelSubscriptions)
+                    {
+                        var closeTask = CloseLiveQueryAsync(
+                            liveQueryChannel,
+                            SurrealDbLiveQueryClosureReason.ConnectionTerminated
+                        );
+                        endChannelsTasks.Add(closeTask);
+                    }
+                }
+            }
+
+            if (endChannelsTasks.Count > 0)
+            {
+                try
+                {
+                    await Task.WhenAll(endChannelsTasks).ConfigureAwait(false);
+                }
+                catch (SurrealDbException) { }
+                catch (OperationCanceledException) { }
+            }
+
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     public async Task Unset(string key, CancellationToken cancellationToken)

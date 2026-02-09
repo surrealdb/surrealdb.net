@@ -37,12 +37,19 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     internal Action<CborOptions>? _configureCborOptions { get; }
     internal SurrealDbHttpEngineConfig _config { get; }
 
-    private readonly Uri _uri;
+    private int _pendingRequests;
+
+#if DEBUG
+    public string Id { get; } = Guid.NewGuid().ToString();
+#endif
+
     private readonly SurrealDbOptions _parameters;
     private readonly IHttpClientFactory? _httpClientFactory;
     private readonly ISurrealDbLoggerFactory? _surrealDbLoggerFactory;
     private readonly Lazy<HttpClient> _singleHttpClient = new(() => new HttpClient(), true);
     private HttpClientConfiguration? _singleHttpClientConfiguration;
+
+    public Uri Uri { get; }
 
     public SurrealDbHttpEngine(
         SurrealDbOptions parameters,
@@ -51,7 +58,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         ISurrealDbLoggerFactory? surrealDbLoggerFactory
     )
     {
-        _uri = new Uri(parameters.Endpoint!);
+        Uri = new Uri(parameters.Endpoint!);
         _parameters = parameters;
         _httpClientFactory = httpClientFactory;
         _configureCborOptions = configureCborOptions;
@@ -730,6 +737,31 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         throw new NotSupportedException();
     }
 
+    public Task<bool> TryResetAsync()
+    {
+        try
+        {
+            if (_pendingRequests > 0)
+            {
+                throw new SurrealDbException("Cannot reset client while requests are pending.");
+            }
+
+#if ENABLE_HTTP_RESET
+            var request = new SurrealDbHttpRequest { Method = "reset" };
+            await ExecuteRequestAsync(request, CancellationToken.None).ConfigureAwait(false);
+
+            _config.Reset(_parameters);
+            return true;
+#else
+            return Task.FromResult(false);
+#endif
+        }
+        catch (Exception)
+        {
+            return Task.FromResult(false);
+        }
+    }
+
     public Task Unset(string key, CancellationToken _)
     {
         if (key is null)
@@ -999,7 +1031,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         UseConfiguration? useConfiguration
     )
     {
-        client.BaseAddress = _uri;
+        client.BaseAddress = Uri;
 
         var ns = useConfiguration is not null ? useConfiguration.Ns : _config.Ns;
         var db = useConfiguration is not null ? useConfiguration.Db : _config.Db;
@@ -1076,7 +1108,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         if (_httpClientFactory is not null)
         {
-            string httpClientName = HttpClientHelper.GetHttpClientName(_uri);
+            string httpClientName = HttpClientHelper.GetHttpClientName(Uri);
             return _httpClientFactory.CreateClient(httpClientName);
         }
 
@@ -1153,12 +1185,27 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         using var wrapper = CreateHttpClientWrapper();
         using var body = CreateBodyContent(_configureCborOptions, request, _surrealDbLoggerFactory);
 
-        using var response = await wrapper
-            .Instance.PostAsync(RPC_ENDPOINT, body, cancellationToken)
-            .ConfigureAwait(false);
+        Interlocked.Increment(ref _pendingRequests);
 
-        var surrealDbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
-            .ConfigureAwait(false);
+        SurrealDbHttpOkResponse surrealDbResponse;
+
+        try
+        {
+            using var response = await wrapper
+                .Instance.PostAsync(RPC_ENDPOINT, body, cancellationToken)
+                .ConfigureAwait(false);
+
+            surrealDbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch
+        {
+            throw;
+        }
+        finally
+        {
+            Interlocked.Decrement(ref _pendingRequests);
+        }
 
 #if NET7_0_OR_GREATER
         var executionTime = Stopwatch.GetElapsedTime(executionStartTime);

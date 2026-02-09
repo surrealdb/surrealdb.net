@@ -14,6 +14,7 @@
 	<PackageReference Include="Dahomey.Cbor" />
 	<PackageReference Include="Microsoft.AspNetCore.JsonPatch.SystemTextJson" Condition="'$(TargetFramework)' == 'net10.0'" />
 	<PackageReference Include="Microsoft.Extensions.Http" />
+	<PackageReference Include="Microsoft.Extensions.ObjectPool" />
 	<PackageReference Include="Microsoft.IO.RecyclableMemoryStream" />
 	<PackageReference Include="Microsoft.Spatial" />
 	<PackageReference Include="Semver" />
@@ -30,6 +31,9 @@
 	<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
 	  <_Parameter1>SurrealDb.Net.LiveQuery.Tests</_Parameter1>
 	</AssemblyAttribute>
+  <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+    <_Parameter1>SurrealDb.Net.Tests.Fixtures</_Parameter1>
+  </AssemblyAttribute>
 	<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
 	  <_Parameter1>SurrealDb.Net.Benchmarks</_Parameter1>
 	</AssemblyAttribute>
