@@ -2,17 +2,20 @@
 
 namespace SurrealDb.Net.Internals.Ws;
 
-internal class SurrealDbWsErrorResponse : ISurrealDbWsStandardResponse
+internal sealed class SurrealDbWsErrorResponse : ISurrealDbWsStandardResponse
 {
     public string Id { get; set; } = string.Empty;
     public SurrealDbWsErrorResponseContent Error { get; set; } = new();
 }
 
-internal class SurrealDbWsErrorResponseContent
+internal sealed class SurrealDbWsErrorResponseContent
 {
     [CborProperty("code")]
     public long Code { get; set; }
 
     [CborProperty("message")]
     public string Message { get; set; } = string.Empty;
+
+    [CborProperty("kind")]
+    public string? Kind { get; set; }
 }

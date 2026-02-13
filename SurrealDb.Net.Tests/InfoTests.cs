@@ -55,7 +55,7 @@ public class InfoTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.User);
@@ -93,7 +93,9 @@ public class InfoTests
             RegisteredAt = currentUser?.RegisteredAt ?? default,
         };
 
-        currentUser.Should().BeEquivalentTo(expected);
+        currentUser
+            .Should()
+            .BeEquivalentTo(expected, options => options.Excluding(u => u.Password));
         currentUser?.Id.Should().NotBeNull();
     }
 

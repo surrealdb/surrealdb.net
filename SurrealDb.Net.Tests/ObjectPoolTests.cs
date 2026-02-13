@@ -99,6 +99,8 @@ public class ObjectPoolTests
     [SinceSurrealVersion("2.2")]
     public async Task ShouldResetAuthWhenClientIsReused(string connectionString)
     {
+        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
+
         User? userSession1 = null;
         User? userSession2 = null;
 
@@ -119,9 +121,9 @@ public class ObjectPoolTests
             {
                 string filePath = Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory,
-                    "Schemas/user.surql"
+                    $"Schemas/v{version.Major}/user.surql"
                 );
-                string fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+                string fileContent = await File.ReadAllTextAsync(filePath, Encoding.UTF8);
 
                 string query = fileContent;
                 await client1.RawQuery(query);

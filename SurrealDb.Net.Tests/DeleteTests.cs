@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using SurrealDb.Net.Exceptions;
 
 namespace SurrealDb.Net.Tests;
 
@@ -100,6 +101,8 @@ public class DeleteTests
     [ConnectionStringFixtureGenerator]
     public async Task ShouldTryToDeleteInexistentRecord(string connectionString)
     {
+        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
+
         IEnumerable<Post>? list = null;
         bool? result = null;
 
@@ -108,7 +111,7 @@ public class DeleteTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -117,6 +120,14 @@ public class DeleteTests
 
             list = await client.Select<Post>("post");
         };
+
+        if (version.Major >= 3)
+        {
+            await func.Should()
+                .ThrowAsync<SurrealDbException>()
+                .WithMessage("Expected a single result output when using the ONLY keyword");
+            return;
+        }
 
         await func.Should().NotThrowAsync();
 

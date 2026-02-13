@@ -34,6 +34,7 @@ internal sealed class SurrealDbWsLiveResponseContentConverter
         RecordId? record = null;
         string? action = null;
         ReadOnlyMemory<byte>? result = null;
+        Guid? session = null;
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
@@ -66,6 +67,12 @@ internal sealed class SurrealDbWsLiveResponseContentConverter
                 continue;
             }
 
+            if (key.SequenceEqual("session"u8))
+            {
+                session = _guidConverter.Read(ref reader);
+                continue;
+            }
+
             throw new CborException(
                 $"{Encoding.UTF8.GetString(key)} is not a valid property of {nameof(SurrealDbWsLiveResponseContent)}."
             );
@@ -73,7 +80,7 @@ internal sealed class SurrealDbWsLiveResponseContentConverter
 
         if (id.HasValue && action is not null)
         {
-            if (action == LiveQueryConstants.KILLED)
+            if (action == LiveQueryActionConstants.KILLED)
             {
                 return new SurrealDbWsLiveResponseContent(
                     id.Value,

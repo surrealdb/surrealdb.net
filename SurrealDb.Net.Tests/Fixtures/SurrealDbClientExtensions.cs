@@ -1,5 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Text;
+using Semver;
+using SurrealDb.Net.Extensions;
 
 namespace SurrealDb.Net.Tests.Fixtures;
 
@@ -14,12 +16,15 @@ public static class SurrealDbClientExtensions
         CancellationToken cancellationToken = default
     )
     {
-        string query = await RetrieveSchemaDefinitionAsync(schemaFile, cancellationToken);
+        var version = (await client.Version(cancellationToken)).ToSemver();
+        string query = await RetrieveSchemaDefinitionAsync(schemaFile, version, cancellationToken);
+
         (await client.RawQuery(query, cancellationToken: cancellationToken)).EnsureAllOks();
     }
 
     private static async ValueTask<string> RetrieveSchemaDefinitionAsync(
         SurrealSchemaFile schemaFile,
+        SemVersion version,
         CancellationToken cancellationToken
     )
     {
@@ -44,9 +49,17 @@ public static class SurrealDbClientExtensions
             _ => throw new NotImplementedException(),
         };
 
+        bool hasVersionedSchemas = schemaFile switch
+        {
+            SurrealSchemaFile.User => true,
+            _ => false,
+        };
+
+        string folder = hasVersionedSchemas ? $"Schemas/v{version.Major}" : "Schemas";
+
         string filePath = Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory,
-            $"Schemas/{schemaFileName}.surql"
+            $"{folder}/{schemaFileName}.surql"
         );
         string fileContent = await File.ReadAllTextAsync(
             filePath,

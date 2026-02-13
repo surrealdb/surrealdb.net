@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace SurrealDb.Net.Tests;
+﻿namespace SurrealDb.Net.Tests;
 
 public class AuthenticateTests
 {

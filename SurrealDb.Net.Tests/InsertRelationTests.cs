@@ -28,6 +28,7 @@ public class InsertRelationTests
                 dbInfo.Namespace,
                 dbInfo.Database
             );
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             result = await client.InsertRelation(
                 new WroteRelation

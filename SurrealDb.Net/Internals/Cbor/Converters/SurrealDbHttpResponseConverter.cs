@@ -7,7 +7,7 @@ using SurrealDb.Net.Internals.Http;
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
 
-internal class SurrealDbHttpResponseConverter : CborConverterBase<ISurrealDbHttpResponse>
+internal sealed class SurrealDbHttpResponseConverter : CborConverterBase<ISurrealDbHttpResponse>
 {
     private readonly CborOptions _options;
     private readonly ICborConverter<SurrealDbHttpErrorResponseContent> _surrealDbHttpErrorResponseContentConverter;

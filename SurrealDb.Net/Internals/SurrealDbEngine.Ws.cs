@@ -152,6 +152,10 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                 Observable.FromAsync(
                     async (cancellationToken) =>
                     {
+#if DEBUG
+                        try
+                        {
+#endif
                         ISurrealDbWsResponse? response = null;
 
                         if (message.MessageType == WebSocketMessageType.Binary)
@@ -236,6 +240,14 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                                     break;
                             }
                         }
+#if DEBUG
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine(ex.Message);
+                            throw;
+                        }
+#endif
                     }
                 )
             )
@@ -1649,6 +1661,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 #else
             await SendInnerRequestAsync(request).ConfigureAwait(false);
 #endif
+
             var result = await taskCompletionSource.Task.ConfigureAwait(false);
 
 #if NET7_0_OR_GREATER
