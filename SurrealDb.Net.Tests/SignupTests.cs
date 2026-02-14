@@ -6,14 +6,14 @@ public class SignUpTests
     [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldSignUpUsingScopeAuth(string connectionString)
     {
-        Jwt? jwt = null;
+        Tokens? tokens = null;
 
         Func<Task> func = async () =>
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.User);
@@ -31,13 +31,13 @@ public class SignUpTests
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            jwt = await client.SignUp(authParams);
+            tokens = await client.SignUp(authParams);
         };
 
         await func.Should().NotThrowAsync();
 
-        jwt.Should().NotBeNull();
-        jwt!.Value.Token.Should().BeValidJwt();
+        tokens.Should().NotBeNull();
+        tokens!.Access.Should().BeValidJwt();
     }
 
     [Test]
@@ -49,7 +49,7 @@ public class SignUpTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.User);

@@ -31,13 +31,13 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// `Authenticate` on surrealdb.com/docs
     /// </see>
     /// </summary>
-    /// <param name="jwt">The JWT holder of the token.</param>
+    /// <param name="tokens">The JWT holder of the token.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task Authenticate(Jwt jwt, CancellationToken cancellationToken = default);
+    Task Authenticate(Tokens tokens, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Connects to the SurrealDB instance. This can improve performance to avoid cold starts.<br />
@@ -960,7 +960,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken = default);
+    Task<Tokens> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Sign in as a database user.<br />
@@ -974,7 +974,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<Jwt> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken = default);
+    Task<Tokens> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Sign in as a scoped user.<br />
@@ -990,7 +990,7 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken = default)
+    Task<Tokens> SignIn<T>(T scopeAuth, CancellationToken cancellationToken = default)
         where T : ScopeAuth;
 
     /// <summary>
@@ -1002,12 +1002,12 @@ public interface ISurrealDbClient : IDisposable, IAsyncDisposable
     /// <typeparam name="T">Type of the params used in the SIGNUP scope function</typeparam>
     /// <param name="scopeAuth">Credentials to sign up as a scoped user</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-    /// <returns>The JSON Web Token that can be used to authenticate the user</returns>
+    /// <returns>The tokens that can be used to authenticate the user</returns>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken = default)
+    Task<Tokens> SignUp<T>(T scopeAuth, CancellationToken cancellationToken = default)
         where T : ScopeAuth;
 
     /// <summary>

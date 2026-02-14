@@ -11,6 +11,7 @@
 /// * stored in a database with restricted access,<br />
 /// * or encrypted in conjunction with other encryption mechanisms.<br />
 /// </summary>
+[Obsolete($"Use {nameof(Tokens)} type.")]
 public readonly struct Jwt
 {
     /// <summary>
@@ -26,10 +27,5 @@ public readonly struct Jwt
     public Jwt(string token)
     {
         Token = token;
-    }
-
-    public override string ToString()
-    {
-        return Token;
     }
 }

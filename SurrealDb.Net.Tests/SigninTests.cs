@@ -14,6 +14,24 @@ public class AuthParams : ScopeAuth
     public string Password { get; set; } = string.Empty;
 }
 
+public class AccessResponse
+{
+    [Column("grant")]
+    public AccessResponseGrant Grant { get; set; } = null!;
+}
+
+public class AccessResponseGrant
+{
+    [Column("key")]
+    public string Key { get; set; } = string.Empty;
+}
+
+public class AcessAuthParams : ScopeAuth
+{
+    [Column("key")]
+    public required string Key { get; init; }
+}
+
 public class SignInTests
 {
     [Test]
@@ -24,7 +42,7 @@ public class SignInTests
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         };
 
@@ -39,7 +57,7 @@ public class SignInTests
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         };
 
@@ -52,20 +70,20 @@ public class SignInTests
     [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldSignInUsingNamespaceAuth(string connectionString)
     {
-        Jwt? jwt = null;
+        Tokens? tokens = null;
 
         Func<Task> func = async () =>
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             string query = "DEFINE USER johndoe ON NAMESPACE PASSWORD 'password123'";
             (await client.RawQuery(query)).EnsureAllOks();
 
-            jwt = await client.SignIn(
+            tokens = await client.SignIn(
                 new NamespaceAuth
                 {
                     Namespace = dbInfo.Namespace,
@@ -77,8 +95,8 @@ public class SignInTests
 
         await func.Should().NotThrowAsync();
 
-        jwt.Should().NotBeNull();
-        jwt!.Value.Token.Should().BeValidJwt();
+        tokens.Should().NotBeNull();
+        tokens!.Access.Should().BeValidJwt();
     }
 
     [Test]
@@ -115,20 +133,20 @@ public class SignInTests
     [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldSignInUsingDatabaseAuth(string connectionString)
     {
-        Jwt? jwt = null;
+        Tokens? tokens = null;
 
         Func<Task> func = async () =>
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             string query = "DEFINE USER johndoe ON DATABASE PASSWORD 'password123'";
             (await client.RawQuery(query)).EnsureAllOks();
 
-            jwt = await client.SignIn(
+            tokens = await client.SignIn(
                 new DatabaseAuth
                 {
                     Namespace = dbInfo.Namespace,
@@ -141,8 +159,8 @@ public class SignInTests
 
         await func.Should().NotThrowAsync();
 
-        jwt.Should().NotBeNull();
-        jwt!.Value.Token.Should().BeValidJwt();
+        tokens.Should().NotBeNull();
+        tokens!.Access.Should().BeValidJwt();
     }
 
     [Test]
@@ -154,7 +172,7 @@ public class SignInTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             string query = "DEFINE USER johndoe ON DATABASE PASSWORD 'password123'";
@@ -180,14 +198,14 @@ public class SignInTests
     [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldSignInUsingScopeAuth(string connectionString)
     {
-        Jwt? jwt = null;
+        Tokens? tokens = null;
 
         Func<Task> func = async () =>
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.User);
@@ -207,13 +225,13 @@ public class SignInTests
 
             await client.SignUp(authParams);
 
-            jwt = await client.SignIn(authParams);
+            tokens = await client.SignIn(authParams);
         };
 
         await func.Should().NotThrowAsync();
 
-        jwt.Should().NotBeNull();
-        jwt!.Value.Token.Should().BeValidJwt();
+        tokens.Should().NotBeNull();
+        tokens!.Access.Should().BeValidJwt();
     }
 
     [Test]
@@ -225,7 +243,7 @@ public class SignInTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.User);
@@ -251,5 +269,44 @@ public class SignInTests
         await func.Should()
             .ThrowAsync<NotSupportedException>()
             .WithMessage("Authentication is not enabled in embedded mode.");
+    }
+
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldSignInUsingBearerAuth(string connectionString)
+    {
+        Tokens? tokens = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            await using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Bearer);
+
+            var response = await client.RawQuery("ACCESS api GRANT FOR RECORD user:johndoe;");
+            response.EnsureAllOks();
+
+            var access = response.FirstOk!.GetValue<AccessResponse>()!;
+
+            var authParams = new AcessAuthParams
+            {
+                Namespace = dbInfo.Namespace,
+                Database = dbInfo.Database,
+                Access = "api",
+                Key = access.Grant.Key,
+            };
+
+            tokens = await client.SignIn(authParams);
+        };
+
+        await func.Should().NotThrowAsync();
+
+        tokens.Should().NotBeNull();
+        tokens!.Access.Should().BeValidJwt();
     }
 }

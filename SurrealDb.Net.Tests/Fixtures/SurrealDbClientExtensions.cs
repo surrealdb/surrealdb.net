@@ -46,6 +46,7 @@ public static class SurrealDbClientExtensions
             SurrealSchemaFile.User => "user",
             SurrealSchemaFile.Uuid => "uuid",
             SurrealSchemaFile.Vector => "vector",
+            SurrealSchemaFile.Bearer => "bearer",
             _ => throw new NotImplementedException(),
         };
 

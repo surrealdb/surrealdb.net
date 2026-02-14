@@ -21,9 +21,9 @@ namespace SurrealDb.Net;
 
 public abstract partial class BaseSurrealDbClient
 {
-    public Task Authenticate(Jwt jwt, CancellationToken cancellationToken = default)
+    public Task Authenticate(Tokens tokens, CancellationToken cancellationToken = default)
     {
-        return Engine.Authenticate(jwt, cancellationToken);
+        return Engine.Authenticate(tokens, cancellationToken);
     }
 
     public Task Connect(CancellationToken cancellationToken = default)
@@ -547,23 +547,23 @@ public abstract partial class BaseSurrealDbClient
         return Engine.SignIn(root, cancellationToken);
     }
 
-    public Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken = default)
+    public Task<Tokens> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken = default)
     {
         return Engine.SignIn(nsAuth, cancellationToken);
     }
 
-    public Task<Jwt> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken = default)
+    public Task<Tokens> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken = default)
     {
         return Engine.SignIn(dbAuth, cancellationToken);
     }
 
-    public Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken = default)
+    public Task<Tokens> SignIn<T>(T scopeAuth, CancellationToken cancellationToken = default)
         where T : ScopeAuth
     {
         return Engine.SignIn(scopeAuth, cancellationToken);
     }
 
-    public Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken = default)
+    public Task<Tokens> SignUp<T>(T scopeAuth, CancellationToken cancellationToken = default)
         where T : ScopeAuth
     {
         return Engine.SignUp(scopeAuth, cancellationToken);

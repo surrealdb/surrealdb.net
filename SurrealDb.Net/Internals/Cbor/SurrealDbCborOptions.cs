@@ -4,6 +4,7 @@ using SurrealDb.Net.Internals.Cbor.Converters.Numerics;
 using SurrealDb.Net.Internals.Cbor.Converters.Spatial;
 using SurrealDb.Net.Internals.Http;
 using SurrealDb.Net.Internals.Ws;
+using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Internals.Cbor;
@@ -46,6 +47,7 @@ public static class SurrealDbCborOptions
             new JsonPatchDocumentConverterProvider()
         );
         RegisterWsEngineConverters(options);
+        options.Registry.ConverterRegistry.RegisterConverter(typeof(Tokens), new TokensConverter());
 
         return options;
     }

@@ -6,7 +6,7 @@ public class AuthenticateTests
     [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldAuthenticate(string connectionString)
     {
-        Jwt? jwt = null;
+        Tokens? tokens = null;
         IEnumerable<Post>? list = null;
 
         Func<Task> func = async () =>
@@ -14,7 +14,7 @@ public class AuthenticateTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.User);
@@ -33,9 +33,9 @@ public class AuthenticateTests
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            jwt = await client.SignUp(authParams);
+            tokens = await client.SignUp(authParams);
 
-            await client.Authenticate(jwt.Value);
+            await client.Authenticate(tokens);
 
             list = await client.Select<Post>("post");
         };
@@ -54,7 +54,7 @@ public class AuthenticateTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.User);
@@ -87,7 +87,7 @@ public class AuthenticateTests
     [RemoteConnectionStringFixtureGenerator]
     public async Task ShouldFailWhenInvalidate(string connectionString)
     {
-        Jwt? jwt = null;
+        Tokens? tokens = null;
         IEnumerable<Post>? list = null;
 
         Func<Task> func = async () =>
@@ -95,7 +95,7 @@ public class AuthenticateTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.User);
@@ -114,7 +114,7 @@ public class AuthenticateTests
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            jwt = await client.SignUp(authParams);
+            tokens = await client.SignUp(authParams);
 
             await client.Invalidate();
 
