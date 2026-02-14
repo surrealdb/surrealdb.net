@@ -4,17 +4,16 @@ using Dahomey.Cbor.Serialization.Converters.Providers;
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
 
-internal sealed class RangeConverterProvider : CborConverterProviderBase
+internal sealed class HashSetConverterProvider : CborConverterProviderBase
 {
     public override ICborConverter? GetConverter(Type type, CborOptions options)
     {
-        if (type.Namespace == ConverterTypeConstants.ModelsNamespace && type.Name == "Range`2")
+        if (type is { Namespace: "System.Collections.Generic", Name: "HashSet`1" })
         {
             return CreateGenericConverter(
                 options,
-                typeof(RangeConverter<,>),
-                type.GenericTypeArguments[0],
-                type.GenericTypeArguments[1]
+                typeof(HashSetConverter<>),
+                type.GenericTypeArguments[0]
             );
         }
 

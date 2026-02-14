@@ -1,5 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using SurrealDb.Net.Internals.Cbor;
+using SurrealDb.Net.Internals.Cbor.Converters;
 using SurrealDb.Net.Models;
 
 namespace SurrealDb.Net.Json.Internals;
@@ -22,7 +24,7 @@ internal sealed class RecordIdJsonFactoryConverter : JsonConverterFactory
             return true;
 
         if (
-            typeToConvert.Namespace == "SurrealDb.Net.Models"
+            typeToConvert.Namespace == ConverterTypeConstants.ModelsNamespace
             && typeToConvert.Name == "RecordIdOf`1"
         )
             return true;

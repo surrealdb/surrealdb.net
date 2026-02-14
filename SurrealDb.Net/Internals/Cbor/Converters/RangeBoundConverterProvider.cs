@@ -8,7 +8,7 @@ internal sealed class RangeBoundConverterProvider : CborConverterProviderBase
 {
     public override ICborConverter? GetConverter(Type type, CborOptions options)
     {
-        if (type.Namespace == "SurrealDb.Net.Models" && type.Name == "RangeBound`1")
+        if (type.Namespace == ConverterTypeConstants.ModelsNamespace && type.Name == "RangeBound`1")
         {
             return CreateGenericConverter(
                 options,

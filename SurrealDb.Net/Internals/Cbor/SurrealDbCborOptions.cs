@@ -23,6 +23,9 @@ public static class SurrealDbCborOptions
             new PrimitiveConverterProvider()
         );
         options.Registry.ConverterRegistry.RegisterConverterProvider(
+            new HashSetConverterProvider()
+        );
+        options.Registry.ConverterRegistry.RegisterConverterProvider(
             new RecordIdOfConverterProvider()
         );
         options.Registry.ConverterRegistry.RegisterConverterProvider(
