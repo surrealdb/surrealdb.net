@@ -5,7 +5,7 @@ using SurrealDb.Net.Models;
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
 
-internal class PrimitiveConverterProvider : CborConverterProviderBase
+internal sealed class PrimitiveConverterProvider : CborConverterProviderBase
 {
     public override ICborConverter? GetConverter(Type type, CborOptions options)
     {
@@ -59,6 +59,10 @@ internal class PrimitiveConverterProvider : CborConverterProviderBase
         if (type == typeof(Future))
         {
             return new FutureConverter();
+        }
+        if (type == typeof(SurrealFile))
+        {
+            return new SurrealFileConverter();
         }
 
         return null;

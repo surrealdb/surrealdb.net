@@ -12,6 +12,7 @@ internal static class CborTagConstants
     public const ulong TAG_RANGE = 49;
     public const ulong TAG_INCLUSIVE_BOUND = 50;
     public const ulong TAG_EXCLUSIVE_BOUND = 51;
+    public const ulong TAG_FILE = 55;
     public const ulong TAG_SET = 56;
     public const ulong TAG_GEOMETRY_POINT = 88;
     public const ulong TAG_GEOMETRY_LINE = 89;
