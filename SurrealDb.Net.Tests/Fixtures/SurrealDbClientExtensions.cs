@@ -68,7 +68,10 @@ public static class SurrealDbClientExtensions
             cancellationToken
         );
 
-        _schemaDefinitions.TryAdd(schemaFile, fileContent);
+        if (!hasVersionedSchemas)
+        {
+            _schemaDefinitions.TryAdd(schemaFile, fileContent);
+        }
 
         return fileContent;
     }

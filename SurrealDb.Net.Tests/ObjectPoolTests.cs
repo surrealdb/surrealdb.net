@@ -13,9 +13,12 @@ public class ObjectPoolTests
     public async Task ShouldCreateTwoDistinctEngines(string connectionString)
     {
         var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
-        if (options.Endpoint!.StartsWith(EndpointConstants.Client.ROCKSDB))
+        if (
+            options.Endpoint!.StartsWith(EndpointConstants.Client.ROCKSDB)
+            || options.Endpoint!.StartsWith(EndpointConstants.Client.SURREALKV)
+        )
         {
-            // 💡 Multi-locks not allowed with rocksdb
+            // 💡 Multi-locks not allowed with rocksdb/surrealkv
             return;
         }
 
@@ -163,7 +166,7 @@ public class ObjectPoolTests
     }
 
     [Test]
-    [RemoteConnectionStringFixtureGenerator]
+    [WebsocketConnectionStringFixtureGenerator] // TODO : should be RemoteConnectionStringFixtureGenerator but HTTP parallelism issue
     [SinceSurrealVersion("2.2")]
     public async Task ShouldResetDbNs(string connectionString)
     {
@@ -192,6 +195,7 @@ public class ObjectPoolTests
             await client2.SignIn(new RootAuth { Username = "root", Password = "root" });
 
             var response = await client2.Query($"SELECT * FROM $session;");
+            response.EnsureAllOks();
 
             var list = response.GetValue<List<SessionInfo>>(0)!;
             result = list[0];

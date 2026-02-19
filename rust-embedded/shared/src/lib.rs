@@ -1,6 +1,6 @@
 use app::SurrealEmbeddedEngine;
 use bindgen::{
-    callback::{send_failure, send_success, FailureAction, SuccessAction},
+    callback::{FailureAction, SuccessAction, send_failure, send_success},
     csharp_to_rust::{convert_csharp_to_rust_bytes, convert_csharp_to_rust_string_utf16},
 };
 use models::method::Method;
@@ -9,7 +9,6 @@ use runtime::{engines::ENGINES, get_global_runtime};
 pub mod app;
 pub mod bindgen;
 pub mod cbor;
-pub mod err;
 pub mod models;
 pub mod runtime;
 
@@ -37,7 +36,7 @@ pub unsafe extern "C" fn apply_connect(
                 send_success(vec![], success);
             }
             Err(e) => {
-                send_failure(&format!("Cannot connect to db: {}", e.as_str()), failure);
+                send_failure(&format!("Cannot connect to db: {}", e), failure);
             }
         }
     });
@@ -65,7 +64,7 @@ pub unsafe extern "C" fn execute(
                 send_success(output, success);
             }
             Err(error) => {
-                send_failure(error.as_str(), failure);
+                send_failure(&error.to_string(), failure);
             }
         }
     });
@@ -90,7 +89,7 @@ pub unsafe extern "C" fn import(
                 send_success(vec![], success);
             }
             Err(error) => {
-                send_failure(error.as_str(), failure);
+                send_failure(&error.to_string(), failure);
             }
         }
     });
@@ -115,7 +114,7 @@ pub unsafe extern "C" fn export(
                 send_success(output, success);
             }
             Err(error) => {
-                send_failure(error.as_str(), failure);
+                send_failure(&error.to_string(), failure);
             }
         }
     });

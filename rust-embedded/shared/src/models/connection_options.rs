@@ -1,5 +1,7 @@
+use anyhow::anyhow;
 use std::collections::HashSet;
-use surrealdb::{dbs::capabilities, err::Error, sql::Value};
+use surrealdb::dbs::capabilities;
+use surrealdb_types::Value;
 
 #[derive(Debug, Default)]
 pub struct ConnectionOptions {
@@ -26,7 +28,7 @@ pub struct TargetsConfig {
 }
 
 impl TryFrom<&Value> for ConnectionOptions {
-    type Error = Error;
+    type Error = anyhow::Error;
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match value {
             Value::None | Value::Null => Ok(ConnectionOptions::default()),
@@ -38,11 +40,8 @@ impl TryFrom<&Value> for ConnectionOptions {
                     Some(Value::Bool(v)) => {
                         connection.strict = Some(v.to_owned());
                     }
-                    Some(v) => {
-                        return Err(Error::ConvertTo {
-                            from: v.to_owned(),
-                            into: "bool".to_string(),
-                        })
+                    Some(_) => {
+                        return Err(anyhow!("Failed to convert to boolean"));
                     }
                     _ => (),
                 }
@@ -53,16 +52,13 @@ impl TryFrom<&Value> for ConnectionOptions {
 
                 Ok(connection)
             }
-            v => Err(Error::ConvertTo {
-                from: v.to_owned(),
-                into: "object".to_string(),
-            }),
+            _ => Err(anyhow!("Failed to convert to object")),
         }
     }
 }
 
 impl TryFrom<&Value> for CapabilitiesConfig {
-    type Error = Error;
+    type Error = anyhow::Error;
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match value {
             Value::None | Value::Null => Ok(CapabilitiesConfig::default()),
@@ -75,16 +71,13 @@ impl TryFrom<&Value> for CapabilitiesConfig {
 
                 Ok(config)
             }
-            v => Err(Error::ConvertTo {
-                from: v.to_owned(),
-                into: "object".to_string(),
-            }),
+            _ => Err(anyhow!("Failed to convert to object")),
         }
     }
 }
 
 impl TryFrom<&Value> for Targets {
-    type Error = Error;
+    type Error = anyhow::Error;
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match value {
             Value::None | Value::Null => Ok(Targets::default()),
@@ -101,16 +94,13 @@ impl TryFrom<&Value> for Targets {
 
                 Ok(targets)
             }
-            v => Err(Error::ConvertTo {
-                from: v.to_owned(),
-                into: "object".to_string(),
-            }),
+            _ => Err(anyhow!("Failed to convert to object")),
         }
     }
 }
 
 impl TryFrom<&Value> for TargetsConfig {
-    type Error = Error;
+    type Error = anyhow::Error;
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match value {
             Value::None | Value::Null => Ok(TargetsConfig::default()),
@@ -122,11 +112,8 @@ impl TryFrom<&Value> for TargetsConfig {
                     Some(Value::Bool(v)) => {
                         config.bool = Some(v.to_owned());
                     }
-                    Some(v) => {
-                        return Err(Error::ConvertTo {
-                            from: v.to_owned(),
-                            into: "bool".to_string(),
-                        })
+                    Some(_) => {
+                        return Err(anyhow!("Failed to convert to boolean"));
                     }
                     _ => (),
                 }
@@ -134,23 +121,24 @@ impl TryFrom<&Value> for TargetsConfig {
                 match obj.get("array") {
                     Some(Value::None) => (),
                     Some(Value::Array(v)) => {
-                        config.array = Some(v.iter().map(|v| v.to_string()).collect());
+                        config.array = Some(
+                            v.iter()
+                                .map(|v| match v {
+                                    Value::String(s) => Ok(s.to_string()),
+                                    _ => Err(anyhow::anyhow!("Expected string, got {:?}", v)),
+                                })
+                                .collect::<Result<HashSet<_>, _>>()?,
+                        );
                     }
-                    Some(v) => {
-                        return Err(Error::ConvertTo {
-                            from: v.to_owned(),
-                            into: "array".to_string(),
-                        })
+                    Some(_) => {
+                        return Err(anyhow!("Failed to convert to array"));
                     }
                     _ => (),
                 }
 
                 Ok(config)
             }
-            v => Err(Error::ConvertTo {
-                from: v.to_owned(),
-                into: "object".to_string(),
-            }),
+            _ => Err(anyhow!("Failed to convert to object")),
         }
     }
 }
@@ -166,7 +154,7 @@ macro_rules! process_targets {
 }
 
 impl TryFrom<CapabilitiesConfig> for capabilities::Capabilities {
-    type Error = Error;
+    type Error = anyhow::Error;
 
     fn try_from(config: CapabilitiesConfig) -> Result<Self, Self::Error> {
         let mut capabilities = Self::default();
