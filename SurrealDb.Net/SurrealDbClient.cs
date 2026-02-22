@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
+using SurrealDb.Net.Internals.DependencyInjection;
 
 namespace SurrealDb.Net;
 
@@ -60,42 +61,70 @@ public class SurrealDbClient : BaseSurrealDbClient
         IHttpClientFactory? httpClientFactory = null,
         Action<CborOptions>? configureCborOptions = null,
         ILoggerFactory? loggerFactory = null,
-        Func<Task>? poolTask = null
+        ISessionizer? sessionizer = null
     )
+    {
+        Uri = ParseEndpoint(configuration);
+        Engine = CreateEngine(
+            configuration,
+            serviceProvider,
+            httpClientFactory,
+            configureCborOptions,
+            loggerFactory,
+            sessionizer,
+            Uri
+        );
+    }
+
+    private static Uri ParseEndpoint(SurrealDbOptions configuration)
     {
         if (configuration.Endpoint is null)
             throw new ArgumentNullException(nameof(configuration), "The endpoint is required.");
 
-        _poolTask = poolTask;
-        Uri = new Uri(configuration.Endpoint);
-        if (Uri.Scheme is "ws" or "wss" && !Uri.AbsolutePath.EndsWith("/rpc"))
+        var endpointUri = new Uri(configuration.Endpoint);
+        if (endpointUri.Scheme is "ws" or "wss" && !endpointUri.AbsolutePath.EndsWith("/rpc"))
         {
-            string absoluteNakedPath = Uri.AbsolutePath.EndsWith("/")
-                ? Uri.AbsolutePath[..^1]
-                : Uri.AbsolutePath;
-            Uri = new Uri(Uri, $"{absoluteNakedPath}/rpc");
+            string absoluteNakedPath = endpointUri.AbsolutePath.EndsWith('/')
+                ? endpointUri.AbsolutePath[..^1]
+                : endpointUri.AbsolutePath;
+            return new Uri(endpointUri, $"{absoluteNakedPath}/rpc");
         }
 
-        var protocol = Uri.Scheme;
+        return endpointUri;
+    }
 
-        Engine = protocol switch
+    private static ISurrealDbEngine CreateEngine(
+        SurrealDbOptions configuration,
+        IServiceProvider? serviceProvider,
+        IHttpClientFactory? httpClientFactory,
+        Action<CborOptions>? configureCborOptions,
+        ILoggerFactory? loggerFactory,
+        ISessionizer? sessionizer,
+        Uri uri
+    )
+    {
+        string protocol = uri.Scheme;
+        return protocol switch
         {
             "http" or "https" => new SurrealDbHttpEngine(
                 configuration,
                 httpClientFactory,
                 configureCborOptions,
-                loggerFactory is not null ? new SurrealDbLoggerFactory(loggerFactory) : null
+                loggerFactory is not null ? new SurrealDbLoggerFactory(loggerFactory) : null,
+                sessionizer
             ),
             "ws" or "wss" => new SurrealDbWsEngine(
                 configuration,
                 configureCborOptions,
-                loggerFactory is not null ? new SurrealDbLoggerFactory(loggerFactory) : null
+                loggerFactory is not null ? new SurrealDbLoggerFactory(loggerFactory) : null,
+                sessionizer
             ),
             "mem" => ResolveEmbeddedProvider<ISurrealDbInMemoryEngine>(
                 serviceProvider,
                 configuration,
                 configureCborOptions,
-                loggerFactory
+                loggerFactory,
+                sessionizer
             )
                 ?? throw new Exception(
                     "Impossible to create a new in-memory SurrealDB client. Make sure to use `AddInMemoryProvider`."
@@ -104,7 +133,8 @@ public class SurrealDbClient : BaseSurrealDbClient
                 serviceProvider,
                 configuration,
                 configureCborOptions,
-                loggerFactory
+                loggerFactory,
+                sessionizer
             )
                 ?? throw new Exception(
                     "Impossible to create a new file SurrealDB client, backed by RocksDB. Make sure to use `AddRocksDbProvider`."
@@ -113,7 +143,8 @@ public class SurrealDbClient : BaseSurrealDbClient
                 serviceProvider,
                 configuration,
                 configureCborOptions,
-                loggerFactory
+                loggerFactory,
+                sessionizer
             )
                 ?? throw new Exception(
                     "Impossible to create a new file SurrealDB client, backed by SurrealKV. Make sure to use `AddSurrealKvProvider`."
@@ -122,30 +153,25 @@ public class SurrealDbClient : BaseSurrealDbClient
         };
     }
 
-    internal SurrealDbClient(
-        SurrealDbOptions configuration,
-        ISurrealDbEngine engine,
-        Func<Task>? poolTask = null
-    )
-    {
-        Uri = new Uri(configuration.Endpoint!);
-
-        Engine = engine;
-        _poolTask = poolTask;
-    }
-
-    private T? ResolveEmbeddedProvider<T>(
+    private static T? ResolveEmbeddedProvider<T>(
         IServiceProvider? serviceProvider,
         SurrealDbOptions configuration,
         Action<CborOptions>? configureCborOptions,
-        ILoggerFactory? loggerFactory
+        ILoggerFactory? loggerFactory,
+        ISessionizer? sessionizer
     )
         where T : class, ISurrealDbProviderEngine
     {
         var engine = serviceProvider?.GetService<T>();
         if (engine is not null)
         {
-            InitializeProviderEngine(engine, configuration, configureCborOptions, loggerFactory);
+            InitializeProviderEngine(
+                engine,
+                configuration,
+                configureCborOptions,
+                loggerFactory,
+                sessionizer
+            );
         }
 
         return engine;

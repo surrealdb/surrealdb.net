@@ -23,13 +23,14 @@ impl SurrealEmbeddedEngines {
         &self,
         id: i32,
         method: Method,
+        session_id: Option<Uuid>,
         params: Vec<u8>,
     ) -> anyhow::Result<Vec<u8>> {
         let read_lock = self.0.read().await;
         let Some(engine) = read_lock.get(&id) else {
             return Err(anyhow!("Engine not found"));
         };
-        engine.execute(method, params).await
+        engine.execute(method, session_id, params).await
     }
 
     pub async fn import(&self, id: i32, input: String) -> anyhow::Result<()> {
@@ -70,11 +71,16 @@ impl Default for SurrealEmbeddedEngines {
 pub struct SurrealEmbeddedEngine(RwLock<SurrealEmbeddedEngineInner>);
 
 impl SurrealEmbeddedEngine {
-    pub async fn execute(&self, method: Method, params: Vec<u8>) -> anyhow::Result<Vec<u8>> {
+    pub async fn execute(
+        &self,
+        method: Method,
+        session_id: Option<Uuid>,
+        params: Vec<u8>,
+    ) -> anyhow::Result<Vec<u8>> {
         let params =
             crate::cbor::get_params(params).map_err(|_| anyhow!("Failed to deserialize params"))?;
         let rpc = self.0.read().await;
-        let res = RpcProtocol::execute(&*rpc, None, None, method, params).await?;
+        let res = RpcProtocol::execute(&*rpc, None, session_id, method, params).await?;
         encode(res.into_value())
     }
 
