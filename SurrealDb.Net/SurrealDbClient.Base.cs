@@ -6,30 +6,49 @@ using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Auth;
+using SurrealDb.Net.Internals.DependencyInjection;
 using SurrealDb.Net.Internals.Http;
 
 namespace SurrealDb.Net;
 
 public abstract partial class BaseSurrealDbClient : ISurrealDbClient
 {
-    protected Func<Task>? _poolTask { get; set; }
     internal ISurrealDbEngine Engine { get; set; } = null!;
 
-    public Uri Uri { get; protected set; } = null!;
+    public Uri Uri { get; protected init; } = null!;
 
-    protected void InitializeProviderEngine(
+    protected void InitializeAndSetProviderEngine(
         ISurrealDbProviderEngine engine,
         SurrealDbOptions configuration,
         Action<CborOptions>? configureCborOptions,
-        ILoggerFactory? loggerFactory
+        ILoggerFactory? loggerFactory,
+        ISessionizer? sessionizer
+    )
+    {
+        InitializeProviderEngine(
+            engine,
+            configuration,
+            configureCborOptions,
+            loggerFactory,
+            sessionizer
+        );
+        Engine = engine;
+    }
+
+    internal static void InitializeProviderEngine(
+        ISurrealDbProviderEngine engine,
+        SurrealDbOptions configuration,
+        Action<CborOptions>? configureCborOptions,
+        ILoggerFactory? loggerFactory,
+        ISessionizer? sessionizer
     )
     {
         engine.Initialize(
             configuration,
             configureCborOptions,
-            loggerFactory is not null ? new SurrealDbLoggerFactory(loggerFactory) : null
+            loggerFactory is not null ? new SurrealDbLoggerFactory(loggerFactory) : null,
+            sessionizer
         );
-        Engine = engine;
     }
 
     private async Task<CommonHttpWrapper> CreateCommonHttpWrapperAsync(
@@ -48,21 +67,29 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
                 // 💡 Ensures underlying engine is started to retrieve some information
                 await httpEngine.Connect(cancellationToken).ConfigureAwait(false);
 
-                version = httpEngine._version;
-                ns = httpEngine._config.Ns;
-                db = httpEngine._config.Db;
-                auth = httpEngine._config.Auth;
-                configureCborOptions = httpEngine._configureCborOptions;
+                {
+                    var session = httpEngine.SessionInfos.Get(SessionId)!;
+
+                    version = httpEngine._version;
+                    ns = session.Ns;
+                    db = session.Db;
+                    auth = session.Auth;
+                    configureCborOptions = httpEngine._configureCborOptions;
+                }
                 break;
             case SurrealDbWsEngine wsEngine:
                 // 💡 Ensures underlying engine is started to retrieve some information
                 await wsEngine.InternalConnectAsync(true, cancellationToken).ConfigureAwait(false);
 
-                version = wsEngine._version;
-                ns = wsEngine._config.Ns;
-                db = wsEngine._config.Db;
-                auth = wsEngine._config.Auth;
-                configureCborOptions = wsEngine._configureCborOptions;
+                {
+                    var session = wsEngine.SessionInfos.Get(SessionId)!;
+
+                    version = wsEngine._version;
+                    ns = session.Ns;
+                    db = session.Db;
+                    auth = session.Auth;
+                    configureCborOptions = wsEngine._configureCborOptions;
+                }
                 break;
             default:
                 throw new SurrealDbException("No underlying engine is started.");

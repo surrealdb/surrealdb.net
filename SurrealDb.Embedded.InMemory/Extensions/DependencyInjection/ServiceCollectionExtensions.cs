@@ -1,5 +1,6 @@
 ﻿using SurrealDb.Embedded.Internals;
 using SurrealDb.Net.Internals;
+using SurrealDb.Net.Internals.DependencyInjection;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -11,6 +12,9 @@ public static class ServiceCollectionExtensions
 {
     public static SurrealDbBuilder AddInMemoryProvider(this SurrealDbBuilder builder)
     {
+        builder.Services.AddKeyedSingleton<ISessionInfoProvider, EmbeddedSessionInfoProvider>(
+            "mem"
+        );
         builder.Services.AddTransient<ISurrealDbInMemoryEngine, SurrealDbEmbeddedEngine>();
 
         return builder;

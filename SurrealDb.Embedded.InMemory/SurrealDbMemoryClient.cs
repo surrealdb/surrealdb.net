@@ -42,6 +42,12 @@ public class SurrealDbMemoryClient : BaseSurrealDbClient
         Uri = new Uri(ENDPOINT);
 
         var engine = new SurrealDbEmbeddedEngine(options);
-        InitializeProviderEngine(engine, parameters, configureCborOptions, loggerFactory);
+        InitializeAndSetProviderEngine(
+            engine,
+            parameters,
+            configureCborOptions,
+            loggerFactory,
+            null
+        );
     }
 }

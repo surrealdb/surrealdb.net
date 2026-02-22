@@ -22,7 +22,7 @@ public class RelateTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -53,7 +53,7 @@ public class RelateTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -93,7 +93,7 @@ public class RelateTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -141,7 +141,7 @@ public class RelateTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -204,7 +204,7 @@ public class RelateTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             var complexOne = await client.Create(

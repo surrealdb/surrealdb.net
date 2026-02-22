@@ -2,26 +2,38 @@
 using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Models.Auth;
 
-namespace SurrealDb.Net.Internals.Http;
+namespace SurrealDb.Net.Internals.Sessions;
 
-internal sealed class SurrealDbHttpEngineConfig
+internal sealed class RpcSessionInfo : SessionInfo
 {
     public IAuth Auth { get; private set; } = new NoAuth();
-    public string? Ns { get; private set; }
-    public string? Db { get; private set; }
 
-    private readonly Dictionary<string, object> _parameters = new();
-    public IReadOnlyDictionary<string, object> Parameters => _parameters;
+    public RpcSessionInfo() { }
 
-    public SurrealDbHttpEngineConfig(SurrealDbOptions options)
+    public RpcSessionInfo(RpcSessionInfo from)
+        : base(from)
     {
-        Reset(options);
+        Auth = from.Auth switch
+        {
+            InternalSystemAuth internalSystemAuth => new InternalSystemAuth(
+                internalSystemAuth.Auth
+            ),
+            BearerAuth bearerAuth => new BearerAuth(bearerAuth.Token),
+            _ => Auth,
+        };
     }
 
-    public void Use(string ns, string? db)
+    public RpcSessionInfo(SurrealDbOptions options)
+        : base(options)
     {
-        Ns = ns;
-        Db = db;
+        if (options.Username is not null)
+        {
+            SetSystemAuth(options.Username, options.Password, options.SystemAuthLevel);
+        }
+        else if (options.Token is not null)
+        {
+            SetBearerAuth(options.Token);
+        }
     }
 
     public void SetSystemAuth(SystemAuth auth)
@@ -60,34 +72,5 @@ internal sealed class SurrealDbHttpEngineConfig
     public void ResetAuth()
     {
         Auth = new NoAuth();
-    }
-
-    public void SetParam(string key, object value)
-    {
-        _parameters.Add(key, value);
-    }
-
-    public void RemoveParam(string key)
-    {
-        _parameters.Remove(key);
-    }
-
-    public void Reset(SurrealDbOptions options)
-    {
-        _parameters.Clear();
-        Ns = options.Namespace;
-        Db = options.Database;
-        if (options.Username is not null)
-        {
-            SetSystemAuth(options.Username, options.Password, options.SystemAuthLevel);
-        }
-        else if (options.Token is not null)
-        {
-            SetBearerAuth(options.Token);
-        }
-        else
-        {
-            ResetAuth();
-        }
     }
 }

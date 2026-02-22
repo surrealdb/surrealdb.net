@@ -5,6 +5,7 @@ use bindgen::{
 };
 use models::method::Method;
 use runtime::{engines::ENGINES, get_global_runtime};
+use uuid::Uuid;
 
 pub mod app;
 pub mod bindgen;
@@ -50,16 +51,31 @@ pub unsafe extern "C" fn apply_connect(
 pub unsafe extern "C" fn execute(
     id: i32,
     method: Method,
-    bytes: *const u8,
-    len: i32,
+    session_bytes: *const u8,
+    session_len: i32,
+    params_bytes: *const u8,
+    params_len: i32,
     success: SuccessAction,
     failure: FailureAction,
 ) {
     let method: surrealdb::rpc::Method = method.into();
-    let params_bytes = unsafe { convert_csharp_to_rust_bytes(bytes, len) };
+    let session_id = if session_len == 16 {
+        let session_bytes = unsafe { convert_csharp_to_rust_bytes(session_bytes, session_len) };
+        Uuid::try_from(session_bytes).map(|u| Some(u))
+    } else {
+        Ok(None)
+    };
+    if let Err(_) = session_id {
+        send_failure("Failed to deserialize session id", failure);
+        return;
+    }
+    let params_bytes = unsafe { convert_csharp_to_rust_bytes(params_bytes, params_len) };
 
     get_global_runtime().spawn(async move {
-        match ENGINES.execute(id, method, params_bytes).await {
+        match ENGINES
+            .execute(id, method, session_id.unwrap(), params_bytes)
+            .await
+        {
             Ok(output) => {
                 send_success(output, success);
             }

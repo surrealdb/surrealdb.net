@@ -72,9 +72,9 @@ public class DeleteBench : BaseRemoteBenchmark
                 await clientGenerator.DisposeAsync();
         }
 
-        _surrealdbHttpClient?.Dispose();
-        _surrealdbHttpClientWithHttpClientFactory?.Dispose();
-        _surrealdbWsBinaryClient?.Dispose();
+        await _surrealdbHttpClient!.DisposeAsync();
+        await _surrealdbHttpClientWithHttpClientFactory!.DisposeAsync();
+        await _surrealdbWsBinaryClient!.DisposeAsync();
     }
 
     [Benchmark]
