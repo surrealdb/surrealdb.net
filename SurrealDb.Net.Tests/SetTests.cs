@@ -15,7 +15,7 @@ public class SetTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -23,7 +23,7 @@ public class SetTests
             await client.Set("status", "DRAFT");
 
             {
-                string query = "SELECT * FROM post WHERE status == $status;";
+                const string query = "SELECT * FROM post WHERE status == $status;";
                 response = (await client.RawQuery(query)).EnsureAllOks();
             }
         };
@@ -50,7 +50,7 @@ public class SetTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -72,7 +72,7 @@ public class SetTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -94,7 +94,7 @@ public class SetTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -118,7 +118,7 @@ public class SetTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -126,7 +126,7 @@ public class SetTests
             await client.Set("st_at_us", "DRAFT");
 
             {
-                string query = "SELECT * FROM post WHERE status == $st_at_us;";
+                const string query = "SELECT * FROM post WHERE status == $st_at_us;";
                 response = (await client.RawQuery(query)).EnsureAllOks();
             }
         };
@@ -155,7 +155,7 @@ public class SetTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -163,7 +163,7 @@ public class SetTests
             await client.Set("a.b@c.d", "DRAFT");
 
             {
-                string query = "SELECT * FROM post WHERE status == $`a.b@c.d`;";
+                const string query = "SELECT * FROM post WHERE status == $`a.b@c.d`;";
                 response = (await client.RawQuery(query)).EnsureAllOks();
             }
         };
@@ -197,7 +197,7 @@ public class SetTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -205,7 +205,7 @@ public class SetTests
             await client.Set("value", new ValueSetObject());
 
             {
-                string query = "RETURN $value;";
+                const string query = "RETURN $value;";
                 response = (await client.RawQuery(query)).EnsureAllOks();
             }
         };
@@ -240,7 +240,7 @@ public class SetTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -248,7 +248,7 @@ public class SetTests
             await client.Set("value", new ValueSetObject2());
 
             {
-                string query = "RETURN $value;";
+                const string query = "RETURN $value;";
                 response = (await client.RawQuery(query)).EnsureAllOks();
             }
         };
@@ -265,5 +265,48 @@ public class SetTests
 
         outputValue.Should().NotBeNull();
         outputValue!.Id.Should().BeNull();
+    }
+
+    private class RecursiveStructure
+    {
+        public string Name { get; set; } = string.Empty;
+        public RecursiveStructure? Inner { get; set; }
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    public async Task ShouldSetObjectWithRecursiveStructure(string connectionString)
+    {
+        SurrealDbResponse? response = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            await using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.Post);
+
+            await client.Set("value", new RecursiveStructure());
+
+            {
+                const string query = "RETURN $value;";
+                response = (await client.RawQuery(query)).EnsureAllOks();
+            }
+        };
+
+        await func.Should().NotThrowAsync();
+
+        response.Should().NotBeNull().And.HaveCount(1);
+
+        var firstResult = response![0];
+        firstResult.Should().BeOfType<SurrealDbOkResult>();
+
+        var okResult = firstResult as SurrealDbOkResult;
+        var outputValue = okResult!.GetValue<RecursiveStructure>();
+
+        outputValue.Should().NotBeNull();
     }
 }
