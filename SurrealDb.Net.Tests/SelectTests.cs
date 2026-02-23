@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using Dahomey.Cbor.Attributes;
+using SurrealDb.Net.Exceptions;
 
 namespace SurrealDb.Net.Tests;
 
@@ -61,6 +62,8 @@ public class SelectTests
     [ConnectionStringFixtureGenerator]
     public async Task ShouldSelectFromEmptyTable(string connectionString)
     {
+        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
+
         IEnumerable<Empty>? result = null;
 
         Func<Task> func = async () =>
@@ -68,8 +71,10 @@ public class SelectTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.RawQuery("DEFINE TABLE empty SCHEMALESS;");
 
             result = await client.Select<Empty>("empty");
         };

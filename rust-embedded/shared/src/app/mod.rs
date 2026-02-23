@@ -1,17 +1,15 @@
-use arc_swap::ArcSwap;
+use anyhow::anyhow;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use surrealdb::dbs::Session;
-use surrealdb::kvs::export::Config;
 use surrealdb::kvs::Datastore;
-use surrealdb::rpc::format::cbor;
-use surrealdb::rpc::Method;
-use surrealdb::rpc::{Data, RpcContext, RpcProtocolV1, RpcProtocolV2};
-use surrealdb::sql::Value;
-use tokio::sync::{RwLock, Semaphore};
+use surrealdb::kvs::export::Config;
+use surrealdb::rpc::format::cbor::{decode, encode};
+use surrealdb::rpc::{DbResult, Method, RpcProtocol};
+use surrealdb_types::{HashMap, SurrealValue, Value};
+use tokio::sync::RwLock;
 use uuid::Uuid;
 
-pub use crate::err::Error;
 use crate::models::connection_options::ConnectionOptions;
 
 pub struct SurrealEmbeddedEngines(RwLock<BTreeMap<i32, SurrealEmbeddedEngine>>);
@@ -26,26 +24,26 @@ impl SurrealEmbeddedEngines {
         id: i32,
         method: Method,
         params: Vec<u8>,
-    ) -> Result<Vec<u8>, Error> {
+    ) -> anyhow::Result<Vec<u8>> {
         let read_lock = self.0.read().await;
         let Some(engine) = read_lock.get(&id) else {
-            return Err("Engine not found".into());
+            return Err(anyhow!("Engine not found"));
         };
         engine.execute(method, params).await
     }
 
-    pub async fn import(&self, id: i32, input: String) -> Result<(), Error> {
+    pub async fn import(&self, id: i32, input: String) -> anyhow::Result<()> {
         let read_lock = self.0.read().await;
         let Some(engine) = read_lock.get(&id) else {
-            return Err("Engine not found".into());
+            return Err(anyhow!("Engine not found"));
         };
         engine.import(input).await
     }
 
-    pub async fn export(&self, id: i32, params: Vec<u8>) -> Result<Vec<u8>, Error> {
+    pub async fn export(&self, id: i32, params: Vec<u8>) -> anyhow::Result<Vec<u8>> {
         let read_lock = self.0.read().await;
         let Some(engine) = read_lock.get(&id) else {
-            return Err("Engine not found".into());
+            return Err(anyhow!("Engine not found"));
         };
         engine.export(params).await
     }
@@ -72,29 +70,25 @@ impl Default for SurrealEmbeddedEngines {
 pub struct SurrealEmbeddedEngine(RwLock<SurrealEmbeddedEngineInner>);
 
 impl SurrealEmbeddedEngine {
-    pub async fn execute(&self, method: Method, params: Vec<u8>) -> Result<Vec<u8>, Error> {
-        let params = crate::cbor::get_params(params)
-            .map_err(|_| "Failed to deserialize params".to_string())?;
+    pub async fn execute(&self, method: Method, params: Vec<u8>) -> anyhow::Result<Vec<u8>> {
+        let params =
+            crate::cbor::get_params(params).map_err(|_| anyhow!("Failed to deserialize params"))?;
         let rpc = self.0.read().await;
-        let res = RpcContext::execute(&*rpc, None, method, params)
-            .await
-            .map_err(|e| e.to_string())?;
-        let value: Value = res.try_into().map_err(|e: surrealdb::err::Error| e.to_string())?;
-        let out = cbor::res(value).map_err(|e| e.to_string())?;
-        Ok(out)
+        let res = RpcProtocol::execute(&*rpc, None, None, method, params).await?;
+        encode(res.into_value())
     }
 
     pub async fn connect(
         endpoint: String,
         options: Vec<u8>,
-    ) -> Result<SurrealEmbeddedEngine, Error> {
+    ) -> anyhow::Result<SurrealEmbeddedEngine> {
         let endpoint = match &endpoint {
             s if s.starts_with("mem:") => "memory",
             s => s,
         };
 
-        let in_options = cbor::parse_value(options).map_err(|e| e.to_string())?;
-        let options = ConnectionOptions::try_from(&in_options).map_err(|e| e.to_string())?;
+        let in_options = decode(&options)?;
+        let options = ConnectionOptions::try_from(&in_options).map_err(|e| anyhow!(e))?;
 
         let kvs = Datastore::new(endpoint)
             .await?
@@ -103,29 +97,33 @@ impl SurrealEmbeddedEngine {
                 options
                     .capabilities
                     .map_or(Ok(Default::default()), |a| a.try_into())?,
-            )
-            .with_strict_mode(options.strict.map_or(Default::default(), |s| s));
+            );
 
         let inner = SurrealEmbeddedEngineInner {
             kvs,
-            lock: Arc::new(Semaphore::new(1)),
-            session: ArcSwap::from(Arc::new(Session::default().with_rt(true))),
+            sessions: HashMap::new(),
         };
+        // Store the default session with None key
+        let session = Session::default();
+        inner.sessions.insert(None, Arc::new(RwLock::new(session)));
 
         Ok(SurrealEmbeddedEngine(RwLock::new(inner)))
     }
 
-    pub async fn export(&self, config: Vec<u8>) -> Result<Vec<u8>, Error> {
+    pub async fn export(&self, config: Vec<u8>) -> anyhow::Result<Vec<u8>> {
         let (tx, rx) = channel::unbounded();
 
         let inner = self.0.read().await;
 
-        let in_config = cbor::parse_value(config).map_err(|e| e.to_string())?;
-        let config = Config::try_from(&in_config).map_err(|e| e.to_string())?;
+        let in_config = decode(&config)?;
+        let config = Config::from_value(in_config)?;
+
+        let lock = inner.get_session(&None)?;
+        let session = lock.read().await;
 
         inner
             .kvs
-            .export_with_config(&inner.session(), tx, config)
+            .export_with_config(&session, tx, config)
             .await?
             .await?;
 
@@ -134,15 +132,17 @@ impl SurrealEmbeddedEngine {
             buffer.push(item);
         }
 
-        let result = String::from_utf8(buffer.concat()).map_err(|e| e.to_string())?;
-
-        let out = cbor::res(result).map_err(|e| e.to_string())?;
-        Ok(out)
+        let result = String::from_utf8(buffer.concat()).map_err(|e| anyhow!(e))?;
+        encode(result.into_value())
     }
 
-    pub async fn import(&self, input: String) -> Result<(), Error> {
+    pub async fn import(&self, input: String) -> anyhow::Result<()> {
         let inner = self.0.read().await;
-        inner.kvs.import(&input, &inner.session()).await?;
+
+        let lock = inner.get_session(&None)?;
+        let session = lock.write().await;
+
+        inner.kvs.import(&input, &session).await?;
 
         Ok(())
     }
@@ -150,37 +150,26 @@ impl SurrealEmbeddedEngine {
 
 struct SurrealEmbeddedEngineInner {
     pub kvs: Datastore,
-    pub lock: Arc<Semaphore>,
-    pub session: ArcSwap<Session>,
+    pub sessions: HashMap<Option<Uuid>, Arc<RwLock<Session>>>,
 }
 
-impl RpcProtocolV1 for SurrealEmbeddedEngineInner {}
-impl RpcProtocolV2 for SurrealEmbeddedEngineInner {}
-
-impl RpcContext for SurrealEmbeddedEngineInner {
+impl RpcProtocol for SurrealEmbeddedEngineInner {
     fn kvs(&self) -> &Datastore {
         &self.kvs
     }
 
-    fn lock(&self) -> Arc<Semaphore> {
-        self.lock.clone()
+    fn session_map(&self) -> &HashMap<Option<Uuid>, Arc<RwLock<Session>>> {
+        &self.sessions
     }
 
-    fn session(&self) -> Arc<Session> {
-        self.session.load_full()
+    fn version_data(&self) -> DbResult {
+        DbResult::Other(Value::String(format!("surrealdb-{}", SURREALDB_VERSION)))
     }
 
-    fn set_session(&self, session: Arc<Session>) {
-        self.session.store(session);
-    }
+    const LQ_SUPPORT: bool = false;
 
-    fn version_data(&self) -> Data {
-        Value::from(format!("surrealdb-{}", SURREALDB_VERSION)).into()
-    }
-
-    const LQ_SUPPORT: bool = true;
-    async fn handle_live(&self, _lqid: &Uuid) {}
-    async fn handle_kill(&self, _lqid: &Uuid) {}
+    async fn cleanup_lqs(&self, _: Option<&Uuid>) {}
+    async fn cleanup_all_lqs(&self) {}
 }
 
 static SURREALDB_VERSION: &str = include_str!("../surreal-version.txt");

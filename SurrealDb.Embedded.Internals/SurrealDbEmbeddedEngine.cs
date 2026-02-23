@@ -78,7 +78,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         _config = new(_parameters);
     }
 
-    public Task Authenticate(Jwt jwt, CancellationToken cancellationToken)
+    public Task Authenticate(Tokens tokens, CancellationToken cancellationToken)
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
@@ -825,23 +825,23 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
 
-    public Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken)
+    public Task<Tokens> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken)
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
 
-    public Task<Jwt> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken)
+    public Task<Tokens> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken)
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
 
-    public Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken)
+    public Task<Tokens> SignIn<T>(T scopeAuth, CancellationToken cancellationToken)
         where T : ScopeAuth
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
 
-    public Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken)
+    public Task<Tokens> SignUp<T>(T scopeAuth, CancellationToken cancellationToken)
         where T : ScopeAuth
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");

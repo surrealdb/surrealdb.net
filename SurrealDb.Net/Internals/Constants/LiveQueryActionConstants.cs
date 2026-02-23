@@ -1,6 +1,6 @@
 ﻿namespace SurrealDb.Net.Internals.Constants;
 
-internal static class LiveQueryConstants
+internal static class LiveQueryActionConstants
 {
     public const string CREATE = "CREATE";
     public const string UPDATE = "UPDATE";

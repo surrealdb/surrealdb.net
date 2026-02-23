@@ -24,6 +24,8 @@ public class ReactiveLiveQueryTests : BaseLiveQueryTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
+            await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
+
             var response = await client.RawQuery("LIVE SELECT * FROM test;");
 
             if (response.FirstResult is not SurrealDbOkResult okResult)
@@ -88,6 +90,8 @@ public class ReactiveLiveQueryTests : BaseLiveQueryTests
             await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
 
             var response = await client.RawQuery("LIVE SELECT * FROM test;");
 
@@ -159,6 +163,8 @@ public class ReactiveLiveQueryTests : BaseLiveQueryTests
             await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
 
             var response = await client.RawQuery("LIVE SELECT * FROM test;");
 

@@ -66,17 +66,17 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         _config = new(_parameters);
     }
 
-    public async Task Authenticate(Jwt jwt, CancellationToken cancellationToken)
+    public async Task Authenticate(Tokens tokens, CancellationToken cancellationToken)
     {
         var request = new SurrealDbHttpRequest
         {
             Method = "authenticate",
-            Parameters = [jwt.Token],
+            Parameters = [tokens.Access],
         };
 
         await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
 
-        _config.SetBearerAuth(jwt.Token);
+        _config.SetBearerAuth(tokens.Access);
     }
 
     public async Task Connect(CancellationToken cancellationToken)
@@ -678,58 +678,58 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         _config.SetSystemAuth(rootAuth);
     }
 
-    public async Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken)
+    public async Task<Tokens> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken)
     {
         var request = new SurrealDbHttpRequest { Method = "signin", Parameters = [nsAuth] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-        var token = dbResponse.GetValue<string>();
+        var tokens = dbResponse.GetValue<Tokens>()!;
 
         _config.SetSystemAuth(nsAuth);
 
-        return new Jwt(token!);
+        return tokens;
     }
 
-    public async Task<Jwt> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken)
+    public async Task<Tokens> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken)
     {
         var request = new SurrealDbHttpRequest { Method = "signin", Parameters = [dbAuth] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-        var token = dbResponse.GetValue<string>();
+        var tokens = dbResponse.GetValue<Tokens>()!;
 
         _config.SetSystemAuth(dbAuth);
 
-        return new Jwt(token!);
+        return tokens;
     }
 
-    public async Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken)
+    public async Task<Tokens> SignIn<T>(T scopeAuth, CancellationToken cancellationToken)
         where T : ScopeAuth
     {
         var request = new SurrealDbHttpRequest { Method = "signin", Parameters = [scopeAuth] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-        var token = dbResponse.GetValue<string>();
+        var tokens = dbResponse.GetValue<Tokens>()!;
 
-        _config.SetBearerAuth(token!);
+        _config.SetBearerAuth(tokens.Access);
 
-        return new Jwt(token!);
+        return tokens;
     }
 
-    public async Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken)
+    public async Task<Tokens> SignUp<T>(T scopeAuth, CancellationToken cancellationToken)
         where T : ScopeAuth
     {
         var request = new SurrealDbHttpRequest { Method = "signup", Parameters = [scopeAuth] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
             .ConfigureAwait(false);
-        var token = dbResponse.GetValue<string>();
+        var tokens = dbResponse.GetValue<Tokens>()!;
 
-        _config.SetBearerAuth(token!);
+        _config.SetBearerAuth(tokens.Access);
 
-        return new Jwt(token!);
+        return tokens;
     }
 
     public SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id)

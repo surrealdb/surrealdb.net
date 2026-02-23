@@ -19,7 +19,11 @@ public sealed class SinceSurrealVersionAttribute(string version)
             connectionString!
         );
 
-        bool shouldExecute = SemVersion.CompareSortOrder(currentVersion, expectedVersion) >= 0;
+        bool shouldExecute =
+            SemVersion.CompareSortOrder(
+                currentVersion.WithoutPrereleaseOrMetadata(),
+                expectedVersion
+            ) >= 0;
         return !shouldExecute;
     }
 }

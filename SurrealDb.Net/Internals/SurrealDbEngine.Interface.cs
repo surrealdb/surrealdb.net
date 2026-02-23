@@ -19,7 +19,7 @@ public interface ISurrealDbEngine : IDisposable, IAsyncDisposable, IAsyncResetta
 {
     Uri Uri { get; }
 
-    Task Authenticate(Jwt jwt, CancellationToken cancellationToken);
+    Task Authenticate(Tokens tokens, CancellationToken cancellationToken);
     Task Connect(CancellationToken cancellationToken);
     Task<T> Create<T>(T data, CancellationToken cancellationToken)
         where T : IRecord;
@@ -139,11 +139,11 @@ public interface ISurrealDbEngine : IDisposable, IAsyncDisposable, IAsyncResetta
     );
     Task Set(string key, object value, CancellationToken cancellationToken);
     Task SignIn(RootAuth root, CancellationToken cancellationToken);
-    Task<Jwt> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken);
-    Task<Jwt> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken);
-    Task<Jwt> SignIn<T>(T scopeAuth, CancellationToken cancellationToken)
+    Task<Tokens> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken);
+    Task<Tokens> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken);
+    Task<Tokens> SignIn<T>(T scopeAuth, CancellationToken cancellationToken)
         where T : ScopeAuth;
-    Task<Jwt> SignUp<T>(T scopeAuth, CancellationToken cancellationToken)
+    Task<Tokens> SignUp<T>(T scopeAuth, CancellationToken cancellationToken)
         where T : ScopeAuth;
     SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id);
     Task Unset(string key, CancellationToken cancellationToken);

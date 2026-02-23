@@ -8,7 +8,10 @@ internal sealed class RecordIdRangeConverterProvider : CborConverterProviderBase
 {
     public override ICborConverter? GetConverter(Type type, CborOptions options)
     {
-        if (type.Namespace == "SurrealDb.Net.Models" && type.Name == "RecordIdRange`2")
+        if (
+            type.Namespace == ConverterTypeConstants.ModelsNamespace
+            && type.Name == "RecordIdRange`2"
+        )
         {
             return CreateGenericConverter(
                 options,

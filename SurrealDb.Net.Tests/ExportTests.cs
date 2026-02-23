@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
+using Semver;
 
 namespace SurrealDb.Net.Tests;
 
@@ -42,15 +43,30 @@ public class ExportTests
         );
     }
 
+    private static bool IsV3Compatible(SemVersion version)
+    {
+        return version.Major == 2 && version.Minor >= 6;
+    }
+
+    private void UseSnapshotDirectory(SemVersion version)
+    {
+        var majorVersion = IsV3Compatible(version) switch
+        {
+            true => 3,
+            false => version.Major,
+        };
+
+        string versionFolder = $"v{majorVersion}";
+        _verifySettings.UseDirectory($"Snapshots/{versionFolder}");
+    }
+
     [Test]
     [ConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("2.0")]
     public async Task ShouldExportEmptyDatabaseWithDefaultOptions(string connectionString)
     {
         var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
-        if (version?.Major < 2)
-        {
-            return;
-        }
+        UseSnapshotDirectory(version);
 
         string? result = null;
 
@@ -72,13 +88,11 @@ public class ExportTests
 
     [Test]
     [ConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("2.0")]
     public async Task ShouldExportFullDatabaseWithDefaultOptions(string connectionString)
     {
         var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
-        if (version?.Major < 2)
-        {
-            return;
-        }
+        UseSnapshotDirectory(version);
 
         string? result = null;
 

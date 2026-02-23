@@ -1,0 +1,5 @@
+﻿There was a problem with the database: Parse error: Unexpected token `an identifier`, expected Eof
+ --> [1:5]
+  |
+1 | abc def;
+  |     ^^^ 

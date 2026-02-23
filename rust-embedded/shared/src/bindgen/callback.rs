@@ -1,5 +1,5 @@
-use surrealdb::rpc::format::cbor::Cbor;
-use surrealdb::sql::Value;
+use surrealdb::rpc::format::cbor::encode;
+use surrealdb_types::Value;
 
 use super::{alloc::alloc_u8_buffer, byte_buffer::ByteBuffer};
 
@@ -28,7 +28,9 @@ impl SuccessAction {
     ///
     /// Invokes the expected Success action.
     pub unsafe fn invoke(&self, value: *mut ByteBuffer) {
-        unsafe { (self.callback)(self.handle.ptr, value); }
+        unsafe {
+            (self.callback)(self.handle.ptr, value);
+        }
     }
 }
 
@@ -43,16 +45,14 @@ impl FailureAction {
     ///
     /// Invokes the expected Failure action.
     pub unsafe fn invoke(&self, value: *mut ByteBuffer) {
-        unsafe { (self.callback)(self.handle.ptr, value); }
+        unsafe {
+            (self.callback)(self.handle.ptr, value);
+        }
     }
 }
 
 fn value_to_buffer(value: Value) -> Result<*mut ByteBuffer, ()> {
-    let value: Cbor = value.try_into().map_err(|_| ())?;
-
-    let mut output = Vec::new();
-    ciborium::into_writer(&value.0, &mut output).map_err(|_| ())?;
-
+    let output = encode(value).map_err(|_| ())?;
     Ok(alloc_u8_buffer(output))
 }
 
@@ -62,7 +62,7 @@ pub fn send_success(bytes: Vec<u8>, success: SuccessAction) {
 }
 
 pub fn send_failure(error: &str, action: FailureAction) {
-    let value = Value::Strand(error.into());
+    let value = Value::String(error.into());
 
     match value_to_buffer(value) {
         Ok(buffer) => unsafe { action.invoke(buffer) },

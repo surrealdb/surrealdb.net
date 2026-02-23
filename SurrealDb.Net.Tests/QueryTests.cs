@@ -7,6 +7,15 @@ namespace SurrealDb.Net.Tests;
 
 public class QueryTests
 {
+    private readonly VerifySettings _verifySettings = new();
+
+    public QueryTests()
+    {
+        _verifySettings.DisableRequireUniquePrefix();
+        _verifySettings.UseDirectory("Snapshots");
+        _verifySettings.IgnoreParametersForVerified();
+    }
+
     [Test]
     [ConnectionStringFixtureGenerator]
     public async Task ShouldQueryWithoutParam(string connectionString)
@@ -122,8 +131,10 @@ AND created_at >= {threeMonthsAgo};
     [ConnectionStringFixtureGenerator]
     public async Task ShouldHaveOneProtocolErrorResult(string connectionString)
     {
-        var options = new SurrealDbOptionsBuilder().FromConnectionString(connectionString).Build();
         var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
+
+        string versionFolder = $"v{version.Major}";
+        _verifySettings.UseDirectory($"Snapshots/{versionFolder}");
 
         SurrealDbResponse? response = null;
 
@@ -132,7 +143,7 @@ AND created_at >= {threeMonthsAgo};
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -140,20 +151,8 @@ AND created_at >= {threeMonthsAgo};
             response = await client.Query($"abc def;");
         };
 
-        string errorMessage =
-            version?.Major > 1
-                ? @"There was a problem with the database: Parse error: Unexpected token `an identifier`, expected Eof
- --> [1:5]
-  |
-1 | abc def;
-  |     ^^^ 
-"
-                : @"There was a problem with the database: Parse error: Failed to parse query at line 1 column 5 expected query to end
-  |
-1 | abc def;
-  |     ^ perhaps missing a semicolon on the previous statement?
-";
+        var exception = await func.Should().ThrowAsync<SurrealDbException>();
 
-        await func.Should().ThrowAsync<SurrealDbException>().WithMessage(errorMessage);
+        await Verify(exception.Which.Message, _verifySettings);
     }
 }

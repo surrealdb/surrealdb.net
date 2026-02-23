@@ -97,7 +97,7 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
             {
                 if (
                     response is SurrealDbWsLiveResponse surrealDbWsLiveResponse
-                    && surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.CREATE
+                    && surrealDbWsLiveResponse.Result.Action == LiveQueryActionConstants.CREATE
                 )
                 {
                     yield return surrealDbWsLiveResponse.Result.GetValue<T>()!;
@@ -130,7 +130,7 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
             {
                 if (
                     response is SurrealDbWsLiveResponse surrealDbWsLiveResponse
-                    && surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.UPDATE
+                    && surrealDbWsLiveResponse.Result.Action == LiveQueryActionConstants.UPDATE
                 )
                 {
                     yield return surrealDbWsLiveResponse.Result.GetValue<T>()!;
@@ -163,7 +163,7 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
             {
                 if (
                     response is SurrealDbWsLiveResponse surrealDbWsLiveResponse
-                    && surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.DELETE
+                    && surrealDbWsLiveResponse.Result.Action == LiveQueryActionConstants.DELETE
                 )
                 {
                     yield return surrealDbWsLiveResponse.Result.GetValue<T>()!;
@@ -227,28 +227,28 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
     {
         if (response is SurrealDbWsLiveResponse surrealDbWsLiveResponse)
         {
-            if (surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.CREATE)
+            if (surrealDbWsLiveResponse.Result.Action == LiveQueryActionConstants.CREATE)
             {
                 return new SurrealDbLiveQueryCreateResponse<T>(
                     surrealDbWsLiveResponse.Result.GetValue<T>()!
                 );
             }
 
-            if (surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.UPDATE)
+            if (surrealDbWsLiveResponse.Result.Action == LiveQueryActionConstants.UPDATE)
             {
                 return new SurrealDbLiveQueryUpdateResponse<T>(
                     surrealDbWsLiveResponse.Result.GetValue<T>()!
                 );
             }
 
-            if (surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.DELETE)
+            if (surrealDbWsLiveResponse.Result.Action == LiveQueryActionConstants.DELETE)
             {
                 return new SurrealDbLiveQueryDeleteResponse<T>(
                     surrealDbWsLiveResponse.Result.GetValue<T>()!
                 );
             }
 
-            if (surrealDbWsLiveResponse.Result.Action == LiveQueryConstants.KILLED)
+            if (surrealDbWsLiveResponse.Result.Action == LiveQueryActionConstants.KILLED)
             {
                 return new SurrealDbLiveQueryCloseResponse(
                     SurrealDbLiveQueryClosureReason.QueryKilled

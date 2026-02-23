@@ -10,7 +10,7 @@ using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
 
-internal class SurrealDbResultConverter : CborConverterBase<ISurrealDbResult>
+internal sealed class SurrealDbResultConverter : CborConverterBase<ISurrealDbResult>
 {
     private readonly CborOptions _options;
 
@@ -35,6 +35,8 @@ internal class SurrealDbResultConverter : CborConverterBase<ISurrealDbResult>
         short? code = null;
         ReadOnlyMemory<byte>? result = null;
         var type = SurrealDbResponseType.Other;
+        string? kind = null;
+        ReadOnlyMemory<byte>? customErrorDetails = null;
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
@@ -97,9 +99,27 @@ internal class SurrealDbResultConverter : CborConverterBase<ISurrealDbResult>
             if (key.SequenceEqual("type"u8))
             {
                 var typeString = reader.ReadString();
+                if (typeString is null)
+                {
+                    continue;
+                }
                 type =
                     SurrealDbResponseTypeExtensions.From(typeString)
                     ?? throw new CborException($"'{typeString}' is not a valid result type.");
+                continue;
+            }
+
+            if (key.SequenceEqual("kind"u8))
+            {
+                // TODO : ignored for now
+                kind = reader.ReadString();
+                continue;
+            }
+
+            if (key.SequenceEqual("details"u8))
+            {
+                // TODO : ignored for now
+                customErrorDetails = reader.ReadDataItemAsMemory();
                 continue;
             }
 

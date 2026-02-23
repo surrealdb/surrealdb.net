@@ -12,9 +12,7 @@ public class ConnectionStringFixtureGeneratorAttribute : DataSourceGeneratorAttr
     )
     {
         foreach (
-            var cs in _embeddedConnectionStringFixtureGeneratorAttribute.GenerateDataSourcesPublicly(
-                dataGeneratorMetadata
-            )
+            var cs in _embeddedConnectionStringFixtureGeneratorAttribute.GenerateDataSourcesPublicly()
         )
         {
             yield return cs;
@@ -48,9 +46,7 @@ public class RemoteConnectionStringFixtureGeneratorAttribute : DataSourceGenerat
     {
         yield return () => "Endpoint=http://127.0.0.1:8000;User=root;Pass=root";
         foreach (
-            var cs in _websocketConnectionStringFixtureGeneratorAttribute.GenerateDataSourcesPublicly(
-                dataGeneratorMetadata
-            )
+            var cs in _websocketConnectionStringFixtureGeneratorAttribute.GenerateDataSourcesPublicly()
         )
         {
             yield return cs;
@@ -65,12 +61,10 @@ public class WebsocketConnectionStringFixtureGeneratorAttribute
         DataGeneratorMetadata dataGeneratorMetadata
     )
     {
-        return GenerateDataSourcesPublicly(dataGeneratorMetadata);
+        return GenerateDataSourcesPublicly();
     }
 
-    public IEnumerable<Func<string>> GenerateDataSourcesPublicly(
-        DataGeneratorMetadata dataGeneratorMetadata
-    )
+    public IEnumerable<Func<string>> GenerateDataSourcesPublicly()
     {
         yield return () => "Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root";
     }
@@ -83,12 +77,10 @@ public class EmbeddedConnectionStringFixtureGeneratorAttribute
         DataGeneratorMetadata dataGeneratorMetadata
     )
     {
-        return GenerateDataSourcesPublicly(dataGeneratorMetadata);
+        return GenerateDataSourcesPublicly();
     }
 
-    public IEnumerable<Func<string>> GenerateDataSourcesPublicly(
-        DataGeneratorMetadata dataGeneratorMetadata
-    )
+    public IEnumerable<Func<string>> GenerateDataSourcesPublicly()
     {
 #if EMBEDDED_MODE
         yield return () => "Endpoint=mem://";

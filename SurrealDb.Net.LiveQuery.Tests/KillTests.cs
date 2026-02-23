@@ -41,6 +41,8 @@ public class KillTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
+            await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
+
             var response = await client.RawQuery("LIVE SELECT * FROM test;");
 
             if (response.FirstResult is not SurrealDbOkResult okResult)
@@ -76,11 +78,12 @@ public class KillTests
             ex.Message.Contains(
                 "There was a problem with the database: Can not execute KILL statement using id"
             )
-            && (
-                ex.Message.Contains(liveQueryUuid.ToString()) // >= 2.1
-                || ex.Message.Contains("KILL statement uuid did not exist") // 1.x
-                || ex.Message.Contains("Can not execute KILL statement using id '$id'") // 2.0.x
-            );
+            || ex.Message.Contains("KILL statement uuid did not exist") // 1.x
+            || ex.Message.Contains("Can not execute KILL statement using id '$id'") // 2.0.x
+            || ex.Message.Contains(
+                $"Cannot execute KILL statement using id: u'{liveQueryUuid}'"
+            ) // 3.0.x
+        ;
 
         await func.Should().ThrowAsync<SurrealDbException>().Where(validErrorMessage);
     }

@@ -21,6 +21,8 @@ public class LiveTableTests : BaseLiveQueryTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
+            await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
+
             await using var liveQuery = await client.LiveTable<int>("test");
         };
 
@@ -41,6 +43,8 @@ public class LiveTableTests : BaseLiveQueryTests
             await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
 
             var liveQuery = await client.LiveTable<TestRecord>("test");
 
@@ -117,6 +121,8 @@ public class LiveTableTests : BaseLiveQueryTests
             await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
 
             var liveQuery = await client.LiveTable<JsonPatchDocument<TestRecord>>("test", true);
 

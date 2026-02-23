@@ -1,5 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using SurrealDb.Net.Internals.Cbor;
+using SurrealDb.Net.Internals.Cbor.Converters;
 using SurrealDb.Net.Models;
 #if NET7_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
@@ -23,7 +25,7 @@ internal sealed class RecordIdJsonConverter : JsonConverter<RecordId>
     )
     {
         if (
-            typeToConvert.Namespace == "SurrealDb.Net.Models"
+            typeToConvert.Namespace == ConverterTypeConstants.ModelsNamespace
             && typeToConvert.Name == "RecordIdOf`1"
         )
         {
@@ -92,7 +94,7 @@ internal sealed class RecordIdJsonConverter : JsonConverter<RecordId>
         }
 
         var type = value.GetType();
-        if (type.Namespace == "SurrealDb.Net.Models" && type.Name == "RecordIdOf`1")
+        if (type.Namespace == ConverterTypeConstants.ModelsNamespace && type.Name == "RecordIdOf`1")
         {
             var idType = type.GenericTypeArguments[0];
             writer.WriteRawValue(

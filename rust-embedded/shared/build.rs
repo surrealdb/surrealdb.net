@@ -35,7 +35,7 @@ fn write_surreal_version() -> Result<(), Box<dyn Error>> {
     let package = lock
         .packages
         .iter()
-        .find(|p| p.name.as_str() == "surrealdb")
+        .find(|p| p.name.as_str() == "surrealdb-core")
         .expect("Failed to find surrealdb in Cargo.lock");
 
     let version = format!(

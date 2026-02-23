@@ -3,7 +3,7 @@ using SurrealDb.Net.Internals.Extensions;
 
 namespace SurrealDb.Net.Internals.Ws;
 
-internal class SurrealDbWsOkResponse : ISurrealDbWsStandardResponse
+internal sealed class SurrealDbWsOkResponse : ISurrealDbWsStandardResponse
 {
     private readonly ReadOnlyMemory<byte>? _binaryResult;
     private readonly CborOptions? _cborOptions;

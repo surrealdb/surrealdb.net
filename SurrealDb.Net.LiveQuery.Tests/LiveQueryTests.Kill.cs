@@ -18,6 +18,8 @@ public class KillLiveQueryTests
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
+        await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
+
         Guid liveQueryUuid = Guid.Empty;
 
         Func<Task> createLiveQueryFunc = async () =>
@@ -47,11 +49,12 @@ public class KillLiveQueryTests
             ex.Message.Contains(
                 "There was a problem with the database: Can not execute KILL statement using id"
             )
-            && (
-                ex.Message.Contains(liveQueryUuid.ToString()) // >= 2.1
-                || ex.Message.Contains("KILL statement uuid did not exist") // 1.x
-                || ex.Message.Contains("Can not execute KILL statement using id '$id'") // 2.0.x
-            );
+            || ex.Message.Contains("KILL statement uuid did not exist") // 1.x
+            || ex.Message.Contains("Can not execute KILL statement using id '$id'") // 2.0.x
+            || ex.Message.Contains(
+                $"Cannot execute KILL statement using id: u'{liveQueryUuid}'"
+            ) // 3.0.x
+        ;
 
         await liveQueryAlreadyKilledFunc
             .Should()
@@ -69,6 +72,8 @@ public class KillLiveQueryTests
         await using var client = surrealDbClientGenerator.Create(connectionString);
         await client.SignIn(new RootAuth { Username = "root", Password = "root" });
         await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
 
         SurrealDbLiveQuery<int>? liveQuery = null;
         Guid liveQueryUuid = Guid.Empty;
@@ -103,11 +108,12 @@ public class KillLiveQueryTests
             ex.Message.Contains(
                 "There was a problem with the database: Can not execute KILL statement using id"
             )
-            && (
-                ex.Message.Contains(liveQueryUuid.ToString()) // >= 2.1
-                || ex.Message.Contains("KILL statement uuid did not exist") // 1.x
-                || ex.Message.Contains("Can not execute KILL statement using id '$id'") // 2.0.x
-            );
+            || ex.Message.Contains("KILL statement uuid did not exist") // 1.x
+            || ex.Message.Contains("Can not execute KILL statement using id '$id'") // 2.0.x
+            || ex.Message.Contains(
+                $"Cannot execute KILL statement using id: u'{liveQueryUuid}'"
+            ) // 3.0.x
+        ;
 
         await liveQueryAlreadyKilledFunc
             .Should()

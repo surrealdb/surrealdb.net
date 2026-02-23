@@ -25,6 +25,8 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
+            await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
+
             using var cts = new CancellationTokenSource();
             cts.CancelAfter(Timeout);
 
@@ -123,6 +125,8 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
 
             using var cts = new CancellationTokenSource();
             cts.CancelAfter(Timeout);
@@ -230,6 +234,8 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
             var client = surrealDbClientGenerator.Create(connectionString);
             await client.SignIn(new RootAuth { Username = "root", Password = "root" });
             await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
 
             using var cts = new CancellationTokenSource();
             cts.CancelAfter(Timeout);

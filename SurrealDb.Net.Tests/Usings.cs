@@ -12,5 +12,6 @@ using TUnit.Core.Interfaces;
 
 public record CustomParallelLimit : IParallelLimit
 {
-    public int Limit => 12;
+    // TODO : Parallelism issue with HTTP in v3
+    public int Limit => 1;
 }

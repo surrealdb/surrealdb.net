@@ -2,11 +2,12 @@
 using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
+using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Http;
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
 
-internal class SurrealDbHttpErrorResponseContentConverter
+internal sealed class SurrealDbHttpErrorResponseContentConverter
     : CborConverterBase<SurrealDbHttpErrorResponseContent>
 {
     public override SurrealDbHttpErrorResponseContent Read(ref CborReader reader)
@@ -17,6 +18,8 @@ internal class SurrealDbHttpErrorResponseContentConverter
 
         long code = 0;
         string? message = null;
+        string? kind = null;
+        ReadOnlyMemory<byte>? customErrorDetails = null;
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
@@ -34,12 +37,30 @@ internal class SurrealDbHttpErrorResponseContentConverter
                 continue;
             }
 
+            if (key.SequenceEqual("kind"u8))
+            {
+                kind = reader.ReadString();
+                continue;
+            }
+
+            if (key.SequenceEqual("details"u8))
+            {
+                // TODO : ignored for now
+                customErrorDetails = reader.ReadDataItemAsMemory();
+                continue;
+            }
+
             throw new CborException(
                 $"{Encoding.UTF8.GetString(key)} is not a valid property of {nameof(SurrealDbHttpErrorResponseContent)}."
             );
         }
 
-        return new SurrealDbHttpErrorResponseContent { Code = code, Message = message! };
+        return new SurrealDbHttpErrorResponseContent
+        {
+            Code = code,
+            Message = message!,
+            Kind = kind,
+        };
     }
 
     public override void Write(ref CborWriter writer, SurrealDbHttpErrorResponseContent value)
