@@ -1,5 +1,4 @@
 ﻿using SurrealDb.Net.Exceptions;
-using SurrealDb.Net.Extensions;
 using SurrealDb.Net.Models.Sessions;
 
 namespace SurrealDb.Net;
@@ -16,12 +15,6 @@ public abstract partial class BaseSurrealDbClient
 
     public Guid? SessionId { get; protected init; }
     public SessionState SessionState { get; private set; }
-
-    public async Task<bool> SupportsSession(CancellationToken cancellationToken = default)
-    {
-        var version = await Engine.Version(cancellationToken).ConfigureAwait(false);
-        return version.ToSemver().Major >= 3;
-    }
 
     public Task<IEnumerable<Guid>> Sessions(CancellationToken cancellationToken = default)
     {

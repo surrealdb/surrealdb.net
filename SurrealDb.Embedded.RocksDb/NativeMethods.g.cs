@@ -126,6 +126,9 @@ namespace SurrealDb.Embedded.Internals
         Sessions = 18,
         Attach = 19,
         Detach = 20,
+        Begin = 21,
+        Commit = 22,
+        Cancel = 23,
     }
 
 
