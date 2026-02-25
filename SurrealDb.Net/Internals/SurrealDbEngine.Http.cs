@@ -98,12 +98,55 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         SessionInfos.Get(sessionId)?.SetBearerAuth(tokens.Access);
     }
 
+    public async Task<Guid> Begin(Guid? sessionId, CancellationToken cancellationToken)
+    {
+        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
+
+        var request = new SurrealDbHttpRequest { Method = "begin", SessionId = sessionId };
+        var response = await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        return response.GetValue<Guid>();
+    }
+
+    public async Task Cancel(
+        Guid? sessionId,
+        Guid transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
+
+        var request = new SurrealDbHttpRequest
+        {
+            Method = "cancel",
+            SessionId = sessionId,
+            Parameters = [transactionId],
+        };
+        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task CloseSession(Guid sessionId, CancellationToken cancellationToken)
     {
         await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
         await Detach(sessionId, cancellationToken).ConfigureAwait(false);
 
         SessionInfos.Remove(sessionId);
+    }
+
+    public async Task Commit(
+        Guid? sessionId,
+        Guid transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
+
+        var request = new SurrealDbHttpRequest
+        {
+            Method = "commit",
+            SessionId = sessionId,
+            Parameters = [transactionId],
+        };
+        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<Guid> CreateSession(CancellationToken cancellationToken)

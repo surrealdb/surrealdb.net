@@ -95,11 +95,37 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
 
+    public async Task<Guid> Begin(Guid? sessionId, CancellationToken cancellationToken)
+    {
+        return await SendRequestAsync<Guid>(Method.Begin, null, sessionId, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task Cancel(
+        Guid? sessionId,
+        Guid transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        await SendRequestAsync<Unit>(Method.Cancel, [transactionId], sessionId, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public async Task CloseSession(Guid sessionId, CancellationToken cancellationToken)
     {
         await Detach(sessionId, cancellationToken).ConfigureAwait(false);
 
         SessionInfos.Remove(sessionId);
+    }
+
+    public async Task Commit(
+        Guid? sessionId,
+        Guid transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        await SendRequestAsync<Unit>(Method.Commit, [transactionId], sessionId, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public async Task<Guid> CreateSession(CancellationToken cancellationToken)

@@ -20,6 +20,9 @@ pub enum Method {
     Sessions = 18,
     Attach = 19,
     Detach = 20,
+    Begin = 21,
+    Commit = 22,
+    Cancel = 23,
 }
 
 impl From<Method> for surrealdb::rpc::Method {
@@ -45,6 +48,9 @@ impl From<Method> for surrealdb::rpc::Method {
             Method::Sessions => surrealdb::rpc::Method::Sessions,
             Method::Attach => surrealdb::rpc::Method::Attach,
             Method::Detach => surrealdb::rpc::Method::Detach,
+            Method::Begin => surrealdb::rpc::Method::Begin,
+            Method::Commit => surrealdb::rpc::Method::Commit,
+            Method::Cancel => surrealdb::rpc::Method::Cancel,
         }
     }
 }

@@ -22,7 +22,26 @@ public interface ISurrealDbInterface
     Uri Uri { get; }
 }
 
-public interface ISurrealDbSharedMethods : ISurrealDbInterface
+public interface ISurrealDbFeatures
+{
+    /// <summary>
+    /// Indicates if the session feature is available for the current <see cref="SurrealDbClient"/>.
+    /// </summary>
+    /// <remarks>Multi-sessions feature is only available since SurrealDB v3.0.</remarks>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns><c>true</c> if the feature is available.</returns>
+    Task<bool> SupportsSession(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Indicates if the transaction feature is available for the current <see cref="SurrealDbClient"/>.
+    /// </summary>
+    /// <remarks>Transactions feature is only available since SurrealDB v3.0.</remarks>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns><c>true</c> if the feature is available.</returns>
+    Task<bool> SupportsTransactions(CancellationToken cancellationToken = default);
+}
+
+public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatures
 {
     /// <summary>
     /// Authenticates the current connection with a JWT.<br />

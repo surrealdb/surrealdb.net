@@ -59,6 +59,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     > _liveQueryChannelSubscriptionsPerQuery = new();
     private readonly Pinger _pinger;
     private readonly SemaphoreSlim _semaphoreConnect = new(1, 1);
+    private readonly ConcurrentDictionary<Guid, Guid> _transactions = new();
 
 #if NET9_0_OR_GREATER
     private static readonly ConcurrentHashSet<string> _allResponseTaskIds = [];
@@ -356,12 +357,69 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             .ConfigureAwait(false);
     }
 
+    public async Task<Guid> Begin(Guid? sessionId, CancellationToken cancellationToken)
+    {
+        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
+
+        var response = await SendRequestAsync(
+                "begin",
+                null,
+                sessionId,
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        var transactionId = response.GetValue<Guid>();
+
+        _transactions[sessionId!.Value] = transactionId;
+
+        return transactionId;
+    }
+
+    public async Task Cancel(
+        Guid? sessionId,
+        Guid transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
+
+        await SendRequestAsync(
+                "cancel",
+                [transactionId],
+                sessionId,
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        _transactions.TryRemove(sessionId!.Value, out _);
+    }
+
     public async Task CloseSession(Guid sessionId, CancellationToken cancellationToken)
     {
         await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
         await Detach(sessionId, cancellationToken).ConfigureAwait(false);
 
         SessionInfos.Remove(sessionId);
+    }
+
+    public async Task Commit(
+        Guid? sessionId,
+        Guid transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
+
+        await SendRequestAsync(
+                "commit",
+                [transactionId],
+                sessionId,
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        _transactions.TryRemove(sessionId!.Value, out _);
     }
 
     public async Task<Guid> CreateSession(CancellationToken cancellationToken)
@@ -1855,6 +1913,16 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 #if !NET9_0_OR_GREATER
         await _responseTaskHandler.WaitUntilAsync(priority).ConfigureAwait(false);
 #endif
+
+        Guid? transactionId = null;
+        if (sessionId.HasValue)
+        {
+            if (_transactions.TryGetValue(sessionId.Value, out var txnId))
+            {
+                transactionId = txnId;
+            }
+        }
+
         bool shouldSendParamsInRequest = parameters is not null && parameters.Length > 0;
         var innerRequest = new SurrealDbWsRequest
         {
@@ -1862,6 +1930,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             Method = method,
             Parameters = shouldSendParamsInRequest ? parameters : null,
             SessionId = sessionId,
+            TransactionId = transactionId,
         };
 
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();

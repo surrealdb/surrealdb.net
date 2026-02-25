@@ -11,7 +11,7 @@ public static class SurrealDbClientExtensions
         new();
 
     public static async Task ApplySchemaAsync(
-        this SurrealDbClient client,
+        this ISurrealDbSharedMethods client,
         SurrealSchemaFile schemaFile,
         CancellationToken cancellationToken = default
     )

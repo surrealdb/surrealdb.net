@@ -15,14 +15,6 @@ public interface ISurrealDbSharedSession
     SessionState SessionState { get; }
 
     /// <summary>
-    /// Indicates if the session feature is available for the current <see cref="SurrealDbClient"/>.
-    /// </summary>
-    /// <remarks>Multi-sessions feature is only available since SurrealDB v3.0.</remarks>
-    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-    /// <returns><c>true</c> if the feature is available.</returns>
-    Task<bool> SupportsSession(CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// List all active sessions on the current connection.
     /// </summary>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
@@ -53,6 +45,14 @@ public interface ISurrealDbSession
         ISurrealDbSharedMethods,
         IAsyncDisposable
 {
+    /// <summary>
+    /// Create a new transaction scoped to the current session.
+    /// Transactions allow you to execute multiple queries atomically.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>A new <see cref="SurrealDbTransaction"/>.</returns>
+    Task<SurrealDbTransaction> BeginTransaction(CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Create a new session by cloning the current session.
     /// The new session inherits all properties from the parent session including namespace, database, variables, and authentication state.

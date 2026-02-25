@@ -22,7 +22,18 @@ public interface ISurrealDbEngineWithSessions
     Task<Guid> CreateSession(Guid from, CancellationToken cancellationToken);
 }
 
-public interface ISurrealDbEngine : ISurrealDbEngineWithSessions, IDisposable, IAsyncDisposable
+public interface ISurrealDbEngineWithTransactions
+{
+    Task<Guid> Begin(Guid? sessionId, CancellationToken cancellationToken);
+    Task Commit(Guid? sessionId, Guid transactionId, CancellationToken cancellationToken);
+    Task Cancel(Guid? sessionId, Guid transactionId, CancellationToken cancellationToken);
+}
+
+public interface ISurrealDbEngine
+    : ISurrealDbEngineWithSessions,
+        ISurrealDbEngineWithTransactions,
+        IDisposable,
+        IAsyncDisposable
 {
     Uri Uri { get; }
 

@@ -1,4 +1,5 @@
 ﻿using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Internals;
 
 namespace SurrealDb.Net;
 
@@ -12,6 +13,18 @@ public class SurrealDbSession : BaseSurrealDbClient, ISurrealDbSession
         Uri = from.Uri;
         Engine = from.Engine;
         SessionId = sessionId;
+    }
+
+    public async Task<SurrealDbTransaction> BeginTransaction(
+        CancellationToken cancellationToken = default
+    )
+    {
+        var transactionId = await Engine.Begin(SessionId, cancellationToken).ConfigureAwait(false);
+        return new SurrealDbTransaction(
+            SessionId,
+            transactionId,
+            new WeakReference<ISurrealDbEngine>(Engine)
+        );
     }
 
     public async Task<ISurrealDbSession> ForkSession(CancellationToken cancellationToken = default)
