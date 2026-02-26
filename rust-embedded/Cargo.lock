@@ -3460,6 +3460,7 @@ dependencies = [
  "async-channel",
  "cargo-lock",
  "csbindgen",
+ "dashmap",
  "num_cpus",
  "once_cell",
  "surrealdb-core",

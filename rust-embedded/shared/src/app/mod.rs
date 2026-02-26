@@ -1,12 +1,13 @@
 use anyhow::anyhow;
+use dashmap::DashMap;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use surrealdb::dbs::Session;
-use surrealdb::kvs::Datastore;
 use surrealdb::kvs::export::Config;
+use surrealdb::kvs::{self, Datastore, LockType, Transaction, TransactionType};
 use surrealdb::rpc::format::cbor::{decode, encode};
-use surrealdb::rpc::{DbResult, Method, RpcProtocol};
-use surrealdb_types::{HashMap, SurrealValue, Value};
+use surrealdb::rpc::{self, DbResult, Method, RpcProtocol};
+use surrealdb_types::{Array, HashMap, SurrealValue, Value};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
@@ -24,13 +25,16 @@ impl SurrealEmbeddedEngines {
         id: i32,
         method: Method,
         session_id: Option<Uuid>,
+        transaction_id: Option<Uuid>,
         params: Vec<u8>,
     ) -> anyhow::Result<Vec<u8>> {
         let read_lock = self.0.read().await;
         let Some(engine) = read_lock.get(&id) else {
             return Err(anyhow!("Engine not found"));
         };
-        engine.execute(method, session_id, params).await
+        engine
+            .execute(method, session_id, transaction_id, params)
+            .await
     }
 
     pub async fn import(&self, id: i32, input: String) -> anyhow::Result<()> {
@@ -75,12 +79,13 @@ impl SurrealEmbeddedEngine {
         &self,
         method: Method,
         session_id: Option<Uuid>,
+        transaction_id: Option<Uuid>,
         params: Vec<u8>,
     ) -> anyhow::Result<Vec<u8>> {
         let params =
             crate::cbor::get_params(params).map_err(|_| anyhow!("Failed to deserialize params"))?;
         let rpc = self.0.read().await;
-        let res = RpcProtocol::execute(&*rpc, None, session_id, method, params).await?;
+        let res = RpcProtocol::execute(&*rpc, transaction_id, session_id, method, params).await?;
         encode(res.into_value())
     }
 
@@ -108,6 +113,7 @@ impl SurrealEmbeddedEngine {
         let inner = SurrealEmbeddedEngineInner {
             kvs,
             sessions: HashMap::new(),
+            transactions: DashMap::new(),
         };
         // Store the default session with None key
         let session = Session::default();
@@ -157,7 +163,11 @@ impl SurrealEmbeddedEngine {
 struct SurrealEmbeddedEngineInner {
     pub kvs: Datastore,
     pub sessions: HashMap<Option<Uuid>, Arc<RwLock<Session>>>,
+    pub transactions: DashMap<Uuid, Arc<Transaction>>,
 }
+
+type TxError = surrealdb_types::Error;
+type TxResult<T> = std::result::Result<T, TxError>;
 
 impl RpcProtocol for SurrealEmbeddedEngineInner {
     fn kvs(&self) -> &Datastore {
@@ -176,6 +186,86 @@ impl RpcProtocol for SurrealEmbeddedEngineInner {
 
     async fn cleanup_lqs(&self, _: Option<&Uuid>) {}
     async fn cleanup_all_lqs(&self) {}
+
+    // ------------------------------
+    // Transactions
+    // ------------------------------
+
+    /// Retrieves a transaction by ID
+    async fn get_tx(&self, id: Uuid) -> TxResult<Arc<kvs::Transaction>> {
+        self.transactions
+            .get(&id)
+            .map(|tx| tx.clone())
+            .ok_or_else(|| rpc::invalid_params("Transaction not found"))
+    }
+
+    /// Stores a transaction
+    async fn set_tx(&self, id: Uuid, tx: Arc<kvs::Transaction>) -> TxResult<()> {
+        self.transactions.insert(id, tx);
+        Ok(())
+    }
+
+    // ------------------------------
+    // Methods for transactions
+    // ------------------------------
+
+    /// Begin a new transaction
+    async fn begin(&self, _txn: Option<Uuid>, _session_id: Option<Uuid>) -> TxResult<DbResult> {
+        // Create a new transaction
+        let tx = self
+            .kvs()
+            .transaction(TransactionType::Write, LockType::Optimistic)
+            .await
+            .map_err(rpc::types_error_from_anyhow)?;
+        // Generate a unique transaction ID
+        let id = Uuid::now_v7();
+        // Store the transaction in the map
+        self.transactions.insert(id, Arc::new(tx));
+        // Return the transaction ID to the client
+        Ok(DbResult::Other(Value::Uuid(surrealdb_types::Uuid::from(
+            id,
+        ))))
+    }
+
+    /// Commit a transaction
+    async fn commit(
+        &self,
+        _txn: Option<Uuid>,
+        _session_id: Option<Uuid>,
+        params: Array,
+    ) -> TxResult<DbResult> {
+        let mut params_vec = params.into_vec();
+        let Some(Value::Uuid(txn_id)) = params_vec.pop() else {
+            return Err(rpc::invalid_params("Expected transaction UUID"));
+        };
+        let txn_id = txn_id.into_inner();
+        let Some((_, tx)) = self.transactions.remove(&txn_id) else {
+            return Err(rpc::invalid_params("Transaction not found"));
+        };
+        tx.commit().await.map_err(rpc::types_error_from_anyhow)?;
+        Ok(DbResult::Other(Value::None))
+    }
+
+    /// Cancel a transaction
+    async fn cancel(
+        &self,
+        _txn: Option<Uuid>,
+        _session_id: Option<Uuid>,
+        params: Array,
+    ) -> TxResult<DbResult> {
+        let mut params_vec = params.into_vec();
+        let Some(Value::Uuid(txn_id)) = params_vec.pop() else {
+            return Err(rpc::invalid_params("Expected transaction UUID"));
+        };
+        let txn_id = txn_id.into_inner();
+        let Some((_, tx)) = self.transactions.remove(&txn_id) else {
+            return Err(rpc::invalid_params("Transaction not found"));
+        };
+        tx.cancel().await.map_err(rpc::types_error_from_anyhow)?;
+
+        // Return success
+        Ok(DbResult::Other(Value::None))
+    }
 }
 
 static SURREALDB_VERSION: &str = include_str!("../surreal-version.txt");
