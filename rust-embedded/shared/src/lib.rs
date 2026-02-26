@@ -53,27 +53,49 @@ pub unsafe extern "C" fn execute(
     method: Method,
     session_bytes: *const u8,
     session_len: i32,
+    transaction_bytes: *const u8,
+    transaction_len: i32,
     params_bytes: *const u8,
     params_len: i32,
     success: SuccessAction,
     failure: FailureAction,
 ) {
     let method: surrealdb::rpc::Method = method.into();
+
     let session_id = if session_len == 16 {
         let session_bytes = unsafe { convert_csharp_to_rust_bytes(session_bytes, session_len) };
-        Uuid::try_from(session_bytes).map(|u| Some(u))
+        Uuid::try_from(session_bytes).map(Some)
     } else {
         Ok(None)
     };
-    if let Err(_) = session_id {
+    if session_id.is_err() {
         send_failure("Failed to deserialize session id", failure);
         return;
     }
+
+    let transaction_id = if transaction_len == 16 {
+        let transaction_bytes =
+            unsafe { convert_csharp_to_rust_bytes(transaction_bytes, transaction_len) };
+        Uuid::try_from(transaction_bytes).map(Some)
+    } else {
+        Ok(None)
+    };
+    if transaction_id.is_err() {
+        send_failure("Failed to deserialize transaction id", failure);
+        return;
+    }
+
     let params_bytes = unsafe { convert_csharp_to_rust_bytes(params_bytes, params_len) };
 
     get_global_runtime().spawn(async move {
         match ENGINES
-            .execute(id, method, session_id.unwrap(), params_bytes)
+            .execute(
+                id,
+                method,
+                session_id.unwrap(),
+                transaction_id.unwrap(),
+                params_bytes,
+            )
             .await
         {
             Ok(output) => {

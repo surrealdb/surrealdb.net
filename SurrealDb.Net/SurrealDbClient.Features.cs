@@ -12,8 +12,7 @@ public abstract partial class BaseSurrealDbClient
 
     public async Task<bool> SupportsTransactions(CancellationToken cancellationToken = default)
     {
-        bool isWebsocket = Uri.Scheme == "ws" || Uri.Scheme == "wss";
-        if (!isWebsocket)
+        if (Uri.Scheme is "http" or "https")
         {
             return false;
         }

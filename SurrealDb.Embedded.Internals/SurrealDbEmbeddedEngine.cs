@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Reactive;
 using System.Runtime.InteropServices;
 using Dahomey.Cbor;
@@ -44,6 +45,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
     private bool _isConnected;
     private bool _isInitialized;
+
+    private readonly ConcurrentDictionary<Guid, Guid> _transactions = new();
 
 #if DEBUG
     public string Id => _id.ToString();
@@ -100,8 +103,16 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
     public async Task<Guid> Begin(Guid? sessionId, CancellationToken cancellationToken)
     {
-        return await SendRequestAsync<Guid>(Method.Begin, null, sessionId, cancellationToken)
+        var transactionId = await SendRequestAsync<Guid>(
+                Method.Begin,
+                null,
+                sessionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
+
+        _transactions[sessionId!.Value] = transactionId;
+        return transactionId;
     }
 
     public async Task Cancel(
@@ -112,6 +123,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     {
         await SendRequestAsync<Unit>(Method.Cancel, [transactionId], sessionId, cancellationToken)
             .ConfigureAwait(false);
+        _transactions.TryRemove(sessionId!.Value, out _);
     }
 
     public async Task CloseSession(Guid sessionId, CancellationToken cancellationToken)
@@ -129,6 +141,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     {
         await SendRequestAsync<Unit>(Method.Commit, [transactionId], sessionId, cancellationToken)
             .ConfigureAwait(false);
+        _transactions.TryRemove(sessionId!.Value, out _);
     }
 
     public async Task<Guid> CreateSession(CancellationToken cancellationToken)
@@ -1384,6 +1397,15 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 .ConfigureAwait(false);
         }
 
+        Guid? transactionId = null;
+        if (sessionId.HasValue)
+        {
+            if (_transactions.TryGetValue(sessionId.Value, out var txnId))
+            {
+                transactionId = txnId;
+            }
+        }
+
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
 
         try
@@ -1500,8 +1522,10 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             };
 
             var sessionBytes = sessionId.HasValue ? sessionId.Value.ToByteArray() : [];
+            var transactionBytes = transactionId.HasValue ? transactionId.Value.ToByteArray() : [];
 
             fixed (byte* session = sessionBytes.AsSpan())
+            fixed (byte* transaction = transactionBytes.AsSpan())
             fixed (byte* payload = bytes.AsSpan())
             {
                 NativeMethods.execute(
@@ -1509,6 +1533,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                     method,
                     session,
                     sessionBytes.Length,
+                    transaction,
+                    transactionBytes.Length,
                     payload,
                     bytes.Count,
                     successAction,

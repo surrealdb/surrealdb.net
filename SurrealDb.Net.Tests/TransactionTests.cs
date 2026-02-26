@@ -15,13 +15,13 @@ public class TransactionTests
         await using var client = surrealDbClientGenerator.Create(connectionString);
         bool result = await client.SupportsTransactions();
 
-        if (client.Engine is SurrealDbWsEngine)
+        if (client.Engine is SurrealDbHttpEngine)
         {
-            result.Should().BeTrue();
+            result.Should().BeFalse();
         }
         else
         {
-            result.Should().BeFalse();
+            result.Should().BeTrue();
         }
     }
 
@@ -39,10 +39,14 @@ public class TransactionTests
     }
 
     [Test]
-    [WebsocketConnectionStringFixtureGenerator]
+    [ConnectionStringFixtureGenerator]
     [SinceSurrealVersion("3.0")]
     public async Task BeginTransaction(string connectionString)
     {
+        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+        if (new Uri(options.Endpoint!).Scheme is "http" or "https")
+            return;
+
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
         await using var client = surrealDbClientGenerator.Create(connectionString);
@@ -59,10 +63,12 @@ public class TransactionTests
     [SinceSurrealVersion("3.0")]
     public async Task CommitTransaction(string connectionString)
     {
+        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+        if (new Uri(options.Endpoint!).Scheme is "http" or "https")
+            return;
+
         IEnumerable<Post>? beforeCommitList = null;
         IEnumerable<Post>? afterCommitList = null;
-
-        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
 
         Func<Task> func = async () =>
         {
@@ -112,9 +118,11 @@ public class TransactionTests
     [SinceSurrealVersion("3.0")]
     public async Task RollbackTransaction(string connectionString)
     {
-        IEnumerable<Post>? afterCommitList = null;
-
         var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+        if (new Uri(options.Endpoint!).Scheme is "http" or "https")
+            return;
+
+        IEnumerable<Post>? afterCommitList = null;
 
         Func<Task> func = async () =>
         {
@@ -161,9 +169,11 @@ public class TransactionTests
     [SinceSurrealVersion("3.0")]
     public async Task ShouldRollbackOnDispose(string connectionString)
     {
-        IEnumerable<Post>? afterCommitList = null;
-
         var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+        if (new Uri(options.Endpoint!).Scheme is "http" or "https")
+            return;
+
+        IEnumerable<Post>? afterCommitList = null;
 
         Func<Task> func = async () =>
         {
