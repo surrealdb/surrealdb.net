@@ -22,7 +22,7 @@ public class ConnectTests
         {
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
 
             await client.Connect();
         };
@@ -38,10 +38,10 @@ public class ConnectTests
 
         Func<Task> func = async () =>
         {
-            using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = new SurrealDbClient(
+            await using var client = new SurrealDbClient(
                 new SurrealDbOptions
                 {
                     Endpoint = "ws://127.0.0.1:8000/rpc",

@@ -1,6 +1,6 @@
 ﻿using SurrealDb.Embedded.Internals;
-using SurrealDb.Embedded.Options;
 using SurrealDb.Net.Internals;
+using SurrealDb.Net.Internals.DependencyInjection;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +12,9 @@ public static class ServiceCollectionExtensions
 {
     public static SurrealDbBuilder AddSurrealKvProvider(this SurrealDbBuilder builder)
     {
+        builder.Services.AddKeyedSingleton<ISessionInfoProvider, EmbeddedSessionInfoProvider>(
+            "surrealkv"
+        );
         builder.Services.AddTransient<ISurrealDbKvEngine, SurrealDbEmbeddedEngine>();
 
         return builder;

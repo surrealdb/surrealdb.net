@@ -13,7 +13,7 @@ public class ColdStartBench : BaseRemoteBenchmark
     private readonly List<ISurrealDbClient> _clients = new();
 
     [GlobalSetup]
-    public void GlobalSetup()
+    public async Task GlobalSetup()
     {
         var services = new ServiceCollection();
 
@@ -22,19 +22,19 @@ public class ColdStartBench : BaseRemoteBenchmark
 
         _serviceProvider = services.BuildServiceProvider(validateScopes: true);
 
-        using var clientGenerator = new SurrealDbClientGenerator();
+        await using var clientGenerator = new SurrealDbClientGenerator();
         _databaseInfo = clientGenerator.GenerateDatabaseInfo();
     }
 
     [GlobalCleanup]
-    public void GlobalCleanup()
+    public async Task GlobalCleanup()
     {
         foreach (var client in _clients)
         {
-            client.Dispose();
+            await client.DisposeAsync();
         }
 
-        _serviceProvider?.Dispose();
+        await _serviceProvider!.DisposeAsync();
     }
 
     [Benchmark]

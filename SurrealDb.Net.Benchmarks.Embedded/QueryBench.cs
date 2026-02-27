@@ -34,16 +34,14 @@ public class QueryBench : BaseEmbeddedBenchmark
     }
 
     [IterationCleanup]
-    public void Cleanup()
+    public async Task Cleanup()
     {
         ISurrealDbClient[] clients = [_memoryClient!, _rocksDbClient!, _surrealKvClient!];
 
         foreach (var client in clients)
         {
-#pragma warning disable CA2025
-            ClearData(client, DefaultDatabaseInfo).GetAwaiter().GetResult();
-#pragma warning restore CA2025
-            client.Dispose();
+            await ClearData(client, DefaultDatabaseInfo);
+            await client.DisposeAsync();
         }
     }
 

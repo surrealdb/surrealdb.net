@@ -1,17 +1,16 @@
 ﻿using Dahomey.Cbor;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SurrealDb.Net;
 using SurrealDb.Net.Extensions.DependencyInjection;
+using SurrealDb.Net.Internals.DependencyInjection;
 using SurrealDb.Net.Internals.Helpers;
-using SurrealDb.Net.Internals.ObjectPool;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Extensions to register SurrealDB services.
-/// Registers <see cref="ISurrealDbClient"/>.
+/// Registers <see cref="ISurrealDbClient"/> for <see cref="ServiceLifetime.Singleton"/> lifetime.
+/// Registers <see cref="ISurrealDbSession"/> for <see cref="ServiceLifetime.Scoped"/> and <see cref="ServiceLifetime.Transient"/> lifetimes.
 /// Registers <see cref="IHttpClientFactory"/> for HTTP requests.
 /// </summary>
 public static class ServiceCollectionExtensions
@@ -80,29 +79,38 @@ public static class ServiceCollectionExtensions
         Action<CborOptions>? configureCborOptions = null
     )
     {
-        if (configuration.Endpoint is null)
-            throw new ArgumentNullException(nameof(configuration), "The endpoint is required.");
+        services.RegisterInnerServices(configuration);
 
-        bool shouldRegisterHttpClient = new Uri(configuration.Endpoint).Scheme is "http" or "https";
-        if (shouldRegisterHttpClient)
+        if (lifetime == ServiceLifetime.Singleton)
         {
-            RegisterHttpClient(services, configuration.Endpoint);
+            RegisterSurrealDbClient<ISurrealDbClient>(
+                services,
+                configuration,
+                lifetime,
+                configureCborOptions
+            );
+            RegisterSurrealDbClient<SurrealDbClient>(
+                services,
+                configuration,
+                lifetime,
+                configureCborOptions
+            );
         }
-
-        services.AddSingleton<IValidateOptions<SurrealDbOptions>, SurrealDbOptionsValidation>();
-
-        RegisterSurrealDbClient<ISurrealDbClient>(
-            services,
-            configuration,
-            lifetime,
-            configureCborOptions
-        );
-        RegisterSurrealDbClient<SurrealDbClient>(
-            services,
-            configuration,
-            lifetime,
-            configureCborOptions
-        );
+        else
+        {
+            RegisterSurrealDbClient<ISurrealDbSession>(
+                services,
+                configuration,
+                lifetime,
+                configureCborOptions
+            );
+            RegisterSurrealDbClient<SurrealDbSession>(
+                services,
+                configuration,
+                lifetime,
+                configureCborOptions
+            );
+        }
 
         return new SurrealDbBuilder(services);
     }
@@ -184,34 +192,69 @@ public static class ServiceCollectionExtensions
         Action<CborOptions>? configureCborOptions = null
     )
     {
+        services.RegisterInnerServices(configuration);
+
+        if (lifetime == ServiceLifetime.Singleton)
+        {
+            RegisterKeyedSurrealDbClient<ISurrealDbClient>(
+                services,
+                serviceKey,
+                configuration,
+                lifetime,
+                configureCborOptions
+            );
+            RegisterKeyedSurrealDbClient<SurrealDbClient>(
+                services,
+                serviceKey,
+                configuration,
+                lifetime,
+                configureCborOptions
+            );
+        }
+        else
+        {
+            RegisterKeyedSurrealDbClient<ISurrealDbSession>(
+                services,
+                serviceKey,
+                configuration,
+                lifetime,
+                configureCborOptions
+            );
+            RegisterKeyedSurrealDbClient<SurrealDbSession>(
+                services,
+                serviceKey,
+                configuration,
+                lifetime,
+                configureCborOptions
+            );
+        }
+
+        return new SurrealDbBuilder(services);
+    }
+
+    private static void RegisterInnerServices(
+        this IServiceCollection services,
+        SurrealDbOptions configuration
+    )
+    {
         if (configuration.Endpoint is null)
             throw new ArgumentNullException(nameof(configuration), "The endpoint is required.");
 
         bool shouldRegisterHttpClient = new Uri(configuration.Endpoint).Scheme is "http" or "https";
         if (shouldRegisterHttpClient)
         {
-            RegisterHttpClient(services, configuration.Endpoint);
+            services.RegisterHttpClient(configuration.Endpoint);
         }
 
-        RegisterKeyedSurrealDbClient<ISurrealDbClient>(
-            services,
-            serviceKey,
-            configuration,
-            lifetime,
-            configureCborOptions
-        );
-        RegisterKeyedSurrealDbClient<SurrealDbClient>(
-            services,
-            serviceKey,
-            configuration,
-            lifetime,
-            configureCborOptions
-        );
-
-        return new SurrealDbBuilder(services);
+        services.AddSingleton<IValidateOptions<SurrealDbOptions>, SurrealDbOptionsValidation>();
+        services.AddSingleton<ISessionizer, Sessionizer>();
+        services.AddKeyedSingleton<ISessionInfoProvider, RpcSessionInfoProvider>("http");
+        services.AddKeyedSingleton<ISessionInfoProvider, RpcSessionInfoProvider>("https");
+        services.AddKeyedSingleton<ISessionInfoProvider, RpcSessionInfoProvider>("ws");
+        services.AddKeyedSingleton<ISessionInfoProvider, RpcSessionInfoProvider>("wss");
     }
 
-    private static void RegisterHttpClient(IServiceCollection services, string endpoint)
+    private static void RegisterHttpClient(this IServiceCollection services, string endpoint)
     {
         var uri = new Uri(endpoint);
         string httpClientName = HttpClientHelper.GetHttpClientName(uri);
@@ -238,36 +281,73 @@ public static class ServiceCollectionExtensions
                 services.AddSingleton(
                     typeof(T),
                     serviceProvider =>
-                        CreateSurrealDbClientWithoutPooling(
+                        SurrealDbClientFactory.CreateSurrealDbClient(
                             serviceProvider,
                             configuration,
-                            configureCborOptions
+                            configureCborOptions,
+                            null
                         )
                 );
                 break;
             case ServiceLifetime.Scoped:
-                TryAddSingletonPoolContainer(services);
-                services.AddScoped(
-                    typeof(T),
-                    serviceProvider =>
-                        CreateSurrealDbClientWithPoolingFactory(
-                            serviceProvider,
-                            configuration,
-                            configureCborOptions
-                        )
-                );
+                {
+                    var surrealDbClientFactory = new SurrealDbClientFactory();
+
+                    services.AddScoped(
+                        typeof(T),
+                        (serviceProvider) =>
+                        {
+                            var sessionizer = serviceProvider.GetRequiredService<ISessionizer>();
+                            var session = surrealDbClientFactory.CreateChildClient(
+                                serviceProvider,
+                                configuration,
+                                configureCborOptions,
+                                sessionizer
+                            );
+
+                            var sessionInfoProvider =
+                                serviceProvider.GetRequiredKeyedService<ISessionInfoProvider>(
+                                    session.Uri.Scheme
+                                );
+                            sessionizer.Add(
+                                session.SessionId!.Value,
+                                sessionInfoProvider.Get(configuration)
+                            );
+
+                            return session;
+                        }
+                    );
+                }
                 break;
             case ServiceLifetime.Transient:
-                TryAddSingletonPoolContainer(services);
-                services.AddTransient(
-                    typeof(T),
-                    serviceProvider =>
-                        CreateSurrealDbClientWithPoolingFactory(
-                            serviceProvider,
-                            configuration,
-                            configureCborOptions
-                        )
-                );
+                {
+                    var surrealDbClientFactory = new SurrealDbClientFactory();
+
+                    services.AddTransient(
+                        typeof(T),
+                        (serviceProvider) =>
+                        {
+                            var sessionizer = serviceProvider.GetRequiredService<ISessionizer>();
+                            var session = surrealDbClientFactory.CreateChildClient(
+                                serviceProvider,
+                                configuration,
+                                configureCborOptions,
+                                sessionizer
+                            );
+
+                            var sessionInfoProvider =
+                                serviceProvider.GetRequiredKeyedService<ISessionInfoProvider>(
+                                    session.Uri.Scheme
+                                );
+                            sessionizer.Add(
+                                session.SessionId!.Value,
+                                sessionInfoProvider.Get(configuration)
+                            );
+
+                            return session;
+                        }
+                    );
+                }
                 break;
             default:
                 throw new ArgumentOutOfRangeException(
@@ -293,38 +373,75 @@ public static class ServiceCollectionExtensions
                     typeof(T),
                     serviceKey,
                     (serviceProvider, _) =>
-                        CreateSurrealDbClientWithoutPooling(
+                        SurrealDbClientFactory.CreateSurrealDbClient(
                             serviceProvider,
                             configuration,
-                            configureCborOptions
+                            configureCborOptions,
+                            null
                         )
                 );
                 break;
             case ServiceLifetime.Scoped:
-                TryAddSingletonPoolContainer(services);
-                services.AddKeyedScoped(
-                    typeof(T),
-                    serviceKey,
-                    (serviceProvider, _) =>
-                        CreateSurrealDbClientWithPoolingFactory(
-                            serviceProvider,
-                            configuration,
-                            configureCborOptions
-                        )
-                );
+                {
+                    var surrealDbClientFactory = new SurrealDbClientFactory();
+
+                    services.AddKeyedScoped(
+                        typeof(T),
+                        serviceKey,
+                        (serviceProvider, _) =>
+                        {
+                            var sessionizer = serviceProvider.GetRequiredService<ISessionizer>();
+                            var session = surrealDbClientFactory.CreateChildClient(
+                                serviceProvider,
+                                configuration,
+                                configureCborOptions,
+                                sessionizer
+                            );
+
+                            var sessionInfoProvider =
+                                serviceProvider.GetRequiredKeyedService<ISessionInfoProvider>(
+                                    session.Uri.Scheme
+                                );
+                            sessionizer.Add(
+                                session.SessionId!.Value,
+                                sessionInfoProvider.Get(configuration)
+                            );
+
+                            return session;
+                        }
+                    );
+                }
                 break;
             case ServiceLifetime.Transient:
-                TryAddSingletonPoolContainer(services);
-                services.AddKeyedTransient(
-                    typeof(T),
-                    serviceKey,
-                    (serviceProvider, _) =>
-                        CreateSurrealDbClientWithPoolingFactory(
-                            serviceProvider,
-                            configuration,
-                            configureCborOptions
-                        )
-                );
+                {
+                    var surrealDbClientFactory = new SurrealDbClientFactory();
+
+                    services.AddKeyedTransient(
+                        typeof(T),
+                        serviceKey,
+                        (serviceProvider, _) =>
+                        {
+                            var sessionizer = serviceProvider.GetRequiredService<ISessionizer>();
+                            var session = surrealDbClientFactory.CreateChildClient(
+                                serviceProvider,
+                                configuration,
+                                configureCborOptions,
+                                sessionizer
+                            );
+
+                            var sessionInfoProvider =
+                                serviceProvider.GetRequiredKeyedService<ISessionInfoProvider>(
+                                    session.Uri.Scheme
+                                );
+                            sessionizer.Add(
+                                session.SessionId!.Value,
+                                sessionInfoProvider.Get(configuration)
+                            );
+
+                            return session;
+                        }
+                    );
+                }
                 break;
             default:
                 throw new ArgumentOutOfRangeException(
@@ -333,77 +450,5 @@ public static class ServiceCollectionExtensions
                     "Invalid service lifetime."
                 );
         }
-    }
-
-    private static SurrealDbClient CreateSurrealDbClientWithoutPooling(
-        IServiceProvider serviceProvider,
-        SurrealDbOptions configuration,
-        Action<CborOptions>? configureCborOptions
-    )
-    {
-        return new SurrealDbClient(
-            configuration,
-            serviceProvider,
-            serviceProvider.GetService<IHttpClientFactory>(),
-            configureCborOptions,
-            serviceProvider.GetService<ILoggerFactory>()
-        );
-    }
-
-    private static SurrealDbClient CreateSurrealDbClientWithPoolingFactory(
-        IServiceProvider serviceProvider,
-        SurrealDbOptions configuration,
-        Action<CborOptions>? configureCborOptions
-    )
-    {
-        bool supportsPooling = !configuration.IsEmbedded;
-        if (!supportsPooling)
-        {
-            return CreateSurrealDbClientWithoutPooling(
-                serviceProvider,
-                configuration,
-                configureCborOptions
-            );
-        }
-
-        var pool = serviceProvider.GetRequiredService<SurrealDbClientPool>();
-        var container = pool.TryGetExact(configuration.Endpoint);
-
-        if (container is null)
-        {
-            return CreateSurrealDbClientWithoutPooling(
-                serviceProvider,
-                configuration,
-                configureCborOptions
-            );
-        }
-
-        var poolTask = new Func<Task>(() => pool.ReturnAsync(container));
-
-        if (container.ClientEngine is not null)
-        {
-            return new SurrealDbClient(configuration, container.ClientEngine, poolTask);
-        }
-
-        var client = new SurrealDbClient(
-            configuration,
-            serviceProvider,
-            serviceProvider.GetService<IHttpClientFactory>(),
-            configureCborOptions,
-            serviceProvider.GetService<ILoggerFactory>(),
-            poolTask
-        );
-        container.ClientEngine = client.Engine;
-
-        return client;
-    }
-
-    private static void TryAddSingletonPoolContainer(IServiceCollection services)
-    {
-        services.TryAddSingleton(_ =>
-        {
-            var policy = new AsyncPooledObjectPolicy<SurrealDbClientPoolContainer>();
-            return new SurrealDbClientPool(policy);
-        });
     }
 }

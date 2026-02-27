@@ -13,7 +13,7 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.ApplySchemaAsync(SurrealSchemaFile.String);
@@ -94,7 +94,7 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.ApplySchemaAsync(SurrealSchemaFile.Number);
@@ -143,7 +143,7 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.ApplySchemaAsync(SurrealSchemaFile.Decimal);
@@ -232,7 +232,7 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.ApplySchemaAsync(SurrealSchemaFile.Decimal);
@@ -321,7 +321,7 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.ApplySchemaAsync(SurrealSchemaFile.Decimal);
@@ -410,7 +410,7 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.ApplySchemaAsync(SurrealSchemaFile.Duration);
@@ -558,7 +558,7 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.ApplySchemaAsync(SurrealSchemaFile.Duration);
@@ -696,7 +696,7 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.ApplySchemaAsync(SurrealSchemaFile.Datetime);
@@ -822,7 +822,7 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.ApplySchemaAsync(SurrealSchemaFile.Vector);
@@ -857,7 +857,7 @@ public class TypesTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
         await client.Create(

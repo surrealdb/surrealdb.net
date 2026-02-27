@@ -34,7 +34,7 @@ namespace SurrealDb.Embedded.Internals
         ///  To execute a method, you should pass down the Method, the params and the callback functions (success, failure).
         /// </summary>
         [DllImport(__DllName, EntryPoint = "execute", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern void execute(int id, Method method, byte* bytes, int len, SuccessAction success, FailureAction failure);
+        internal static extern void execute(int id, Method method, byte* session_bytes, int session_len, byte* transaction_bytes, int transaction_len, byte* params_bytes, int params_len, SuccessAction success, FailureAction failure);
 
         /// <summary>
         ///  # Safety
@@ -123,6 +123,12 @@ namespace SurrealDb.Embedded.Internals
         Relate = 15,
         Run = 16,
         InsertRelation = 17,
+        Sessions = 18,
+        Attach = 19,
+        Detach = 20,
+        Begin = 21,
+        Commit = 22,
+        Cancel = 23,
     }
 
 

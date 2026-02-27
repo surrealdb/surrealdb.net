@@ -7,7 +7,7 @@ public static class SemverExtensions
     /// <summary>
     /// Converts a SurrealDB version string to a Semver version.
     /// </summary>
-    /// <param name="version">The SurrealDB version string extracted from <see cref="ISurrealDbClient.Version(CancellationToken)"/>.</param>
+    /// <param name="version">The SurrealDB version string extracted from <see cref="ISurrealDbSharedMethods.Version(CancellationToken)"/>.</param>
     /// <returns>The full Semver version.</returns>
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
