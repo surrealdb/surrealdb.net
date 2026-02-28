@@ -1255,18 +1255,19 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
 
-        return ExtractSurrealDbOkResponse(result);
+        return ExtractSurrealDbOkResponse(result, cborSerializerOptions);
     }
 
     private static SurrealDbHttpOkResponse ExtractSurrealDbOkResponse(
-        ISurrealDbHttpResponse? result
+        ISurrealDbHttpResponse? result,
+        CborOptions cborOptions
     )
     {
         return result switch
         {
             SurrealDbHttpOkResponse okResponse => okResponse,
-            SurrealDbHttpErrorResponse errorResponse => throw new SurrealDbException(
-                errorResponse.Error.Message
+            SurrealDbHttpErrorResponse errorResponse => throw errorResponse.Error.ToException(
+                cborOptions
             ),
             _ => throw new SurrealDbException("Unknown response type"),
         };

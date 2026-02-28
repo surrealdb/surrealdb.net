@@ -2,15 +2,20 @@
 using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
-using SurrealDb.Net.Internals.Extensions;
-using SurrealDb.Net.Internals.Http;
+using SurrealDb.Net.Internals.Errors;
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
 
-internal sealed class SurrealDbHttpErrorResponseContentConverter
-    : CborConverterBase<SurrealDbHttpErrorResponseContent>
+internal sealed class RpcErrorResponseContentConverter : CborConverterBase<RpcErrorResponseContent>
 {
-    public override SurrealDbHttpErrorResponseContent Read(ref CborReader reader)
+    private readonly ICborConverter<RpcErrorDetails> _rpcErrorDetailsConverter;
+
+    public RpcErrorResponseContentConverter(CborOptions options)
+    {
+        _rpcErrorDetailsConverter = options.Registry.ConverterRegistry.Lookup<RpcErrorDetails>();
+    }
+
+    public override RpcErrorResponseContent Read(ref CborReader reader)
     {
         reader.ReadBeginMap();
 
@@ -19,7 +24,7 @@ internal sealed class SurrealDbHttpErrorResponseContentConverter
         long code = 0;
         string? message = null;
         string? kind = null;
-        ReadOnlyMemory<byte>? customErrorDetails = null;
+        RpcErrorDetails? customErrorDetails = null;
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
@@ -45,28 +50,28 @@ internal sealed class SurrealDbHttpErrorResponseContentConverter
 
             if (key.SequenceEqual("details"u8))
             {
-                // TODO : ignored for now
-                customErrorDetails = reader.ReadDataItemAsMemory();
+                customErrorDetails = _rpcErrorDetailsConverter.Read(ref reader);
                 continue;
             }
 
             throw new CborException(
-                $"{Encoding.UTF8.GetString(key)} is not a valid property of {nameof(SurrealDbHttpErrorResponseContent)}."
+                $"{Encoding.UTF8.GetString(key)} is not a valid property of {nameof(RpcErrorResponseContent)}."
             );
         }
 
-        return new SurrealDbHttpErrorResponseContent
+        return new RpcErrorResponseContent
         {
             Code = code,
             Message = message!,
             Kind = kind,
+            Details = customErrorDetails,
         };
     }
 
-    public override void Write(ref CborWriter writer, SurrealDbHttpErrorResponseContent value)
+    public override void Write(ref CborWriter writer, RpcErrorResponseContent value)
     {
         throw new NotSupportedException(
-            $"Cannot write {nameof(SurrealDbHttpErrorResponseContent)} back in cbor..."
+            $"Cannot write {nameof(RpcErrorResponseContent)} back in cbor..."
         );
     }
 }

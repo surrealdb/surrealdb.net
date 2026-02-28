@@ -230,7 +230,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                                     break;
                                 case SurrealDbWsErrorResponse errorResponse:
                                     responseTaskCompletionSource.SetException(
-                                        new SurrealDbException(errorResponse.Error.Message)
+                                        errorResponse.Error.ToException(GetCborOptions())
                                     );
                                     break;
                                 default:

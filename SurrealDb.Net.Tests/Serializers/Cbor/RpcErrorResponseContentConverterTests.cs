@@ -1,13 +1,13 @@
-﻿using SurrealDb.Net.Internals.Ws;
+﻿using SurrealDb.Net.Internals.Errors;
 
 namespace SurrealDb.Net.Tests.Serializers.Cbor;
 
-public class SurrealDbWsErrorResponseContentConverterTests : BaseCborConverterTests
+public class RpcErrorResponseContentConverterTests : BaseCborConverterTests
 {
     [Test]
     public void CannotSerialize()
     {
-        var value = new SurrealDbWsErrorResponseContent { Code = 1, Message = "Error message" };
+        var value = new RpcErrorResponseContent { Code = 1, Message = "Error message" };
 
         Func<Task> act = () => SerializeCborBinaryAsHexaAsync(value);
 
@@ -17,7 +17,7 @@ public class SurrealDbWsErrorResponseContentConverterTests : BaseCborConverterTe
     [Test]
     public async Task Deserialize()
     {
-        var result = await DeserializeCborBinaryAsHexaAsync<SurrealDbWsErrorResponseContent>(
+        var result = await DeserializeCborBinaryAsHexaAsync<RpcErrorResponseContent>(
             "a264636f646504676d6573736167656d4572726f72206d657373616765"
         );
 

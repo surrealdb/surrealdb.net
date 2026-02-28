@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Exceptions.Rpc;
 
 namespace SurrealDb.Net.Tests;
 
@@ -47,6 +49,36 @@ public class SignInTests
         };
 
         await func.Should().NotThrowAsync();
+    }
+
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
+    public async Task ShouldFailedToSignInAsRootUserWithInvalidCredentials(string connectionString)
+    {
+        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+
+            await using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.SignIn(new RootAuth { Username = "test", Password = "password" });
+        };
+
+        const string expectedMessage = "There was a problem with authentication";
+
+        if (version.Major >= 3)
+        {
+            await func.Should()
+                .ThrowAsync<SurrealDbNotAllowedException>()
+                .WithMessage(expectedMessage);
+        }
+        else
+        {
+            await func.Should()
+                .ThrowAsync<SurrealDbInternalException>()
+                .WithMessage(expectedMessage);
+        }
     }
 
     [Test]
