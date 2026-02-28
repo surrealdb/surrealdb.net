@@ -9,6 +9,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Semver;
 using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Exceptions.LiveQuery;
+using SurrealDb.Net.Exceptions.Methods;
+using SurrealDb.Net.Exceptions.Response;
 using SurrealDb.Net.Extensions;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals.Auth;
@@ -235,7 +238,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                                     break;
                                 default:
                                     responseTaskCompletionSource.SetException(
-                                        new SurrealDbException("Unknown response type")
+                                        new UnknownResponseTypeException()
                                     );
                                     break;
                             }
@@ -323,7 +326,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     public async Task Connect(CancellationToken cancellationToken)
     {
         if (_wsClient.IsStarted)
-            throw new SurrealDbException("Client already started");
+            throw new SurrealDbConnectException("Client already started");
 
         _surrealDbLoggerFactory?.Connection?.LogConnectionAttempt(_parameters.Endpoint!);
 
@@ -339,7 +342,9 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
 
         if (_version.CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
         {
-            throw new SurrealDbException("CBOR is only supported on SurrealDB 1.4.0 or later.");
+            throw new SurrealDbConnectException(
+                "CBOR is only supported on SurrealDB 1.4.0 or later."
+            );
         }
 
         _pinger.Start();
@@ -352,7 +357,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         where T : IRecord
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot create a record without an Id");
+            throw new SurrealDbMethodException("Cannot create a record without an Id");
 
         var dbResponse = await SendRequestAsync(
                 "create",
@@ -573,7 +578,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             throw new NotImplementedException();
 
         if (data.Id is null)
-            throw new SurrealDbException("Cannot create a relation record without an Id");
+            throw new SurrealDbMethodException("Cannot create a relation record without an Id");
 
         var dbResponse = await SendRequestAsync(
                 "insert_relation",
@@ -599,7 +604,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             throw new NotImplementedException();
 
         if (data.Id is not null)
-            throw new SurrealDbException(
+            throw new SurrealDbMethodException(
                 "You cannot provide both the table and an Id for the record. Either use the method overload without 'table' param or set the Id property to null."
             );
 
@@ -711,7 +716,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         where TMerge : IRecord
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot create a record without an Id");
+            throw new SurrealDbMethodException("Cannot create a record without an Id");
 
         var dbResponse = await SendRequestAsync(
                 "merge",
@@ -1101,7 +1106,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             )
         )
         {
-            throw new SurrealDbException("Live Query not found");
+            throw new LiveQuerySurrealDbException("Live Query not found");
         }
 
         var liveQueryChannel = new SurrealDbLiveQueryChannel();
@@ -1216,7 +1221,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
             throw new NotImplementedException();
 
         if (data.Id is null)
-            throw new SurrealDbException("Cannot update a record without an Id");
+            throw new SurrealDbMethodException("Cannot update a record without an Id");
 
         var dbResponse = await SendRequestAsync(
                 "update",
@@ -1310,7 +1315,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
         where T : IRecord
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot upsert a record without an Id");
+            throw new SurrealDbMethodException("Cannot upsert a record without an Id");
 
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 

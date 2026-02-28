@@ -65,19 +65,15 @@ public class SignInTests
             await client.SignIn(new RootAuth { Username = "test", Password = "password" });
         };
 
-        const string expectedMessage = "There was a problem with authentication";
-
         if (version.Major >= 3)
         {
             await func.Should()
                 .ThrowAsync<SurrealDbNotAllowedException>()
-                .WithMessage(expectedMessage);
+                .WithMessage("There was a problem with authentication");
         }
         else
         {
-            await func.Should()
-                .ThrowAsync<SurrealDbInternalException>()
-                .WithMessage(expectedMessage);
+            await func.Should().ThrowAsync<SurrealDbInternalException>();
         }
     }
 

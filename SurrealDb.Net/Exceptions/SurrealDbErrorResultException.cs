@@ -7,10 +7,10 @@ namespace SurrealDb.Net.Exceptions;
 /// </summary>
 public sealed class SurrealDbErrorResultException : SurrealDbException
 {
-    public SurrealDbErrorResultException()
+    internal SurrealDbErrorResultException()
         : base(GetErrorMessage()) { }
 
-    public SurrealDbErrorResultException(ISurrealDbErrorResult errorResult)
+    internal SurrealDbErrorResultException(ISurrealDbErrorResult errorResult)
         : base(GetErrorMessage(errorResult)) { }
 
     private static string GetErrorMessage(ISurrealDbErrorResult? errorResult = null)

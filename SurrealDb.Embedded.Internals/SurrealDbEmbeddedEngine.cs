@@ -7,6 +7,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SurrealDb.Embedded.Options;
 using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Exceptions.Embedded;
+using SurrealDb.Net.Exceptions.Methods;
+using SurrealDb.Net.Exceptions.Serialization;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Cbor;
@@ -108,7 +111,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             bool canGetBuffer = stream.TryGetBuffer(out var bytes);
             if (!canGetBuffer)
             {
-                throw new SurrealDbException("Failed to retrieve serialized buffer.");
+                throw new SurrealDbSerializationException("Failed to retrieve serialized buffer.");
             }
 
             var taskCompletionSource = new TaskCompletionSource<bool>(
@@ -133,7 +136,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                     byteBuffer.AsReadOnly(),
                     GetCborOptions()
                 );
-                taskCompletionSource.SetException(new SurrealDbException(error));
+                taskCompletionSource.SetException(new SurrealDbEmbeddedException(error));
             };
 
             var successHandle = GCHandle.Alloc(success);
@@ -205,7 +208,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         where T : IRecord
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot create a record without an Id");
+            throw new SurrealDbMethodException("Cannot create a record without an Id");
 
         return await SendRequestAsync<T>(Method.Create, [data.Id, data], cancellationToken)
             .ConfigureAwait(false);
@@ -305,7 +308,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         bool canGetBuffer = stream.TryGetBuffer(out var bytes);
         if (!canGetBuffer)
         {
-            throw new SurrealDbException("Failed to retrieve serialized buffer.");
+            throw new SurrealDbSerializationException("Failed to retrieve serialized buffer.");
         }
 
         var taskCompletionSource = new TaskCompletionSource<string>(
@@ -349,7 +352,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 byteBuffer.AsReadOnly(),
                 GetCborOptions()
             );
-            taskCompletionSource.SetException(new SurrealDbException(error));
+            taskCompletionSource.SetException(new SurrealDbEmbeddedException(error));
         };
 
         var successHandle = GCHandle.Alloc(success);
@@ -448,7 +451,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 byteBuffer.AsReadOnly(),
                 GetCborOptions()
             );
-            taskCompletionSource.SetException(new SurrealDbException(error));
+            taskCompletionSource.SetException(new SurrealDbEmbeddedException(error));
         };
 
         var successHandle = GCHandle.Alloc(success);
@@ -517,7 +520,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         where T : IRelationRecord
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot create a relation record without an Id");
+            throw new SurrealDbMethodException("Cannot create a relation record without an Id");
 
         var result = await SendRequestAsync<List<T>>(
                 Method.InsertRelation,
@@ -537,7 +540,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         where T : IRelationRecord
     {
         if (data.Id is not null)
-            throw new SurrealDbException(
+            throw new SurrealDbMethodException(
                 "You cannot provide both the table and an Id for the record. Either use the method overload without 'table' param or set the Id property to null."
             );
 
@@ -603,7 +606,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         where TMerge : IRecord
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot create a record without an Id");
+            throw new SurrealDbMethodException("Cannot create a record without an Id");
 
         return await SendRequestAsync<TOutput>(Method.Merge, [data.Id, data], cancellationToken)
             .ConfigureAwait(false);
@@ -876,7 +879,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         where T : IRecord
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot update a record without an Id");
+            throw new SurrealDbMethodException("Cannot update a record without an Id");
 
         return await SendRequestAsync<T>(Method.Update, [data.Id, data], cancellationToken)
             .ConfigureAwait(false);
@@ -938,7 +941,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         where T : IRecord
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot upsert a record without an Id");
+            throw new SurrealDbMethodException("Cannot upsert a record without an Id");
 
         return await SendRequestAsync<T>(Method.Upsert, [data.Id, data], cancellationToken)
             .ConfigureAwait(false);
@@ -1115,7 +1118,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 method.ToString(),
                 "Failed to retrieve serialized buffer."
             ); // TODO : Avoid ToString()
-            throw new SurrealDbException("Failed to retrieve serialized buffer.");
+            throw new SurrealDbSerializationException("Failed to retrieve serialized buffer.");
         }
 
         var taskCompletionSource = new TaskCompletionSource<T>(
@@ -1170,7 +1173,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 byteBuffer.AsReadOnly(),
                 GetCborOptions()
             );
-            taskCompletionSource.SetException(new SurrealDbException(error));
+            taskCompletionSource.SetException(new SurrealDbEmbeddedException(error));
         };
 
         var successHandle = GCHandle.Alloc(success);

@@ -5,6 +5,6 @@
 /// </summary>
 public abstract class SurrealDbRpcException : SurrealDbException
 {
-    protected SurrealDbRpcException(string message)
+    protected internal SurrealDbRpcException(string message)
         : base(message) { }
 }
