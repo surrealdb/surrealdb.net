@@ -2,6 +2,7 @@
 using SurrealDb.Net.Internals.Cbor.Converters;
 using SurrealDb.Net.Internals.Cbor.Converters.Numerics;
 using SurrealDb.Net.Internals.Cbor.Converters.Spatial;
+using SurrealDb.Net.Internals.Errors;
 using SurrealDb.Net.Internals.Http;
 using SurrealDb.Net.Internals.Ws;
 using SurrealDb.Net.Models.Auth;
@@ -68,14 +69,23 @@ public static class SurrealDbCborOptions
     private static void RegisterWsEngineConverters(CborOptions options)
     {
         options.Registry.ConverterRegistry.RegisterConverter(
+            typeof(RpcNestedErrorDetails),
+            new RpcNestedErrorDetailsConverter()
+        );
+        options.Registry.ConverterRegistry.RegisterConverter(
+            typeof(RpcErrorDetails),
+            new RpcErrorDetailsConverter(options)
+        );
+        options.Registry.ConverterRegistry.RegisterConverter(
             typeof(ISurrealDbResult),
             new SurrealDbResultConverter(options)
         );
 
         options.Registry.ConverterRegistry.RegisterConverter(
-            typeof(SurrealDbHttpErrorResponseContent),
-            new SurrealDbHttpErrorResponseContentConverter()
+            typeof(RpcErrorResponseContent),
+            new RpcErrorResponseContentConverter(options)
         );
+
         options.Registry.ConverterRegistry.RegisterConverter(
             typeof(ISurrealDbHttpResponse),
             new SurrealDbHttpResponseConverter(options)
@@ -84,10 +94,6 @@ public static class SurrealDbCborOptions
         options.Registry.ConverterRegistry.RegisterConverter(
             typeof(SurrealDbWsLiveResponseContent),
             new SurrealDbWsLiveResponseContentConverter(options)
-        );
-        options.Registry.ConverterRegistry.RegisterConverter(
-            typeof(SurrealDbWsErrorResponseContent),
-            new SurrealDbWsErrorResponseContentConverter()
         );
         options.Registry.ConverterRegistry.RegisterConverter(
             typeof(ISurrealDbWsResponse),

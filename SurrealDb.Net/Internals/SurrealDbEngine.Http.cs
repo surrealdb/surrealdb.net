@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Semver;
 using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Exceptions.Methods;
+using SurrealDb.Net.Exceptions.Response;
 using SurrealDb.Net.Extensions;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals.Auth;
@@ -87,7 +89,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         if (_version!.CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
         {
-            throw new SurrealDbException("CBOR is only supported on SurrealDB 1.4.0 or later.");
+            throw new SurrealDbConnectException(
+                "CBOR is only supported on SurrealDB 1.4.0 or later."
+            );
         }
 
         var dbResponse = await RawQuery(
@@ -105,7 +109,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         where T : IRecord
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot create a record without an Id");
+            throw new SurrealDbMethodException("Cannot create a record without an Id");
 
         var request = new SurrealDbHttpRequest { Method = "create", Parameters = [data.Id, data] };
 
@@ -253,7 +257,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             throw new NotImplementedException();
 
         if (data.Id is null)
-            throw new SurrealDbException("Cannot create a relation record without an Id");
+            throw new SurrealDbMethodException("Cannot create a relation record without an Id");
 
         var request = new SurrealDbHttpRequest
         {
@@ -280,7 +284,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             throw new NotImplementedException();
 
         if (data.Id is not null)
-            throw new SurrealDbException(
+            throw new SurrealDbMethodException(
                 "You cannot provide both the table and an Id for the record. Either use the method overload without 'table' param or set the Id property to null."
             );
 
@@ -341,7 +345,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         where TMerge : IRecord
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot create a record without an Id");
+            throw new SurrealDbMethodException("Cannot create a record without an Id");
 
         var request = new SurrealDbHttpRequest { Method = "merge", Parameters = [data.Id, data] };
 
@@ -743,7 +747,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         {
             if (_pendingRequests > 0)
             {
-                throw new SurrealDbException("Cannot reset client while requests are pending.");
+                throw new SurrealDbResetException(
+                    "Cannot reset client while requests are pending."
+                );
             }
 
 #if ENABLE_HTTP_RESET
@@ -786,7 +792,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             throw new NotImplementedException();
 
         if (data.Id is null)
-            throw new SurrealDbException("Cannot update a record without an Id");
+            throw new SurrealDbMethodException("Cannot update a record without an Id");
 
         var request = new SurrealDbHttpRequest { Method = "update", Parameters = [data.Id, data] };
 
@@ -865,7 +871,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         where T : IRecord
     {
         if (data.Id is null)
-            throw new SurrealDbException("Cannot upsert a record without an Id");
+            throw new SurrealDbMethodException("Cannot upsert a record without an Id");
 
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
@@ -1255,20 +1261,21 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
 
-        return ExtractSurrealDbOkResponse(result);
+        return ExtractSurrealDbOkResponse(result, cborSerializerOptions);
     }
 
     private static SurrealDbHttpOkResponse ExtractSurrealDbOkResponse(
-        ISurrealDbHttpResponse? result
+        ISurrealDbHttpResponse? result,
+        CborOptions cborOptions
     )
     {
         return result switch
         {
             SurrealDbHttpOkResponse okResponse => okResponse,
-            SurrealDbHttpErrorResponse errorResponse => throw new SurrealDbException(
-                errorResponse.Error.Message
+            SurrealDbHttpErrorResponse errorResponse => throw errorResponse.Error.ToException(
+                cborOptions
             ),
-            _ => throw new SurrealDbException("Unknown response type"),
+            _ => throw new UnknownResponseTypeException(),
         };
     }
 

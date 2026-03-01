@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Semver;
 using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Exceptions.Methods;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Auth;
@@ -65,16 +66,16 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
                 configureCborOptions = wsEngine._configureCborOptions;
                 break;
             default:
-                throw new SurrealDbException("No underlying engine is started.");
+                throw new MisssingEngineSurrealDbException();
         }
 
         if (string.IsNullOrWhiteSpace(ns))
         {
-            throw new SurrealDbException("Namespace should be provided to export data.");
+            throw new SurrealDbExportException("Namespace should be provided to export data.");
         }
         if (string.IsNullOrWhiteSpace(db))
         {
-            throw new SurrealDbException("Database should be provided to export data.");
+            throw new SurrealDbExportException("Database should be provided to export data.");
         }
 
         var httpClient = new HttpClient();
