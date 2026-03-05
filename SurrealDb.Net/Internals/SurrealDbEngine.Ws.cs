@@ -1587,7 +1587,8 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
     {
         long executionStartTime = Stopwatch.GetTimestamp();
 
-        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        TimeSpan requestTimeout = _parameters.RequestTimeout ?? TimeSpan.FromSeconds(30);
+        using var timeoutCts = new CancellationTokenSource(requestTimeout);
         await using var registration = cancellationToken.Register(timeoutCts.Cancel);
 
         bool requireInitialized = priority == SurrealDbWsRequestPriority.Normal;
