@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+	<PackageReference Include="Microsoft.Bcl.Memory" />
 	<PackageReference Include="ConcurrentHashSet" />
 	<PackageReference Include="Dahomey.Cbor" />
 	<PackageReference Include="Microsoft.AspNetCore.JsonPatch.SystemTextJson" Condition="'$(TargetFramework)' == 'net10.0'" />
