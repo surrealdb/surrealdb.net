@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SurrealDb.Net.Internals.Extensions;
+using SurrealDb.Net.Internals.Helpers;
 
 namespace SurrealDb.Net.Exceptions.Rpc;
 
@@ -19,7 +20,7 @@ public sealed class SurrealDbValidationException : SurrealDbRpcException
     /// The name of the invalid parameter, if applicable.
     /// </summary>
     public string? ParameterName =>
-        RpcErrorDetailHelpers.DetailField(Details, "InvalidParameter", "name");
+        RpcErrorDetailHelper.DetailField(Details, "InvalidParameter", "name");
 
     internal SurrealDbValidationException(
         string message,

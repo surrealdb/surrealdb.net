@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SurrealDb.Net.Internals.Extensions;
+using SurrealDb.Net.Internals.Helpers;
 
 namespace SurrealDb.Net.Exceptions.Rpc;
 
@@ -14,13 +15,13 @@ public sealed class SurrealDbNotAllowedException : SurrealDbRpcException
     /// True if the auth token has expired.
     /// </summary>
     public bool IsTokenExpired =>
-        Kind == "Auth" && RpcErrorDetailHelpers.DetailInnerKind(Details) == "TokenExpired";
+        Kind == "Auth" && RpcErrorDetailHelper.DetailInnerKind(Details) == "TokenExpired";
 
     /// <summary>
     /// True if authentication credentials are invalid.
     /// </summary>
     public bool IsInvalidAuth =>
-        Kind == "Auth" && RpcErrorDetailHelpers.DetailInnerKind(Details) == "InvalidAuth";
+        Kind == "Auth" && RpcErrorDetailHelper.DetailInnerKind(Details) == "InvalidAuth";
 
     /// <summary>
     /// True if scripting is blocked.
@@ -30,12 +31,12 @@ public sealed class SurrealDbNotAllowedException : SurrealDbRpcException
     /// <summary>
     /// The method name that is not allowed, if applicable.
     /// </summary>
-    public string? MethodName => RpcErrorDetailHelpers.DetailField(Details, "Method", "name");
+    public string? MethodName => RpcErrorDetailHelper.DetailField(Details, "Method", "name");
 
     /// <summary>
     /// The function name that is not allowed, if applicable.
     /// </summary>
-    public string? FunctionName => RpcErrorDetailHelpers.DetailField(Details, "Function", "name");
+    public string? FunctionName => RpcErrorDetailHelper.DetailField(Details, "Function", "name");
 
     internal SurrealDbNotAllowedException(
         string message,

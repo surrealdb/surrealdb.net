@@ -1,11 +1,9 @@
-using System.Collections.Generic;
+namespace SurrealDb.Net.Internals.Helpers;
 
-namespace SurrealDb.Net.Internals.Extensions;
-
-internal static class RpcErrorDetailHelpers
+internal static class RpcErrorDetailHelper
 {
     /// <summary>Gets the "kind" string from a detail object.</summary>
-    internal static string? DetailKind(IReadOnlyDictionary<string, object?>? details)
+    private static string? DetailKind(IReadOnlyDictionary<string, object?>? details)
     {
         if (details == null || !details.TryGetValue("kind", out var k) || k is not string s)
             return null;
@@ -13,7 +11,7 @@ internal static class RpcErrorDetailHelpers
     }
 
     /// <summary>Gets the inner "details" map when present.</summary>
-    internal static IReadOnlyDictionary<string, object?>? DetailInner(
+    private static IReadOnlyDictionary<string, object?>? DetailInner(
         IReadOnlyDictionary<string, object?>? details
     )
     {
@@ -33,6 +31,7 @@ internal static class RpcErrorDetailHelpers
     {
         if (details == null)
             return null;
+
         var inner = DetailInner(details);
         if (
             DetailKind(details) == kind
@@ -40,9 +39,13 @@ internal static class RpcErrorDetailHelpers
             && inner.TryGetValue(field, out var v)
             && v is string vs
         )
+        {
             return vs;
+        }
+
         if (details.TryGetValue(field, out var v2) && v2 is string vs2)
             return vs2;
+
         return null;
     }
 
@@ -62,12 +65,17 @@ internal static class RpcErrorDetailHelpers
             || !details.TryGetValue("duration", out var d)
             || d is not IReadOnlyDictionary<string, object?> duration
         )
+        {
             return null;
+        }
         if (
             !duration.TryGetValue("secs", out var secsObj)
             || !duration.TryGetValue("nanos", out var nanosObj)
         )
+        {
             return null;
+        }
+
         var secs = secsObj switch
         {
             long l => (int)l,
@@ -80,6 +88,7 @@ internal static class RpcErrorDetailHelpers
             int i => i,
             _ => 0,
         };
+
         return (secs, nanos);
     }
 }

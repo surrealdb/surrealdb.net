@@ -1,5 +1,3 @@
-using System.Text;
-using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
 using SurrealDb.Net.Internals.Errors;
@@ -8,8 +6,6 @@ namespace SurrealDb.Net.Internals.Cbor.Converters;
 
 internal sealed class RpcErrorDetailsConverter : CborConverterBase<RpcErrorDetails>
 {
-    public RpcErrorDetailsConverter(CborOptions options) { }
-
     public override RpcErrorDetails Read(ref CborReader reader)
     {
         reader.ReadBeginMap();

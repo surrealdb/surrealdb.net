@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SurrealDb.Net.Internals.Extensions;
+using SurrealDb.Net.Internals.Helpers;
 
 namespace SurrealDb.Net.Exceptions.Rpc;
 
@@ -28,8 +29,7 @@ public sealed class SurrealDbQueryException : SurrealDbRpcException
     /// <summary>
     /// The timeout duration, if this is a timeout error. Returns (seconds, nanos) or null if not a timeout error.
     /// </summary>
-    public (int seconds, int nanos)? Timeout =>
-        RpcErrorDetailHelpers.DetailTimeoutDuration(Details);
+    public (int seconds, int nanos)? Timeout => RpcErrorDetailHelper.DetailTimeoutDuration(Details);
 
     internal SurrealDbQueryException(
         string message,

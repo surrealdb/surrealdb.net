@@ -70,7 +70,7 @@ public static class SurrealDbCborOptions
     {
         options.Registry.ConverterRegistry.RegisterConverter(
             typeof(RpcErrorDetails),
-            new RpcErrorDetailsConverter(options)
+            new RpcErrorDetailsConverter()
         );
         options.Registry.ConverterRegistry.RegisterConverter(
             typeof(ISurrealDbResult),

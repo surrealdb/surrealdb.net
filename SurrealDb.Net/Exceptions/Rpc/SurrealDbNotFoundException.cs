@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SurrealDb.Net.Internals.Extensions;
+using SurrealDb.Net.Internals.Helpers;
 
 namespace SurrealDb.Net.Exceptions.Rpc;
 
@@ -13,27 +14,27 @@ public sealed class SurrealDbNotFoundException : SurrealDbRpcException
     /// <summary>
     /// The table name that was not found, if applicable.
     /// </summary>
-    public string? TableName => RpcErrorDetailHelpers.DetailField(Details, "Table", "name");
+    public string? TableName => RpcErrorDetailHelper.DetailField(Details, "Table", "name");
 
     /// <summary>
     /// The record ID that was not found, if applicable.
     /// </summary>
-    public string? RecordId => RpcErrorDetailHelpers.DetailField(Details, "Record", "id");
+    public string? RecordId => RpcErrorDetailHelper.DetailField(Details, "Record", "id");
 
     /// <summary>
     /// The RPC method name that was not found, if applicable.
     /// </summary>
-    public string? MethodName => RpcErrorDetailHelpers.DetailField(Details, "Method", "name");
+    public string? MethodName => RpcErrorDetailHelper.DetailField(Details, "Method", "name");
 
     /// <summary>
     /// The namespace name that was not found, if applicable.
     /// </summary>
-    public string? NamespaceName => RpcErrorDetailHelpers.DetailField(Details, "Namespace", "name");
+    public string? NamespaceName => RpcErrorDetailHelper.DetailField(Details, "Namespace", "name");
 
     /// <summary>
     /// The database name that was not found, if applicable.
     /// </summary>
-    public string? DatabaseName => RpcErrorDetailHelpers.DetailField(Details, "Database", "name");
+    public string? DatabaseName => RpcErrorDetailHelper.DetailField(Details, "Database", "name");
 
     internal SurrealDbNotFoundException(
         string message,

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SurrealDb.Net.Internals.Extensions;
+using SurrealDb.Net.Internals.Helpers;
 
 namespace SurrealDb.Net.Exceptions.Rpc;
 
@@ -13,12 +14,12 @@ public sealed class SurrealDbAlreadyExistsException : SurrealDbRpcException
     /// <summary>
     /// The table name that already exists, if applicable.
     /// </summary>
-    public string? TableName => RpcErrorDetailHelpers.DetailField(Details, "Table", "name");
+    public string? TableName => RpcErrorDetailHelper.DetailField(Details, "Table", "name");
 
     /// <summary>
     /// The record ID that already exists, if applicable.
     /// </summary>
-    public string? RecordId => RpcErrorDetailHelpers.DetailField(Details, "Record", "id");
+    public string? RecordId => RpcErrorDetailHelper.DetailField(Details, "Record", "id");
 
     internal SurrealDbAlreadyExistsException(
         string message,

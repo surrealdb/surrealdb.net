@@ -8,12 +8,10 @@ namespace SurrealDb.Net.Internals.Cbor.Converters;
 
 internal sealed class RpcErrorResponseContentConverter : CborConverterBase<RpcErrorResponseContent>
 {
-    private readonly CborOptions _options;
     private readonly ICborConverter<RpcErrorDetails> _rpcErrorDetailsConverter;
 
     public RpcErrorResponseContentConverter(CborOptions options)
     {
-        _options = options;
         _rpcErrorDetailsConverter = options.Registry.ConverterRegistry.Lookup<RpcErrorDetails>();
     }
 
@@ -66,9 +64,7 @@ internal sealed class RpcErrorResponseContentConverter : CborConverterBase<RpcEr
                 }
                 else
                 {
-                    cause = _options
-                        .Registry.ConverterRegistry.Lookup<RpcErrorResponseContent>()
-                        .Read(ref reader);
+                    cause = this.Read(ref reader);
                 }
                 continue;
             }

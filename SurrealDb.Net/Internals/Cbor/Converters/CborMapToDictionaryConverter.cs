@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
 
@@ -13,7 +11,16 @@ namespace SurrealDb.Net.Internals.Cbor.Converters;
 /// </summary>
 internal sealed class CborMapToDictionaryConverter : CborConverterBase<Dictionary<string, object?>?>
 {
-    /// <summary>Reads a CBOR value (null or map) into Dictionary? without registering a converter.</summary>
+    public override Dictionary<string, object?>? Read(ref CborReader reader)
+    {
+        return ReadNullableMap(ref reader);
+    }
+
+    public override void Write(ref CborWriter writer, Dictionary<string, object?>? value)
+    {
+        throw new NotSupportedException("Cannot write Dictionary<string, object?> back to CBOR.");
+    }
+
     internal static Dictionary<string, object?>? ReadNullableMap(ref CborReader reader)
     {
         if (reader.GetCurrentDataItemType() == CborDataItemType.Null)
@@ -29,8 +36,9 @@ internal sealed class CborMapToDictionaryConverter : CborConverterBase<Dictionar
         }
 
         reader.ReadBeginMap();
+
         int remainingItemCount = reader.ReadSize();
-        var dict = new Dictionary<string, object?>();
+        var dict = new Dictionary<string, object?>(remainingItemCount);
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
@@ -47,16 +55,6 @@ internal sealed class CborMapToDictionaryConverter : CborConverterBase<Dictionar
         }
 
         return dict;
-    }
-
-    public override Dictionary<string, object?>? Read(ref CborReader reader)
-    {
-        return ReadNullableMap(ref reader);
-    }
-
-    public override void Write(ref CborWriter writer, Dictionary<string, object?>? value)
-    {
-        throw new NotSupportedException("Cannot write Dictionary<string, object?> back to CBOR.");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -82,8 +80,9 @@ internal sealed class CborMapToDictionaryConverter : CborConverterBase<Dictionar
     private static Dictionary<string, object?> ReadMapIntoDictionary(ref CborReader reader)
     {
         reader.ReadBeginMap();
+
         int remainingItemCount = reader.ReadSize();
-        var dict = new Dictionary<string, object?>();
+        var dict = new Dictionary<string, object?>(remainingItemCount);
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
@@ -105,6 +104,7 @@ internal sealed class CborMapToDictionaryConverter : CborConverterBase<Dictionar
     private static List<object?> ReadArrayIntoList(ref CborReader reader)
     {
         reader.ReadBeginArray();
+
         int size = reader.ReadSize();
         var list = new List<object?>(size);
 
