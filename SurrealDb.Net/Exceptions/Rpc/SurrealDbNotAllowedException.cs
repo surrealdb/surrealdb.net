@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Models.Errors;
+using System.Collections.Generic;
+using SurrealDb.Net.Internals.Extensions;
 
 namespace SurrealDb.Net.Exceptions.Rpc;
 
@@ -7,49 +8,43 @@ namespace SurrealDb.Net.Exceptions.Rpc;
 /// </summary>
 public sealed class SurrealDbNotAllowedException : SurrealDbRpcException
 {
-    private readonly NotAllowedErrorDetail? _details;
-
     public string? Kind { get; }
 
     /// <summary>
     /// True if the auth token has expired.
     /// </summary>
-    public bool IsTokenExpired => Kind == "Auth" && _details?.Auth?.Kind == "TokenExpired";
+    public bool IsTokenExpired =>
+        Kind == "Auth" && RpcErrorDetailHelpers.DetailInnerKind(Details) == "TokenExpired";
 
     /// <summary>
     /// True if authentication credentials are invalid.
     /// </summary>
-    public bool IsInvalidAuth => Kind == "Auth" && _details?.Auth?.Kind == "InvalidAuth";
+    public bool IsInvalidAuth =>
+        Kind == "Auth" && RpcErrorDetailHelpers.DetailInnerKind(Details) == "InvalidAuth";
 
     /// <summary>
     /// True if scripting is blocked.
     /// </summary>
-    public bool IsScriptingBlocked => Kind == "Auth" && _details?.Auth?.Kind == "Scripting";
+    public bool IsScriptingBlocked => Kind == "Scripting";
 
     /// <summary>
     /// The method name that is not allowed, if applicable.
     /// </summary>
-    public string? MethodName
-    {
-        get { return Kind != "Method" ? null : _details?.Name; }
-    }
+    public string? MethodName => RpcErrorDetailHelpers.DetailField(Details, "Method", "name");
 
     /// <summary>
     /// The function name that is not allowed, if applicable.
     /// </summary>
-    public string? FunctionName
-    {
-        get { return Kind != "Function" ? null : _details?.Name; }
-    }
+    public string? FunctionName => RpcErrorDetailHelpers.DetailField(Details, "Function", "name");
 
     internal SurrealDbNotAllowedException(
         string message,
         string? kind,
-        NotAllowedErrorDetail? details
+        IReadOnlyDictionary<string, object?>? details,
+        Exception? innerException = null
     )
-        : base(message)
+        : base(message, details, innerException)
     {
         Kind = kind;
-        _details = details;
     }
 }

@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Models.Errors;
+using System.Collections.Generic;
+using SurrealDb.Net.Internals.Extensions;
 
 namespace SurrealDb.Net.Exceptions.Rpc;
 
@@ -7,8 +8,6 @@ namespace SurrealDb.Net.Exceptions.Rpc;
 /// </summary>
 public sealed class SurrealDbQueryException : SurrealDbRpcException
 {
-    private readonly QueryErrorDetail? _details;
-
     public string? Kind { get; }
 
     /// <summary>
@@ -27,22 +26,19 @@ public sealed class SurrealDbQueryException : SurrealDbRpcException
     public bool IsCancelled => Kind == "Cancelled";
 
     /// <summary>
-    /// The timeout duration, if this is a timeout error. Returns `{ secs, nanos }` or undefined.
+    /// The timeout duration, if this is a timeout error. Returns (seconds, nanos) or null if not a timeout error.
     /// </summary>
-    public (int seconds, int nanos)? Timeout
-    {
-        get
-        {
-            return Kind != "TimedOut" || _details is null
-                ? null
-                : (_details.Seconds ?? 0, _details.Nanos ?? 0);
-        }
-    }
+    public (int seconds, int nanos)? Timeout =>
+        RpcErrorDetailHelpers.DetailTimeoutDuration(Details);
 
-    internal SurrealDbQueryException(string message, string? kind, QueryErrorDetail? details)
-        : base(message)
+    internal SurrealDbQueryException(
+        string message,
+        string? kind,
+        IReadOnlyDictionary<string, object?>? details,
+        Exception? innerException = null
+    )
+        : base(message, details, innerException)
     {
         Kind = kind;
-        _details = details;
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace SurrealDb.Net.Exceptions.Rpc;
+namespace SurrealDb.Net.Exceptions.Rpc;
 
 /// <summary>
 /// Server error: feature or configuration not supported (live queries, GraphQL).
@@ -12,8 +12,12 @@ public sealed class SurrealDbConfigurationException : SurrealDbRpcException
     /// </summary>
     public bool IsLiveQueryNotSupported => Kind == "LiveQueryNotSupported";
 
-    internal SurrealDbConfigurationException(string message, string? kind)
-        : base(message)
+    internal SurrealDbConfigurationException(
+        string message,
+        string? kind,
+        Exception? innerException = null
+    )
+        : base(message, null, innerException)
     {
         Kind = kind;
     }

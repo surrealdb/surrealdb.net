@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
@@ -8,10 +8,12 @@ namespace SurrealDb.Net.Internals.Cbor.Converters;
 
 internal sealed class RpcErrorResponseContentConverter : CborConverterBase<RpcErrorResponseContent>
 {
+    private readonly CborOptions _options;
     private readonly ICborConverter<RpcErrorDetails> _rpcErrorDetailsConverter;
 
     public RpcErrorResponseContentConverter(CborOptions options)
     {
+        _options = options;
         _rpcErrorDetailsConverter = options.Registry.ConverterRegistry.Lookup<RpcErrorDetails>();
     }
 
@@ -25,6 +27,7 @@ internal sealed class RpcErrorResponseContentConverter : CborConverterBase<RpcEr
         string? message = null;
         string? kind = null;
         RpcErrorDetails? customErrorDetails = null;
+        RpcErrorResponseContent? cause = null;
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
@@ -54,6 +57,22 @@ internal sealed class RpcErrorResponseContentConverter : CborConverterBase<RpcEr
                 continue;
             }
 
+            if (key.SequenceEqual("cause"u8))
+            {
+                if (reader.GetCurrentDataItemType() == CborDataItemType.Null)
+                {
+                    reader.ReadNull();
+                    cause = null;
+                }
+                else
+                {
+                    cause = _options
+                        .Registry.ConverterRegistry.Lookup<RpcErrorResponseContent>()
+                        .Read(ref reader);
+                }
+                continue;
+            }
+
             throw new CborException(
                 $"{Encoding.UTF8.GetString(key)} is not a valid property of {nameof(RpcErrorResponseContent)}."
             );
@@ -65,6 +84,7 @@ internal sealed class RpcErrorResponseContentConverter : CborConverterBase<RpcEr
             Message = message!,
             Kind = kind,
             Details = customErrorDetails,
+            Cause = cause,
         };
     }
 

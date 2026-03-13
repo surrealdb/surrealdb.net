@@ -1,4 +1,4 @@
-﻿using Dahomey.Cbor;
+using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Semver;
@@ -66,7 +66,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
                 configureCborOptions = wsEngine._configureCborOptions;
                 break;
             default:
-                throw new MisssingEngineSurrealDbException();
+                throw new MissingEngineSurrealDbException();
         }
 
         if (string.IsNullOrWhiteSpace(ns))

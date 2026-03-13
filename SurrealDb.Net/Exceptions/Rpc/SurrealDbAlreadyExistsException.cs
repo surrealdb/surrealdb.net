@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Models.Errors;
+using System.Collections.Generic;
+using SurrealDb.Net.Internals.Extensions;
 
 namespace SurrealDb.Net.Exceptions.Rpc;
 
@@ -7,34 +8,26 @@ namespace SurrealDb.Net.Exceptions.Rpc;
 /// </summary>
 public sealed class SurrealDbAlreadyExistsException : SurrealDbRpcException
 {
-    private readonly AlreadyExistsErrorDetail? _details;
-
     public string? Kind { get; }
 
     /// <summary>
-    /// The table name that was not found, if applicable.
+    /// The table name that already exists, if applicable.
     /// </summary>
-    public string? TableName
-    {
-        get { return Kind != "Table" ? null : _details?.Name; }
-    }
+    public string? TableName => RpcErrorDetailHelpers.DetailField(Details, "Table", "name");
 
     /// <summary>
-    /// The record ID that was not found, if applicable.
+    /// The record ID that already exists, if applicable.
     /// </summary>
-    public string? RecordId
-    {
-        get { return Kind != "Record" ? null : _details?.Id; }
-    }
+    public string? RecordId => RpcErrorDetailHelpers.DetailField(Details, "Record", "id");
 
     internal SurrealDbAlreadyExistsException(
         string message,
         string? kind,
-        AlreadyExistsErrorDetail? details
+        IReadOnlyDictionary<string, object?>? details,
+        Exception? innerException = null
     )
-        : base(message)
+        : base(message, details, innerException)
     {
         Kind = kind;
-        _details = details;
     }
 }

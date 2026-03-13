@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Reactive.Concurrency;
@@ -233,7 +233,7 @@ internal class SurrealDbWsEngine : ISurrealDbEngine
                                     break;
                                 case SurrealDbWsErrorResponse errorResponse:
                                     responseTaskCompletionSource.SetException(
-                                        errorResponse.Error.ToException(GetCborOptions())
+                                        errorResponse.Error.ToException()
                                     );
                                     break;
                                 default:

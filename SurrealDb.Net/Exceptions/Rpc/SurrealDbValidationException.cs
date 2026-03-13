@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Models.Errors;
+using System.Collections.Generic;
+using SurrealDb.Net.Internals.Extensions;
 
 namespace SurrealDb.Net.Exceptions.Rpc;
 
@@ -7,8 +8,6 @@ namespace SurrealDb.Net.Exceptions.Rpc;
 /// </summary>
 public sealed class SurrealDbValidationException : SurrealDbRpcException
 {
-    private readonly ValidationErrorDetail? _details;
-
     public string? Kind { get; }
 
     /// <summary>
@@ -19,19 +18,17 @@ public sealed class SurrealDbValidationException : SurrealDbRpcException
     /// <summary>
     /// The name of the invalid parameter, if applicable.
     /// </summary>
-    public string? ParameterName
-    {
-        get { return Kind != "InvalidParameter" ? null : _details?.Name; }
-    }
+    public string? ParameterName =>
+        RpcErrorDetailHelpers.DetailField(Details, "InvalidParameter", "name");
 
     internal SurrealDbValidationException(
         string message,
         string? kind,
-        ValidationErrorDetail? details
+        IReadOnlyDictionary<string, object?>? details,
+        Exception? innerException = null
     )
-        : base(message)
+        : base(message, details, innerException)
     {
         Kind = kind;
-        _details = details;
     }
 }

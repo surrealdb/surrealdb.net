@@ -1261,20 +1261,17 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
 
-        return ExtractSurrealDbOkResponse(result, cborSerializerOptions);
+        return ExtractSurrealDbOkResponse(result);
     }
 
     private static SurrealDbHttpOkResponse ExtractSurrealDbOkResponse(
-        ISurrealDbHttpResponse? result,
-        CborOptions cborOptions
+        ISurrealDbHttpResponse? result
     )
     {
         return result switch
         {
             SurrealDbHttpOkResponse okResponse => okResponse,
-            SurrealDbHttpErrorResponse errorResponse => throw errorResponse.Error.ToException(
-                cborOptions
-            ),
+            SurrealDbHttpErrorResponse errorResponse => throw errorResponse.Error.ToException(),
             _ => throw new UnknownResponseTypeException(),
         };
     }

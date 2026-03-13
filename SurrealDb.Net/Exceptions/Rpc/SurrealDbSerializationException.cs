@@ -1,9 +1,9 @@
-﻿namespace SurrealDb.Net.Exceptions.Rpc;
+namespace SurrealDb.Net.Exceptions.Rpc;
 
 /// <summary>
 /// Server error: serialization or deserialization failure.
 /// </summary>
-public sealed class SurrealDbSerializationExeption : SurrealDbRpcException
+public sealed class SurrealDbSerializationException : SurrealDbRpcException
 {
     public string? Kind { get; }
 
@@ -12,8 +12,12 @@ public sealed class SurrealDbSerializationExeption : SurrealDbRpcException
     /// </summary>
     public bool IsDeserialization => Kind == "Deserialization";
 
-    internal SurrealDbSerializationExeption(string message, string? kind)
-        : base(message)
+    internal SurrealDbSerializationException(
+        string message,
+        string? kind,
+        Exception? innerException = null
+    )
+        : base(message, null, innerException)
     {
         Kind = kind;
     }

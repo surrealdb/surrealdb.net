@@ -1,4 +1,4 @@
-﻿using Dahomey.Cbor;
+using Dahomey.Cbor;
 using SurrealDb.Net.Internals.Cbor.Converters;
 using SurrealDb.Net.Internals.Cbor.Converters.Numerics;
 using SurrealDb.Net.Internals.Cbor.Converters.Spatial;
@@ -68,10 +68,6 @@ public static class SurrealDbCborOptions
 
     private static void RegisterWsEngineConverters(CborOptions options)
     {
-        options.Registry.ConverterRegistry.RegisterConverter(
-            typeof(RpcNestedErrorDetails),
-            new RpcNestedErrorDetailsConverter()
-        );
         options.Registry.ConverterRegistry.RegisterConverter(
             typeof(RpcErrorDetails),
             new RpcErrorDetailsConverter(options)

@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
@@ -8,13 +8,7 @@ namespace SurrealDb.Net.Internals.Cbor.Converters;
 
 internal sealed class RpcErrorDetailsConverter : CborConverterBase<RpcErrorDetails>
 {
-    private readonly ICborConverter<RpcNestedErrorDetails> _rpcNestedErrorDetailsConverter;
-
-    public RpcErrorDetailsConverter(CborOptions options)
-    {
-        _rpcNestedErrorDetailsConverter =
-            options.Registry.ConverterRegistry.Lookup<RpcNestedErrorDetails>();
-    }
+    public RpcErrorDetailsConverter(CborOptions options) { }
 
     public override RpcErrorDetails Read(ref CborReader reader)
     {
@@ -23,7 +17,7 @@ internal sealed class RpcErrorDetailsConverter : CborConverterBase<RpcErrorDetai
         int remainingItemCount = reader.ReadSize();
 
         string? kind = null;
-        RpcNestedErrorDetails? details = null;
+        IReadOnlyDictionary<string, object?>? details = null;
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
@@ -37,16 +31,14 @@ internal sealed class RpcErrorDetailsConverter : CborConverterBase<RpcErrorDetai
 
             if (key.SequenceEqual("details"u8))
             {
-                details = _rpcNestedErrorDetailsConverter.Read(ref reader);
+                details = CborMapToDictionaryConverter.ReadNullableMap(ref reader);
                 continue;
             }
 
-            throw new CborException(
-                $"{Encoding.UTF8.GetString(key)} is not a valid property of {nameof(RpcErrorDetails)}."
-            );
+            reader.SkipDataItem();
         }
 
-        return new RpcErrorDetails { Kind = kind!, Details = details };
+        return new RpcErrorDetails { Kind = kind ?? string.Empty, Details = details };
     }
 
     public override void Write(ref CborWriter writer, RpcErrorDetails value)
