@@ -5,7 +5,7 @@ namespace SurrealDb.Net;
 
 /// <summary>
 /// The <see cref="SurrealDbTransaction"/> class provides transaction support for executing multiple queries atomically.
-/// When all desired queries have been executed, call <see cref="Commit"/> to apply the changes to the database, or <see cref="Rollback"/> to discard them.
+/// When all desired queries have been executed, call <see cref="Commit"/> to apply the changes to the database, or <see cref="Cancel"/> to discard them.
 /// </summary>
 public sealed class SurrealDbTransaction : IAsyncDisposable
 {
@@ -71,25 +71,25 @@ public sealed class SurrealDbTransaction : IAsyncDisposable
     /// After canceling, the transaction cannot be used again.
     /// </remarks>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
-    public Task Rollback(CancellationToken cancellationToken = default)
+    public Task Cancel(CancellationToken cancellationToken = default)
     {
-        return RollbackInternal(false, cancellationToken);
+        return CancelInternal(false, cancellationToken);
     }
 
-    private Task RollbackInternal(bool disposed, CancellationToken cancellationToken)
+    private Task CancelInternal(bool disposed, CancellationToken cancellationToken)
     {
-        bool shouldRollback = false;
+        bool shouldCancel = false;
 
         lock (_completeLock)
         {
             if (!_isComplete)
             {
                 _isComplete = true;
-                shouldRollback = true;
+                shouldCancel = true;
             }
         }
 
-        if (!shouldRollback)
+        if (!shouldCancel)
         {
             if (disposed)
                 return Task.CompletedTask;
@@ -107,6 +107,6 @@ public sealed class SurrealDbTransaction : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await RollbackInternal(true, CancellationToken.None);
+        await CancelInternal(true, CancellationToken.None);
     }
 }

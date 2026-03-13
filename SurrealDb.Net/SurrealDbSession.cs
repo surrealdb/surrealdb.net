@@ -19,6 +19,11 @@ public class SurrealDbSession : BaseSurrealDbClient, ISurrealDbSession
         CancellationToken cancellationToken = default
     )
     {
+        if (!(await SupportsTransactions(cancellationToken)))
+        {
+            throw new NotSupportedException("Transactions are not supported.");
+        }
+
         var transactionId = await Engine.Begin(SessionId, cancellationToken).ConfigureAwait(false);
         return new SurrealDbTransaction(
             SessionId,
