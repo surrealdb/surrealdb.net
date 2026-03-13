@@ -12,12 +12,19 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
 
     public Guid Id { get; }
     private readonly Guid? _sessionId;
+    private readonly Guid? _transactionId;
 
-    internal SurrealDbLiveQuery(Guid id, ISurrealDbEngine surrealDbEngine, Guid? sessionId)
+    internal SurrealDbLiveQuery(
+        Guid id,
+        ISurrealDbEngine surrealDbEngine,
+        Guid? sessionId,
+        Guid? transactionId
+    )
     {
         Id = id;
         _surrealDbEngine = new WeakReference<ISurrealDbEngine>(surrealDbEngine);
         _sessionId = sessionId;
+        _transactionId = transactionId;
     }
 
     public async ValueTask DisposeAsync()
@@ -202,6 +209,7 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
                 Id,
                 SurrealDbLiveQueryClosureReason.QueryKilled,
                 _sessionId,
+                _transactionId,
                 cancellationToken
             );
 

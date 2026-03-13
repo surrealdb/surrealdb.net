@@ -26,7 +26,7 @@ public abstract partial class BaseSurrealDbClient
     )
     {
         var newId = await Engine.CreateSession(cancellationToken).ConfigureAwait(false);
-        return new SurrealDbSession(this, newId);
+        return new SurrealDbSession(this, newId, null);
     }
 
     public Task CloseSession(CancellationToken cancellationToken = default)

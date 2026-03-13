@@ -74,6 +74,7 @@ public class SurrealDbClient : BaseSurrealDbClient
             sessionizer,
             Uri
         );
+        Sessionizer = sessionizer;
     }
 
     private static Uri ParseEndpoint(SurrealDbOptions configuration)

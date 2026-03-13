@@ -59,7 +59,6 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     > _liveQueryChannelSubscriptionsPerQuery = new();
     private readonly Pinger _pinger;
     private readonly SemaphoreSlim _semaphoreConnect = new(1, 1);
-    private readonly ConcurrentDictionary<Guid, Guid> _transactions = new();
 
 #if NET9_0_OR_GREATER
     private static readonly ConcurrentHashSet<string> _allResponseTaskIds = [];
@@ -324,18 +323,25 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "attach",
                 null,
                 sessionId,
+                null,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
             .ConfigureAwait(false);
     }
 
-    public Task Authenticate(Tokens tokens, Guid? sessionId, CancellationToken cancellationToken)
+    public Task Authenticate(
+        Tokens tokens,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         return Authenticate(
             tokens,
             SurrealDbWsRequestPriority.Normal,
             sessionId,
+            transactionId,
             cancellationToken
         );
     }
@@ -344,6 +350,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         Tokens tokens,
         SurrealDbWsRequestPriority priority,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -351,6 +358,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "authenticate",
                 [tokens.Access],
                 sessionId,
+                transactionId,
                 priority,
                 cancellationToken
             )
@@ -365,13 +373,12 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "begin",
                 null,
                 sessionId,
+                null,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
             .ConfigureAwait(false);
         var transactionId = response.GetValue<Guid>();
-
-        _transactions[sessionId!.Value] = transactionId;
 
         return transactionId;
     }
@@ -388,11 +395,11 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "cancel",
                 [transactionId],
                 sessionId,
+                null,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
             .ConfigureAwait(false);
-        _transactions.TryRemove(sessionId!.Value, out _);
     }
 
     public async Task CloseSession(Guid sessionId, CancellationToken cancellationToken)
@@ -415,11 +422,11 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "commit",
                 [transactionId],
                 sessionId,
+                null,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
             .ConfigureAwait(false);
-        _transactions.TryRemove(sessionId!.Value, out _);
     }
 
     public async Task<Guid> CreateSession(CancellationToken cancellationToken)
@@ -458,7 +465,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         await Attach(sessionId, cancellationToken).ConfigureAwait(false);
         SessionInfos.Set(sessionId, sessionInfo);
 
-        await ApplyConfigurationAsync(sessionId, cancellationToken).ConfigureAwait(false);
+        await ApplyConfigurationAsync(sessionId, null, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task Connect(CancellationToken cancellationToken)
@@ -489,7 +496,12 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         _surrealDbLoggerFactory?.Connection?.LogConnectionSuccess(_parameters.Endpoint!);
     }
 
-    public async Task<T> Create<T>(T data, Guid? sessionId, CancellationToken cancellationToken)
+    public async Task<T> Create<T>(
+        T data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : IRecord
     {
         if (data.Id is null)
@@ -499,6 +511,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "create",
                 [data.Id, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -510,6 +523,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string table,
         T? data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -517,6 +531,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "create",
                 [table, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -533,6 +548,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         StringRecordId recordId,
         TData? data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -541,6 +557,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "create",
                 [recordId, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -548,12 +565,18 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.GetValue<TOutput>()!;
     }
 
-    public async Task Delete(string table, Guid? sessionId, CancellationToken cancellationToken)
+    public async Task Delete(
+        string table,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         await SendRequestAsync(
                 "delete",
                 [table],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -563,6 +586,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<bool> Delete(
         RecordId recordId,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -570,6 +594,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "delete",
                 [recordId],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -580,6 +605,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<bool> Delete(
         StringRecordId recordId,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -587,6 +613,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "delete",
                 [recordId],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -602,6 +629,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "detach",
                 null,
                 sessionId,
+                null,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -655,6 +683,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                     var killTask = Kill(
                         key,
                         SurrealDbLiveQueryClosureReason.SocketClosed,
+                        null,
                         null,
                         default
                     );
@@ -714,12 +743,17 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         }
     }
 
-    public async Task<T> Info<T>(Guid? sessionId, CancellationToken cancellationToken)
+    public async Task<T> Info<T>(
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         var dbResponse = await SendRequestAsync(
                 "info",
                 null,
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -731,6 +765,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string table,
         IEnumerable<T> data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : IRecord
@@ -739,6 +774,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "insert",
                 [table, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -750,6 +786,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<T> InsertRelation<T>(
         T data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : IRelationRecord
@@ -766,6 +803,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "insert_relation",
                 [null, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -778,6 +816,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string table,
         T data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : IRelationRecord
@@ -796,6 +835,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "insert_relation",
                 [table, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -804,12 +844,17 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<T>().Single();
     }
 
-    public async Task Invalidate(Guid? sessionId, CancellationToken cancellationToken)
+    public async Task Invalidate(
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         await SendRequestAsync(
                 "invalidate",
                 null,
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -822,6 +867,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         Guid queryUuid,
         SurrealDbLiveQueryClosureReason reason,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -844,26 +890,34 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "kill",
                 [queryUuid],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
             .ConfigureAwait(false);
     }
 
-    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid, Guid? sessionId)
+    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid, Guid? sessionId, Guid? transactionId)
     {
         _liveQueryChannelSubscriptionsPerQuery.TryAdd(queryUuid, new(_id));
-        return new SurrealDbLiveQuery<T>(queryUuid, this, sessionId);
+        return new SurrealDbLiveQuery<T>(queryUuid, this, sessionId, transactionId);
     }
 
     public async Task<SurrealDbLiveQuery<T>> LiveRawQuery<T>(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
-        var dbResponse = await RawQuery(query, parameters, sessionId, cancellationToken)
+        var dbResponse = await RawQuery(
+                query,
+                parameters,
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
 
         if (dbResponse.HasErrors)
@@ -878,13 +932,14 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
         var queryUuid = dbResponse.FirstOk.GetValue<Guid>()!;
 
-        return ListenLive<T>(queryUuid, sessionId);
+        return ListenLive<T>(queryUuid, sessionId, transactionId);
     }
 
     public async Task<SurrealDbLiveQuery<T>> LiveTable<T>(
         string table,
         bool diff,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -892,18 +947,20 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "live",
                 [table, diff],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
             .ConfigureAwait(false);
         var queryUuid = dbResponse.GetValue<Guid>()!;
 
-        return ListenLive<T>(queryUuid, sessionId);
+        return ListenLive<T>(queryUuid, sessionId, transactionId);
     }
 
     public async Task<TOutput> Merge<TMerge, TOutput>(
         TMerge data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TMerge : IRecord
@@ -915,6 +972,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "merge",
                 [data.Id, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -926,6 +984,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         RecordId recordId,
         Dictionary<string, object> data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -933,6 +992,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "merge",
                 [recordId, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -944,6 +1004,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         StringRecordId recordId,
         Dictionary<string, object> data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -951,6 +1012,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "merge",
                 [recordId, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -962,6 +1024,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string table,
         TMerge data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TMerge : class
@@ -970,6 +1033,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "merge",
                 [table, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -981,6 +1045,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string table,
         Dictionary<string, object> data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -988,6 +1053,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "merge",
                 [table, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -999,6 +1065,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         RecordId recordId,
         JsonPatchDocument<T> patches,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
@@ -1007,6 +1074,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "patch",
                 [recordId, patches],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1018,6 +1086,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         StringRecordId recordId,
         JsonPatchDocument<T> patches,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
@@ -1026,6 +1095,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "patch",
                 [recordId, patches],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1037,6 +1107,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string table,
         JsonPatchDocument<T> patches,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
@@ -1045,6 +1116,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "patch",
                 [table, patches],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1056,6 +1128,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string query,
         IReadOnlyDictionary<string, object?> parameters,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -1065,6 +1138,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "query",
                 [query, parameters],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1096,6 +1170,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         IEnumerable<RecordId> outs,
         TData? data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : class
@@ -1104,6 +1179,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "relate",
                 [ins, table, outs, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1118,6 +1194,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         RecordId @out,
         TData? data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : class
@@ -1126,6 +1203,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "relate",
                 [@in, recordId, @out, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1139,6 +1217,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string? version,
         object[]? args,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -1146,6 +1225,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "run",
                 [name, version, args],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1157,6 +1237,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<IEnumerable<T>> Select<T>(
         string table,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -1164,6 +1245,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "select",
                 [table],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1174,6 +1256,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<T?> Select<T>(
         RecordId recordId,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -1181,6 +1264,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "select",
                 [recordId],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1191,6 +1275,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<T?> Select<T>(
         StringRecordId recordId,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -1198,6 +1283,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "select",
                 [recordId],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1208,6 +1294,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<IEnumerable<TOutput>> Select<TStart, TEnd, TOutput>(
         RecordIdRange<TStart, TEnd> recordIdRange,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -1220,6 +1307,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "select",
                 [recordIdRange],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1235,6 +1323,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "sessions",
                 null,
                 null,
+                null,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1246,6 +1335,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string key,
         object value,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -1262,25 +1352,45 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "let",
                 [key, value],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
             .ConfigureAwait(false);
     }
 
-    public Task SignIn(RootAuth rootAuth, Guid? sessionId, CancellationToken cancellationToken)
+    public Task SignIn(
+        RootAuth rootAuth,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
-        return SignIn(rootAuth, sessionId, SurrealDbWsRequestPriority.Normal, cancellationToken);
+        return SignIn(
+            rootAuth,
+            sessionId,
+            transactionId,
+            SurrealDbWsRequestPriority.Normal,
+            cancellationToken
+        );
     }
 
     private async Task SignIn(
         SystemAuth systemAuth,
         Guid? sessionId,
+        Guid? transactionId,
         SurrealDbWsRequestPriority priority,
         CancellationToken cancellationToken
     )
     {
-        await SendRequestAsync("signin", [systemAuth], sessionId, priority, cancellationToken)
+        await SendRequestAsync(
+                "signin",
+                [systemAuth],
+                sessionId,
+                transactionId,
+                priority,
+                cancellationToken
+            )
             .ConfigureAwait(false);
 
         SessionInfos.Get(sessionId)?.SetSystemAuth(systemAuth);
@@ -1289,6 +1399,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<Tokens> SignIn(
         NamespaceAuth nsAuth,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -1296,6 +1407,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "signin",
                 [nsAuth],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1310,6 +1422,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<Tokens> SignIn(
         DatabaseAuth dbAuth,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -1317,6 +1430,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "signin",
                 [dbAuth],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1331,6 +1445,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<Tokens> SignIn<T>(
         T scopeAuth,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : ScopeAuth
@@ -1339,6 +1454,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "signin",
                 [scopeAuth],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1353,6 +1469,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     public async Task<Tokens> SignUp<T>(
         T scopeAuth,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : ScopeAuth
@@ -1361,6 +1478,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "signup",
                 [scopeAuth],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1390,7 +1508,12 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         return liveQueryChannel;
     }
 
-    public async Task Unset(string key, Guid? sessionId, CancellationToken cancellationToken)
+    public async Task Unset(
+        string key,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         if (key is null)
         {
@@ -1405,13 +1528,19 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "unset",
                 [key],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
             .ConfigureAwait(false);
     }
 
-    public async Task<T> Update<T>(T data, Guid? sessionId, CancellationToken cancellationToken)
+    public async Task<T> Update<T>(
+        T data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : IRecord
     {
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
@@ -1426,6 +1555,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "update",
                 [data.Id, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1437,6 +1567,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         StringRecordId recordId,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -1450,6 +1581,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "update",
                 [recordId, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1461,6 +1593,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string table,
         T data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
@@ -1469,6 +1602,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "update",
                 [table, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1480,6 +1614,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string table,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -1488,6 +1623,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "update",
                 [table, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1499,6 +1635,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         RecordId recordId,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -1512,6 +1649,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 "update",
                 [recordId, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1519,7 +1657,12 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.GetValue<TOutput>()!;
     }
 
-    public async Task<T> Upsert<T>(T data, Guid? sessionId, CancellationToken cancellationToken)
+    public async Task<T> Upsert<T>(
+        T data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : IRecord
     {
         if (data.Id is null)
@@ -1532,6 +1675,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 method,
                 [data.Id, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1543,6 +1687,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         StringRecordId recordId,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -1554,6 +1699,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 method,
                 [recordId, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1565,6 +1711,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string table,
         T data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
@@ -1576,6 +1723,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 method,
                 [table, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1587,6 +1735,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string table,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -1598,6 +1747,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 method,
                 [table, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1609,6 +1759,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         RecordId recordId,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -1620,6 +1771,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 method,
                 [recordId, data],
                 sessionId,
+                transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
@@ -1627,20 +1779,41 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.GetValue<TOutput>()!;
     }
 
-    public Task Use(string ns, string db, Guid? sessionId, CancellationToken cancellationToken)
+    public Task Use(
+        string ns,
+        string db,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
-        return Use(ns, db, sessionId, SurrealDbWsRequestPriority.Normal, cancellationToken);
+        return Use(
+            ns,
+            db,
+            sessionId,
+            transactionId,
+            SurrealDbWsRequestPriority.Normal,
+            cancellationToken
+        );
     }
 
     private async Task Use(
         string ns,
         string db,
         Guid? sessionId,
+        Guid? transactionId,
         SurrealDbWsRequestPriority priority,
         CancellationToken cancellationToken
     )
     {
-        await SendRequestAsync("use", [ns, db], sessionId, priority, cancellationToken)
+        await SendRequestAsync(
+                "use",
+                [ns, db],
+                sessionId,
+                transactionId,
+                priority,
+                cancellationToken
+            )
             .ConfigureAwait(false);
         SessionInfos.Get(sessionId)?.Use(ns, db);
     }
@@ -1655,7 +1828,14 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        var dbResponse = await SendRequestAsync("version", null, null, priority, cancellationToken)
+        var dbResponse = await SendRequestAsync(
+                "version",
+                null,
+                null,
+                null,
+                priority,
+                cancellationToken
+            )
             .ConfigureAwait(false);
         string version = dbResponse.GetValue<string>()!;
 
@@ -1672,16 +1852,20 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     {
         foreach (var sessionId in SessionInfos.Enumerate())
         {
-            await ApplyConfigurationAsync(sessionId, cancellationToken);
+            await ApplyConfigurationAsync(sessionId, null, cancellationToken);
         }
     }
 
     private Task ApplyRootConfigurationAsync(CancellationToken cancellationToken)
     {
-        return ApplyConfigurationAsync(null, cancellationToken);
+        return ApplyConfigurationAsync(null, null, cancellationToken);
     }
 
-    private async Task ApplyConfigurationAsync(Guid? sessionId, CancellationToken cancellationToken)
+    private async Task ApplyConfigurationAsync(
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         var session = SessionInfos.Get(sessionId)!;
 
@@ -1691,6 +1875,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                     session.Ns,
                     session.Db!,
                     sessionId,
+                    transactionId,
                     SurrealDbWsRequestPriority.High,
                     cancellationToken
                 )
@@ -1716,6 +1901,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 await SignIn(
                         rootAuth,
                         sessionId,
+                        transactionId,
                         SurrealDbWsRequestPriority.High,
                         cancellationToken
                     )
@@ -1734,7 +1920,13 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             }
             if (systemAuth.Auth is NamespaceAuth nsAuth)
             {
-                await SignIn(nsAuth, sessionId, SurrealDbWsRequestPriority.High, cancellationToken)
+                await SignIn(
+                        nsAuth,
+                        sessionId,
+                        transactionId,
+                        SurrealDbWsRequestPriority.High,
+                        cancellationToken
+                    )
                     .ConfigureAwait(false);
 
                 _surrealDbLoggerFactory?.Connection?.LogConnectionSignedAsNamespaceUser(
@@ -1750,7 +1942,13 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             }
             if (systemAuth.Auth is DatabaseAuth dbAuth)
             {
-                await SignIn(dbAuth, sessionId, SurrealDbWsRequestPriority.High, cancellationToken)
+                await SignIn(
+                        dbAuth,
+                        sessionId,
+                        transactionId,
+                        SurrealDbWsRequestPriority.High,
+                        cancellationToken
+                    )
                     .ConfigureAwait(false);
 
                 _surrealDbLoggerFactory?.Connection?.LogConnectionSignedAsDatabaseUser(
@@ -1772,6 +1970,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                     new Tokens(bearerAuth.Token),
                     SurrealDbWsRequestPriority.High,
                     sessionId,
+                    transactionId,
                     cancellationToken
                 )
                 .ConfigureAwait(false);
@@ -1791,6 +1990,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         {
             await SendRequestAsync(
                     "ping",
+                    null,
                     null,
                     null,
                     SurrealDbWsRequestPriority.High,
@@ -1847,6 +2047,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string method,
         object?[]? parameters,
         Guid? sessionId,
+        Guid? transactionId,
         SurrealDbWsRequestPriority priority,
         CancellationToken cancellationToken
     )
@@ -1913,15 +2114,6 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 #if !NET9_0_OR_GREATER
         await _responseTaskHandler.WaitUntilAsync(priority).ConfigureAwait(false);
 #endif
-
-        Guid? transactionId = null;
-        if (sessionId.HasValue)
-        {
-            if (_transactions.TryGetValue(sessionId.Value, out var txnId))
-            {
-                transactionId = txnId;
-            }
-        }
 
         bool shouldSendParamsInRequest = parameters is not null && parameters.Length > 0;
         var innerRequest = new SurrealDbWsRequest

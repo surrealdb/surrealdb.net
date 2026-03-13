@@ -13,6 +13,7 @@ namespace SurrealDb.Net;
 
 public abstract partial class BaseSurrealDbClient : ISurrealDbClient
 {
+    internal ISessionizer? Sessionizer { get; set; }
     internal ISurrealDbEngine Engine { get; set; } = null!;
 
     public Uri Uri { get; protected init; } = null!;
@@ -33,6 +34,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
             sessionizer
         );
         Engine = engine;
+        Sessionizer = sessionizer;
     }
 
     internal static void InitializeProviderEngine(
