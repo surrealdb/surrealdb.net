@@ -116,7 +116,7 @@ public class TransactionTests
     [Test]
     [WebsocketConnectionStringFixtureGenerator]
     [SinceSurrealVersion("3.0")]
-    public async Task RollbackTransaction(string connectionString)
+    public async Task CancelTransaction(string connectionString)
     {
         var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
         if (new Uri(options.Endpoint!).Scheme is "http" or "https")
@@ -154,7 +154,7 @@ public class TransactionTests
 
             _ = await session.Create("post", post);
 
-            await transaction.Rollback();
+            await transaction.Cancel();
 
             afterCommitList = await client.Select<Post>("post");
         };
@@ -167,7 +167,7 @@ public class TransactionTests
     [Test]
     [WebsocketConnectionStringFixtureGenerator]
     [SinceSurrealVersion("3.0")]
-    public async Task ShouldRollbackOnDispose(string connectionString)
+    public async Task ShouldCancelOnDispose(string connectionString)
     {
         var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
         if (new Uri(options.Endpoint!).Scheme is "http" or "https")
