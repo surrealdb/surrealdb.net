@@ -10,6 +10,7 @@ using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Cbor;
+using SurrealDb.Net.Internals.DependencyInjection;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Models.LiveQuery;
@@ -34,9 +35,9 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     private readonly SurrealDbEmbeddedOptions? _options;
     private Action<CborOptions>? _configureCborOptions;
     private ISurrealDbLoggerFactory? _surrealDbLoggerFactory;
+    private ISessionizer? _sessionizer;
 
     private readonly int _id;
-    private SurrealDbEmbeddedEngineConfig _config = new();
 
     private bool _isConnected;
     private bool _isInitialized;
@@ -45,6 +46,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public string Id => _id.ToString();
 #endif
     public Uri Uri { get; private set; } = new("unknown://");
+    public EmbeddedSessionInfos SessionInfos { get; } = new();
 
     static SurrealDbEmbeddedEngine()
     {
@@ -68,19 +70,118 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public void Initialize(
         SurrealDbOptions parameters,
         Action<CborOptions>? configureCborOptions,
-        ISurrealDbLoggerFactory? surrealDbLoggerFactory
+        ISurrealDbLoggerFactory? surrealDbLoggerFactory,
+        ISessionizer? sessionizer
     )
     {
         Uri = new Uri(parameters.Endpoint!);
         _parameters = parameters;
         _configureCborOptions = configureCborOptions;
         _surrealDbLoggerFactory = surrealDbLoggerFactory;
-        _config = new(_parameters);
+        _sessionizer = sessionizer;
+
+        // Set root session
+        SessionInfos.Set(null, new EmbeddedSessionInfo(parameters));
     }
 
-    public Task Authenticate(Tokens tokens, CancellationToken cancellationToken)
+    public async Task Attach(Guid sessionId, CancellationToken cancellationToken)
+    {
+        await SendRequestAsync<Unit>(Method.Attach, null, sessionId, null, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public Task Authenticate(
+        Tokens tokens,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
+    }
+
+    public async Task<Guid> Begin(Guid? sessionId, CancellationToken cancellationToken)
+    {
+        var transactionId = await SendRequestAsync<Guid>(
+                Method.Begin,
+                null,
+                sessionId,
+                null,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        return transactionId;
+    }
+
+    public async Task Cancel(
+        Guid? sessionId,
+        Guid transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        await SendRequestAsync<Unit>(
+                Method.Cancel,
+                [transactionId],
+                sessionId,
+                null,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+    }
+
+    public async Task CloseSession(Guid sessionId, CancellationToken cancellationToken)
+    {
+        await Detach(sessionId, cancellationToken).ConfigureAwait(false);
+
+        SessionInfos.Remove(sessionId);
+    }
+
+    public async Task Commit(
+        Guid? sessionId,
+        Guid transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        await SendRequestAsync<Unit>(
+                Method.Commit,
+                [transactionId],
+                sessionId,
+                null,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+    }
+
+    public async Task<Guid> CreateSession(CancellationToken cancellationToken)
+    {
+        var newId = Guid.NewGuid();
+
+        await Attach(newId, cancellationToken).ConfigureAwait(false);
+        SessionInfos.Set(newId, new EmbeddedSessionInfo());
+
+        return newId;
+    }
+
+    public async Task<Guid> CreateSession(Guid from, CancellationToken cancellationToken)
+    {
+        var newId = Guid.NewGuid();
+        var newState = SessionInfos.Clone(from, newId);
+
+        await Attach(newId, cancellationToken).ConfigureAwait(false);
+        SessionInfos.Set(newId, newState);
+
+        return newId;
+    }
+
+    private async Task CreateSession(
+        Guid sessionId,
+        EmbeddedSessionInfo sessionInfo,
+        CancellationToken cancellationToken
+    )
+    {
+        await Attach(sessionId, cancellationToken).ConfigureAwait(false);
+        SessionInfos.Set(sessionId, sessionInfo);
     }
 
     partial void PreConnect();
@@ -181,71 +282,126 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             _isConnected = true;
         }
 
-        if (_config.Ns is not null)
-        {
-            await Use(_config.Ns, _config.Db!, cancellationToken).ConfigureAwait(false);
-
-            if (_config.Db is not null)
-            {
-                _surrealDbLoggerFactory?.Connection?.LogConnectionNamespaceAndDatabaseSet(
-                    _config.Ns,
-                    _config.Db
-                );
-            }
-            else
-            {
-                _surrealDbLoggerFactory?.Connection?.LogConnectionNamespaceSet(_config.Ns);
-            }
-        }
+        await ApplyRootConfigurationAsync(cancellationToken).ConfigureAwait(false);
 
         _isInitialized = true;
     }
 
-    public async Task<T> Create<T>(T data, CancellationToken cancellationToken)
+    public async Task<T> Create<T>(
+        T data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : IRecord
     {
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        return await SendRequestAsync<T>(Method.Create, [data.Id, data], cancellationToken)
+        return await SendRequestAsync<T>(
+                Method.Create,
+                [data.Id, data],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
-    public async Task<T> Create<T>(string table, T? data, CancellationToken cancellationToken)
+    public async Task<T> Create<T>(
+        string table,
+        T? data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
-        return await SendRequestAsync<T>(Method.Create, [table, data], cancellationToken)
+        return await SendRequestAsync<T>(
+                Method.Create,
+                [table, data],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
     public async Task<TOutput> Create<TData, TOutput>(
         StringRecordId recordId,
         TData? data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
     {
-        return await SendRequestAsync<TOutput>(Method.Create, [recordId, data], cancellationToken)
+        return await SendRequestAsync<TOutput>(
+                Method.Create,
+                [recordId, data],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
-    public async Task Delete(string table, CancellationToken cancellationToken)
+    public async Task Delete(
+        string table,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
-        await SendRequestAsync<Unit>(Method.Delete, [table], cancellationToken)
+        await SendRequestAsync<Unit>(
+                Method.Delete,
+                [table],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
-    public async Task<bool> Delete(RecordId recordId, CancellationToken cancellationToken)
+    public async Task<bool> Delete(
+        RecordId recordId,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
-        var result = await SendRequestAsync<object?>(Method.Delete, [recordId], cancellationToken)
+        var result = await SendRequestAsync<object?>(
+                Method.Delete,
+                [recordId],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
         return result is not null;
     }
 
-    public async Task<bool> Delete(StringRecordId recordId, CancellationToken cancellationToken)
+    public async Task<bool> Delete(
+        StringRecordId recordId,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
-        var result = await SendRequestAsync<object?>(Method.Delete, [recordId], cancellationToken)
+        var result = await SendRequestAsync<object?>(
+                Method.Delete,
+                [recordId],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
         return result is not null;
+    }
+
+    public async Task Detach(Guid sessionId, CancellationToken cancellationToken)
+    {
+        await SendRequestAsync<Unit>(Method.Detach, null, sessionId, null, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private bool _disposed;
@@ -402,7 +558,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     {
         try
         {
-            await SendRequestAsync<Unit>(Method.Ping, null, cancellationToken)
+            await SendRequestAsync<Unit>(Method.Ping, null, null, null, cancellationToken)
                 .ConfigureAwait(false);
             return true;
         }
@@ -497,7 +653,11 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         }
     }
 
-    public Task<T> Info<T>(CancellationToken cancellationToken)
+    public Task<T> Info<T>(
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
@@ -505,15 +665,28 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public async Task<IEnumerable<T>> Insert<T>(
         string table,
         IEnumerable<T> data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : IRecord
     {
-        return await SendRequestAsync<List<T>>(Method.Insert, [table, data], cancellationToken)
+        return await SendRequestAsync<List<T>>(
+                Method.Insert,
+                [table, data],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
-    public async Task<T> InsertRelation<T>(T data, CancellationToken cancellationToken)
+    public async Task<T> InsertRelation<T>(
+        T data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : IRelationRecord
     {
         if (data.Id is null)
@@ -522,6 +695,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         var result = await SendRequestAsync<List<T>>(
                 Method.InsertRelation,
                 [null, data],
+                sessionId,
+                transactionId,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -532,6 +707,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public async Task<T> InsertRelation<T>(
         string table,
         T data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : IRelationRecord
@@ -544,6 +721,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         var result = await SendRequestAsync<List<T>>(
                 Method.InsertRelation,
                 [table, data],
+                sessionId,
+                transactionId,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -551,7 +730,11 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         return result.Single();
     }
 
-    public Task Invalidate(CancellationToken cancellationToken)
+    public Task Invalidate(
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
@@ -559,19 +742,23 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public Task Kill(
         Guid queryUuid,
         SurrealDbLiveQueryClosureReason reason,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
         throw new NotSupportedException();
     }
 
-    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid)
+    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid, Guid? sessionId, Guid? transactionId)
     {
         throw new NotSupportedException();
     }
 
     public Task<SurrealDbLiveQuery<T>> LiveQuery<T>(
         FormattableString query,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -581,6 +768,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public Task<SurrealDbLiveQuery<T>> LiveRawQuery<T>(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -590,6 +779,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public Task<SurrealDbLiveQuery<T>> LiveTable<T>(
         string table,
         bool diff,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -598,6 +789,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
     public async Task<TOutput> Merge<TMerge, TOutput>(
         TMerge data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TMerge : IRecord
@@ -605,33 +798,57 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         if (data.Id is null)
             throw new SurrealDbException("Cannot create a record without an Id");
 
-        return await SendRequestAsync<TOutput>(Method.Merge, [data.Id, data], cancellationToken)
+        return await SendRequestAsync<TOutput>(
+                Method.Merge,
+                [data.Id, data],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
     public async Task<T> Merge<T>(
         RecordId recordId,
         Dictionary<string, object> data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
-        return await SendRequestAsync<T>(Method.Merge, [recordId, data], cancellationToken)
+        return await SendRequestAsync<T>(
+                Method.Merge,
+                [recordId, data],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
     public async Task<T> Merge<T>(
         StringRecordId recordId,
         Dictionary<string, object> data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
-        return await SendRequestAsync<T>(Method.Merge, [recordId, data], cancellationToken)
+        return await SendRequestAsync<T>(
+                Method.Merge,
+                [recordId, data],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
     public async Task<IEnumerable<TOutput>> Merge<TMerge, TOutput>(
         string table,
         TMerge data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TMerge : class
@@ -639,6 +856,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         return await SendRequestAsync<IEnumerable<TOutput>>(
                 Method.Merge,
                 [table, data],
+                sessionId,
+                transactionId,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -647,12 +866,16 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public async Task<IEnumerable<T>> Merge<T>(
         string table,
         Dictionary<string, object> data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
         return await SendRequestAsync<IEnumerable<T>>(
                 Method.Merge,
                 [table, data],
+                sessionId,
+                transactionId,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -661,28 +884,46 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public async Task<T> Patch<T>(
         RecordId recordId,
         JsonPatchDocument<T> patches,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
     {
-        return await SendRequestAsync<T>(Method.Patch, [recordId, patches], cancellationToken)
+        return await SendRequestAsync<T>(
+                Method.Patch,
+                [recordId, patches],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
     public async Task<T> Patch<T>(
         StringRecordId recordId,
         JsonPatchDocument<T> patches,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
     {
-        return await SendRequestAsync<T>(Method.Patch, [recordId, patches], cancellationToken)
+        return await SendRequestAsync<T>(
+                Method.Patch,
+                [recordId, patches],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
     public async Task<IEnumerable<T>> Patch<T>(
         string table,
         JsonPatchDocument<T> patches,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
@@ -690,6 +931,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         return await SendRequestAsync<IEnumerable<T>>(
                 Method.Patch,
                 [table, patches],
+                sessionId,
+                transactionId,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -698,6 +941,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public async Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -706,6 +951,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         var list = await SendRequestAsync<List<ISurrealDbResult>>(
                 Method.Query,
                 [query, parameters],
+                sessionId,
+                transactionId,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -734,6 +981,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         IEnumerable<RecordId> ins,
         IEnumerable<RecordId> outs,
         TData? data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : class
@@ -741,6 +990,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         return await SendRequestAsync<List<TOutput>>(
                 Method.Relate,
                 [ins, table, outs, data],
+                sessionId,
+                transactionId,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -751,6 +1002,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         RecordId @in,
         RecordId @out,
         TData? data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : class
@@ -758,6 +1011,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         return await SendRequestAsync<TOutput>(
                 Method.Relate,
                 [@in, recordId, @out, data],
+                sessionId,
+                transactionId,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -767,45 +1022,108 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         string name,
         string? version,
         object[]? args,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
-        return await SendRequestAsync<T>(Method.Run, [name, version, args], cancellationToken)
+        return await SendRequestAsync<T>(
+                Method.Run,
+                [name, version, args],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
-    public async Task<IEnumerable<T>> Select<T>(string table, CancellationToken cancellationToken)
+    public async Task<IEnumerable<T>> Select<T>(
+        string table,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
-        return await SendRequestAsync<IEnumerable<T>>(Method.Select, [table], cancellationToken)
+        return await SendRequestAsync<IEnumerable<T>>(
+                Method.Select,
+                [table],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
-    public async Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken)
+    public async Task<T?> Select<T>(
+        RecordId recordId,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
-        return await SendRequestAsync<T?>(Method.Select, [recordId], cancellationToken)
+        return await SendRequestAsync<T?>(
+                Method.Select,
+                [recordId],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
-    public async Task<T?> Select<T>(StringRecordId recordId, CancellationToken cancellationToken)
+    public async Task<T?> Select<T>(
+        StringRecordId recordId,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
-        return await SendRequestAsync<T?>(Method.Select, [recordId], cancellationToken)
+        return await SendRequestAsync<T?>(
+                Method.Select,
+                [recordId],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
     public async Task<IEnumerable<TOutput>> Select<TStart, TEnd, TOutput>(
         RecordIdRange<TStart, TEnd> recordIdRange,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
         return await SendRequestAsync<IEnumerable<TOutput>>(
                 Method.Select,
                 [recordIdRange],
+                sessionId,
+                transactionId,
                 cancellationToken
             )
             .ConfigureAwait(false);
     }
 
-    public async Task Set(string key, object value, CancellationToken cancellationToken)
+    public async Task<IEnumerable<Guid>> Sessions(CancellationToken cancellationToken)
+    {
+        return await SendRequestAsync<IEnumerable<Guid>>(
+                Method.Sessions,
+                null,
+                null,
+                null,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+    }
+
+    public async Task Set(
+        string key,
+        object value,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         if (key is null)
         {
@@ -816,32 +1134,63 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             throw new ArgumentException("Variable name is not valid.", nameof(key));
         }
 
-        await SendRequestAsync<Unit>(Method.Set, [key, value], cancellationToken)
+        await SendRequestAsync<Unit>(
+                Method.Set,
+                [key, value],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
-    public Task SignIn(RootAuth root, CancellationToken cancellationToken)
+    public Task SignIn(
+        RootAuth root,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
 
-    public Task<Tokens> SignIn(NamespaceAuth nsAuth, CancellationToken cancellationToken)
+    public Task<Tokens> SignIn(
+        NamespaceAuth nsAuth,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
 
-    public Task<Tokens> SignIn(DatabaseAuth dbAuth, CancellationToken cancellationToken)
+    public Task<Tokens> SignIn(
+        DatabaseAuth dbAuth,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
 
-    public Task<Tokens> SignIn<T>(T scopeAuth, CancellationToken cancellationToken)
+    public Task<Tokens> SignIn<T>(
+        T scopeAuth,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : ScopeAuth
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
 
-    public Task<Tokens> SignUp<T>(T scopeAuth, CancellationToken cancellationToken)
+    public Task<Tokens> SignUp<T>(
+        T scopeAuth,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : ScopeAuth
     {
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
@@ -858,7 +1207,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         return Task.FromResult(false);
     }
 
-    public async Task Unset(string key, CancellationToken cancellationToken)
+    public async Task Unset(
+        string key,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         if (key is null)
         {
@@ -869,44 +1223,80 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             throw new ArgumentException("Variable name is not valid.", nameof(key));
         }
 
-        await SendRequestAsync<Unit>(Method.Unset, [key], cancellationToken).ConfigureAwait(false);
+        await SendRequestAsync<Unit>(
+                Method.Unset,
+                [key],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
     }
 
-    public async Task<T> Update<T>(T data, CancellationToken cancellationToken)
+    public async Task<T> Update<T>(
+        T data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : IRecord
     {
         if (data.Id is null)
             throw new SurrealDbException("Cannot update a record without an Id");
 
-        return await SendRequestAsync<T>(Method.Update, [data.Id, data], cancellationToken)
+        return await SendRequestAsync<T>(
+                Method.Update,
+                [data.Id, data],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
     public async Task<TOutput> Update<TData, TOutput>(
         StringRecordId recordId,
         TData data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
     {
-        return await SendRequestAsync<TOutput>(Method.Update, [recordId, data], cancellationToken)
+        return await SendRequestAsync<TOutput>(
+                Method.Update,
+                [recordId, data],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
     public async Task<TOutput> Update<TData, TOutput>(
         RecordId recordId,
         TData data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
     {
-        return await SendRequestAsync<TOutput>(Method.Update, [recordId, data], cancellationToken)
+        return await SendRequestAsync<TOutput>(
+                Method.Update,
+                [recordId, data],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
     public async Task<IEnumerable<T>> Update<T>(
         string table,
         T data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
@@ -914,6 +1304,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         return await SendRequestAsync<IEnumerable<T>>(
                 Method.Update,
                 [table, data],
+                sessionId,
+                transactionId,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -922,6 +1314,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public async Task<IEnumerable<TOutput>> Update<TData, TOutput>(
         string table,
         TData data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -929,35 +1323,58 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         return await SendRequestAsync<IEnumerable<TOutput>>(
                 Method.Update,
                 [table, data],
+                sessionId,
+                transactionId,
                 cancellationToken
             )
             .ConfigureAwait(false);
     }
 
-    public async Task<T> Upsert<T>(T data, CancellationToken cancellationToken)
+    public async Task<T> Upsert<T>(
+        T data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : IRecord
     {
         if (data.Id is null)
             throw new SurrealDbException("Cannot upsert a record without an Id");
 
-        return await SendRequestAsync<T>(Method.Upsert, [data.Id, data], cancellationToken)
+        return await SendRequestAsync<T>(
+                Method.Upsert,
+                [data.Id, data],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
     public async Task<TOutput> Upsert<TData, TOutput>(
         StringRecordId recordId,
         TData data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
     {
-        return await SendRequestAsync<TOutput>(Method.Upsert, [recordId, data], cancellationToken)
+        return await SendRequestAsync<TOutput>(
+                Method.Upsert,
+                [recordId, data],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
     public async Task<IEnumerable<T>> Upsert<T>(
         string table,
         T data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
@@ -965,6 +1382,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         return await SendRequestAsync<IEnumerable<T>>(
                 Method.Upsert,
                 [table, data],
+                sessionId,
+                transactionId,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -973,6 +1392,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public async Task<IEnumerable<TOutput>> Upsert<TData, TOutput>(
         string table,
         TData data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -980,6 +1401,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         return await SendRequestAsync<IEnumerable<TOutput>>(
                 Method.Upsert,
                 [table, data],
+                sessionId,
+                transactionId,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -988,26 +1411,75 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public async Task<TOutput> Upsert<TData, TOutput>(
         RecordId recordId,
         TData data,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
     {
-        return await SendRequestAsync<TOutput>(Method.Upsert, [recordId, data], cancellationToken)
+        return await SendRequestAsync<TOutput>(
+                Method.Upsert,
+                [recordId, data],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
             .ConfigureAwait(false);
     }
 
-    public async Task Use(string ns, string db, CancellationToken cancellationToken)
+    public async Task Use(
+        string ns,
+        string db,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
-        await SendRequestAsync<Unit>(Method.Use, [ns, db], cancellationToken).ConfigureAwait(false);
+        await SendRequestAsync<Unit>(
+                Method.Use,
+                [ns, db],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
     }
 
     public async Task<string> Version(CancellationToken cancellationToken)
     {
-        string version = await SendRequestAsync<string>(Method.Version, null, cancellationToken)
+        string version = await SendRequestAsync<string>(
+                Method.Version,
+                null,
+                null,
+                null,
+                cancellationToken
+            )
             .ConfigureAwait(false);
 
         const string VERSION_PREFIX = "surrealdb-";
         return version.Replace(VERSION_PREFIX, string.Empty);
+    }
+
+    private async Task ApplyRootConfigurationAsync(CancellationToken cancellationToken)
+    {
+        var session = SessionInfos.Get(null)!;
+
+        if (session.Ns is not null)
+        {
+            await Use(session.Ns, session.Db!, null, null, cancellationToken).ConfigureAwait(false);
+
+            if (session.Db is not null)
+            {
+                _surrealDbLoggerFactory?.Connection?.LogConnectionNamespaceAndDatabaseSet(
+                    session.Ns,
+                    session.Db
+                );
+            }
+            else
+            {
+                _surrealDbLoggerFactory?.Connection?.LogConnectionNamespaceSet(session.Ns);
+            }
+        }
     }
 
     private CborOptions GetCborOptions()
@@ -1058,6 +1530,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     private async Task<T> SendRequestAsync<T>(
         Method method,
         object?[]? parameters,
+        Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -1081,6 +1555,18 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             }
 
             throw;
+        }
+
+        if (
+            sessionId.HasValue
+            && _sessionizer is not null
+            && _sessionizer.Get(sessionId.Value, out var newSessionInfo)
+            && newSessionInfo is EmbeddedSessionInfo newEmbeddedSessionInfo
+        )
+        {
+            _sessionizer.TryRemove(sessionId.Value);
+            await CreateSession(sessionId.Value, newEmbeddedSessionInfo, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
@@ -1198,11 +1684,20 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 callback = &NativeBindings.FailureCallback,
             };
 
+            var sessionBytes = sessionId.HasValue ? sessionId.Value.ToByteArray() : [];
+            var transactionBytes = transactionId.HasValue ? transactionId.Value.ToByteArray() : [];
+
+            fixed (byte* session = sessionBytes.AsSpan())
+            fixed (byte* transaction = transactionBytes.AsSpan())
             fixed (byte* payload = bytes.AsSpan())
             {
                 NativeMethods.execute(
                     _id,
                     method,
+                    session,
+                    sessionBytes.Length,
+                    transaction,
+                    transactionBytes.Length,
                     payload,
                     bytes.Count,
                     successAction,

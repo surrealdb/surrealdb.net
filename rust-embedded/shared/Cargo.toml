@@ -10,6 +10,7 @@ resolver = "2"
 [dependencies]
 anyhow = "1.0.100"
 channel = { version = "2.3.1", package = "async-channel" }
+dashmap = "6.1.0"
 num_cpus = "1.17.0"
 once_cell = "1.21.3"
 surrealdb = { package = "surrealdb-core", version = "=3.0.0", default-features = false }

@@ -34,7 +34,7 @@ internal sealed class FilePathFaker : Faker<FilePathInfo>
     }
 }
 
-public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
+public sealed class SurrealDbClientGenerator : IAsyncDisposable
 {
     private static readonly DatabaseInfoFaker _databaseInfoFaker = new();
     private static readonly FilePathFaker _filePathFaker = new();
@@ -117,9 +117,9 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
         return this;
     }
 
-    public IServiceScope? CreateScope()
+    public AsyncServiceScope CreateAsyncScope()
     {
-        return _serviceProvider?.CreateScope();
+        return _serviceProvider!.CreateAsyncScope();
     }
 
     public DatabaseInfo GenerateDatabaseInfo()
@@ -134,11 +134,6 @@ public sealed class SurrealDbClientGenerator : IDisposable, IAsyncDisposable
         await using var client = surrealDbClientGenerator.Create(connectionString);
 
         return (await client.Version()).ToSemver();
-    }
-
-    public void Dispose()
-    {
-        _serviceProvider?.Dispose();
     }
 
     public async ValueTask DisposeAsync()

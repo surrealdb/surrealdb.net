@@ -262,7 +262,7 @@ public class ReceiveLiveQueryTests : BaseLiveQueryTests
             {
                 await WaitLiveQueryCreationAsync();
 
-                client.Dispose();
+                await client.DisposeAsync();
                 await WaitLiveQueryNotificationAsync();
 
                 await cts.CancelAsync();
