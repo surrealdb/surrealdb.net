@@ -4,6 +4,7 @@ using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
 using SurrealDb.Net.Internals.Constants;
+using SurrealDb.Net.Internals.Errors;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Response;
@@ -13,10 +14,13 @@ namespace SurrealDb.Net.Internals.Cbor.Converters;
 internal sealed class SurrealDbResultConverter : CborConverterBase<ISurrealDbResult>
 {
     private readonly CborOptions _options;
+    private readonly ICborConverter<RpcErrorDetails> _rpcErrorDetailsConverter;
 
     public SurrealDbResultConverter(CborOptions options)
     {
         _options = options;
+
+        _rpcErrorDetailsConverter = options.Registry.ConverterRegistry.Lookup<RpcErrorDetails>();
     }
 
     public override ISurrealDbResult Read(ref CborReader reader)
@@ -36,7 +40,7 @@ internal sealed class SurrealDbResultConverter : CborConverterBase<ISurrealDbRes
         ReadOnlyMemory<byte>? result = null;
         var type = SurrealDbResponseType.Other;
         string? kind = null;
-        ReadOnlyMemory<byte>? customErrorDetails = null;
+        RpcErrorDetails? customErrorDetails = null;
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
@@ -111,15 +115,13 @@ internal sealed class SurrealDbResultConverter : CborConverterBase<ISurrealDbRes
 
             if (key.SequenceEqual("kind"u8))
             {
-                // TODO : ignored for now
                 kind = reader.ReadString();
                 continue;
             }
 
             if (key.SequenceEqual("details"u8))
             {
-                // TODO : ignored for now
-                customErrorDetails = reader.ReadDataItemAsMemory();
+                customErrorDetails = _rpcErrorDetailsConverter.Read(ref reader);
                 continue;
             }
 
@@ -135,13 +137,15 @@ internal sealed class SurrealDbResultConverter : CborConverterBase<ISurrealDbRes
                 return new SurrealDbOkResult(time, status, type, result.Value, _options);
             }
 
+            var errorKind = RpcErrorKindExtensions.From(kind, null);
+
             if (result.HasValue)
             {
                 string errorFromResult = CborSerializer.Deserialize<string>(result.Value.Span);
-                return new SurrealDbErrorResult(time, status, errorFromResult);
+                return new SurrealDbErrorResult(errorKind, time, status, errorFromResult);
             }
 
-            return new SurrealDbErrorResult(time, status, errorDetails!);
+            return new SurrealDbErrorResult(errorKind, time, status, errorDetails!);
         }
 
         if (

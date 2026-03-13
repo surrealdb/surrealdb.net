@@ -1,10 +1,13 @@
-﻿namespace SurrealDb.Net.Exceptions;
+namespace SurrealDb.Net.Exceptions;
 
 /// <summary>
 /// Generated exception when the response from the SurrealDb query is an unexpected error.
 /// </summary>
-public class SurrealDbException : Exception
+public abstract class SurrealDbException : Exception
 {
-    public SurrealDbException(string message)
+    protected internal SurrealDbException(string message)
         : base(message) { }
+
+    protected internal SurrealDbException(string message, Exception? innerException)
+        : base(message, innerException) { }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using SurrealDb.Net.Models.Errors;
 using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Tests.Models;
@@ -21,7 +22,15 @@ public class SurrealDbResultTests
                     true
                 );
             yield return () =>
-                (new SurrealDbErrorResult(TimeSpan.Zero, "KO", "Something went wrong..."), false);
+                (
+                    new SurrealDbErrorResult(
+                        RpcErrorKind.Internal,
+                        TimeSpan.Zero,
+                        "KO",
+                        "Something went wrong..."
+                    ),
+                    false
+                );
             yield return () =>
                 (
                     new SurrealDbProtocolErrorResult(
