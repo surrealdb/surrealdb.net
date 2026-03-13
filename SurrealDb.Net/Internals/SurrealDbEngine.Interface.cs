@@ -38,67 +38,106 @@ public interface ISurrealDbEngine
     Uri Uri { get; }
 
     Task Attach(Guid sessionId, CancellationToken cancellationToken);
-    Task Authenticate(Tokens tokens, Guid? sessionId, CancellationToken cancellationToken);
+    Task Authenticate(
+        Tokens tokens,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
     Task Connect(CancellationToken cancellationToken);
-    Task<T> Create<T>(T data, Guid? sessionId, CancellationToken cancellationToken)
+    Task<T> Create<T>(
+        T data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : IRecord;
-    Task<T> Create<T>(string table, T? data, Guid? sessionId, CancellationToken cancellationToken);
+    Task<T> Create<T>(
+        string table,
+        T? data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
     Task<TOutput> Create<TData, TOutput>(
         StringRecordId recordId,
         TData? data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord;
-    Task Delete(string table, Guid? sessionId, CancellationToken cancellationToken);
-    Task<bool> Delete(RecordId recordId, Guid? sessionId, CancellationToken cancellationToken);
+    Task Delete(
+        string table,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
+    Task<bool> Delete(
+        RecordId recordId,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
     Task<bool> Delete(
         StringRecordId recordId,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     );
     Task Detach(Guid sessionId, CancellationToken cancellationToken);
     Task<bool> Health(CancellationToken cancellationToken);
-    Task<T> Info<T>(Guid? sessionId, CancellationToken cancellationToken);
+    Task<T> Info<T>(Guid? sessionId, Guid? transactionId, CancellationToken cancellationToken);
     Task<IEnumerable<T>> Insert<T>(
         string table,
         IEnumerable<T> data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : IRecord;
-    Task<T> InsertRelation<T>(T data, Guid? sessionId, CancellationToken cancellationToken)
+    Task<T> InsertRelation<T>(
+        T data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : IRelationRecord;
     Task<T> InsertRelation<T>(
         string table,
         T data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : IRelationRecord;
-    Task Invalidate(Guid? sessionId, CancellationToken cancellationToken);
+    Task Invalidate(Guid? sessionId, Guid? transactionId, CancellationToken cancellationToken);
     Task Kill(
         Guid queryUuid,
         SurrealDbLiveQueryClosureReason reason,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     );
-    SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid, Guid? sessionId);
+    SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid, Guid? sessionId, Guid? transactionId);
     Task<SurrealDbLiveQuery<T>> LiveRawQuery<T>(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     );
     Task<SurrealDbLiveQuery<T>> LiveTable<T>(
         string table,
         bool diff,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     );
     Task<TOutput> Merge<TMerge, TOutput>(
         TMerge data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TMerge : IRecord;
@@ -106,18 +145,21 @@ public interface ISurrealDbEngine
         RecordId recordId,
         Dictionary<string, object> data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     );
     Task<T> Merge<T>(
         StringRecordId recordId,
         Dictionary<string, object> data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     );
     Task<IEnumerable<TOutput>> Merge<TMerge, TOutput>(
         string table,
         TMerge data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TMerge : class;
@@ -125,12 +167,14 @@ public interface ISurrealDbEngine
         string table,
         Dictionary<string, object> data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     );
     Task<T> Patch<T>(
         RecordId recordId,
         JsonPatchDocument<T> patches,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class;
@@ -138,6 +182,7 @@ public interface ISurrealDbEngine
         StringRecordId recordId,
         JsonPatchDocument<T> patches,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class;
@@ -145,6 +190,7 @@ public interface ISurrealDbEngine
         string table,
         JsonPatchDocument<T> patches,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class;
@@ -152,6 +198,7 @@ public interface ISurrealDbEngine
         string query,
         IReadOnlyDictionary<string, object?> parameters,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     );
     Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
@@ -160,6 +207,7 @@ public interface ISurrealDbEngine
         IEnumerable<RecordId> outs,
         TData? data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : class;
@@ -169,6 +217,7 @@ public interface ISurrealDbEngine
         RecordId @out,
         TData? data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : class;
@@ -177,42 +226,93 @@ public interface ISurrealDbEngine
         string? version,
         object[]? args,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     );
     Task<IEnumerable<T>> Select<T>(
         string table,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     );
-    Task<T?> Select<T>(RecordId recordId, Guid? sessionId, CancellationToken cancellationToken);
+    Task<T?> Select<T>(
+        RecordId recordId,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
     Task<T?> Select<T>(
         StringRecordId recordId,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     );
     Task<IEnumerable<TOutput>> Select<TStart, TEnd, TOutput>(
         RecordIdRange<TStart, TEnd> recordIdRange,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     );
 
     Task<IEnumerable<Guid>> Sessions(CancellationToken cancellationToken);
-    Task Set(string key, object value, Guid? sessionId, CancellationToken cancellationToken);
-    Task SignIn(RootAuth root, Guid? sessionId, CancellationToken cancellationToken);
-    Task<Tokens> SignIn(NamespaceAuth nsAuth, Guid? sessionId, CancellationToken cancellationToken);
-    Task<Tokens> SignIn(DatabaseAuth dbAuth, Guid? sessionId, CancellationToken cancellationToken);
-    Task<Tokens> SignIn<T>(T scopeAuth, Guid? sessionId, CancellationToken cancellationToken)
+    Task Set(
+        string key,
+        object value,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
+    Task SignIn(
+        RootAuth root,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
+    Task<Tokens> SignIn(
+        NamespaceAuth nsAuth,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
+    Task<Tokens> SignIn(
+        DatabaseAuth dbAuth,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
+    Task<Tokens> SignIn<T>(
+        T scopeAuth,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : ScopeAuth;
-    Task<Tokens> SignUp<T>(T scopeAuth, Guid? sessionId, CancellationToken cancellationToken)
+    Task<Tokens> SignUp<T>(
+        T scopeAuth,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : ScopeAuth;
     SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id);
-    Task Unset(string key, Guid? sessionId, CancellationToken cancellationToken);
-    Task<T> Update<T>(T data, Guid? sessionId, CancellationToken cancellationToken)
+    Task Unset(
+        string key,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
+    Task<T> Update<T>(
+        T data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : IRecord;
     Task<TOutput> Update<TData, TOutput>(
         StringRecordId recordId,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord;
@@ -220,6 +320,7 @@ public interface ISurrealDbEngine
         string table,
         T data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class;
@@ -228,6 +329,7 @@ public interface ISurrealDbEngine
         string table,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord;
@@ -235,15 +337,22 @@ public interface ISurrealDbEngine
         RecordId recordId,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord;
-    Task<T> Upsert<T>(T data, Guid? sessionId, CancellationToken cancellationToken)
+    Task<T> Upsert<T>(
+        T data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : IRecord;
     Task<TOutput> Upsert<TData, TOutput>(
         StringRecordId recordId,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord;
@@ -251,6 +360,7 @@ public interface ISurrealDbEngine
         string table,
         T data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class;
@@ -258,6 +368,7 @@ public interface ISurrealDbEngine
         string table,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord;
@@ -265,10 +376,17 @@ public interface ISurrealDbEngine
         RecordId recordId,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord;
-    Task Use(string ns, string db, Guid? sessionId, CancellationToken cancellationToken);
+    Task Use(
+        string ns,
+        string db,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
     Task<string> Version(CancellationToken cancellationToken);
 }
 

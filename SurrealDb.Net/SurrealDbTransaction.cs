@@ -1,5 +1,4 @@
 ﻿using SurrealDb.Net.Exceptions;
-using SurrealDb.Net.Internals;
 
 namespace SurrealDb.Net;
 
@@ -7,12 +6,8 @@ namespace SurrealDb.Net;
 /// The <see cref="SurrealDbTransaction"/> class provides transaction support for executing multiple queries atomically.
 /// When all desired queries have been executed, call <see cref="Commit"/> to apply the changes to the database, or <see cref="Cancel"/> to discard them.
 /// </summary>
-public sealed class SurrealDbTransaction : IAsyncDisposable
+public sealed class SurrealDbTransaction : SurrealDbSession
 {
-    private readonly Guid? _sessionId;
-    private readonly Guid _transactionId;
-    private readonly WeakReference<ISurrealDbEngine> _engineReference;
-
 #if NET9_0_OR_GREATER
     private readonly Lock _completeLock = new();
 #else
@@ -20,16 +15,8 @@ public sealed class SurrealDbTransaction : IAsyncDisposable
 #endif
     private bool _isComplete;
 
-    internal SurrealDbTransaction(
-        Guid? sessionId,
-        Guid transactionId,
-        WeakReference<ISurrealDbEngine> engineReference
-    )
-    {
-        _sessionId = sessionId;
-        _transactionId = transactionId;
-        _engineReference = engineReference;
-    }
+    internal SurrealDbTransaction(BaseSurrealDbClient from, Guid sessionId, Guid transactionId)
+        : base(from, sessionId, transactionId) { }
 
     /// <summary>
     /// Commit the transaction to the database, applying all changes made within the transaction scope.
@@ -56,12 +43,7 @@ public sealed class SurrealDbTransaction : IAsyncDisposable
             throw new SurrealDbTransactionException();
         }
 
-        if (_engineReference.TryGetTarget(out var engine))
-        {
-            return engine.Commit(_sessionId, _transactionId, cancellationToken);
-        }
-
-        throw new EngineDisposedSurrealDbException();
+        return Engine.Commit(SessionId, TransactionId!.Value, cancellationToken);
     }
 
     /// <summary>
@@ -97,15 +79,10 @@ public sealed class SurrealDbTransaction : IAsyncDisposable
             throw new SurrealDbTransactionException();
         }
 
-        if (_engineReference.TryGetTarget(out var engine))
-        {
-            return engine.Cancel(_sessionId, _transactionId, cancellationToken);
-        }
-
-        throw new EngineDisposedSurrealDbException();
+        return Engine.Cancel(SessionId, TransactionId!.Value, cancellationToken);
     }
 
-    public async ValueTask DisposeAsync()
+    public new async ValueTask DisposeAsync()
     {
         await CancelInternal(true, CancellationToken.None);
     }

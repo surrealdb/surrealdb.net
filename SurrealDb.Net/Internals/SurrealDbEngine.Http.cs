@@ -86,6 +86,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task Authenticate(
         Tokens tokens,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -229,6 +230,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
                 "RETURN TRUE",
                 ImmutableDictionary<string, object?>.Empty,
                 null,
+                null,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -237,7 +239,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         _surrealDbLoggerFactory?.Connection?.LogConnectionSuccess(_parameters.Endpoint!);
     }
 
-    public async Task<T> Create<T>(T data, Guid? sessionId, CancellationToken cancellationToken)
+    public async Task<T> Create<T>(
+        T data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : IRecord
     {
         if (data.Id is null)
@@ -255,6 +262,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string table,
         T? data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -274,6 +282,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         StringRecordId recordId,
         TData? data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -285,7 +294,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return dbResponse.GetValue<TOutput>()!;
     }
 
-    public async Task Delete(string table, Guid? sessionId, CancellationToken cancellationToken)
+    public async Task Delete(
+        string table,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         var request = new SurrealDbHttpRequest { Method = "delete", Parameters = [table] };
 
@@ -295,6 +309,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<bool> Delete(
         RecordId recordId,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -308,6 +323,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<bool> Delete(
         StringRecordId recordId,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -377,7 +393,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         }
     }
 
-    public async Task<T> Info<T>(Guid? sessionId, CancellationToken cancellationToken)
+    public async Task<T> Info<T>(
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
         var request = new SurrealDbHttpRequest { Method = "info" };
 
@@ -391,6 +411,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string table,
         IEnumerable<T> data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : IRecord
@@ -406,6 +427,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<T> InsertRelation<T>(
         T data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : IRelationRecord
@@ -434,6 +456,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string table,
         T data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : IRelationRecord
@@ -460,7 +483,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<T>().Single();
     }
 
-    public Task Invalidate(Guid? sessionId, CancellationToken _)
+    public Task Invalidate(Guid? sessionId, Guid? transactionId, CancellationToken _)
     {
         SessionInfos.Get(sessionId)?.ResetAuth();
         return Task.CompletedTask;
@@ -470,13 +493,14 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         Guid queryUuid,
         SurrealDbLiveQueryClosureReason reason,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
         throw new NotSupportedException();
     }
 
-    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid, Guid? sessionId)
+    public SurrealDbLiveQuery<T> ListenLive<T>(Guid queryUuid, Guid? sessionId, Guid? transactionId)
     {
         throw new NotSupportedException();
     }
@@ -485,6 +509,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string query,
         IReadOnlyDictionary<string, object?> parameters,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -495,6 +520,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string table,
         bool diff,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -504,6 +530,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<TOutput> Merge<TMerge, TOutput>(
         TMerge data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TMerge : IRecord
@@ -522,6 +549,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         RecordId recordId,
         Dictionary<string, object> data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -536,6 +564,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         StringRecordId recordId,
         Dictionary<string, object> data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -550,6 +579,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string table,
         TMerge data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TMerge : class
@@ -565,6 +595,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string table,
         Dictionary<string, object> data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -579,6 +610,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         RecordId recordId,
         JsonPatchDocument<T> patches,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
@@ -598,6 +630,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         StringRecordId recordId,
         JsonPatchDocument<T> patches,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
@@ -617,6 +650,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string table,
         JsonPatchDocument<T> patches,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
@@ -632,6 +666,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string query,
         IReadOnlyDictionary<string, object?> parameters,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -689,6 +724,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         IEnumerable<RecordId> outs,
         TData? data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : class
@@ -710,6 +746,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         RecordId @out,
         TData? data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : class
@@ -730,6 +767,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string? version,
         object[]? args,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -747,6 +785,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<IEnumerable<T>> Select<T>(
         string table,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -760,6 +799,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<T?> Select<T>(
         RecordId recordId,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -773,6 +813,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<T?> Select<T>(
         StringRecordId recordId,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -786,6 +827,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<IEnumerable<TOutput>> Select<TStart, TEnd, TOutput>(
         RecordIdRange<TStart, TEnd> recordIdRange,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -816,6 +858,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string key,
         object value,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -835,6 +878,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
                 $"RETURN ${escapedKey}",
                 new Dictionary<string, object?>(capacity: 1) { { key, value } },
                 sessionId,
+                transactionId,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -884,6 +928,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task SignIn(
         RootAuth rootAuth,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -897,6 +942,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<Tokens> SignIn(
         NamespaceAuth nsAuth,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -914,6 +960,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<Tokens> SignIn(
         DatabaseAuth dbAuth,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
@@ -931,6 +978,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<Tokens> SignIn<T>(
         T scopeAuth,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : ScopeAuth
@@ -949,6 +997,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public async Task<Tokens> SignUp<T>(
         T scopeAuth,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : ScopeAuth
@@ -996,7 +1045,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         }
     }
 
-    public Task Unset(string key, Guid? sessionId, CancellationToken _)
+    public Task Unset(string key, Guid? sessionId, Guid? transactionId, CancellationToken _)
     {
         if (key is null)
         {
@@ -1011,7 +1060,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return Task.CompletedTask;
     }
 
-    public async Task<T> Update<T>(T data, Guid? sessionId, CancellationToken cancellationToken)
+    public async Task<T> Update<T>(
+        T data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : IRecord
     {
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
@@ -1033,6 +1087,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         StringRecordId recordId,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -1053,6 +1108,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string table,
         T data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
@@ -1068,6 +1124,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string table,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -1083,6 +1140,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         RecordId recordId,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -1099,7 +1157,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return dbResponse.GetValue<TOutput>()!;
     }
 
-    public async Task<T> Upsert<T>(T data, Guid? sessionId, CancellationToken cancellationToken)
+    public async Task<T> Upsert<T>(
+        T data,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
         where T : IRecord
     {
         if (data.Id is null)
@@ -1119,6 +1182,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         StringRecordId recordId,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -1137,6 +1201,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string table,
         T data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where T : class
@@ -1155,6 +1220,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string table,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -1173,6 +1239,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         RecordId recordId,
         TData data,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
         where TOutput : IRecord
@@ -1191,6 +1258,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string ns,
         string db,
         Guid? sessionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {

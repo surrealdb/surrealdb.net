@@ -98,7 +98,7 @@ public class TransactionTests
                 Content = "This is a new article created using a transaction",
             };
 
-            _ = await session.Create("post", post);
+            _ = await transaction.Create("post", post);
 
             beforeCommitList = await client.Select<Post>("post");
 
@@ -152,7 +152,7 @@ public class TransactionTests
                 Content = "This is a new article created using a transaction",
             };
 
-            _ = await session.Create("post", post);
+            _ = await transaction.Create("post", post);
 
             await transaction.Cancel();
 
@@ -204,7 +204,7 @@ public class TransactionTests
                     Content = "This is a new article created using a transaction",
                 };
 
-                _ = await session.Create("post", post);
+                _ = await transaction.Create("post", post);
             }
 
             afterCommitList = await client.Select<Post>("post");

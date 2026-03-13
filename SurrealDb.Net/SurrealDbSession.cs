@@ -8,28 +8,29 @@ namespace SurrealDb.Net;
 /// </summary>
 public class SurrealDbSession : BaseSurrealDbClient, ISurrealDbSession
 {
-    internal SurrealDbSession(BaseSurrealDbClient from, Guid sessionId)
+    internal SurrealDbSession(BaseSurrealDbClient from, Guid sessionId, Guid? transactionId)
     {
         Uri = from.Uri;
         Engine = from.Engine;
         SessionId = sessionId;
+        TransactionId = transactionId;
     }
 
     public async Task<SurrealDbTransaction> BeginTransaction(
         CancellationToken cancellationToken = default
     )
     {
+        if (!SessionId.HasValue)
+        {
+            throw new InvalidSessionException(SessionId);
+        }
         if (!(await SupportsTransactions(cancellationToken)))
         {
             throw new NotSupportedException("Transactions are not supported.");
         }
 
         var transactionId = await Engine.Begin(SessionId, cancellationToken).ConfigureAwait(false);
-        return new SurrealDbTransaction(
-            SessionId,
-            transactionId,
-            new WeakReference<ISurrealDbEngine>(Engine)
-        );
+        return new SurrealDbTransaction(this, SessionId!.Value, transactionId);
     }
 
     public async Task<ISurrealDbSession> ForkSession(CancellationToken cancellationToken = default)
@@ -42,6 +43,6 @@ public class SurrealDbSession : BaseSurrealDbClient, ISurrealDbSession
         var newId = await Engine
             .CreateSession(SessionId.Value, cancellationToken)
             .ConfigureAwait(false);
-        return new SurrealDbSession(this, newId);
+        return new SurrealDbSession(this, newId, null);
     }
 }

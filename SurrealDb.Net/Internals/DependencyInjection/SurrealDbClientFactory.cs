@@ -31,7 +31,7 @@ internal sealed class SurrealDbClientFactory
         }
 
         var sessionId = Guid.NewGuid();
-        return new SurrealDbSession(_rootClient, sessionId);
+        return new SurrealDbSession(_rootClient, sessionId, null);
     }
 
     public static SurrealDbClient CreateSurrealDbClient(
