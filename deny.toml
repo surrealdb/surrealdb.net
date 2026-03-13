@@ -54,10 +54,11 @@ db-path = "~/.cargo/advisory-db"
 yanked = "warn"
 # A list of security advisory identifiers to ignore.
 # TODOs:
-# - for RUSTSEC-2024-0436, track https://github.com/3Hren/msgpack-rust/issues/365
-# - for RUSTSEC-2025-0134, rustls-pemfile is unmaintained (archived) but pulled in transitively
-#   by tonic and axum-server. Upstream crates need to migrate to rustls-pki-types.
-ignore = ["RUSTSEC-2024-0436", "RUSTSEC-2025-0118", "RUSTSEC-2025-0134"]
+# - for RUSTSEC-2025-0141, `bincode` is pulled transitively via `surrealmx`/`surrealdb-core`.
+#   No safe upgrade is available according to RustSec at this time.
+# - for RUSTSEC-2023-0071, `rsa` is pulled transitively via `jsonwebtoken`/`surrealdb-core`.
+#   No safe upgrade is available according to RustSec at this time.
+ignore = ["RUSTSEC-2025-0141", "RUSTSEC-2023-0071"]
 
 # --------------------------------------------------
 # LICENSES
@@ -79,6 +80,7 @@ allow = [
     "BSD-3-Clause",
     "Unlicense",
     "Unicode-3.0",
+    "OpenSSL",
 ]
 # The confidence threshold for detecting a license from license text.
 confidence-threshold = 0.95
@@ -124,6 +126,10 @@ allow = ["BUSL-1.1"]
 [[licenses.exceptions]]
 name = "surrealism-types"
 allow = ["BUSL-1.1"]
+
+[[licenses.exceptions]]
+name = "shared"
+allow = ["Apache-2.0"]
 
 [[licenses.clarify]]
 name = "surreal"

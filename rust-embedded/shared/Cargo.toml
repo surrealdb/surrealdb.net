@@ -4,6 +4,7 @@ publish = false
 version = "3.0.0"
 edition = "2024"
 rust-version = "1.91.0"
+license = "Apache-2.0"
 license-file = "../../LICENSE"
 resolver = "2"
 
