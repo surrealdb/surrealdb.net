@@ -17,21 +17,21 @@ internal static class DbLoggerCategory
     public sealed class Connection : LoggerCategory<Connection>;
 
     /// <summary>
-    /// Logger category for method execution, excluding <see cref="ISurrealDbClient.Connect(CancellationToken)"/>.
+    /// Logger category for method execution, excluding <see cref="ISurrealDbSharedMethods.Connect(CancellationToken)"/>.
     /// </summary>
     public sealed class Method : LoggerCategory<Method>;
 
 #if NET6_0_OR_GREATER
     /// <summary>
     /// Logger category for messages related to written or generated queries, that can be executed within
-    /// <see cref="ISurrealDbClient.Query(QueryInterpolatedStringHandler, CancellationToken)" />
-    /// or <see cref="ISurrealDbClient.RawQuery(string, IReadOnlyDictionary{string, object?}?, CancellationToken)"/>.
+    /// <see cref="ISurrealDbSharedMethods.Query(QueryInterpolatedStringHandler, CancellationToken)" />
+    /// or <see cref="ISurrealDbSharedMethods.RawQuery(string, IReadOnlyDictionary{string, object?}?, CancellationToken)"/>.
     /// </summary>
 #else
     /// <summary>
     /// Logger category for messages related to written or generated queries, that can be executed within
-    /// <see cref="ISurrealDbClient.Query(FormattableString, CancellationToken)" />
-    /// or <see cref="ISurrealDbClient.RawQuery(string, IReadOnlyDictionary{string, object?}?, CancellationToken)"/>.
+    /// <see cref="ISurrealDbSharedMethods.Query(FormattableString, CancellationToken)" />
+    /// or <see cref="ISurrealDbSharedMethods.RawQuery(string, IReadOnlyDictionary{string, object?}?, CancellationToken)"/>.
     /// </summary>
 #endif
     public sealed class Query : LoggerCategory<Query>;

@@ -12,11 +12,11 @@ public class FactoryTests
         Func<Task> func = async () =>
         {
             await using var surrealDbClientGenerator1 = new SurrealDbClientGenerator();
-            using var client1 = surrealDbClientGenerator1.Create(connectionString);
+            await using var client1 = surrealDbClientGenerator1.Create(connectionString);
             await client1.Use("test", "test");
 
             await using var surrealDbClientGenerator2 = new SurrealDbClientGenerator();
-            using var client2 = surrealDbClientGenerator1.Create(connectionString);
+            await using var client2 = surrealDbClientGenerator1.Create(connectionString);
             await client2.Use("test", "test");
 
             await client1.Create("data", new Post { Content = "First post" });

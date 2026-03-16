@@ -3,7 +3,7 @@
 namespace SurrealDb.Net.Models;
 
 /// <summary>
-/// Settings used to configure the exported data from <see cref="ISurrealDbClient.Export"/> method.
+/// Settings used to configure the exported data from <see cref="ISurrealDbSharedMethods.Export"/> method.
 /// </summary>
 public class ExportOptions
 {

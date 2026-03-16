@@ -13,4 +13,12 @@ internal sealed class SurrealDbWsRequest
     [CborProperty("params")]
     [CborIgnoreIfDefault]
     public object?[]? Parameters { get; set; }
+
+    [CborProperty("session")]
+    [CborIgnoreIfDefault]
+    public Guid? SessionId { get; set; }
+
+    [CborProperty("txn")]
+    [CborIgnoreIfDefault]
+    public Guid? TransactionId { get; set; }
 }
