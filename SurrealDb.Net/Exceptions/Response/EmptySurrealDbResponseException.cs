@@ -1,4 +1,4 @@
-namespace SurrealDb.Net.Exceptions;
+namespace SurrealDb.Net.Exceptions.Response;
 
 /// <summary>
 /// Generated exception when the response from the SurrealDb query is empty.

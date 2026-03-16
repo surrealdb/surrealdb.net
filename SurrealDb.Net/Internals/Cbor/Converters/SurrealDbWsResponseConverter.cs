@@ -3,6 +3,7 @@ using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
 using SurrealDb.Net.Internals.Constants;
+using SurrealDb.Net.Internals.Errors;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Ws;
 
@@ -11,14 +12,14 @@ namespace SurrealDb.Net.Internals.Cbor.Converters;
 internal sealed class SurrealDbWsResponseConverter : CborConverterBase<ISurrealDbWsResponse>
 {
     private readonly CborOptions _options;
-    private readonly ICborConverter<SurrealDbWsErrorResponseContent> _surrealDbWsErrorResponseContentConverter;
+    private readonly ICborConverter<RpcErrorResponseContent> _rpcErrorResponseContentConverter;
 
     public SurrealDbWsResponseConverter(CborOptions options)
     {
         _options = options;
 
-        _surrealDbWsErrorResponseContentConverter =
-            options.Registry.ConverterRegistry.Lookup<SurrealDbWsErrorResponseContent>();
+        _rpcErrorResponseContentConverter =
+            options.Registry.ConverterRegistry.Lookup<RpcErrorResponseContent>();
     }
 
     public override ISurrealDbWsResponse Read(ref CborReader reader)
@@ -28,7 +29,7 @@ internal sealed class SurrealDbWsResponseConverter : CborConverterBase<ISurrealD
         int remainingItemCount = reader.ReadSize();
 
         string? rootId = null;
-        SurrealDbWsErrorResponseContent? errorContent = null;
+        RpcErrorResponseContent? errorContent = null;
         ReadOnlyMemory<byte>? result = null;
         string? type = null;
 
@@ -44,7 +45,7 @@ internal sealed class SurrealDbWsResponseConverter : CborConverterBase<ISurrealD
 
             if (key.SequenceEqual("error"u8))
             {
-                errorContent = _surrealDbWsErrorResponseContentConverter.Read(ref reader);
+                errorContent = _rpcErrorResponseContentConverter.Read(ref reader);
                 continue;
             }
 

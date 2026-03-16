@@ -10,22 +10,22 @@ public sealed class SurrealDbProtocolErrorResult : ISurrealDbErrorResult
     /// <summary>
     /// The HTTP status code of the error.
     /// </summary>
-    public HttpStatusCode Code { get; set; }
+    public HttpStatusCode Code { get; private set; }
 
     /// <summary>
     /// Details about the error.
     /// </summary>
-    public string Details { get; set; } = string.Empty;
+    public string Details { get; private set; } = string.Empty;
 
     /// <summary>
     /// Description of the error.
     /// </summary>
-    public string Description { get; set; } = string.Empty;
+    public string Description { get; private set; } = string.Empty;
 
     /// <summary>
     /// Some information about the error.
     /// </summary>
-    public string Information { get; set; } = string.Empty;
+    public string Information { get; private init; } = string.Empty;
 
     public bool IsOk => false;
 

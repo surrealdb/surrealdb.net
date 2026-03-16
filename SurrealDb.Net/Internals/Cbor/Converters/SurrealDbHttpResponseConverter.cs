@@ -2,6 +2,7 @@
 using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
+using SurrealDb.Net.Internals.Errors;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Http;
 
@@ -10,14 +11,14 @@ namespace SurrealDb.Net.Internals.Cbor.Converters;
 internal sealed class SurrealDbHttpResponseConverter : CborConverterBase<ISurrealDbHttpResponse>
 {
     private readonly CborOptions _options;
-    private readonly ICborConverter<SurrealDbHttpErrorResponseContent> _surrealDbHttpErrorResponseContentConverter;
+    private readonly ICborConverter<RpcErrorResponseContent> _rpcErrorResponseContentConverter;
 
     public SurrealDbHttpResponseConverter(CborOptions options)
     {
         _options = options;
 
-        _surrealDbHttpErrorResponseContentConverter =
-            options.Registry.ConverterRegistry.Lookup<SurrealDbHttpErrorResponseContent>();
+        _rpcErrorResponseContentConverter =
+            options.Registry.ConverterRegistry.Lookup<RpcErrorResponseContent>();
     }
 
     public override ISurrealDbHttpResponse Read(ref CborReader reader)
@@ -26,7 +27,7 @@ internal sealed class SurrealDbHttpResponseConverter : CborConverterBase<ISurrea
 
         int remainingItemCount = reader.ReadSize();
 
-        SurrealDbHttpErrorResponseContent? errorContent = null;
+        RpcErrorResponseContent? errorContent = null;
         ReadOnlyMemory<byte>? result = null;
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
@@ -35,7 +36,7 @@ internal sealed class SurrealDbHttpResponseConverter : CborConverterBase<ISurrea
 
             if (key.SequenceEqual("error"u8))
             {
-                errorContent = _surrealDbHttpErrorResponseContentConverter.Read(ref reader);
+                errorContent = _rpcErrorResponseContentConverter.Read(ref reader);
                 continue;
             }
 
