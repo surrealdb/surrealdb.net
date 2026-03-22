@@ -43,7 +43,7 @@ public class DateTimeMembersTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT VALUE Status FROM order WHERE CreatedAt < time::from::unix(0)
+                SELECT VALUE Status FROM order WHERE CreatedAt < time::from_unix(0)
                 """
             );
     }

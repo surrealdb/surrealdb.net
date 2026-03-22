@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using Semver;
 using SurrealDb.Net.Internals.Queryable.Visitors;
 
 namespace SurrealDb.Net.Internals.Queryable;
@@ -70,7 +71,15 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
                 return (TResult)result;
             }
 
-            var (query, parameters) = Translate(expression);
+            await engine.EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+            var (query, parameters) = Translate(
+                expression,
+                engine.CachedVersion
+                    ?? throw new NullReferenceException(
+                        "Cannot detect version of the inner SurrealDB engine."
+                    )
+            );
 
             {
                 var result = await engine
@@ -86,14 +95,16 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
     }
 
     public (string Query, IReadOnlyDictionary<string, object?> Parameters) Translate(
-        Expression expression
+        Expression expression,
+        SemVersion version
     )
     {
         var (intermediateExpression, numberOfNamedValues, sourceExpressionParameters) =
             new ToIntermediateExpressionVisitor().Bind(expression);
         var surrealExpressionResult = new SurrealExpressionVisitor(
             sourceExpressionParameters,
-            numberOfNamedValues
+            numberOfNamedValues,
+            version
         ).Bind(intermediateExpression);
         var surrealExpression = (Expressions.Surreal.SurrealExpression)
             surrealExpressionResult.Expression;
