@@ -508,6 +508,13 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                     || toType == typeof(ulong)
                 )
                 {
+                    // Enum to integer: inline the underlying integer value as a constant
+                    if (fromType.IsEnum && node.Operand is ConstantExpression constantExpression)
+                    {
+                        var underlyingValue = Convert.ChangeType(constantExpression.Value, toType);
+                        return Visit(Expression.Constant(underlyingValue, toType))!;
+                    }
+
                     return new CastValueExpression("int", ExtractOperandValueExpression());
                 }
                 if (toType == typeof(float) || toType == typeof(double))

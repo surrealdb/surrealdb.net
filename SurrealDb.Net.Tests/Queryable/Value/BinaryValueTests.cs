@@ -230,21 +230,6 @@ public class BinaryValueTests : BaseQueryableTests
     }
 
     [Test]
-    [Skip("Implement MethodCall for Math.Pow")]
-    public void Power()
-    {
-        string query = ToSurql(Users.Where(u => Math.Pow(u.Age, 2) > 100));
-
-        query
-            .Should()
-            .Be(
-                """
-                SELECT * FROM user WHERE Age ** 2 > 100
-                """
-            );
-    }
-
-    [Test]
     public void And()
     {
         Func<string> func = () => ToSurql(Users.Where(p => p.IsActive & p.IsAdmin));

@@ -57,6 +57,11 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
                     .GetField(node.Member.Name)
                     ?.GetValue(constantExpression.Value);
 
+                if (node.Type.IsEnum)
+                {
+                    return Expression.Constant(value, node.Type);
+                }
+
                 _numberOfNamedValues++;
                 return new NamedValueExpression(node.Type, node.Member.Name, value);
             }
