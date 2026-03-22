@@ -15,6 +15,9 @@ public static class SemverExtensions
     /// <exception cref="OverflowException"></exception>
     public static SemVersion ToSemver(this string version)
     {
-        return SemVersion.Parse(version.Replace("surrealdb-", ""), SemVersionStyles.Strict);
+        return SemVersion.Parse(
+            version.Replace("surrealdb-", "", StringComparison.Ordinal),
+            SemVersionStyles.Strict
+        );
     }
 }

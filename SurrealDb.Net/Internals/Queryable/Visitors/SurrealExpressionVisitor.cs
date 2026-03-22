@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Text.RegularExpressions;
 using Dahomey.Cbor.Util;
 using Microsoft.Spatial;
+using Semver;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Queryable.Expressions.Intermediate;
@@ -19,17 +20,20 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
     private readonly Dictionary<ParameterExpression, Expression> _sourceExpressionParameters;
     private readonly Dictionary<string, object?> _parameters;
     private readonly Dictionary<string, object?> _recordIdParameters = [];
+    private readonly SemVersion _surrealVersion;
 
     private int _currentNestedSelectLevel = 0;
     private readonly Dictionary<ParameterExpression, int> _parametersNestedLevels = [];
 
     public SurrealExpressionVisitor(
         Dictionary<ParameterExpression, Expression> sourceExpressionParameters,
-        int numberOfNamedValues
+        int numberOfNamedValues,
+        SemVersion surrealVersion
     )
     {
         _sourceExpressionParameters = sourceExpressionParameters;
         _parameters = new(numberOfNamedValues);
+        _surrealVersion = surrealVersion;
     }
 
     internal (Expression Expression, IReadOnlyDictionary<string, object?> Parameters) Bind(
@@ -897,7 +901,9 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         }
         if (node.Member.Name.Equals(nameof(DateTime.UnixEpoch), StringComparison.Ordinal))
         {
-            return new FunctionValueExpression("time::from::unix", [new Int32ValueExpression(0)]);
+            string functionName =
+                _surrealVersion.Major >= 3 ? "time::from_unix" : "time::from::unix";
+            return new FunctionValueExpression(functionName, [new Int32ValueExpression(0)]);
         }
         if (node.Member.Name.Equals(nameof(DateTime.Today), StringComparison.Ordinal))
         {
@@ -2041,7 +2047,10 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 FloatValueExpression floatValueExpression => new DurationValueExpression(
                     TimeSpan.FromDays(floatValueExpression.ToInnerValue())
                 ),
-                _ => new FunctionValueExpression("duration::from::days", [valueExpression]),
+                _ => new FunctionValueExpression(
+                    _surrealVersion.Major >= 3 ? "duration::from_days" : "duration::from::days",
+                    [valueExpression]
+                ),
             };
         }
         if (node.Method.Name.Equals(nameof(TimeSpan.FromHours), StringComparison.Ordinal))
@@ -2058,7 +2067,10 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 FloatValueExpression floatValueExpression => new DurationValueExpression(
                     TimeSpan.FromHours(floatValueExpression.ToInnerValue())
                 ),
-                _ => new FunctionValueExpression("duration::from::hours", [valueExpression]),
+                _ => new FunctionValueExpression(
+                    _surrealVersion.Major >= 3 ? "duration::from_hours" : "duration::from::hours",
+                    [valueExpression]
+                ),
             };
         }
         if (node.Method.Name.Equals(nameof(TimeSpan.FromMinutes), StringComparison.Ordinal))
@@ -2075,7 +2087,10 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 FloatValueExpression floatValueExpression => new DurationValueExpression(
                     TimeSpan.FromMinutes(floatValueExpression.ToInnerValue())
                 ),
-                _ => new FunctionValueExpression("duration::from::mins", [valueExpression]),
+                _ => new FunctionValueExpression(
+                    _surrealVersion.Major >= 3 ? "duration::from_mins" : "duration::from::mins",
+                    [valueExpression]
+                ),
             };
         }
         if (node.Method.Name.Equals(nameof(TimeSpan.FromSeconds), StringComparison.Ordinal))
@@ -2092,7 +2107,10 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 FloatValueExpression floatValueExpression => new DurationValueExpression(
                     TimeSpan.FromSeconds(floatValueExpression.ToInnerValue())
                 ),
-                _ => new FunctionValueExpression("duration::from::secs", [valueExpression]),
+                _ => new FunctionValueExpression(
+                    _surrealVersion.Major >= 3 ? "duration::from_secs" : "duration::from::secs",
+                    [valueExpression]
+                ),
             };
         }
         if (node.Method.Name.Equals(nameof(TimeSpan.FromMilliseconds), StringComparison.Ordinal))
@@ -2109,7 +2127,10 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 FloatValueExpression floatValueExpression => new DurationValueExpression(
                     TimeSpan.FromMilliseconds(floatValueExpression.ToInnerValue())
                 ),
-                _ => new FunctionValueExpression("duration::from::millis", [valueExpression]),
+                _ => new FunctionValueExpression(
+                    _surrealVersion.Major >= 3 ? "duration::from_millis" : "duration::from::millis",
+                    [valueExpression]
+                ),
             };
         }
 #if NET7_0_OR_GREATER
@@ -2127,7 +2148,10 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 FloatValueExpression floatValueExpression => new DurationValueExpression(
                     TimeSpan.FromMicroseconds(floatValueExpression.ToInnerValue())
                 ),
-                _ => new FunctionValueExpression("duration::from::micros", [valueExpression]),
+                _ => new FunctionValueExpression(
+                    _surrealVersion.Major >= 3 ? "duration::from_micros" : "duration::from::micros",
+                    [valueExpression]
+                ),
             };
         }
 #endif
@@ -2148,7 +2172,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 valueExpression
             );
             return new FunctionValueExpression(
-                "duration::from::nanos",
+                _surrealVersion.Major >= 3 ? "duration::from_nanos" : "duration::from::nanos",
                 [fromTicksToNanosExpression]
             );
         }
@@ -2595,6 +2619,16 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                     $"The second argument of {node.Method.DeclaringType!.Name}.Range must be a value expression."
                 );
             }
+
+            if (_surrealVersion.Major >= 3)
+            {
+                return new FunctionValueExpression(
+                    "array::sequence",
+                    [valueExpression1, innerValueExpression2]
+                );
+            }
+
+            // Fallback to range expression
             var valueExpression2 = BinaryValueExpression.Add(
                 valueExpression1,
                 innerValueExpression2

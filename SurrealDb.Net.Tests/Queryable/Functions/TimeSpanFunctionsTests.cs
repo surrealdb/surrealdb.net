@@ -95,7 +95,7 @@ public class TimeSpanFunctionsTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT VALUE duration::from::nanos(100 * 123456789) FROM user
+                SELECT VALUE duration::from_nanos(100 * 123456789) FROM user
                 """
             );
     }

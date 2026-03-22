@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using System.Reflection;
+using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Queryable;
 
 namespace SurrealDb.Net;
@@ -18,7 +19,10 @@ public static class QueryableExtensions
     {
         if (source.Provider is ISurrealDbQueryProvider surrealDbQueryProvider)
         {
-            var (query, _) = surrealDbQueryProvider.Translate(source.Expression);
+            var (query, _) = surrealDbQueryProvider.Translate(
+                source.Expression,
+                VersionConstants.LATEST
+            );
             return query;
         }
 

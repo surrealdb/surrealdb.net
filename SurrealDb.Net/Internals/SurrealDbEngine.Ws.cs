@@ -44,7 +44,6 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 {
     private static readonly ConcurrentDictionary<string, SurrealDbWsEngine> _wsEngines = new();
 
-    internal SemVersion? _version { get; private set; }
     internal Action<CborOptions>? _configureCborOptions { get; }
 
 #if DEBUG
@@ -77,6 +76,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     private bool _isInitialized;
 
     public Uri Uri { get; }
+    public SemVersion? CachedVersion { get; private set; }
     public RpcSessionInfos SessionInfos { get; } = new();
 
 #if NET9_0_OR_GREATER
@@ -491,11 +491,9 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
         await ApplyRootConfigurationAsync(cancellationToken).ConfigureAwait(false);
 
-        string version = await Version(SurrealDbWsRequestPriority.High, cancellationToken)
-            .ConfigureAwait(false);
-        _version = version.ToSemver();
+        await Version(SurrealDbWsRequestPriority.High, cancellationToken).ConfigureAwait(false);
 
-        if (_version.CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
+        if (CachedVersion!.CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
         {
             throw new SurrealDbConnectException(
                 "CBOR is only supported on SurrealDB 1.4.0 or later."
@@ -549,7 +547,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
 
-        if (_version?.Major > 1)
+        if (CachedVersion?.Major > 1)
         {
             return dbResponse.GetValue<T>()!;
         }
@@ -807,7 +805,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     {
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
-        if (_version is null || _version.Major < 2)
+        if (CachedVersion is null || CachedVersion.Major < 2)
             throw new NotImplementedException();
 
         if (data.Id is null)
@@ -837,7 +835,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     {
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
-        if (_version is null || _version.Major < 2)
+        if (CachedVersion is null || CachedVersion.Major < 2)
             throw new NotImplementedException();
 
         if (data.Id is not null)
@@ -1322,7 +1320,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     {
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
-        if (_version is null || _version.Major < 2)
+        if (CachedVersion is null || CachedVersion.Major < 2)
             throw new NotImplementedException();
 
         var dbResponse = await SendRequestAsync(
@@ -1567,7 +1565,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     {
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
-        if (_version is null || _version.Major < 2)
+        if (CachedVersion is null || CachedVersion.Major < 2)
             throw new NotImplementedException();
 
         if (data.Id is null)
@@ -1596,7 +1594,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     {
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
-        if (_version is null || _version.Major < 2)
+        if (CachedVersion is null || CachedVersion.Major < 2)
             throw new NotImplementedException();
 
         var dbResponse = await SendRequestAsync(
@@ -1664,7 +1662,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     {
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
-        if (_version is null || _version.Major < 2)
+        if (CachedVersion is null || CachedVersion.Major < 2)
             throw new NotImplementedException();
 
         var dbResponse = await SendRequestAsync(
@@ -1692,7 +1690,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
-        string method = _version?.Major > 1 ? "upsert" : "update";
+        string method = CachedVersion?.Major > 1 ? "upsert" : "update";
         var dbResponse = await SendRequestAsync(
                 method,
                 [data.Id, data],
@@ -1716,7 +1714,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     {
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
-        string method = _version?.Major > 1 ? "upsert" : "update";
+        string method = CachedVersion?.Major > 1 ? "upsert" : "update";
         var dbResponse = await SendRequestAsync(
                 method,
                 [recordId, data],
@@ -1740,7 +1738,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     {
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
-        string method = _version?.Major > 1 ? "upsert" : "update";
+        string method = CachedVersion?.Major > 1 ? "upsert" : "update";
         var dbResponse = await SendRequestAsync(
                 method,
                 [table, data],
@@ -1764,7 +1762,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     {
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
-        string method = _version?.Major > 1 ? "upsert" : "update";
+        string method = CachedVersion?.Major > 1 ? "upsert" : "update";
         var dbResponse = await SendRequestAsync(
                 method,
                 [table, data],
@@ -1788,7 +1786,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     {
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
-        string method = _version?.Major > 1 ? "upsert" : "update";
+        string method = CachedVersion?.Major > 1 ? "upsert" : "update";
         var dbResponse = await SendRequestAsync(
                 method,
                 [recordId, data],
@@ -1862,7 +1860,11 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         string version = dbResponse.GetValue<string>()!;
 
         const string VERSION_PREFIX = "surrealdb-";
-        return version.Replace(VERSION_PREFIX, string.Empty);
+        version = version.Replace(VERSION_PREFIX, string.Empty);
+
+        CachedVersion = version.ToSemver();
+
+        return version;
     }
 
     private CborOptions GetCborOptions()
@@ -2049,9 +2051,9 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         }
     }
 
-    private async Task EnsureVersionIsSetAsync(CancellationToken cancellationToken)
+    public async Task EnsureVersionIsSetAsync(CancellationToken cancellationToken)
     {
-        if (_version is not null)
+        if (CachedVersion is not null)
             return;
 
         await Version(cancellationToken).ConfigureAwait(false);
@@ -2061,7 +2063,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     {
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
-        if (_version is null || _version.Major < version)
+        if (CachedVersion is null || CachedVersion.Major < version)
             throw new NotImplementedException();
     }
 
