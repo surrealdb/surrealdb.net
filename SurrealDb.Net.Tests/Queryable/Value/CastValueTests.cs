@@ -19,7 +19,6 @@ public class CastValueTests : BaseQueryableTests
     }
 
     [Test]
-    [Skip("TODO")]
     public void EnumToIntUsingParameter()
     {
         TestEnum value = TestEnum.Alpha;
