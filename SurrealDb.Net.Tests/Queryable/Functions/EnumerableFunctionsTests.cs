@@ -333,6 +333,20 @@ public class EnumerableFunctionsTests : BaseQueryableTests
     }
 
     [Test]
+    public void ToArray()
+    {
+        string query = ToSurql(Users.Select(p => new HashSet<int> { 1, 10, 20, 10, 20 }.ToArray()));
+
+        query
+            .Should()
+            .Be(
+                """
+                SELECT VALUE <array> {1, 10, 20, 10, 20} FROM user
+                """
+            );
+    }
+
+    [Test]
     public void ToHashSet()
     {
         string query = ToSurql(Users.Select(p => new[] { 1, 10, 20, 10, 20 }.ToHashSet()));

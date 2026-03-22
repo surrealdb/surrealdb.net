@@ -26,6 +26,12 @@ internal static class ReflectionExtensions
         return type == interfaceType || type.IsSubclassOf(interfaceType);
     }
 
+    public static bool IsHashSet(this Type type)
+    {
+        return (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(HashSet<>))
+            || type.IsSubclassOf(typeof(HashSet<>));
+    }
+
     public static Type GetNullableType(this Type type)
     {
         if (type.IsNullableOfT())
