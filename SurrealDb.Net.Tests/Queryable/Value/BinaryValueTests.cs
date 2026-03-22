@@ -11,7 +11,7 @@ public class BinaryValueTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT Age, id, IsActive, IsAdmin, IsOwner, Username FROM user WHERE Age + 5 > 18
+                SELECT Age, id, IsActive, IsAdmin, IsOwner, Tags, Username FROM user WHERE Age + 5 > 18
                 """
             );
     }
@@ -39,7 +39,7 @@ public class BinaryValueTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT Age, id, IsActive, IsAdmin, IsOwner, Username FROM user WHERE Age - 5 > 18
+                SELECT Age, id, IsActive, IsAdmin, IsOwner, Tags, Username FROM user WHERE Age - 5 > 18
                 """
             );
     }
@@ -69,7 +69,7 @@ public class BinaryValueTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT Age, id, IsActive, IsAdmin, IsOwner, Username FROM user WHERE Age * 2 > 18
+                SELECT Age, id, IsActive, IsAdmin, IsOwner, Tags, Username FROM user WHERE Age * 2 > 18
                 """
             );
     }
@@ -83,7 +83,7 @@ public class BinaryValueTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT Age, id, IsActive, IsAdmin, IsOwner, Username FROM user WHERE Age / 2 > 18
+                SELECT Age, id, IsActive, IsAdmin, IsOwner, Tags, Username FROM user WHERE Age / 2 > 18
                 """
             );
     }
@@ -97,7 +97,7 @@ public class BinaryValueTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT Age, id, IsActive, IsAdmin, IsOwner, Username FROM user WHERE IsAdmin && IsActive
+                SELECT Age, id, IsActive, IsAdmin, IsOwner, Tags, Username FROM user WHERE IsAdmin && IsActive
                 """
             );
     }
@@ -111,7 +111,7 @@ public class BinaryValueTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT Age, id, IsActive, IsAdmin, IsOwner, Username FROM user WHERE IsAdmin || IsOwner
+                SELECT Age, id, IsActive, IsAdmin, IsOwner, Tags, Username FROM user WHERE IsAdmin || IsOwner
                 """
             );
     }
@@ -209,7 +209,7 @@ public class BinaryValueTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT Age, id, IsActive, IsAdmin, IsOwner, Username FROM user WHERE Age % 2 == 0
+                SELECT Age, id, IsActive, IsAdmin, IsOwner, Tags, Username FROM user WHERE Age % 2 == 0
                 """
             );
     }

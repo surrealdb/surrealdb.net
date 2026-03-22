@@ -20,7 +20,7 @@ public class CustomQueryableTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                array::len((SELECT Age, id, IsActive, IsAdmin, IsOwner, Username FROM user WHERE !(Age >= 18))) == 0
+                array::len((SELECT Age, id, IsActive, IsAdmin, IsOwner, Tags, Username FROM user WHERE !(Age >= 18))) == 0
                 """
             );
     }
@@ -140,7 +140,7 @@ public class CustomQueryableTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                (SELECT Age, id, IsActive, IsAdmin, IsOwner, Username FROM user)[0] ?? null
+                (SELECT Age, id, IsActive, IsAdmin, IsOwner, Tags, Username FROM user)[0] ?? null
                 """
             );
     }
@@ -172,7 +172,7 @@ public class CustomQueryableTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                array::last((SELECT Age, id, IsActive, IsAdmin, IsOwner, Username FROM user)) ?? null
+                array::last((SELECT Age, id, IsActive, IsAdmin, IsOwner, Tags, Username FROM user)) ?? null
                 """
             );
     }

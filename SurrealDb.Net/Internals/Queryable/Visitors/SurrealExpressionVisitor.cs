@@ -553,7 +553,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 {
                     return new CastValueExpression("record", ExtractOperandValueExpression());
                 }
-                if (toType == typeof(HashSet<>) || toType.IsSubclassOf(typeof(HashSet<>)))
+                if (toType.IsHashSet())
                 {
                     return new CastValueExpression("set", ExtractOperandValueExpression());
                 }
@@ -1384,9 +1384,28 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             return BindTimeSpanMethodCall(node);
         }
         if (
-            typeof(Enumerable).IsAssignableFrom(node.Method.DeclaringType)
-            || typeof(IEnumerable<>).IsAssignableFrom(node.Method.DeclaringType)
+            _surrealVersion.Major >= 3
+            && node.Method.DeclaringType is { } declaringType
+            && declaringType.IsHashSet()
         )
+        {
+            return BindHashSetMethodCall(node);
+        }
+
+        bool isEnumerable =
+            typeof(Enumerable).IsAssignableFrom(node.Method.DeclaringType)
+            || typeof(IEnumerable<>).IsAssignableFrom(node.Method.DeclaringType);
+
+        if (
+            _surrealVersion.Major >= 3
+            && isEnumerable
+            && node.Arguments.Count >= 1
+            && node.Arguments[0].Type.IsHashSet()
+        )
+        {
+            return BindHashSetMethodCall(node);
+        }
+        if (isEnumerable)
         {
             return BindEnumerableMethodCall(node);
         }
@@ -2740,6 +2759,20 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             );
         }
         if (
+            node.Method.Name.Equals(nameof(Enumerable.ToArray), StringComparison.Ordinal)
+            && node.Arguments.Count == 1
+        )
+        {
+            var valueExpression = Visit(node.Arguments[0])?.ToValue();
+            if (valueExpression is null)
+            {
+                throw new InvalidCastException(
+                    $"The first argument of {node.Method.DeclaringType!.Name}.ToArray must be a value expression."
+                );
+            }
+            return CastValueExpression.Array(valueExpression);
+        }
+        if (
             node.Method.Name.Equals(nameof(Enumerable.ToHashSet), StringComparison.Ordinal)
             && node.Arguments.Count == 1
         )
@@ -2781,6 +2814,211 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         // Pass down the inner enumerable expression
         if (
             node.Method.Name.Equals(nameof(Enumerable.AsEnumerable), StringComparison.Ordinal)
+            && node.Arguments.Count == 1
+        )
+        {
+            return Visit(node.Arguments[0])!;
+        }
+
+        return base.VisitMethodCall(node);
+    }
+
+    private Expression BindHashSetMethodCall(MethodCallExpression node)
+    {
+        bool isInstanceMethod = node.Object is not null && node.Object.Type.IsHashSet();
+
+        ValueExpression GetSetExpression(string methodName)
+        {
+            if (isInstanceMethod)
+            {
+                var value = Visit(node.Object)?.ToValue();
+                if (value is null)
+                {
+                    throw new InvalidCastException(
+                        $"The caller of HashSet.{methodName} must be a value expression."
+                    );
+                }
+                return value;
+            }
+            else
+            {
+                var value = Visit(node.Arguments[0])?.ToValue();
+                if (value is null)
+                {
+                    throw new InvalidCastException(
+                        $"The first argument of {node.Method.DeclaringType!.Name}.{methodName} must be a value expression."
+                    );
+                }
+                return value;
+            }
+        }
+
+        ValueExpression GetArgExpression(int argIndex, string methodName)
+        {
+            int actualIndex = isInstanceMethod ? argIndex : argIndex + 1;
+            var value = Visit(node.Arguments[actualIndex])?.ToValue();
+            if (value is null)
+            {
+                string argNumber = argIndex switch
+                {
+                    0 => "first",
+                    1 => "second",
+                    _ => $"{(argIndex + 1).ToString(CultureInfo.InvariantCulture)}th",
+                };
+                throw new InvalidCastException(
+                    $"The {argNumber} argument of {node.Method.DeclaringType!.Name}.{methodName} must be a value expression."
+                );
+            }
+            return value;
+        }
+
+        bool isImmutable =
+            !(node.Method.Name.Equals(nameof(HashSet<>.Add), StringComparison.Ordinal))
+            && !(node.Method.Name.Equals(nameof(HashSet<>.Remove), StringComparison.Ordinal));
+
+        if (!isImmutable)
+        {
+            return base.VisitMethodCall(node);
+        }
+
+        if (
+            node.Method.Name.Equals(nameof(HashSet<>.Add), StringComparison.Ordinal)
+            && isInstanceMethod
+            && node.Arguments.Count == 1
+        )
+        {
+            var setExpression = GetSetExpression(nameof(HashSet<>.Add));
+            var itemExpression = GetArgExpression(0, nameof(HashSet<>.Add));
+            return new FunctionValueExpression("set::add", [setExpression, itemExpression]);
+        }
+        if (
+            node.Method.Name.Equals(nameof(HashSet<>.Remove), StringComparison.Ordinal)
+            && isInstanceMethod
+            && node.Arguments.Count == 1
+        )
+        {
+            var setExpression = GetSetExpression(nameof(HashSet<>.Remove));
+            var itemExpression = GetArgExpression(0, nameof(HashSet<>.Remove));
+            return new FunctionValueExpression("set::remove", [setExpression, itemExpression]);
+        }
+        if (
+            node.Method.Name.Equals(nameof(Enumerable.Any), StringComparison.Ordinal)
+            && (!isInstanceMethod ? node.Arguments.Count == 1 : node.Arguments.Count == 0)
+        )
+        {
+            var setExpression = GetSetExpression(nameof(Enumerable.Any));
+            return UnaryValueExpression.Not(
+                new FunctionValueExpression("set::is_empty", [setExpression])
+            );
+        }
+        if (node.Method.Name.Equals(nameof(Enumerable.Contains), StringComparison.Ordinal))
+        {
+            var setExpression = GetSetExpression(nameof(Enumerable.Contains));
+            var itemExpression = GetArgExpression(0, nameof(Enumerable.Contains));
+            return BinaryValueExpression.Contains(setExpression, itemExpression);
+        }
+        if (
+            node.Method.Name.Equals(nameof(Enumerable.Count), StringComparison.Ordinal)
+            && (!isInstanceMethod ? node.Arguments.Count == 1 : node.Arguments.Count == 0)
+        )
+        {
+            var setExpression = GetSetExpression(nameof(Enumerable.Count));
+            return new FunctionValueExpression("set::len", [setExpression]);
+        }
+        if (
+            node.Method.Name.Equals(nameof(Enumerable.Except), StringComparison.Ordinal)
+            && (!isInstanceMethod ? node.Arguments.Count == 2 : node.Arguments.Count == 1)
+        )
+        {
+            var setExpression = GetSetExpression(nameof(Enumerable.Except));
+            var otherExpression = GetArgExpression(0, nameof(Enumerable.Except));
+            return new FunctionValueExpression("set::difference", [setExpression, otherExpression]);
+        }
+        if (
+            node.Method.Name.Equals(nameof(Enumerable.FirstOrDefault), StringComparison.Ordinal)
+            && (!isInstanceMethod ? node.Arguments.Count == 1 : node.Arguments.Count == 0)
+        )
+        {
+            var setExpression = GetSetExpression(nameof(Enumerable.FirstOrDefault));
+            return new FunctionValueExpression("set::first", [setExpression]);
+        }
+        if (
+            node.Method.Name.Equals(nameof(Enumerable.Intersect), StringComparison.Ordinal)
+            && (!isInstanceMethod ? node.Arguments.Count == 2 : node.Arguments.Count == 1)
+        )
+        {
+            var setExpression = GetSetExpression(nameof(Enumerable.Intersect));
+            var otherExpression = GetArgExpression(0, nameof(Enumerable.Intersect));
+            return new FunctionValueExpression("set::intersect", [setExpression, otherExpression]);
+        }
+        if (
+            node.Method.Name.Equals(nameof(Enumerable.LastOrDefault), StringComparison.Ordinal)
+            && (!isInstanceMethod ? node.Arguments.Count == 1 : node.Arguments.Count == 0)
+        )
+        {
+            var setExpression = GetSetExpression(nameof(Enumerable.LastOrDefault));
+            return new FunctionValueExpression("set::last", [setExpression]);
+        }
+        if (node.Method.Name.Equals(nameof(Enumerable.Max), StringComparison.Ordinal))
+        {
+            if (!isInstanceMethod ? node.Arguments.Count == 1 : node.Arguments.Count == 0)
+            {
+                var setExpression = GetSetExpression(nameof(Enumerable.Max));
+                return new FunctionValueExpression("set::max", [setExpression]);
+            }
+        }
+        if (node.Method.Name.Equals(nameof(Enumerable.Min), StringComparison.Ordinal))
+        {
+            if (!isInstanceMethod ? node.Arguments.Count == 1 : node.Arguments.Count == 0)
+            {
+                var setExpression = GetSetExpression(nameof(Enumerable.Min));
+                return new FunctionValueExpression("set::min", [setExpression]);
+            }
+        }
+        if (
+            node.Method.Name.Equals(nameof(Enumerable.Union), StringComparison.Ordinal)
+            && (!isInstanceMethod ? node.Arguments.Count == 2 : node.Arguments.Count == 1)
+        )
+        {
+            var setExpression = GetSetExpression(nameof(Enumerable.Union));
+            var otherExpression = GetArgExpression(0, nameof(Enumerable.Union));
+            return new FunctionValueExpression("set::union", [setExpression, otherExpression]);
+        }
+        if (
+            node.Method.Name.Equals(nameof(Enumerable.Skip), StringComparison.Ordinal)
+            && (!isInstanceMethod ? node.Arguments.Count == 2 : node.Arguments.Count == 1)
+        )
+        {
+            var setExpression = GetSetExpression(nameof(Enumerable.Skip));
+            var countExpression = GetArgExpression(0, nameof(Enumerable.Skip));
+            return new FunctionValueExpression("set::slice", [setExpression, countExpression]);
+        }
+        if (
+            node.Method.Name.Equals(nameof(Enumerable.Take), StringComparison.Ordinal)
+            && (!isInstanceMethod ? node.Arguments.Count == 2 : node.Arguments.Count == 1)
+        )
+        {
+            var setExpression = GetSetExpression(nameof(Enumerable.Take));
+            var countExpression = GetArgExpression(0, nameof(Enumerable.Take));
+            return new FunctionValueExpression(
+                "set::slice",
+                [setExpression, new Int32ValueExpression(0), countExpression]
+            );
+        }
+        if (
+            node.Method.Name.Equals(nameof(Enumerable.ToArray), StringComparison.Ordinal)
+            && !isInstanceMethod
+            && node.Arguments.Count == 1
+        )
+        {
+            var setExpression = GetSetExpression(nameof(Enumerable.ToArray));
+            return CastValueExpression.Array(setExpression);
+        }
+
+        // Pass down AsEnumerable
+        if (
+            node.Method.Name.Equals(nameof(Enumerable.AsEnumerable), StringComparison.Ordinal)
+            && !isInstanceMethod
             && node.Arguments.Count == 1
         )
         {
@@ -3195,6 +3433,32 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 }),
             ]
         );
+    }
+
+    protected override Expression VisitListInit(ListInitExpression node)
+    {
+        var values = node
+            .Initializers.SelectMany(e => e.Arguments)
+            .Select(e =>
+            {
+                var valueExpression = Visit(e)?.ToValue();
+                if (valueExpression is null)
+                {
+                    throw new NotSupportedException(
+                        $"Cannot convert {e.Type.Name} to {nameof(ValueExpression)}."
+                    );
+                }
+
+                return valueExpression;
+            })
+            .ToImmutableArray();
+
+        if (node.Type.IsHashSet())
+        {
+            return new SetValueExpression(values);
+        }
+
+        return new ArrayValueExpression(values);
     }
 
     private static IEnumerable<IdiomExpression> ExtractIdioms(
