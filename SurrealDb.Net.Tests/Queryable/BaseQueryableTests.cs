@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using System.Reactive;
+using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Queryable;
 
 namespace SurrealDb.Net.Tests.Queryable;
@@ -58,7 +59,8 @@ public abstract class BaseQueryableTests
     protected string ToSurql(Expression expression)
     {
         var (query, parameters) = new SurrealDbQueryProvider<Unit>(null!, null, null).Translate(
-            expression
+            expression,
+            VersionConstants.LATEST
         );
         Parameters = parameters;
 

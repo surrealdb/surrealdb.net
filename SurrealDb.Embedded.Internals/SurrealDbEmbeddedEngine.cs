@@ -5,11 +5,13 @@ using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Semver;
 using SurrealDb.Embedded.Options;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Exceptions.Embedded;
 using SurrealDb.Net.Exceptions.Methods;
 using SurrealDb.Net.Exceptions.Serialization;
+using SurrealDb.Net.Extensions;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Cbor;
@@ -50,6 +52,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public string Id => _id.ToString();
 #endif
     public Uri Uri { get; private set; } = new("unknown://");
+    public SemVersion? CachedVersion { get; private set; }
     public EmbeddedSessionInfos SessionInfos { get; } = new();
 
     static SurrealDbEmbeddedEngine()
@@ -1473,7 +1476,19 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             .ConfigureAwait(false);
 
         const string VERSION_PREFIX = "surrealdb-";
-        return version.Replace(VERSION_PREFIX, string.Empty);
+        version = version.Replace(VERSION_PREFIX, string.Empty);
+
+        CachedVersion = version.ToSemver();
+
+        return version;
+    }
+
+    public async Task EnsureVersionIsSetAsync(CancellationToken cancellationToken)
+    {
+        if (CachedVersion is not null)
+            return;
+
+        await Version(cancellationToken).ConfigureAwait(false);
     }
 
     private async Task ApplyRootConfigurationAsync(CancellationToken cancellationToken)

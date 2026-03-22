@@ -271,7 +271,7 @@ public class EnumerableFunctionsTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT VALUE Username FROM user WHERE 5..(5 + 10) CONTAINS Age
+                SELECT VALUE Username FROM user WHERE array::sequence(5, 10) CONTAINS Age
                 """
             );
     }

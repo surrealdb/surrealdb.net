@@ -1,5 +1,6 @@
 ﻿using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
+using Semver;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals.DependencyInjection;
 using SurrealDb.Net.Internals.Models.LiveQuery;
@@ -29,9 +30,20 @@ public interface ISurrealDbEngineWithTransactions
     Task Cancel(Guid? sessionId, Guid transactionId, CancellationToken cancellationToken);
 }
 
+/// <summary>
+/// Technical implementation for internal usage
+/// </summary>
+public interface ISurrealDbInternalEngine
+{
+    SemVersion? CachedVersion { get; }
+
+    Task EnsureVersionIsSetAsync(CancellationToken cancellationToken);
+}
+
 public interface ISurrealDbEngine
     : ISurrealDbEngineWithSessions,
         ISurrealDbEngineWithTransactions,
+        ISurrealDbInternalEngine,
         IDisposable,
         IAsyncDisposable
 {
