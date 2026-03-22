@@ -45,7 +45,6 @@ public class BinaryValueTests : BaseQueryableTests
     }
 
     [Test]
-    [Skip("Implement Cast + TimeSpan value")]
     public void SubtractWithTimeSpan()
     {
         string query = ToSurql(
@@ -56,7 +55,7 @@ public class BinaryValueTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT VALUE (CreatedAt - 4w2d) FROM post
+                SELECT content, created_at, id, status, title FROM post WHERE created_at - 4w2d > time::now()
                 """
             );
     }
