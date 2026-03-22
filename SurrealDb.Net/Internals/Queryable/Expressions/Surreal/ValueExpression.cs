@@ -294,6 +294,16 @@ internal sealed class GuidValueExpression
     }
 }
 
+internal sealed class SetValueExpression : ValueExpression, IConstantValueExpression
+{
+    public ImmutableArray<ValueExpression> Values { get; }
+
+    public SetValueExpression(ImmutableArray<ValueExpression> values)
+    {
+        Values = values;
+    }
+}
+
 internal sealed class ArrayValueExpression : ValueExpression, IConstantValueExpression
 {
     public ImmutableArray<ValueExpression> Values { get; }
@@ -895,6 +905,11 @@ internal sealed class CastValueExpression : ValueExpression
     {
         Kind = kind;
         Value = value;
+    }
+
+    public static CastValueExpression Array(ValueExpression valueExpression)
+    {
+        return new CastValueExpression("array", valueExpression);
     }
 
     public static CastValueExpression Set(ValueExpression valueExpression)

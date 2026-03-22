@@ -11,7 +11,7 @@ public class ProjectionQueryableTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT Age, id, IsActive, IsAdmin, IsOwner, Username FROM user
+                SELECT Age, id, IsActive, IsAdmin, IsOwner, Tags, Username FROM user
                 """
             );
     }

@@ -19,7 +19,7 @@ public class ParametersQueryableTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT Age, id, IsActive, IsAdmin, IsOwner, Username FROM user WHERE Age >= 18
+                SELECT Age, id, IsActive, IsAdmin, IsOwner, Tags, Username FROM user WHERE Age >= 18
                 """
             );
         Parameters.Should().BeEmpty();
@@ -35,7 +35,7 @@ public class ParametersQueryableTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT Age, id, IsActive, IsAdmin, IsOwner, Username FROM user WHERE Age >= $minAge
+                SELECT Age, id, IsActive, IsAdmin, IsOwner, Tags, Username FROM user WHERE Age >= $minAge
                 """
             );
         return Verify(Parameters, _verifySettings);

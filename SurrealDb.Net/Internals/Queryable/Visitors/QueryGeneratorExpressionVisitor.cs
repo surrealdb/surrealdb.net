@@ -431,6 +431,13 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
             _surqlQueryBuilder.Append(']');
         }
 
+        if (valueExpression is SetValueExpression setExpression)
+        {
+            _surqlQueryBuilder.Append('{');
+            VisitCommaSeparatedValues(setExpression.Values);
+            _surqlQueryBuilder.Append('}');
+        }
+
         if (valueExpression is ObjectValueExpression objectExpression)
         {
             _surqlQueryBuilder.Append('{');

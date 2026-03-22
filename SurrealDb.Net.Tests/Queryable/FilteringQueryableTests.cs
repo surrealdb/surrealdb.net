@@ -25,7 +25,7 @@ public class FilteringQueryableTests : BaseQueryableTests
             .Should()
             .Be(
                 """
-                SELECT Age, id, IsActive, IsAdmin, IsOwner, Username FROM user WHERE (IsAdmin || IsOwner) && IsActive
+                SELECT Age, id, IsActive, IsAdmin, IsOwner, Tags, Username FROM user WHERE (IsAdmin || IsOwner) && IsActive
                 """
             );
     }

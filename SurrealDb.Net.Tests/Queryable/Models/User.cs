@@ -7,4 +7,5 @@ public class User : SurrealDbRecord
     public bool IsActive { get; set; }
     public bool IsOwner { get; set; }
     public int Age { get; set; }
+    public HashSet<string> Tags { get; set; } = [];
 }
