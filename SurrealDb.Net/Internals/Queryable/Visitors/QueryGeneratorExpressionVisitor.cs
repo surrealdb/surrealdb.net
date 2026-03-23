@@ -10,9 +10,9 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
 {
     private StringBuilder _surqlQueryBuilder = null!;
 
-    public string Translate(SurrealExpression expression)
+    public string Translate(SurrealExpression expression, int approximatedQueryLength)
     {
-        _surqlQueryBuilder = new StringBuilder();
+        _surqlQueryBuilder = new StringBuilder(approximatedQueryLength);
 
         Visit(expression);
 
