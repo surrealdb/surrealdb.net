@@ -4,8 +4,6 @@ using SurrealDb.Net.Internals.Queryable.Visitors;
 
 namespace SurrealDb.Net.Internals.Queryable;
 
-// TODO : remove generic T?
-
 public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQueryProvider
 {
     private readonly Guid? _sessionId;
@@ -50,48 +48,48 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
         CancellationToken cancellationToken
     )
     {
-        if (_surrealDbEngine.TryGetTarget(out var engine))
+        if (!_surrealDbEngine.TryGetTarget(out var engine))
         {
-            if (
-                expression.NodeType == ExpressionType.Constant
-                && expression.Type == typeof(SurrealDbQueryable<T>)
-            )
-            {
-                var constantExpression = (ConstantExpression)expression;
-                var surrealQueryable = (SurrealDbQueryable<T>)constantExpression.Value!;
-
-                var result = await engine
-                    .SelectAll<T>(
-                        surrealQueryable.FromTable,
-                        _sessionId,
-                        _transactionId,
-                        cancellationToken
-                    )
-                    .ConfigureAwait(false);
-                return (TResult)result;
-            }
-
-            await engine.EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
-
-            var (query, parameters) = Translate(
-                expression,
-                engine.CachedVersion
-                    ?? throw new NullReferenceException(
-                        "Cannot detect version of the inner SurrealDB engine."
-                    )
-            );
-
-            {
-                var result = await engine
-                    .RawQuery(query, parameters, _sessionId, _transactionId, cancellationToken)
-                    .ConfigureAwait(false);
-                result.EnsureAllOks();
-
-                return result.GetValue<TResult>(0)!;
-            }
+            throw new Exception("SurrealDB instance has been disposed.");
         }
 
-        throw new Exception("SurrealDB instance has been disposed.");
+        if (
+            expression.NodeType == ExpressionType.Constant
+            && expression.Type == typeof(SurrealDbQueryable<T>)
+        )
+        {
+            var constantExpression = (ConstantExpression)expression;
+            var surrealQueryable = (SurrealDbQueryable<T>)constantExpression.Value!;
+
+            var result = await engine
+                .SelectAll<T>(
+                    surrealQueryable.FromTable,
+                    _sessionId,
+                    _transactionId,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+            return (TResult)result;
+        }
+
+        await engine.EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        var (query, parameters) = Translate(
+            expression,
+            engine.CachedVersion
+                ?? throw new NullReferenceException(
+                    "Cannot detect version of the inner SurrealDB engine."
+                )
+        );
+
+        {
+            var result = await engine
+                .RawQuery(query, parameters, _sessionId, _transactionId, cancellationToken)
+                .ConfigureAwait(false);
+            result.EnsureAllOks();
+
+            return result.GetValue<TResult>(0)!;
+        }
     }
 
     public (string Query, IReadOnlyDictionary<string, object?> Parameters) Translate(
@@ -110,8 +108,13 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
             surrealExpressionResult.Expression;
         // TODO : Check and replace "always true" operations
         // TODO : Check and replace SELECT FROM record ID if operation "== RecordId"
-        // TODO : Approximate Query size? (based on number of expressions)
-        string query = new QueryGeneratorExpressionVisitor().Translate(surrealExpression);
+        int approximatedQueryLength = new ApproximateQueryLengthExpressionVisitor().Approximate(
+            surrealExpression
+        );
+        string query = new QueryGeneratorExpressionVisitor().Translate(
+            surrealExpression,
+            approximatedQueryLength
+        );
 
         return (query, surrealExpressionResult.Parameters);
     }
