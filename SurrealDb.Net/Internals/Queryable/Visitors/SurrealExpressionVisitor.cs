@@ -3,10 +3,12 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Numerics;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Dahomey.Cbor.Util;
 using Microsoft.Spatial;
 using Semver;
+using SurrealDb.Net.Attributes;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Queryable.Expressions.Intermediate;
@@ -1366,6 +1368,14 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
 
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
+        var surrealDbFunctionAttribute = node.Method.GetCustomAttribute<SurrealDbFunctionAttribute>(
+            inherit: false
+        );
+        if (surrealDbFunctionAttribute is not null)
+        {
+            return BindSurrealDbFunctionMethodCall(node, surrealDbFunctionAttribute);
+        }
+
         // TODO : Dictionary?
         if (node.Method.DeclaringType == typeof(string))
         {
@@ -1427,6 +1437,67 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         }
 
         return base.VisitMethodCall(node);
+    }
+
+    private Expression BindSurrealDbFunctionMethodCall(
+        MethodCallExpression node,
+        SurrealDbFunctionAttribute attribute
+    )
+    {
+        string functionName = attribute.ToString();
+
+        var parameters = node
+            .Arguments.Select(
+                (arg, index) =>
+                {
+                    var argExpression = Visit(arg);
+
+                    if (argExpression is ParameterExpression parameterExpression)
+                    {
+                        // TODO : Apply correlation based on mapped intermediate parameters
+                        int parameterLevel = _parametersNestedLevels.GetValueOrDefault(
+                            parameterExpression,
+                            _currentNestedSelectLevel
+                        );
+
+                        if (_currentNestedSelectLevel == parameterLevel)
+                        {
+                            return new ParameterValueExpression("this");
+                        }
+
+                        var parentsParts = Enumerable
+                            .Range(0, _currentNestedSelectLevel - parameterLevel)
+                            .Select<int, PartExpression>(index =>
+                                index == 0
+                                    ? new StartPartExpression(
+                                        new ParameterValueExpression("parent")
+                                    )
+                                    : new FieldPartExpression("$parent")
+                            );
+
+                        return new IdiomExpression([.. parentsParts]).ToValue();
+                    }
+
+                    var valueExpression = argExpression?.ToValue();
+                    if (valueExpression is null)
+                    {
+                        string argNumber = index switch
+                        {
+                            0 => "first",
+                            1 => "second",
+                            2 => "third",
+                            _ => $"{(index + 1).ToString(CultureInfo.InvariantCulture)}th",
+                        };
+                        throw new InvalidCastException(
+                            $"The {argNumber} argument of {functionName} must be a value expression."
+                        );
+                    }
+                    return valueExpression;
+                }
+            )
+            .ToImmutableArray();
+
+        return new FunctionValueExpression(functionName, parameters);
     }
 
     private Expression BindStringMethodCall(MethodCallExpression node)
