@@ -96,7 +96,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           sparse-checkout: |
             rust-embedded
@@ -106,7 +106,7 @@ jobs:
         if: matrix.target == 'aarch64-unknown-linux-gnu'
 
       - name: Setup Android NDK
-        uses: nttld/setup-ndk@v1
+        uses: nttld/setup-ndk@ed92fe6cadad69be94a966a7ee3271275e62f779 # v1
         id: setup-ndk
         with:
           ndk-version: r26d
@@ -134,7 +134,7 @@ jobs:
         if: matrix.target == 'aarch64-apple-ios'
 
       - name: Install 1.91.0 toolchain
-        uses: dtolnay/rust-toolchain@1.91.0
+        uses: dtolnay/rust-toolchain@0dd4a6d07aedb0ef7f65e79f3e229a6c102ae2e0 # 1.91.0
         with:
           toolchain: 1.91.0 # must match the version in the `rust-embedded/rust-toolchain` file
           target: ${{ matrix.target }}
@@ -152,7 +152,7 @@ jobs:
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Publish embedded artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: embedded-${{ matrix.target }}
           path: ${{ matrix.libpath }}
@@ -163,7 +163,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Download embedded artifacts
         uses: actions/download-artifact@v4
@@ -172,7 +172,7 @@ jobs:
           merge-multiple: true
 
       - name: Setup dotnet 10.0
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
           dotnet-version: "10.0.x"
 
@@ -192,11 +192,11 @@ jobs:
 
     steps:
       - name: Setup dotnet 10.0
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
           dotnet-version: "10.0.x"
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: nuget
           path: ${{ env.NuGetDirectory }}
@@ -213,11 +213,11 @@ jobs:
 
     steps:
       - name: Setup dotnet 10.0
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
           dotnet-version: "10.0.x"
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: nuget
           path: ${{ env.NuGetDirectory }}
