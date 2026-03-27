@@ -72,4 +72,26 @@ public class NestedQueryableTests : BaseQueryableTests
                 """
             );
     }
+
+    [Test]
+    public void NestedObjectProperties()
+    {
+        string query = ToSurql(
+            Orders.Select(o => new
+            {
+                o.Id,
+                o.CreatedAt,
+                o.Address.City,
+                o.Address.Country,
+            })
+        );
+
+        query
+            .Should()
+            .Be(
+                """
+                SELECT Address.City AS City, Address.Country AS Country, CreatedAt, id AS Id FROM order
+                """
+            );
+    }
 }

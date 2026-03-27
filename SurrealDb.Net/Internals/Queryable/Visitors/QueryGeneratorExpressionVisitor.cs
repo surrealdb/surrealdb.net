@@ -300,9 +300,18 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
             return idiomExpression;
         }
 
+        bool isFirst = true;
         foreach (var partExpression in idiomExpression.Parts)
         {
-            Visit(partExpression);
+            if (isFirst && partExpression is FieldPartExpression firstFieldPart)
+            {
+                _surqlQueryBuilder.Append(firstFieldPart.FieldName);
+            }
+            else
+            {
+                Visit(partExpression);
+            }
+            isFirst = false;
         }
 
         return idiomExpression;
