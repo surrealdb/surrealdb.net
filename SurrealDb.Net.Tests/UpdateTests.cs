@@ -33,7 +33,7 @@ public class UpdateTests
 
             result = await client.Update(post);
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         if (version.Major >= 3)
@@ -89,7 +89,7 @@ public class UpdateTests
 
             result = await client.Update(post);
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         if (version.Major < 2)
@@ -136,7 +136,7 @@ public class UpdateTests
 
             result = await client.Update<Post, Post>(new StringRecordId("post:another"), post);
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         if (version.Major >= 3)
@@ -191,7 +191,7 @@ public class UpdateTests
 
             result = await client.Update<Post, Post>(new StringRecordId("post:first"), post);
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         if (version.Major < 2)

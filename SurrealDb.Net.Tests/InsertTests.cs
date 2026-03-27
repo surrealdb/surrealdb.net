@@ -23,7 +23,7 @@ public class InsertTests
 
             result = await client.Insert("empty", Enumerable.Empty<Empty>());
 
-            list = await client.Select<Empty>("empty");
+            list = await client.Select<Empty>("empty").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -58,7 +58,7 @@ public class InsertTests
 
             result = await client.Insert("post", new[] { post });
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -100,7 +100,7 @@ public class InsertTests
 
             result = await client.Insert("post", new[] { post });
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -165,7 +165,7 @@ public class InsertTests
 
             result = await client.Insert("post", posts);
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
