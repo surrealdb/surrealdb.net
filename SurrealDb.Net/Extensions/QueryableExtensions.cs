@@ -1090,7 +1090,8 @@ public static class QueryableExtensions
             .First(method =>
             {
                 var parameters = method.GetParameters();
-                return parameters.Length == 1 && parameters[0].ParameterType == typeof(decimal);
+                return parameters.Length == 1
+                    && parameters[0].ParameterType == typeof(IQueryable<decimal>);
             });
 
         return provider.ExecuteAsync<decimal>(
@@ -1120,7 +1121,8 @@ public static class QueryableExtensions
             .First(method =>
             {
                 var parameters = method.GetParameters();
-                return parameters.Length == 1 && parameters[0].ParameterType == typeof(decimal?);
+                return parameters.Length == 1
+                    && parameters[0].ParameterType == typeof(IQueryable<decimal?>);
             });
 
         return provider.ExecuteAsync<decimal?>(
@@ -1232,7 +1234,8 @@ public static class QueryableExtensions
             .First(method =>
             {
                 var parameters = method.GetParameters();
-                return parameters.Length == 1 && parameters[0].ParameterType == typeof(int);
+                return parameters.Length == 1
+                    && parameters[0].ParameterType == typeof(IQueryable<int>);
             });
 
         return provider.ExecuteAsync<int>(
@@ -1262,7 +1265,8 @@ public static class QueryableExtensions
             .First(method =>
             {
                 var parameters = method.GetParameters();
-                return parameters.Length == 1 && parameters[0].ParameterType == typeof(int?);
+                return parameters.Length == 1
+                    && parameters[0].ParameterType == typeof(IQueryable<int?>);
             });
 
         return provider.ExecuteAsync<int?>(
@@ -1374,7 +1378,8 @@ public static class QueryableExtensions
             .First(method =>
             {
                 var parameters = method.GetParameters();
-                return parameters.Length == 1 && parameters[0].ParameterType == typeof(long);
+                return parameters.Length == 1
+                    && parameters[0].ParameterType == typeof(IQueryable<long>);
             });
 
         return provider.ExecuteAsync<long>(
@@ -1404,7 +1409,8 @@ public static class QueryableExtensions
             .First(method =>
             {
                 var parameters = method.GetParameters();
-                return parameters.Length == 1 && parameters[0].ParameterType == typeof(long?);
+                return parameters.Length == 1
+                    && parameters[0].ParameterType == typeof(IQueryable<long?>);
             });
 
         return provider.ExecuteAsync<long?>(
@@ -1516,7 +1522,8 @@ public static class QueryableExtensions
             .First(method =>
             {
                 var parameters = method.GetParameters();
-                return parameters.Length == 1 && parameters[0].ParameterType == typeof(double);
+                return parameters.Length == 1
+                    && parameters[0].ParameterType == typeof(IQueryable<double>);
             });
 
         return provider.ExecuteAsync<double>(
@@ -1546,7 +1553,8 @@ public static class QueryableExtensions
             .First(method =>
             {
                 var parameters = method.GetParameters();
-                return parameters.Length == 1 && parameters[0].ParameterType == typeof(double?);
+                return parameters.Length == 1
+                    && parameters[0].ParameterType == typeof(IQueryable<double?>);
             });
 
         return provider.ExecuteAsync<double?>(
@@ -1658,7 +1666,8 @@ public static class QueryableExtensions
             .First(method =>
             {
                 var parameters = method.GetParameters();
-                return parameters.Length == 1 && parameters[0].ParameterType == typeof(float);
+                return parameters.Length == 1
+                    && parameters[0].ParameterType == typeof(IQueryable<float>);
             });
 
         return provider.ExecuteAsync<float>(
@@ -1688,7 +1697,8 @@ public static class QueryableExtensions
             .First(method =>
             {
                 var parameters = method.GetParameters();
-                return parameters.Length == 1 && parameters[0].ParameterType == typeof(float?);
+                return parameters.Length == 1
+                    && parameters[0].ParameterType == typeof(IQueryable<float?>);
             });
 
         return provider.ExecuteAsync<float?>(
