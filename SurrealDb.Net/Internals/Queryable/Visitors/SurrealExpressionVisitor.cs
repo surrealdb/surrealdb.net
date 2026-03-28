@@ -2065,19 +2065,40 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             }
             return new FunctionValueExpression("math::pow", [valueExpression1, valueExpression2]);
         }
-        if (
-            node.Method.Name.Equals(nameof(Math.Round), StringComparison.Ordinal)
-            && node.Arguments.Count == 1
-        )
+        if (node.Method.Name.Equals(nameof(Math.Round), StringComparison.Ordinal))
         {
-            var valueExpression = Visit(node.Arguments[0])?.ToValue();
-            if (valueExpression is null)
+            var valueExpression1 = Visit(node.Arguments[0])?.ToValue();
+            if (valueExpression1 is null)
             {
                 throw new InvalidCastException(
                     "The first argument of Math.Round must be a value expression."
                 );
             }
-            return new FunctionValueExpression("math::round", [valueExpression]);
+
+            if (node.Arguments.Count == 1)
+            {
+                return new FunctionValueExpression("math::round", [valueExpression1]);
+            }
+
+            if (node.Arguments.Count == 2)
+            {
+                var valueExpression2 = Visit(node.Arguments[1])?.ToValue();
+                if (valueExpression2 is null)
+                {
+                    throw new InvalidCastException(
+                        "The second argument of Math.Round must be a value expression."
+                    );
+                }
+
+                return new FunctionValueExpression(
+                    "math::fixed",
+                    [valueExpression1, valueExpression2]
+                );
+            }
+
+            throw new NotSupportedException(
+                $"Math.Round overload with {node.Arguments.Count} arguments is not supported."
+            );
         }
         if (node.Method.Name.Equals(nameof(Math.Sign), StringComparison.Ordinal))
         {
@@ -2906,6 +2927,24 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                     $"The second argument of {node.Method.DeclaringType!.Name}.Union must be a value expression."
                 );
             }
+            var sourceExpression = Visit(node.Arguments[0]);
+
+            if (
+                sourceExpression is IdiomExpression sourceIdiomExpression
+                && valueExpression2
+                    is IdiomValueExpression { Idiom.IsSingleFieldPart: true } idiomValueExpression
+            )
+            {
+                return new FunctionValueExpression(
+                    "math::sum",
+                    [
+                        IdiomExpression
+                            .Chain(sourceIdiomExpression, idiomValueExpression.Idiom)
+                            .ToValue(),
+                    ]
+                );
+            }
+
             return new FunctionValueExpression("math::sum", [valueExpression2]);
         }
         if (node.Method.Name.Equals(nameof(Enumerable.Take), StringComparison.Ordinal))

@@ -246,6 +246,93 @@ public class ComplexQueryableTests
             });
     }
 
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
+    public async Task ShouldRoundSumProductCosts(string connectionString)
+    {
+        var (result, query) = await ExecuteWithSchema(
+            connectionString,
+            SurrealSchemaFile.Store,
+            client =>
+                client
+                    .Select<StoreOrder>()
+                    .Select(order => new
+                    {
+                        Total = order.Total,
+                        ProductCosts = (float)
+                            Math.Round(order.Products.Sum(product => product.Price), 2),
+                    })
+        );
+
+        query
+            .Should()
+            .Be(
+                "SELECT <float> math::fixed(<float> math::sum(products.price), 2) AS ProductCosts, total AS Total FROM orders"
+            );
+        result.Should().NotBeEmpty().And.HaveCount(10);
+        result
+            .Should()
+            .AllSatisfy(order =>
+            {
+                order.Total.Should().Be(order.ProductCosts);
+            });
+    }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
+    public async Task ShouldRoundToIntSumProductCosts(string connectionString)
+    {
+        var (result, query) = await ExecuteWithSchema(
+            connectionString,
+            SurrealSchemaFile.Store,
+            client =>
+                client
+                    .Select<StoreOrder>()
+                    .Select(order => new
+                    {
+                        Total = (float)Math.Round(order.Total),
+                        ProductCosts = (float)
+                            Math.Round(order.Products.Sum(product => product.Price)),
+                    })
+        );
+
+        query
+            .Should()
+            .Be(
+                "SELECT <float> math::round(<float> math::sum(products.price)) AS ProductCosts, <float> math::round(<float> total) AS Total FROM orders"
+            );
+        result.Should().NotBeEmpty().And.HaveCount(10);
+        result
+            .Should()
+            .AllSatisfy(order =>
+            {
+                order.Total.Should().Be(order.ProductCosts);
+                ((int)order.Total).Should().Be((int)order.ProductCosts);
+            });
+    }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
+    public async Task ShouldSumAllProductCosts(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+        await client.ApplySchemaAsync(SurrealSchemaFile.Store);
+        var queryable = client
+            .Select<StoreOrder>()
+            .Select(order => order.Products.Sum(product => product.Price));
+        var query = queryable.ToQueryString();
+        var result = await queryable.SumAsync();
+
+        // Due to optimizeSelfProjection the query is not exactly what we would expect, but it should still work correctly
+        // math::sum(SELECT VALUE math::sum(products.price) FROM orders)
+        query.Should().Be("SELECT VALUE math::sum(products.price) FROM orders");
+        result.Should().BeApproximately(3879.8f, 0.1f);
+    }
+
     private record StoreOrderSelector(string customer, float total, ProductSelector[] products);
 
     private record ProductSelector(string name, string description);
