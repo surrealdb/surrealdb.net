@@ -15,4 +15,5 @@ public enum SurrealSchemaFile
     Vector,
     Bearer,
     NestedObject,
+    Store,
 }

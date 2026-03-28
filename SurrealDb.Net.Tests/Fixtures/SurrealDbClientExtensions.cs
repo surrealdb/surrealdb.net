@@ -48,6 +48,7 @@ public static class SurrealDbClientExtensions
             SurrealSchemaFile.Vector => "vector",
             SurrealSchemaFile.Bearer => "bearer",
             SurrealSchemaFile.NestedObject => "nestedObject",
+            SurrealSchemaFile.Store => "store",
             _ => throw new NotImplementedException(),
         };
 
