@@ -127,12 +127,15 @@ internal sealed class MethodPartExpression : PartExpression
     }
 }
 
-internal sealed class DestructurePartExpression : PartExpression
+internal sealed class DeconstructPartExpression : PartExpression
 {
-    // TODO
-    private DestructurePartExpression()
+    public string FieldName { get; }
+    public ImmutableArray<string> DeconstructFields { get; }
+
+    public DeconstructPartExpression(string fieldName, ImmutableArray<string> deconstructFields)
     {
-        throw new NotImplementedException();
+        FieldName = fieldName;
+        DeconstructFields = deconstructFields;
     }
 }
 

@@ -292,11 +292,21 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
 
     private IdiomExpression VisitIdiom(IdiomExpression idiomExpression)
     {
-        if (idiomExpression.IsSingleFieldPart)
+        if (idiomExpression.IsSingleFieldPart && idiomExpression.Parts[0] is FieldPartExpression)
         {
             var fieldPartExpression = (FieldPartExpression)idiomExpression.Parts[0];
             _surqlQueryBuilder.Append(fieldPartExpression.FieldName);
 
+            return idiomExpression;
+        }
+
+        // Handle single DeconstructPartExpression
+        if (
+            idiomExpression.Parts.Length == 1
+            && idiomExpression.Parts[0] is DeconstructPartExpression
+        )
+        {
+            Visit(idiomExpression.Parts[0]);
             return idiomExpression;
         }
 
@@ -319,6 +329,22 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
 
     private PartExpression VisitPart(PartExpression partExpression)
     {
+        if (partExpression is DeconstructPartExpression deconstructExpression)
+        {
+            _surqlQueryBuilder.Append(deconstructExpression.FieldName);
+            _surqlQueryBuilder.Append(".{");
+            for (int index = 0; index < deconstructExpression.DeconstructFields.Length; index++)
+            {
+                if (index > 0)
+                {
+                    _surqlQueryBuilder.Append(",");
+                }
+                _surqlQueryBuilder.Append(deconstructExpression.DeconstructFields[index]);
+            }
+            _surqlQueryBuilder.Append("}");
+            return partExpression;
+        }
+
         if (partExpression is IPrintableExpression printableExpression)
         {
             printableExpression.AppendTo(_surqlQueryBuilder);
