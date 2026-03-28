@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Numerics;
@@ -23,6 +24,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
     private readonly Dictionary<string, object?> _parameters;
     private readonly Dictionary<string, object?> _recordIdParameters = [];
     private readonly SemVersion _surrealVersion;
+    private readonly bool _optimizeSelfProjection;
 
     private int _currentNestedSelectLevel = 0;
     private readonly Dictionary<ParameterExpression, int> _parametersNestedLevels = [];
@@ -30,12 +32,14 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
     public SurrealExpressionVisitor(
         Dictionary<ParameterExpression, Expression> sourceExpressionParameters,
         int numberOfNamedValues,
-        SemVersion surrealVersion
+        SemVersion surrealVersion,
+        bool optimizeSelfProjection = true
     )
     {
         _sourceExpressionParameters = sourceExpressionParameters;
         _parameters = new(numberOfNamedValues);
         _surrealVersion = surrealVersion;
+        _optimizeSelfProjection = optimizeSelfProjection;
     }
 
     internal (Expression Expression, IReadOnlyDictionary<string, object?> Parameters) Bind(
@@ -171,6 +175,14 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             if (innerExpression is null)
             {
                 return FieldsExpression.ForType(projectionExpression.Type);
+            }
+
+            if (
+                _optimizeSelfProjection
+                && TryGetSourceTypeForSelfProjection(innerExpression, out var sourceType)
+            )
+            {
+                return FieldsExpression.ForType(sourceType);
             }
 
             var valueExpression = Visit(innerExpression)?.ToValue();
@@ -858,6 +870,42 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
 
         if (source is ParameterExpression parameterExpression)
         {
+            if (
+                parameterExpression.Type.IsAnonymous()
+                && _sourceExpressionParameters.TryGetValue(
+                    parameterExpression,
+                    out var sourceExpression
+                )
+                && sourceExpression
+                    is ProjectionExpression
+                    {
+                        InnerExpression: NewExpression { Members: { } members } newExpression,
+                    }
+            )
+            {
+                int memberIndex = Enumerable
+                    .Range(0, members.Count)
+                    .FirstOrDefault(index =>
+                        members[index].Name.Equals(node.Member.Name, StringComparison.Ordinal)
+                    );
+                bool isMemberFound =
+                    memberIndex < newExpression.Arguments.Count
+                    && members[memberIndex].Name.Equals(node.Member.Name, StringComparison.Ordinal);
+
+                if (isMemberFound)
+                {
+                    var projectionMemberExpression = newExpression.Arguments[memberIndex];
+                    if (projectionMemberExpression != node)
+                    {
+                        var resolvedExpression = Visit(projectionMemberExpression);
+                        if (resolvedExpression is not null)
+                        {
+                            return resolvedExpression;
+                        }
+                    }
+                }
+            }
+
             // TODO : Apply correlation based on mapped intermediate parameters
             int parameterLevel = _parametersNestedLevels.GetValueOrDefault(
                 parameterExpression,
@@ -2757,6 +2805,58 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             }
             return new FunctionValueExpression("array::reverse", [valueExpression]);
         }
+        if (
+            node.Method.Name.Equals(nameof(Enumerable.Select), StringComparison.Ordinal)
+            && node.Arguments.Count == 2
+        )
+        {
+            var sourceExpression = Visit(node.Arguments[0]);
+
+            if (
+                sourceExpression
+                    is IdiomExpression { Parts: [FieldPartExpression fieldPartExpression] }
+                && node.Arguments[1]
+                    is LambdaIntermediateExpression { Expression.Body: NewExpression newExpression }
+                && newExpression.Arguments.Count > 0
+            )
+            {
+                var deconstructFields = newExpression
+                    .Arguments.Select(arg =>
+                    {
+                        if (arg is MemberExpression memberExpression)
+                        {
+                            var (fieldName, _) = ReflectionExtensions.GetDatabaseFieldName(
+                                memberExpression.Member
+                            );
+                            return fieldName;
+                        }
+
+                        throw new NotSupportedException(
+                            $"The selector argument '{arg}' is not supported in Enumerable.Select projection."
+                        );
+                    })
+                    .OrderBy(fieldName => fieldName, StringComparer.Ordinal)
+                    .ToImmutableArray();
+
+                return new IdiomExpression(
+                    [
+                        new DeconstructPartExpression(
+                            fieldPartExpression.FieldName,
+                            deconstructFields
+                        ),
+                    ]
+                );
+            }
+
+            if (sourceExpression is IdiomExpression)
+            {
+                throw new InvalidCastException(
+                    $"The selector of {node.Method.DeclaringType!.Name}.Select is not supported for idiom expressions."
+                );
+            }
+
+            return base.VisitMethodCall(node);
+        }
         if (node.Method.Name.Equals(nameof(Enumerable.SelectMany), StringComparison.Ordinal))
         {
             var valueExpression = Visit(node.Arguments[0])?.ToValue();
@@ -2840,6 +2940,10 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 throw new InvalidCastException(
                     $"The first argument of {node.Method.DeclaringType!.Name}.ToArray must be a value expression."
                 );
+            }
+            if (valueExpression is IdiomValueExpression)
+            {
+                return valueExpression;
             }
             return CastValueExpression.Array(valueExpression);
         }
@@ -3372,13 +3476,36 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
 
     protected override Expression VisitNew(NewExpression node)
     {
+        string[]? fieldNames = null;
+
         if (node.Type.IsAnonymous() && node.Members is not null)
         {
+            fieldNames = [.. node.Members.Select(m => m.Name)];
+        }
+        else if (
+            node.Members is null
+            && node.Arguments.Count > 0
+            && node.Constructor is not null
+            && node.Type.Namespace is not null
+            && !node.Type.Namespace.StartsWith("System", StringComparison.Ordinal)
+        )
+        {
+            var ctorParameters = node.Constructor.GetParameters();
+            if (
+                ctorParameters.Length == node.Arguments.Count
+                && ctorParameters.All(parameter => !string.IsNullOrWhiteSpace(parameter.Name))
+            )
+            {
+                fieldNames = [.. ctorParameters.Select(parameter => parameter.Name!)];
+            }
+        }
+
+        if (fieldNames is not null)
+        {
             var fields = node
-                .Members.Select(
-                    (m, index) =>
+                .Arguments.Select(
+                    (argExpression, index) =>
                     {
-                        var argExpression = node.Arguments[index];
                         var valueExpression = Visit(argExpression)?.ToValue();
                         if (valueExpression is null)
                         {
@@ -3387,7 +3514,9 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                             );
                         }
 
-                        return (FieldName: m.Name, Expression: valueExpression);
+                        string fieldName = fieldNames[index];
+
+                        return (FieldName: fieldName, Expression: valueExpression);
                     }
                 )
                 .ToImmutableDictionary(x => x.FieldName, x => x.Expression);
@@ -3543,5 +3672,96 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         var groupingIdioms = grouping?.Fields ?? [];
 
         return orderingIdioms.Concat(groupingIdioms);
+    }
+
+    private static bool TryGetSourceTypeForSelfProjection(
+        Expression expression,
+        [NotNullWhen(true)] out Type? sourceType
+    )
+    {
+        sourceType = null;
+
+        if (expression is not NewExpression { Members: { } members } newExpression)
+        {
+            return false;
+        }
+
+        if (members.Count != newExpression.Arguments.Count || members.Count == 0)
+        {
+            return false;
+        }
+
+        static MemberExpression? TryExtractRootMember(Expression arg)
+        {
+            if (arg is MemberExpression memberExpression)
+            {
+                return memberExpression;
+            }
+
+            if (
+                arg is MethodCallExpression
+                {
+                    Method.Name: nameof(Enumerable.ToArray),
+                    Arguments: [
+                        MethodCallExpression
+                        {
+                            Method.Name: nameof(Enumerable.Select),
+                            Arguments: [MemberExpression sourceMemberExpression, ..],
+                        },
+                    ],
+                }
+            )
+            {
+                return sourceMemberExpression;
+            }
+
+            return null;
+        }
+
+        var extractedMembers = newExpression.Arguments.Select(TryExtractRootMember).ToArray();
+        if (extractedMembers.Any(memberExpression => memberExpression is null))
+        {
+            return false;
+        }
+
+        var sourceParameters = extractedMembers
+            .Select(memberExpression => memberExpression!.Expression)
+            .OfType<ParameterExpression>()
+            .Distinct()
+            .ToArray();
+        if (sourceParameters.Length != 1)
+        {
+            return false;
+        }
+
+        var candidateType = sourceParameters[0].Type;
+        var sourceFieldNames = candidateType
+            .GetProperties()
+            .Where(property => property is { CanRead: true, CanWrite: true })
+            .Select(property => ReflectionExtensions.GetDatabaseFieldName(property).fieldName)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        var projectionFieldNames = extractedMembers
+            .Select(memberExpression =>
+                ReflectionExtensions.GetDatabaseFieldName(memberExpression!.Member).fieldName
+            )
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        if (sourceFieldNames.Length != projectionFieldNames.Length)
+        {
+            return false;
+        }
+
+        bool isSameProjection = sourceFieldNames.All(fieldName =>
+            projectionFieldNames.Contains(fieldName, StringComparer.Ordinal)
+        );
+        if (!isSameProjection)
+        {
+            return false;
+        }
+
+        sourceType = candidateType;
+        return true;
     }
 }

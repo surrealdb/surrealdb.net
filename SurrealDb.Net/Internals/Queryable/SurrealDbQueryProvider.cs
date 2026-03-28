@@ -72,6 +72,44 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
             return (TResult)result;
         }
 
+        if (
+            TryGetAnonymousEnumerableElementType(typeof(TResult), out _)
+            && TryFindSourceQueryable(expression, out var sourceQueryable)
+        )
+        {
+            await engine.EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+            var (sourceQuery, sourceParameters) = Translate(
+                sourceQueryable!.Expression,
+                engine.CachedVersion
+                    ?? throw new NullReferenceException(
+                        "Cannot detect version of the inner SurrealDB engine."
+                    ),
+                optimizeSelfProjection: true
+            );
+
+            var sourceResponse = await engine
+                .RawQuery(
+                    sourceQuery,
+                    sourceParameters,
+                    _sessionId,
+                    _transactionId,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+            sourceResponse.EnsureAllOks();
+
+            var sourceItems = sourceResponse.GetValue<IEnumerable<T>>(0)!;
+
+            var inMemoryQueryable = sourceItems.AsQueryable();
+            var rewrittenExpression = new RootQueryableReplaceVisitor(
+                sourceQueryable,
+                inMemoryQueryable
+            ).Visit(expression)!;
+
+            return inMemoryQueryable.Provider.Execute<TResult>(rewrittenExpression)!;
+        }
+
         await engine.EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
         var (query, parameters) = Translate(
@@ -79,7 +117,8 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
             engine.CachedVersion
                 ?? throw new NullReferenceException(
                     "Cannot detect version of the inner SurrealDB engine."
-                )
+                ),
+            optimizeSelfProjection: false
         );
 
         {
@@ -97,12 +136,22 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
         SemVersion version
     )
     {
+        return Translate(expression, version, optimizeSelfProjection: true);
+    }
+
+    private (string Query, IReadOnlyDictionary<string, object?> Parameters) Translate(
+        Expression expression,
+        SemVersion version,
+        bool optimizeSelfProjection
+    )
+    {
         var (intermediateExpression, numberOfNamedValues, sourceExpressionParameters) =
             new ToIntermediateExpressionVisitor().Bind(expression);
         var surrealExpressionResult = new SurrealExpressionVisitor(
             sourceExpressionParameters,
             numberOfNamedValues,
-            version
+            version,
+            optimizeSelfProjection
         ).Bind(intermediateExpression);
         var surrealExpression = (Expressions.Surreal.SurrealExpression)
             surrealExpressionResult.Expression;
@@ -117,5 +166,76 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
         );
 
         return (query, surrealExpressionResult.Parameters);
+    }
+
+    private static bool TryGetAnonymousEnumerableElementType(Type resultType, out Type? elementType)
+    {
+        elementType = null;
+
+        if (
+            !resultType.IsGenericType
+            || resultType.GetGenericTypeDefinition() != typeof(IEnumerable<>)
+        )
+        {
+            return false;
+        }
+
+        var candidate = resultType.GetGenericArguments()[0];
+        bool isAnonymous =
+            Attribute.IsDefined(
+                candidate,
+                typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute),
+                false
+            )
+            && candidate.Name.Contains("AnonymousType", StringComparison.Ordinal)
+            && candidate.IsGenericType;
+        if (!isAnonymous)
+        {
+            return false;
+        }
+
+        elementType = candidate;
+        return true;
+    }
+
+    private static bool TryFindSourceQueryable(
+        Expression expression,
+        out SurrealDbQueryable<T>? sourceQueryable
+    )
+    {
+        sourceQueryable = expression switch
+        {
+            ConstantExpression { Value: SurrealDbQueryable<T> surrealQueryable } =>
+                surrealQueryable,
+            MethodCallExpression methodCallExpression => methodCallExpression
+                .Arguments.Select(arg =>
+                    TryFindSourceQueryable(arg, out var innerSourceQueryable)
+                        ? innerSourceQueryable
+                        : null
+                )
+                .FirstOrDefault(queryable => queryable is not null),
+            _ => null,
+        };
+
+        return sourceQueryable is not null;
+    }
+
+    private sealed class RootQueryableReplaceVisitor(
+        SurrealDbQueryable<T> sourceQueryable,
+        IQueryable<T> replacementQueryable
+    ) : ExpressionVisitor
+    {
+        private readonly SurrealDbQueryable<T> _sourceQueryable = sourceQueryable;
+        private readonly IQueryable<T> _replacementQueryable = replacementQueryable;
+
+        protected override Expression VisitConstant(ConstantExpression node)
+        {
+            if (ReferenceEquals(node.Value, _sourceQueryable))
+            {
+                return Expression.Constant(_replacementQueryable, typeof(IQueryable<T>));
+            }
+
+            return base.VisitConstant(node);
+        }
     }
 }
