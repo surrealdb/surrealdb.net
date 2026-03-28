@@ -6,10 +6,13 @@ namespace SurrealDb.Net.Tests.Queryable.Models;
 [Table("inventory")]
 public class Inventory : SurrealDbRecord
 {
-    public RecordId Product { get; set; } = null!;
+    [Column("product")]
+    public StoreProduct Product { get; set; } = null!;
 
-    public RecordId Warehouse { get; set; } = null!;
+    [Column("warehouse")]
+    public Warehouse Warehouse { get; set; } = null!;
 
+    [Column("quantity")]
     public int Quantity { get; set; }
 
     [CborIgnoreIfDefault]
