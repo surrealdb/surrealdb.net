@@ -955,6 +955,10 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 _surrealVersion.Major >= 3 ? "time::from_unix" : "time::from::unix";
             return new FunctionValueExpression(functionName, [new Int32ValueExpression(0)]);
         }
+        if (node.Member.Name.Equals(nameof(DateTime.MinValue), StringComparison.Ordinal))
+        {
+            return new DateTimeValueExpression(DateTime.MinValue);
+        }
         if (node.Member.Name.Equals(nameof(DateTime.Today), StringComparison.Ordinal))
         {
             return new FunctionValueExpression(
@@ -1416,6 +1420,18 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
 
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
+        if (
+            node.Method.Name.Equals(
+                nameof(Nullable<int>.GetValueOrDefault),
+                StringComparison.Ordinal
+            )
+            && node.Method.DeclaringType?.IsGenericType == true
+            && node.Method.DeclaringType.GetGenericTypeDefinition() == typeof(Nullable<>)
+        )
+        {
+            return BindNullableMethodCall(node);
+        }
+
         var surrealDbFunctionAttribute = node.Method.GetCustomAttribute<SurrealDbFunctionAttribute>(
             inherit: false
         );
@@ -1437,6 +1453,16 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         {
             return BindDateTimeMethodCall(node);
         }
+#if NET6_0_OR_GREATER
+        if (node.Method.DeclaringType == typeof(DateOnly))
+        {
+            return BindDateOnlyMethodCall(node);
+        }
+        if (node.Method.DeclaringType == typeof(TimeOnly))
+        {
+            return BindTimeOnlyMethodCall(node);
+        }
+#endif
         if (node.Method.DeclaringType == typeof(TimeSpan))
         {
             return BindTimeSpanMethodCall(node);
@@ -1484,6 +1510,114 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             return BindVectorMethodCall(node);
         }
 
+        return base.VisitMethodCall(node);
+    }
+
+    private Expression BindNullableMethodCall(MethodCallExpression node)
+    {
+        var nullableValueExpression = Visit(node.Object)?.ToValue();
+        if (nullableValueExpression is null)
+        {
+            throw new InvalidCastException(
+                "The caller of Nullable.GetValueOrDefault must be a value expression."
+            );
+        }
+
+        if (node.Method.DeclaringType is null)
+        {
+            throw new InvalidCastException(
+                "The declaring type of Nullable.GetValueOrDefault is null."
+            );
+        }
+
+        ValueExpression defaultValueExpression;
+
+        if (node.Arguments.Count == 0)
+        {
+            var underlyingType = Nullable.GetUnderlyingType(node.Method.DeclaringType);
+            if (underlyingType is null)
+            {
+                throw new InvalidCastException(
+                    "Unable to infer underlying type for Nullable.GetValueOrDefault."
+                );
+            }
+
+            var defaultValue = Activator.CreateInstance(underlyingType);
+            defaultValueExpression =
+                Visit(Expression.Constant(defaultValue, underlyingType))?.ToValue()
+                ?? throw new InvalidCastException(
+                    $"Cannot convert default value for {underlyingType.Name} to a value expression."
+                );
+        }
+        else if (node.Arguments.Count == 1)
+        {
+            defaultValueExpression =
+                Visit(node.Arguments[0])?.ToValue()
+                ?? throw new InvalidCastException(
+                    "The default value argument of Nullable.GetValueOrDefault must be a value expression."
+                );
+        }
+        else
+        {
+            throw new NotSupportedException(
+                $"Nullable.GetValueOrDefault overload with {node.Arguments.Count} arguments is not supported."
+            );
+        }
+
+        return new BinaryValueExpression(
+            nullableValueExpression,
+            new SimpleOperator(OperatorType.Nco),
+            defaultValueExpression
+        );
+    }
+
+    private Expression BindDateOnlyMethodCall(MethodCallExpression node)
+    {
+#if NET6_0_OR_GREATER
+        if (node.Method.Name.Equals(nameof(DateOnly.FromDateTime), StringComparison.Ordinal))
+        {
+            var valueExpression = Visit(node.Arguments[0])?.ToValue();
+            if (valueExpression is null)
+            {
+                throw new InvalidCastException(
+                    "The first argument of DateOnly.FromDateTime must be a value expression."
+                );
+            }
+
+            return new FunctionValueExpression(
+                "time::floor",
+                [valueExpression, new DurationValueExpression(TimeSpan.FromDays(1))]
+            );
+        }
+#endif
+        return base.VisitMethodCall(node);
+    }
+
+    private Expression BindTimeOnlyMethodCall(MethodCallExpression node)
+    {
+#if NET6_0_OR_GREATER
+        if (node.Method.Name.Equals(nameof(TimeOnly.FromDateTime), StringComparison.Ordinal))
+        {
+            var valueExpression = Visit(node.Arguments[0])?.ToValue();
+            if (valueExpression is null)
+            {
+                throw new InvalidCastException(
+                    "The first argument of TimeOnly.FromDateTime must be a value expression."
+                );
+            }
+
+            return new FunctionValueExpression(
+                "duration::from_nanos",
+                [
+                    new BinaryValueExpression(
+                        new FunctionValueExpression("time::nano", [valueExpression]),
+                        new SimpleOperator(OperatorType.Rem),
+                        new FormattedIntegerValueExpression("86400000000000")
+                    ),
+                ]
+            );
+        }
+#endif
         return base.VisitMethodCall(node);
     }
 
