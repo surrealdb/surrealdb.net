@@ -1,4 +1,6 @@
-﻿using System.Linq.Expressions;
+﻿using System.Collections;
+using System.Linq.Expressions;
+using Dahomey.Cbor;
 using Semver;
 using SurrealDb.Net.Internals.Queryable.Visitors;
 
@@ -127,8 +129,80 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
                 .ConfigureAwait(false);
             result.EnsureAllOks();
 
-            return result.GetValue<TResult>(0)!;
+            try
+            {
+                return result.GetValue<TResult>(0)!;
+            }
+            catch (CborException)
+            {
+                if (TryFlattenNestedEnumerableResult(result, out TResult? flattenedResult))
+                {
+                    return flattenedResult!;
+                }
+
+                throw;
+            }
         }
+    }
+
+    private static bool TryFlattenNestedEnumerableResult<TResult>(
+        global::SurrealDb.Net.Models.Response.SurrealDbResponse response,
+        out TResult? flattenedResult
+    )
+    {
+        flattenedResult = default;
+
+        var resultType = typeof(TResult);
+        if (
+            !resultType.IsGenericType
+            || resultType.GetGenericTypeDefinition() != typeof(IEnumerable<>)
+        )
+        {
+            return false;
+        }
+
+        var elementType = resultType.GenericTypeArguments[0];
+        var nestedEnumerableType = typeof(IEnumerable<>).MakeGenericType(
+            typeof(IEnumerable<>).MakeGenericType(elementType)
+        );
+
+        object? nestedValue;
+        try
+        {
+            nestedValue = typeof(global::SurrealDb.Net.Models.Response.SurrealDbResponse)
+                .GetMethod(
+                    nameof(global::SurrealDb.Net.Models.Response.SurrealDbResponse.GetValue)
+                )!
+                .MakeGenericMethod(nestedEnumerableType)
+                .Invoke(response, [0]);
+        }
+        catch
+        {
+            return false;
+        }
+
+        if (nestedValue is not IEnumerable outer)
+        {
+            return false;
+        }
+
+        var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType))!;
+
+        foreach (var inner in outer)
+        {
+            if (inner is not IEnumerable innerEnumerable)
+            {
+                return false;
+            }
+
+            foreach (var item in innerEnumerable)
+            {
+                list.Add(item);
+            }
+        }
+
+        flattenedResult = (TResult)list;
+        return true;
     }
 
     public (string Query, IReadOnlyDictionary<string, object?> Parameters) Translate(
