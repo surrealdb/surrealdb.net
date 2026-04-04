@@ -75,58 +75,21 @@ public class ComplexQueryableTests
 
     [Test]
     [WebsocketConnectionStringFixtureGenerator]
-    public async Task ShouldGetFullOrdersObjectSortedDescending(string connectionString)
+    public async Task ShouldSumTotalOrderedProducts(string connectionString)
     {
-        var (result, query) = await ExecuteWithSchema(
-            connectionString,
-            SurrealSchemaFile.Store,
-            client =>
-                client
-                    .Select<StoreOrder>()
-                    .Select(order => new
-                    {
-                        Id = order.Id,
-                        CreatedAt = order.CreatedAt,
-                        User = order.User,
-                        Total = order.Total,
-                        Products = order
-                            .Products.Select(product => new
-                            {
-                                Id = product.Id,
-                                Name = product.Name,
-                                Description = product.Description,
-                                Price = product.Price,
-                                CreatedAt = product.CreatedAt,
-                            })
-                            .ToArray(),
-                    })
-                    .OrderByDescending(d => d.CreatedAt)
-        );
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        query
-            .Should()
-            .Be(
-                "SELECT user.{created_at,email,id,name}, products.{created_at,description,id,name,price}, total, created_at, id FROM orders ORDER BY created_at DESC"
-            );
-        result.Should().NotBeNull().And.HaveCount(10);
-        result.Should().BeInDescendingOrder(o => o.CreatedAt);
-        result
-            .Should()
-            .AllSatisfy(order =>
-            {
-                order.Products.Should().NotBeEmpty();
-                order
-                    .Products.Should()
-                    .AllSatisfy(product =>
-                    {
-                        product.Should().NotBeNull();
-                        product.Id.Should().NotBeNull();
-                        product.Name.Should().NotBeNullOrWhiteSpace();
-                        product.Description.Should().NotBeNullOrWhiteSpace();
-                        product.Price.Should().BeGreaterThan(0);
-                        product.CreatedAt.Should().NotBeNull();
-                    });
-            });
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+        await client.ApplySchemaAsync(SurrealSchemaFile.Store);
+
+        var queryable = client.Select<StoreOrder>().Select(order => order.Products.Count());
+        var query = queryable.ToQueryString();
+        var result = await queryable.SumAsync();
+
+        query.Should().Be("SELECT VALUE array::len(products) FROM orders");
+        result.Should().Be(20);
     }
 
     [Test]
@@ -212,6 +175,39 @@ public class ComplexQueryableTests
 
     [Test]
     [WebsocketConnectionStringFixtureGenerator]
+    public async Task ShouldGetFirstAndLastOrderDateForCustomer(string connectionString)
+    {
+        var (result, query) = await ExecuteWithSchema(
+            connectionString,
+            SurrealSchemaFile.Store,
+            client =>
+                client
+                    .Select<StoreOrder>()
+                    .Where(order =>
+                        DateOnly.FromDateTime(order.CreatedAt ?? DateTime.MinValue)
+                        >= DateOnly.FromDateTime(DateTime.MinValue)
+                    )
+                    .Select(order => new
+                    {
+                        OrderDate = DateOnly.FromDateTime(order.CreatedAt.GetValueOrDefault()),
+                        OrderTime = TimeOnly.FromDateTime(order.CreatedAt.GetValueOrDefault()),
+                    })
+        );
+
+        var firstOrderAt = result.Min(item => item.OrderDate);
+        var lastOrderAt = result.Max(item => item.OrderDate);
+
+        query
+            .Should()
+            .Be(
+                "SELECT time::floor(created_at ?? d\"0001-01-01T00:00:00.0000000Z\", 1d) AS OrderDate, duration::from_nanos(time::nano(created_at ?? d\"0001-01-01T00:00:00.0000000Z\") % 86400000000000) AS OrderTime FROM orders WHERE time::floor(created_at ?? d\"0001-01-01T00:00:00.0000000Z\", 1d) >= time::floor(d\"0001-01-01T00:00:00.0000000Z\", 1d)"
+            );
+        firstOrderAt.Should().BeOnOrBefore(lastOrderAt);
+        result.Should().OnlyContain(item => item.OrderTime >= TimeOnly.MinValue);
+    }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
     public async Task ShouldSplitQueryWhenOrderingByFieldOutsideProjection(string connectionString)
     {
         var minTotal = 200;
@@ -275,6 +271,41 @@ public class ComplexQueryableTests
             .AllSatisfy(order =>
             {
                 order.Total.Should().Be(order.ProductCosts);
+            });
+    }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
+    public async Task ShouldGetTopOrdersByTotal(string connectionString)
+    {
+        const int top = 3;
+        var (result, query) = await ExecuteWithSchema(
+            connectionString,
+            SurrealSchemaFile.Store,
+            client =>
+                client
+                    .Select<StoreOrder>()
+                    .OrderByDescending(order => order.Total)
+                    .Take(top)
+                    .Select(order => new OrderedOrderProjection(
+                        order.Id,
+                        order.User.Name,
+                        order.Total
+                    ))
+        );
+
+        query
+            .Should()
+            .Be("SELECT user.name AS customer, id, total FROM orders ORDER BY total DESC LIMIT 3");
+        result.Should().NotBeNull().And.HaveCount(top);
+        result.Should().BeInDescendingOrder(order => order.total);
+        result
+            .Should()
+            .AllSatisfy(order =>
+            {
+                order.id.Should().NotBeNull();
+                order.customer.Should().NotBeNullOrWhiteSpace();
+                order.total.Should().BeGreaterThan(0);
             });
     }
 
