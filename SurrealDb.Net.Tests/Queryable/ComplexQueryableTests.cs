@@ -208,6 +208,24 @@ public class ComplexQueryableTests
 
     [Test]
     [WebsocketConnectionStringFixtureGenerator]
+    public async Task ShouldFlattenOrderedProductsWithSelectMany(string connectionString)
+    {
+        var (result, query) = await ExecuteWithSchema(
+            connectionString,
+            SurrealSchemaFile.Store,
+            client => client.Select<StoreOrder>().SelectMany(order => order.Products)
+        );
+
+        query
+            .Should()
+            .Be(
+                "(SELECT array::flatten(products.{created_at,description,id,name,price}) AS Values FROM orders GROUP ALL)[0].Values"
+            );
+        result.Should().NotBeNull().And.HaveCount(20);
+    }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
     public async Task ShouldSplitQueryWhenOrderingByFieldOutsideProjection(string connectionString)
     {
         var minTotal = 200;

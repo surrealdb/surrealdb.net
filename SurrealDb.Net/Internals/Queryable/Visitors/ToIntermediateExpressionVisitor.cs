@@ -427,6 +427,15 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
         const string memberPropertyName = nameof(FlattenProjector<object>.Values);
 
         var collectionExpression = Visit(collectionSelector.Body);
+        if (
+            TryBuildDeconstructSelectExpression(
+                collectionSelector,
+                out var deconstructSelectExpression
+            )
+        )
+        {
+            collectionExpression = Visit(deconstructSelectExpression);
+        }
 
         ProjectionExpression innerProjection = new AggregationFieldProjectionExpression(
             genericSubqueryType,
@@ -448,6 +457,65 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
             innerQuery,
             arraySubqueryType
         );
+    }
+
+    private static bool TryBuildDeconstructSelectExpression(
+        LambdaExpression collectionSelector,
+        out Expression expression
+    )
+    {
+        expression = collectionSelector.Body;
+
+        Type? elementType =
+            collectionSelector.Body.Type.IsArray ? collectionSelector.Body.Type.GetElementType()
+            : collectionSelector.Body.Type.IsGenericType
+                ? collectionSelector.Body.Type.GetGenericArguments()[0]
+            : null;
+        if (elementType is null)
+        {
+            return false;
+        }
+
+        if (
+            !elementType.IsClass
+            || elementType.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.TableAttribute>()
+                is null
+        )
+        {
+            return false;
+        }
+
+        var properties = elementType
+            .GetProperties()
+            .Where(property => property is { CanRead: true, CanWrite: true })
+            .ToArray();
+        if (properties.Length is <= 0 or > 7)
+        {
+            return false;
+        }
+
+        var parameter = Expression.Parameter(elementType, "item");
+        var memberExpressions = properties
+            .Select(property => Expression.MakeMemberAccess(parameter, property))
+            .ToArray();
+
+        var tupleType = Type.GetType($"System.ValueTuple`{memberExpressions.Length}")!
+            .MakeGenericType(
+                memberExpressions.Select(memberExpression => memberExpression.Type).ToArray()
+            );
+        var tupleConstructor = tupleType.GetConstructors().Single();
+        var tupleNewExpression = Expression.New(tupleConstructor, memberExpressions);
+        var selector = Expression.Lambda(tupleNewExpression, parameter);
+
+        expression = Expression.Call(
+            typeof(Enumerable),
+            nameof(Enumerable.Select),
+            [elementType, tupleType],
+            collectionSelector.Body,
+            selector
+        );
+
+        return true;
     }
 
     private SelectExpression BindWhere(
