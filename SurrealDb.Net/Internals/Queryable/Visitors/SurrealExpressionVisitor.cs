@@ -1476,6 +1476,68 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             return BindHashSetMethodCall(node);
         }
 
+        if (
+            node.Method.Name.Equals("op_Implicit", StringComparison.Ordinal)
+            && node.Method.DeclaringType is { IsGenericType: true } spanType
+            && spanType.GetGenericTypeDefinition() == typeof(ReadOnlySpan<>)
+            && node.Arguments.Count == 1
+        )
+        {
+            return Visit(node.Arguments[0])!;
+        }
+
+        if (
+            node.Method.DeclaringType == typeof(MemoryExtensions)
+            && node.Method.Name.Equals(nameof(MemoryExtensions.Contains), StringComparison.Ordinal)
+            && node.Arguments.Count == 2
+        )
+        {
+            var valueExpression1 = Visit(node.Arguments[0])?.ToValue();
+            if (valueExpression1 is null)
+            {
+                throw new InvalidCastException(
+                    $"The first argument of {node.Method.DeclaringType!.Name}.Contains must be a value expression."
+                );
+            }
+
+            var valueExpression2 = Visit(node.Arguments[1])?.ToValue();
+            if (valueExpression2 is null)
+            {
+                throw new InvalidCastException(
+                    $"The second argument of {node.Method.DeclaringType!.Name}.Contains must be a value expression."
+                );
+            }
+
+            return BinaryValueExpression.Contains(valueExpression1, valueExpression2);
+        }
+
+        if (
+            node.Object is not null
+            && node.Method.Name.Equals(nameof(List<object>.Contains), StringComparison.Ordinal)
+            && node.Arguments.Count == 1
+            && node.Object.Type != typeof(string)
+            && typeof(IEnumerable).IsAssignableFrom(node.Object.Type)
+        )
+        {
+            var valueExpression1 = Visit(node.Object)?.ToValue();
+            if (valueExpression1 is null)
+            {
+                throw new InvalidCastException(
+                    $"The caller of {node.Method.DeclaringType!.Name}.Contains must be a value expression."
+                );
+            }
+
+            var valueExpression2 = Visit(node.Arguments[0])?.ToValue();
+            if (valueExpression2 is null)
+            {
+                throw new InvalidCastException(
+                    $"The first argument of {node.Method.DeclaringType!.Name}.Contains must be a value expression."
+                );
+            }
+
+            return BinaryValueExpression.Contains(valueExpression1, valueExpression2);
+        }
+
         bool isEnumerable =
             typeof(Enumerable).IsAssignableFrom(node.Method.DeclaringType)
             || typeof(IEnumerable<>).IsAssignableFrom(node.Method.DeclaringType);
