@@ -337,13 +337,21 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
         throw new NotSupportedException($"The method '{node.Method.Name}' is not supported.");
     }
 
-    private SelectExpression BindSelect(
+    private IntermediateExpression BindSelect(
         Type resultType,
         Expression source,
         LambdaExpression selector
     )
     {
-        var sourceSelect = (SelectExpression)Visit(source);
+        var sourceExpression = Visit(source);
+        if (sourceExpression is CustomExpression sourceCustomExpression)
+        {
+            // Preserve the top-level SelectMany translation when composed with Select/Where/OrderBy.
+            // The composed operators can still be evaluated in-memory by the provider fallback path.
+            return (IntermediateExpression)sourceCustomExpression.WithReturnType(resultType);
+        }
+
+        var sourceSelect = (SelectExpression)sourceExpression;
 
         if (sourceSelect.Type.GetGenericTypeDefinition() == typeof(SurrealGrouping<,>))
         {
@@ -518,13 +526,20 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
         return true;
     }
 
-    private SelectExpression BindWhere(
+    private IntermediateExpression BindWhere(
         Type resultType,
         Expression source,
         LambdaExpression predicate
     )
     {
-        var sourceSelect = (SelectExpression)Visit(source);
+        var sourceExpression = Visit(source);
+        if (sourceExpression is CustomExpression sourceCustomExpression)
+        {
+            // Keep SelectMany top-level query shape when composed.
+            return (IntermediateExpression)sourceCustomExpression.WithReturnType(resultType);
+        }
+
+        var sourceSelect = (SelectExpression)sourceExpression;
 
         _sourceExpressionParameters.Add(predicate.Parameters[0], sourceSelect.Projection);
 
@@ -601,14 +616,21 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
         return new SelectExpression(resultExpression.Type, innerSourceSelect, projection);
     }
 
-    private SelectExpression BindOrder(
+    private IntermediateExpression BindOrder(
         Expression source,
         LambdaExpression selector,
         OrderType orderType,
         bool chainable = false
     )
     {
-        var sourceSelect = (SelectExpression)Visit(source);
+        var sourceExpression = Visit(source);
+        if (sourceExpression is CustomExpression sourceCustomExpression)
+        {
+            // Keep SelectMany top-level query shape when composed.
+            return (IntermediateExpression)sourceCustomExpression.WithReturnType(source.Type);
+        }
+
+        var sourceSelect = (SelectExpression)sourceExpression;
 
         _sourceExpressionParameters.Add(selector.Parameters[0], sourceSelect.Projection);
 
