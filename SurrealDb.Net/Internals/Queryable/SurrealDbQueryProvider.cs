@@ -134,23 +134,19 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
                 return result.GetValue<TResult>(0)!;
             }
             catch (CborException)
+                when (TryGetFlattenedNestedEnumerableValue(result, out TResult? flattenedValue))
             {
-                if (TryFlattenNestedEnumerableResult(result, out TResult? flattenedResult))
-                {
-                    return flattenedResult!;
-                }
-
-                throw;
+                return flattenedValue!;
             }
         }
     }
 
-    private static bool TryFlattenNestedEnumerableResult<TResult>(
-        global::SurrealDb.Net.Models.Response.SurrealDbResponse response,
-        out TResult? flattenedResult
+    private static bool TryGetFlattenedNestedEnumerableValue<TResult>(
+        SurrealDb.Net.Models.Response.SurrealDbResponse response,
+        out TResult? value
     )
     {
-        flattenedResult = default;
+        value = default;
 
         var resultType = typeof(TResult);
         if (
@@ -161,48 +157,45 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
             return false;
         }
 
-        var elementType = resultType.GenericTypeArguments[0];
+        var elementType = resultType.GetGenericArguments()[0];
         var nestedEnumerableType = typeof(IEnumerable<>).MakeGenericType(
             typeof(IEnumerable<>).MakeGenericType(elementType)
         );
 
-        object? nestedValue;
         try
         {
-            nestedValue = typeof(global::SurrealDb.Net.Models.Response.SurrealDbResponse)
-                .GetMethod(
-                    nameof(global::SurrealDb.Net.Models.Response.SurrealDbResponse.GetValue)
-                )!
-                .MakeGenericMethod(nestedEnumerableType)
-                .Invoke(response, [0]);
+            var getValueMethod = typeof(SurrealDb.Net.Models.Response.SurrealDbResponse)
+                .GetMethod(nameof(SurrealDb.Net.Models.Response.SurrealDbResponse.GetValue))!
+                .MakeGenericMethod(nestedEnumerableType);
+            var nested = getValueMethod.Invoke(response, [0]);
+            if (nested is not IEnumerable outer)
+            {
+                return false;
+            }
+
+            var listType = typeof(List<>).MakeGenericType(elementType);
+            var flattened = (IList)Activator.CreateInstance(listType)!;
+
+            foreach (var inner in outer)
+            {
+                if (inner is not IEnumerable innerEnumerable)
+                {
+                    return false;
+                }
+
+                foreach (var item in innerEnumerable)
+                {
+                    flattened.Add(item);
+                }
+            }
+
+            value = (TResult)flattened;
+            return true;
         }
         catch
         {
             return false;
         }
-
-        if (nestedValue is not IEnumerable outer)
-        {
-            return false;
-        }
-
-        var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType))!;
-
-        foreach (var inner in outer)
-        {
-            if (inner is not IEnumerable innerEnumerable)
-            {
-                return false;
-            }
-
-            foreach (var item in innerEnumerable)
-            {
-                list.Add(item);
-            }
-        }
-
-        flattenedResult = (TResult)list;
-        return true;
     }
 
     public (string Query, IReadOnlyDictionary<string, object?> Parameters) Translate(

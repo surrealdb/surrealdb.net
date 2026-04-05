@@ -226,6 +226,37 @@ public class ComplexQueryableTests
 
     [Test]
     [WebsocketConnectionStringFixtureGenerator]
+    public async Task ShouldSelectManyExpensiveProductsWithNameAndPriceOrderedAscending(
+        string connectionString
+    )
+    {
+        const float minPrice = 100;
+
+        var (result, query) = await ExecuteWithSchema(
+            connectionString,
+            SurrealSchemaFile.Store,
+            client =>
+                client
+                    .Select<StoreOrder>()
+                    .SelectMany(order => order.Products)
+                    .Where(product => product.Price > minPrice)
+                    .OrderBy(product => product.Price)
+                    .Select(product => new { product.Name, product.Price })
+        );
+
+        query
+            .Should()
+            .Be(
+                "(SELECT array::flatten(products.{created_at,description,id,name,price}) AS Values FROM orders GROUP ALL)[0].Values"
+            );
+        result.Should().NotBeNull().And.NotBeEmpty();
+        result.Should().OnlyContain(product => product.Price > minPrice);
+        result.Should().BeInAscendingOrder(product => product.Price);
+        result.Should().OnlyContain(product => !string.IsNullOrWhiteSpace(product.Name));
+    }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
     public async Task ShouldSplitQueryWhenOrderingByFieldOutsideProjection(string connectionString)
     {
         var minTotal = 200;
