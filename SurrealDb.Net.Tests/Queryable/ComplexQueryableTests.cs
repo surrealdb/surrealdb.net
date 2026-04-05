@@ -360,6 +360,73 @@ public class ComplexQueryableTests
 
     [Test]
     [WebsocketConnectionStringFixtureGenerator]
+    public async Task ShouldGetProductsFromBerlinOrMunichWarehouses(string connectionString)
+    {
+        var listLocations = new List<string> { "Berlin", "Munich" };
+        var (listResult, listQuery) = await ExecuteWithSchema(
+            connectionString,
+            SurrealSchemaFile.Store,
+            client =>
+                client
+                    .Select<Inventory>()
+                    .Where(inventory => listLocations.Contains(inventory.Warehouse.Location))
+                    .Select(inventory => inventory.Product.Name)
+        );
+
+        listQuery
+            .Should()
+            .Be(
+                "SELECT VALUE product.name FROM inventory WHERE $listLocations CONTAINS warehouse.location"
+            );
+        AssertResult(listResult);
+
+        var hashSetLocations = new HashSet<string> { "Berlin", "Munich" };
+        var (hashSetResult, hashSetQuery) = await ExecuteWithSchema(
+            connectionString,
+            SurrealSchemaFile.Store,
+            client =>
+                client
+                    .Select<Inventory>()
+                    .Where(inventory => hashSetLocations.Contains(inventory.Warehouse.Location))
+                    .Select(inventory => inventory.Product.Name)
+        );
+
+        hashSetQuery
+            .Should()
+            .Be(
+                "SELECT VALUE product.name FROM inventory WHERE $hashSetLocations CONTAINS warehouse.location"
+            );
+        AssertResult(hashSetResult);
+
+        string[] arrayLocations = ["Berlin", "Munich"];
+        var (arrayResult, arrayQuery) = await ExecuteWithSchema(
+            connectionString,
+            SurrealSchemaFile.Store,
+            client =>
+                client
+                    .Select<Inventory>()
+                    .Where(inventory => arrayLocations.Contains(inventory.Warehouse.Location))
+                    .Select(inventory => inventory.Product.Name)
+        );
+
+        arrayQuery
+            .Should()
+            .Be(
+                "SELECT VALUE product.name FROM inventory WHERE $arrayLocations CONTAINS warehouse.location"
+            );
+        AssertResult(arrayResult);
+
+        static void AssertResult(ICollection<string> result)
+        {
+            result.Should().NotBeNull().And.HaveCount(12);
+            result.Should().OnlyContain(productName => !string.IsNullOrWhiteSpace(productName));
+            result.Should().Contain("Laptop");
+            result.Should().Contain("Headphones");
+        }
+    }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
     public async Task ShouldRoundToIntSumProductCosts(string connectionString)
     {
         var (result, query) = await ExecuteWithSchema(
