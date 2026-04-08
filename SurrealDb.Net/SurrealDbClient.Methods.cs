@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using System.Text;
 using Semver;
 using SurrealDb.Net.Internals;
@@ -162,7 +162,7 @@ public abstract partial class BaseSurrealDbClient
         using var wrapper = await CreateCommonHttpWrapperAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        using var httpContent = new StringContent(input, Encoding.UTF8, "plain/text");
+        using var httpContent = new StringContent(input, Encoding.UTF8, "text/plain");
 
         using var response = await wrapper
             .HttpClient.PostAsync(importUri, httpContent, cancellationToken)
