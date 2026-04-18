@@ -17,6 +17,8 @@ internal class NoneConverter : CborConverterBase<None>
             throw new CborException("Expected a CBOR type of NONE");
         }
 
+        reader.ReadNull();
+
         return new();
     }
 
