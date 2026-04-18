@@ -18,13 +18,15 @@ internal sealed class RecordIdConverter : CborConverterBase<RecordId>
 
     public override RecordId Read(ref CborReader reader)
     {
-        if (reader.GetCurrentDataItemType() == CborDataItemType.Null)
+        var dataType = reader.GetCurrentDataItemType();
+
+        if (dataType == CborDataItemType.Null)
         {
             reader.ReadNull();
             return default!;
         }
 
-        return reader.GetCurrentDataItemType() switch
+        return dataType switch
         {
             CborDataItemType.Array => ReadRecordIdFromArray(ref reader),
             CborDataItemType.String => throw new CborException(
