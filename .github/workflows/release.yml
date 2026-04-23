@@ -113,7 +113,11 @@ jobs:
         if: matrix.target == 'aarch64-linux-android'
 
       - name: Set Android linker for Rust target
-        run: echo "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/" >> $GITHUB_PATH
+        run: |
+          NDK_BIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          echo "$NDK_BIN" >> $GITHUB_PATH
+          echo "CC_aarch64_linux_android=$NDK_BIN/aarch64-linux-android26-clang" >> $GITHUB_ENV
+          echo "CXX_aarch64_linux_android=$NDK_BIN/aarch64-linux-android26-clang++" >> $GITHUB_ENV
         shell: bash
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
@@ -133,10 +137,11 @@ jobs:
         shell: bash
         if: matrix.target == 'aarch64-apple-ios'
 
-      - name: Install 1.91.0 toolchain
-        uses: dtolnay/rust-toolchain@0dd4a6d07aedb0ef7f65e79f3e229a6c102ae2e0 # 1.91.0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
         with:
-          toolchain: 1.91.0 # must match the version in the `rust-embedded/rust-toolchain` file
+          toolchain: 1.94.0
+          components: clippy, rustfmt
           target: ${{ matrix.target }}
 
       - name: Build "memory" library
