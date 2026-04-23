@@ -85,6 +85,35 @@ public class QueryTests
 
     [Test]
     [ConnectionStringFixtureGenerator]
+    public async Task ShouldQueryReturnScalarValue(string connectionString)
+    {
+        SurrealDbResponse? response = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            await using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            response = await client.Query($"RETURN 1;");
+        };
+
+        await func.Should().NotThrowAsync();
+
+        response.Should().NotBeNull().And.HaveCount(1);
+
+        var firstResult = response![0];
+        firstResult.Should().BeOfType<SurrealDbOkResult>();
+
+        var okResult = firstResult as SurrealDbOkResult;
+        okResult.Should().NotBeNull();
+        okResult!.GetValue<long>().Should().Be(1);
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldQueryWithMultipleParams(string connectionString)
     {
         SurrealDbResponse? response = null;

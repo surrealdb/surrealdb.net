@@ -24,6 +24,7 @@
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
   </PropertyGroup>
 
   <ItemGroup>
@@ -44,7 +45,7 @@
   </ItemGroup>
 
   <!-- Used to enable build & tests for embedded modes (memory, rocksdb, surrealkv) -->
-  <PropertyGroup Label="Constants" Condition="true">
+  <PropertyGroup Label="Constants" Condition="false">
     <DefineConstants>EMBEDDED_MODE</DefineConstants>
   </PropertyGroup>
 

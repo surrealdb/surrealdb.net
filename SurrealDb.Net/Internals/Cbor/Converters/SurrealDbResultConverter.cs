@@ -103,7 +103,7 @@ internal sealed class SurrealDbResultConverter : CborConverterBase<ISurrealDbRes
             if (key.SequenceEqual("type"u8))
             {
                 var typeString = reader.ReadString();
-                if (typeString is null)
+                if (string.IsNullOrEmpty(typeString))
                 {
                     continue;
                 }
