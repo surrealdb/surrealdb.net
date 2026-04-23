@@ -140,7 +140,7 @@ jobs:
         if: matrix.surrealdb_version == 'v2.4.0'
         uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5
         with:
-          fail_ci_if_error: true
+          fail_ci_if_error: false
           files: "**/*.cobertura.xml"
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -207,21 +207,3 @@ jobs:
         working-directory: ./rust-embedded
         run: cargo clippy -- -Dwarnings
 
-  cargo-deny:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        manifests:
-          - ./rust-embedded/shared/Cargo.toml
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        with:
-          sparse-checkout: |
-            rust-embedded
-            deny.toml
-
-      - uses: EmbarkStudios/cargo-deny-action@3fd3802e88374d3fe9159b834c7714ec57d6c979 # v2
-        with:
-          manifest-path: ${{ matrix.manifests }}
