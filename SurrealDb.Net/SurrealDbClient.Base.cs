@@ -73,7 +73,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
                 {
                     var session = httpEngine.SessionInfos.Get(SessionId)!;
 
-                    version = httpEngine._version;
+                    version = httpEngine.CachedVersion;
                     ns = session.Ns;
                     db = session.Db;
                     auth = session.Auth;
@@ -87,7 +87,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
                 {
                     var session = wsEngine.SessionInfos.Get(SessionId)!;
 
-                    version = wsEngine._version;
+                    version = wsEngine.CachedVersion;
                     ns = session.Ns;
                     db = session.Db;
                     auth = session.Auth;

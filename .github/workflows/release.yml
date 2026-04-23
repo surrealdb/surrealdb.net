@@ -3,6 +3,8 @@ name: Release Workflow
 on:
   release:
     types: [created]
+  pull_request:
+    branches: [main]
 
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
@@ -15,6 +17,7 @@ defaults:
 
 jobs:
   embedded-builds:
+    if: github.event_name == 'release'
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.continue-on-error }}
     strategy:
@@ -159,6 +162,7 @@ jobs:
 
   create-package:
     needs: [embedded-builds]
+    if: always()
     runs-on: ubuntu-latest-4-cores
 
     steps:
@@ -166,20 +170,38 @@ jobs:
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Download embedded artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        if: github.event_name == 'release'
         with:
           pattern: embedded-*
           merge-multiple: true
+
+      - name: Compute pre-release version suffix (PR only)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          TIMESTAMP=$(date -u +"%Y%m%d%H%M%S")
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          echo "VERSION_SUFFIX=pr${PR_NUMBER}-${TIMESTAMP}" >> $GITHUB_ENV
 
       - name: Setup dotnet 10.0
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
           dotnet-version: "10.0.x"
 
-      - name: Create Package
+      - name: Create Package (release)
+        if: github.event_name == 'release'
         run: dotnet pack /p:GenerateCompatibilitySuppressionFile=true --configuration Release --output ${{ env.NuGetDirectory }}
 
-      - uses: actions/upload-artifact@v4
+      - name: Disable embedded mode (PR pre-release)
+        if: github.event_name == 'pull_request'
+        run: sudo bash disable_embedded_mode.sh
+
+      - name: Create Package (PR pre-release)
+        if: github.event_name == 'pull_request'
+        run: dotnet pack /p:GenerateCompatibilitySuppressionFile=true --configuration Release --output ${{ env.NuGetDirectory }} --version-suffix "${{ env.VERSION_SUFFIX }}"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: nuget
           if-no-files-found: error
@@ -188,6 +210,7 @@ jobs:
 
   validate-package:
     needs: [create-package]
+    if: always() && needs.create-package.result == 'success'
     runs-on: ubuntu-latest-4-cores
 
     steps:
@@ -208,6 +231,7 @@ jobs:
         run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg")
 
   publish-package:
+    if: github.event_name == 'release'
     needs: [validate-package]
     runs-on: ubuntu-latest
 
@@ -227,3 +251,22 @@ jobs:
           foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
               dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
           }
+
+  publish-dev-artifacts:
+    if: always() && github.event_name == 'pull_request' && needs.validate-package.result == 'success'
+    needs: [validate-package]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: nuget
+          path: ${{ env.NuGetDirectory }}
+
+      - name: Upload dev packages as PR artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: nuget-pr${{ github.event.pull_request.number }}
+          if-no-files-found: error
+          retention-days: 14
+          path: ${{ env.NuGetDirectory }}/*.nupkg

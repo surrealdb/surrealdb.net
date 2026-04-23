@@ -104,7 +104,7 @@ public readonly partial struct Duration : IEquatable<Duration>, IComparable<Dura
                 if (self.Weeks != 0)
                 {
                     buffer.Write(self.Weeks);
-                    buffer.Write('y');
+                    buffer.Write('w');
                 }
                 if (self.Days != 0)
                 {
