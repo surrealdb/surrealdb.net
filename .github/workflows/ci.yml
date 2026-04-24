@@ -153,8 +153,11 @@ jobs:
           sparse-checkout: |
             rust-embedded
 
-      - name: Install 1.91.0 toolchain
-        uses: dtolnay/rust-toolchain@0dd4a6d07aedb0ef7f65e79f3e229a6c102ae2e0 # 1.91.0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
+        with:
+          toolchain: 1.94.0
+          components: cargo, clippy, rustfmt
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
@@ -181,10 +184,11 @@ jobs:
           sparse-checkout: |
             rust-embedded
 
-      - name: Install 1.91.0 toolchain
-        uses: dtolnay/rust-toolchain@0dd4a6d07aedb0ef7f65e79f3e229a6c102ae2e0 # 1.91.0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
         with:
-          components: clippy, rustfmt
+          toolchain: 1.94.0
+          components: cargo, clippy, rustfmt
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
