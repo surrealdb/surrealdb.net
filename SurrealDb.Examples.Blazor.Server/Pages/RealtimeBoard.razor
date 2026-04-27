@@ -3,7 +3,7 @@
 @using SurrealDb.Examples.Blazor.Server.Models
 @using System.Reactive.Linq
 @using SurrealDb.Net.Models
-@inject SurrealDbClient Client
+@inject SurrealDbSession Session
 @inject IDialogService DialogService
 @implements IDisposable
 
@@ -74,10 +74,10 @@ else
     
     protected override async Task OnInitializedAsync()
     {
-        _columns = await Client.Select<DisplayableColumn>(DisplayableColumn.Table);
+        _columns = await Session.Select<DisplayableColumn>(DisplayableColumn.Table);
         _loading = false;
 
-        _subscription = Client.ObserveTable<DisplayableColumn>(DisplayableColumn.Table)
+        _subscription = Session.ObserveTable<DisplayableColumn>(DisplayableColumn.Table)
             .ScanRecords(_columns.ToDictionary(c => c.Id!.DeserializeId<string>()))
             .Subscribe(async columnsAsDictionary =>
             {
@@ -126,7 +126,7 @@ else
                 To = RecordId.From(ColumnRecord.Table, toColumn.Id!.DeserializeId<string>()),
                 NewIndex = newIndex
             };
-        return Client.Create(MoveTask.Table, moveTask);
+        return Session.Create(MoveTask.Table, moveTask);
     }
 
     private async Task OpenCreateTaskDialog(DisplayableColumn column)
@@ -153,6 +153,6 @@ else
                 Column = columnId
             };
 
-        return Client.Create(CreateTask.Table, @event);
+        return Session.Create(CreateTask.Table, @event);
     }
 }
