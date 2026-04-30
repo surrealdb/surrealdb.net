@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Download SurrealDB
         run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh -s
@@ -19,7 +19,7 @@ jobs:
         run: surreal start --user root --pass root memory --allow-guests &
 
       - name: Setup dotnet 10.0
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
           dotnet-version: "10.0.x"
 
@@ -27,13 +27,13 @@ jobs:
         run: sudo dotnet run -c Release --project SurrealDb.Net.Benchmarks.Remote --filter '*'
 
       - name: Download previous benchmark data
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ./cache
           key: ${{ runner.os }}-benchmark
 
       - name: Store benchmark result
-        uses: rhysd/github-action-benchmark@v1
+        uses: rhysd/github-action-benchmark@a7bc2366eda11037936ea57d811a43b3418d3073 # v1
         with:
           tool: "benchmarkdotnet"
           output-file-path: BenchmarkDotNet.Artifacts/results/Combined.Benchmarks.json

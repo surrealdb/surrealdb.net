@@ -1,5 +1,6 @@
 ﻿using SurrealDb.Embedded.Internals;
 using SurrealDb.Net.Internals;
+using SurrealDb.Net.Internals.DependencyInjection;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -11,6 +12,9 @@ public static class ServiceCollectionExtensions
 {
     public static SurrealDbBuilder AddRocksDbProvider(this SurrealDbBuilder builder)
     {
+        builder.Services.AddKeyedSingleton<ISessionInfoProvider, EmbeddedSessionInfoProvider>(
+            "rocksdb"
+        );
         builder.Services.AddTransient<ISurrealDbRocksDbEngine, SurrealDbEmbeddedEngine>();
 
         return builder;

@@ -36,14 +36,6 @@ public class UpdateTests
             list = await client.Select<Post>("post");
         };
 
-        if (version.Major >= 3)
-        {
-            await func.Should()
-                .ThrowAsync<SurrealDbException>()
-                .WithMessage("Expected a single result output when using the ONLY keyword");
-            return;
-        }
-
         if (version.Major < 2)
         {
             await func.Should().ThrowAsync<NotImplementedException>();
@@ -70,7 +62,7 @@ public class UpdateTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
@@ -139,14 +131,6 @@ public class UpdateTests
             list = await client.Select<Post>("post");
         };
 
-        if (version.Major >= 3)
-        {
-            await func.Should()
-                .ThrowAsync<SurrealDbException>()
-                .WithMessage("Expected a single result output when using the ONLY keyword");
-            return;
-        }
-
         if (version.Major < 2)
         {
             await func.Should().ThrowAsync<NotImplementedException>();
@@ -173,7 +157,7 @@ public class UpdateTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);

@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Exceptions.LiveQuery;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Ws;
@@ -11,11 +12,20 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
     private readonly WeakReference<ISurrealDbEngine> _surrealDbEngine;
 
     public Guid Id { get; }
+    private readonly Guid? _sessionId;
+    private readonly Guid? _transactionId;
 
-    internal SurrealDbLiveQuery(Guid id, ISurrealDbEngine surrealDbEngine)
+    internal SurrealDbLiveQuery(
+        Guid id,
+        ISurrealDbEngine surrealDbEngine,
+        Guid? sessionId,
+        Guid? transactionId
+    )
     {
         Id = id;
         _surrealDbEngine = new WeakReference<ISurrealDbEngine>(surrealDbEngine);
+        _sessionId = sessionId;
+        _transactionId = transactionId;
     }
 
     public async ValueTask DisposeAsync()
@@ -199,6 +209,8 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
             var task = surrealDbEngine.Kill(
                 Id,
                 SurrealDbLiveQueryClosureReason.QueryKilled,
+                _sessionId,
+                _transactionId,
                 cancellationToken
             );
 
@@ -261,6 +273,8 @@ public class SurrealDbLiveQuery<T> : IAsyncEnumerable<SurrealDbLiveQueryResponse
             return new SurrealDbLiveQueryCloseResponse(surrealDbWsClosedLiveResponse.Reason);
         }
 
-        throw new SurrealDbException("Unknown action type for SurrealDB live query response.");
+        throw new LiveQuerySurrealDbException(
+            "Unknown action type for SurrealDB live query response."
+        );
     }
 }

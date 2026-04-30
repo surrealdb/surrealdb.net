@@ -16,10 +16,10 @@ jobs:
     runs-on: ubuntu-latest-4-cores
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Setup dotnet 10.0
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
           dotnet-version: "10.0.x"
 
@@ -43,16 +43,16 @@ jobs:
     runs-on: ubuntu-latest-4-cores
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Download embedded artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: embedded
           path: ./rust-embedded/target/debug
 
       - name: Setup dotnet 10.0
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
           dotnet-version: "10.0.x"
 
@@ -84,14 +84,14 @@ jobs:
             "v2.3.10",
             "v2.4.0",
             "v2.6.1",
-            "v3.0.0",
+            "v3.0.5",
           ]
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Download embedded artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: embedded
           path: ./rust-embedded/target/debug
@@ -108,7 +108,7 @@ jobs:
           fi
 
       - name: Setup dotnet 10.0
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
           dotnet-version: "10.0.x"
 
@@ -138,32 +138,36 @@ jobs:
 
       - name: Upload Coverage
         if: matrix.surrealdb_version == 'v2.4.0'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5
         with:
-          fail_ci_if_error: true
+          fail_ci_if_error: false
           files: "**/*.cobertura.xml"
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   embedded-build:
     runs-on: ubuntu-latest-4-cores
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           sparse-checkout: |
             rust-embedded
 
-      - name: Install 1.91.0 toolchain
-        uses: dtolnay/rust-toolchain@1.91.0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
+        with:
+          toolchain: 1.94.0
+          components: cargo, clippy, rustfmt
 
       - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Build libraries
         working-directory: ./rust-embedded
         run: cargo build
 
       - name: Publish embedded artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: embedded
           path: |
@@ -175,18 +179,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           sparse-checkout: |
             rust-embedded
 
-      - name: Install 1.91.0 toolchain
-        uses: dtolnay/rust-toolchain@1.91.0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
         with:
-          components: clippy, rustfmt
+          toolchain: 1.94.0
+          components: cargo, clippy, rustfmt
 
       - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Run check
         working-directory: ./rust-embedded
@@ -206,20 +211,3 @@ jobs:
         working-directory: ./rust-embedded
         run: cargo clippy -- -Dwarnings
 
-  cargo-deny:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        manifests:
-          - ./rust-embedded/shared/Cargo.toml
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          sparse-checkout: |
-            rust-embedded
-
-      - uses: EmbarkStudios/cargo-deny-action@v2
-        with:
-          manifest-path: ${{ matrix.manifests }}

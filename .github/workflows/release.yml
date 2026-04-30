@@ -96,24 +96,28 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           sparse-checkout: |
             rust-embedded
 
       - name: Install gcc-aarch64-linux-gnu
-        run: sudo apt-get install gcc-aarch64-linux-gnu
+        run: sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
         if: matrix.target == 'aarch64-unknown-linux-gnu'
 
       - name: Setup Android NDK
-        uses: nttld/setup-ndk@v1
+        uses: nttld/setup-ndk@ed92fe6cadad69be94a966a7ee3271275e62f779 # v1
         id: setup-ndk
         with:
           ndk-version: r26d
         if: matrix.target == 'aarch64-linux-android'
 
       - name: Set Android linker for Rust target
-        run: echo "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/" >> $GITHUB_PATH
+        run: |
+          NDK_BIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          echo "$NDK_BIN" >> $GITHUB_PATH
+          echo "CC_aarch64_linux_android=$NDK_BIN/aarch64-linux-android26-clang" >> $GITHUB_ENV
+          echo "CXX_aarch64_linux_android=$NDK_BIN/aarch64-linux-android26-clang++" >> $GITHUB_ENV
         shell: bash
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
@@ -133,10 +137,11 @@ jobs:
         shell: bash
         if: matrix.target == 'aarch64-apple-ios'
 
-      - name: Install 1.91.0 toolchain
-        uses: dtolnay/rust-toolchain@1.91.0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
         with:
-          toolchain: 1.91.0 # must match the version in the `rust-embedded/rust-toolchain` file
+          toolchain: 1.94.0
+          components: cargo, clippy, rustfmt
           target: ${{ matrix.target }}
 
       - name: Build "memory" library
@@ -152,7 +157,7 @@ jobs:
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Publish embedded artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: embedded-${{ matrix.target }}
           path: ${{ matrix.libpath }}
@@ -163,23 +168,23 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Download embedded artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: embedded-*
           merge-multiple: true
 
       - name: Setup dotnet 10.0
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
           dotnet-version: "10.0.x"
 
       - name: Create Package
         run: dotnet pack /p:GenerateCompatibilitySuppressionFile=true --configuration Release --output ${{ env.NuGetDirectory }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: nuget
           if-no-files-found: error
@@ -192,11 +197,11 @@ jobs:
 
     steps:
       - name: Setup dotnet 10.0
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
           dotnet-version: "10.0.x"
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: nuget
           path: ${{ env.NuGetDirectory }}
@@ -213,11 +218,11 @@ jobs:
 
     steps:
       - name: Setup dotnet 10.0
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
           dotnet-version: "10.0.x"
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: nuget
           path: ${{ env.NuGetDirectory }}
