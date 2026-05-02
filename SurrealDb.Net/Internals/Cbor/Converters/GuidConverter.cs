@@ -11,6 +11,24 @@ internal sealed class GuidConverter : CborConverterBase<Guid>
     public override Guid Read(ref CborReader reader)
     {
 #if NET8_0_OR_GREATER
+        // Do NOT call TryReadSemanticTag before GetCurrentDataItemType.
+        // TryReadSemanticTag sets _state = CborReaderState.Data after consuming the tag.
+        // GetCurrentDataItemType then calls SkipSemanticTag → GetHeader, which — because
+        // state is Data — reads one extra byte from the stream, misaligning the cursor.
+        // This produces the "[1] Expected major type ByteString (2)" error at offset 1.
+        //
+        // Instead, let GetCurrentDataItemType handle tag-skipping on its own via its
+        // internal SkipSemanticTag call, which leaves the cursor on the value header
+        // in CborReaderState.Header (peeked but not consumed).
+        var dataItemType = reader.GetCurrentDataItemType();
+
+        // SurrealDB v2 and earlier: tag(37, bstr(16)) — 16-byte big-endian UUID.
+        // SurrealDB v3+:            tag(37, tstr)     — UUID as a text string.
+        if (dataItemType == CborDataItemType.String)
+        {
+            return Guid.Parse(reader.ReadString()!);
+        }
+
         var value = reader.ReadByteString();
 
         if (value.Length != CBOR_ARRAY_SIZE)
