@@ -36,14 +36,6 @@ public class UpdateTests
             list = await client.Select<Post>("post");
         };
 
-        if (version.Major >= 3)
-        {
-            await func.Should()
-                .ThrowAsync<SurrealDbException>()
-                .WithMessage("Expected a single result output when using the ONLY keyword");
-            return;
-        }
-
         if (version.Major < 2)
         {
             await func.Should().ThrowAsync<NotImplementedException>();
@@ -138,14 +130,6 @@ public class UpdateTests
 
             list = await client.Select<Post>("post");
         };
-
-        if (version.Major >= 3)
-        {
-            await func.Should()
-                .ThrowAsync<SurrealDbException>()
-                .WithMessage("Expected a single result output when using the ONLY keyword");
-            return;
-        }
 
         if (version.Major < 2)
         {

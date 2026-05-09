@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 use app::SurrealEmbeddedEngine;
 use bindgen::{
     callback::{FailureAction, SuccessAction, send_failure, send_success},

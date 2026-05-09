@@ -121,14 +121,6 @@ public class DeleteTests
             list = await client.Select<Post>("post");
         };
 
-        if (version.Major >= 3)
-        {
-            await func.Should()
-                .ThrowAsync<SurrealDbException>()
-                .WithMessage("Expected a single result output when using the ONLY keyword");
-            return;
-        }
-
         await func.Should().NotThrowAsync();
 
         list.Should().NotBeNull().And.HaveCount(2);

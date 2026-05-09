@@ -1,7 +1,10 @@
-﻿namespace SurrealDb.Net.Tests;
+﻿using Semver;
+
+namespace SurrealDb.Net.Tests;
 
 public class ImportTests
 {
+    private const string OPTION_IMPORT = "OPTION IMPORT;";
     private const string IMPORT_QUERY = """
         DEFINE TABLE foo SCHEMALESS;
         DEFINE TABLE bar SCHEMALESS;
@@ -28,9 +31,16 @@ public class ImportTests
         var client = surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
 
+        bool shouldPrefixOptionImport =
+            version is not null && version.Satisfies(SemVersionRange.AtLeast(new(3, 0, 4), true));
+
+        string importQuery = shouldPrefixOptionImport
+            ? $"{OPTION_IMPORT}\n{IMPORT_QUERY}"
+            : IMPORT_QUERY;
+
         Func<Task> func = async () =>
         {
-            await client.Import(IMPORT_QUERY);
+            await client.Import(importQuery);
         };
 
         await func.Should().NotThrowAsync();
