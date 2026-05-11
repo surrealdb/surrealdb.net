@@ -12,7 +12,9 @@ public class TransactionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
         bool result = await client.SupportsTransactions();
 
         if (client.Engine is SurrealDbHttpEngine)
