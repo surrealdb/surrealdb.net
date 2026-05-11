@@ -18,10 +18,10 @@ public class SurrealDbScopedSessionTests
 
         Func<Task> func = async () =>
         {
-            await using var surrealDbClientGenerator = new SurrealDbClientGenerator().Configure(
-                connectionString,
-                lifetime: ServiceLifetime.Scoped
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator(
+                ServiceLifetime.Scoped
             );
+            surrealDbClientGenerator.Configure(connectionString);
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
             await using var scope1 = surrealDbClientGenerator.CreateAsyncScope()!;
