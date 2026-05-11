@@ -81,9 +81,9 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                     {
                         e.Should().BeNull();
                     },
-                    async () =>
+                    () =>
                     {
-                        await client.DisposeAsync();
+                        client.DisposeAsync().GetAwaiter().GetResult();
                     }
                 );
 
@@ -190,9 +190,9 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                     {
                         e.Should().BeNull();
                     },
-                    async () =>
+                    () =>
                     {
-                        await client.DisposeAsync();
+                        client.DisposeAsync().GetAwaiter().GetResult();
                     }
                 );
 
@@ -296,9 +296,9 @@ public class ReactiveObserveLiveQueryTests : BaseLiveQueryTests
                     {
                         e.Should().BeNull();
                     },
-                    async () =>
+                    () =>
                     {
-                        await client.DisposeAsync();
+                        client.DisposeAsync().GetAwaiter().GetResult();
                     }
                 );
 
