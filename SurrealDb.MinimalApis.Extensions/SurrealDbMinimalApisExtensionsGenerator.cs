@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
@@ -21,6 +21,10 @@ public class SurrealDbMinimalApisExtensionsGenerator : IIncrementalGenerator
                 {
                     "SurrealDb.MinimalApis.Extensions.SurrealDbMinimalApisOptions.cs",
                     "SurrealDbMinimalApisOptions.g.cs"
+                },
+                {
+                    "SurrealDb.MinimalApis.Extensions.SurrealDbMinimalApisRequests.cs",
+                    "SurrealDbMinimalApisRequests.g.cs"
                 },
             };
 
