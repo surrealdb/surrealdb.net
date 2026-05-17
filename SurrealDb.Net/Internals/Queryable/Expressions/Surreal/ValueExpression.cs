@@ -814,6 +814,27 @@ internal sealed class RecordIdValueExpression
     }
 }
 
+internal sealed class SurrealFileValueExpression
+    : ValueExpression,
+        IPrintableExpression,
+        IConstantValueExpression
+{
+    public readonly SurrealFile Value;
+
+    public SurrealFileValueExpression(SurrealFile value)
+    {
+        Value = value;
+    }
+
+    public void AppendTo(StringBuilder stringBuilder)
+    {
+        stringBuilder.Append('f');
+        stringBuilder.Append('"');
+        stringBuilder.Append(Value);
+        stringBuilder.Append('"');
+    }
+}
+
 internal sealed class ParameterValueExpression
     : ValueExpression,
         IPrintableExpression,
@@ -848,22 +869,22 @@ internal sealed class TableValueExpression
         IPrintableExpression,
         IConstantValueExpression
 {
-    private readonly string _value;
+    public readonly string Value;
 
     public TableValueExpression(string value)
     {
-        _value = value;
+        Value = value;
     }
 
     public void AppendTo(StringBuilder stringBuilder)
     {
-        bool shouldEscape = ShouldEspaceIdent(_value);
+        bool shouldEscape = ShouldEspaceIdent(Value);
 
         if (shouldEscape)
         {
             stringBuilder.Append('`');
         }
-        stringBuilder.Append(_value);
+        stringBuilder.Append(Value);
         if (shouldEscape)
         {
             stringBuilder.Append('`');

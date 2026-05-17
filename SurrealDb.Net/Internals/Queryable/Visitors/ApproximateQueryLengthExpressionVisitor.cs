@@ -387,16 +387,19 @@ internal sealed class ApproximateQueryLengthExpressionVisitor : ExpressionVisito
                 // "$" + param name; parameter names are like "p0", "p1", etc.
                 _length += 4; // "$pNN"
                 break;
-            case TableValueExpression:
+            case TableValueExpression table:
                 // Table name may have backtick escaping (`name`).
-                // The actual name is not publicly accessible; use a pessimistic constant.
-                _length += 64;
+                _length += table.Value.Length + 2;
                 break;
             case ConstantValueExpression:
                 _length += 20; // longest builtin constant e.g. "math::FRAC_2_SQRT_PI"
                 break;
             case RegexValueExpression:
                 _length += 16; // pessimistic
+                break;
+            case SurrealFileValueExpression file:
+                // '"f"' + bucket/path + separator
+                _length += 3 + file.Value.Bucket.Length + 1 + file.Value.Path.Length;
                 break;
             case EmptyBlockValueExpression:
                 _length += 2; // "{}"

@@ -286,4 +286,18 @@ public class DataTypesValueTests : BaseQueryableTests
 
         query.Should().Be("$_rid0 == $_rid1");
     }
+
+    [Test]
+    public void SurrealFile()
+    {
+        string query = ToSurql(Expression.Constant(new SurrealFile("/some/key/to/a/file.txt")));
+
+        query
+            .Should()
+            .Be(
+                """
+                f"file:/some/key/to/a/file.txt"
+                """
+            );
+    }
 }
