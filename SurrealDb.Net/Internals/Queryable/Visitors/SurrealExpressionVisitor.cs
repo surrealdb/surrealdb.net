@@ -823,6 +823,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 ]
             ),
             ISpatial spatialValue => new GeometryValueExpression(spatialValue),
+            SurrealFile file => new SurrealFileValueExpression(file),
             _ => node,
         };
     }
