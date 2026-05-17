@@ -1,0 +1,14 @@
+﻿[
+  Book,
+  Book,
+  Laptop,
+  Mouse,
+  Mouse,
+  Keyboard,
+  Keyboard,
+  Monitor,
+  Headphones,
+  USB Hub,
+  External SSD,
+  External SSD
+]

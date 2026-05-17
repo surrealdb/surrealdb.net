@@ -1422,10 +1422,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
         if (
-            node.Method.Name.Equals(
-                nameof(Nullable<int>.GetValueOrDefault),
-                StringComparison.Ordinal
-            )
+            node.Method.Name.Equals(nameof(Nullable<>.GetValueOrDefault), StringComparison.Ordinal)
             && node.Method.DeclaringType?.IsGenericType == true
             && node.Method.DeclaringType.GetGenericTypeDefinition() == typeof(Nullable<>)
         )
@@ -1454,6 +1451,10 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         {
             return BindDateTimeMethodCall(node);
         }
+        if (node.Method.DeclaringType == typeof(TimeSpan))
+        {
+            return BindTimeSpanMethodCall(node);
+        }
 #if NET6_0_OR_GREATER
         if (node.Method.DeclaringType == typeof(DateOnly))
         {
@@ -1464,10 +1465,6 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             return BindTimeOnlyMethodCall(node);
         }
 #endif
-        if (node.Method.DeclaringType == typeof(TimeSpan))
-        {
-            return BindTimeSpanMethodCall(node);
-        }
         if (
             _surrealVersion.Major >= 3
             && node.Method.DeclaringType is { } declaringType
@@ -1478,7 +1475,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         }
 
         if (
-            node.Method.Name.Equals("op_Implicit", StringComparison.Ordinal)
+            node.Method.Name.Equals("op_Implicit", StringComparison.Ordinal) // Implicit conversion
             && node.Method.DeclaringType is { IsGenericType: true } spanType
             && spanType.GetGenericTypeDefinition() == typeof(ReadOnlySpan<>)
             && node.Arguments.Count == 1
@@ -1514,7 +1511,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
 
         if (
             node.Object is not null
-            && node.Method.Name.Equals(nameof(List<object>.Contains), StringComparison.Ordinal)
+            && node.Method.Name.Equals(nameof(List<>.Contains), StringComparison.Ordinal)
             && node.Arguments.Count == 1
             && node.Object.Type != typeof(string)
             && typeof(IEnumerable).IsAssignableFrom(node.Object.Type)
@@ -3053,12 +3050,12 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                             $"The selector argument '{arg}' is not supported in Enumerable.Select projection."
                         );
                     })
-                    .OrderBy(fieldName => fieldName, StringComparer.Ordinal)
+                    .Order(StringComparer.Ordinal)
                     .ToImmutableArray();
 
                 return new IdiomExpression(
                     [
-                        new DeconstructPartExpression(
+                        new DestructurePartExpression(
                             fieldPartExpression.FieldName,
                             deconstructFields
                         ),
@@ -3121,7 +3118,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             if (valueExpression2 is null)
             {
                 throw new InvalidCastException(
-                    $"The second argument of {node.Method.DeclaringType!.Name}.Union must be a value expression."
+                    $"The second argument of {node.Method.DeclaringType!.Name}.Sum must be a value expression."
                 );
             }
             var sourceExpression = Visit(node.Arguments[0]);
@@ -3929,13 +3926,10 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
 
         static MemberExpression? TryExtractRootMember(Expression arg)
         {
-            if (arg is MemberExpression memberExpression)
+            return arg switch
             {
-                return memberExpression;
-            }
-
-            if (
-                arg is MethodCallExpression
+                MemberExpression memberExpression => memberExpression,
+                MethodCallExpression
                 {
                     Method.Name: nameof(Enumerable.ToArray),
                     Arguments: [
@@ -3945,13 +3939,9 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                             Arguments: [MemberExpression sourceMemberExpression, ..],
                         },
                     ],
-                }
-            )
-            {
-                return sourceMemberExpression;
-            }
-
-            return null;
+                } => sourceMemberExpression,
+                _ => null,
+            };
         }
 
         var extractedMembers = newExpression.Arguments.Select(TryExtractRootMember).ToArray();

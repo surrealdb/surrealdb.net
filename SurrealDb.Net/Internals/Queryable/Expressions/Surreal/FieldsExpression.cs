@@ -57,19 +57,6 @@ internal sealed class FieldsExpression : SurrealExpression
 
                 var propertyType = property.PropertyType;
 
-                ImmutableArray<string> GetDeconstructFields(Type type)
-                {
-                    return type.GetProperties()
-                        .Where(p => p is { CanRead: true, CanWrite: true })
-                        .Select(p =>
-                        {
-                            var (nestedFieldName, _) = ReflectionExtensions.GetDatabaseFieldName(p);
-                            return nestedFieldName;
-                        })
-                        .OrderBy(x => x)
-                        .ToImmutableArray();
-                }
-
                 // Check if this property is a nested collection/array
                 var isCollection =
                     propertyType.IsArray
@@ -94,7 +81,7 @@ internal sealed class FieldsExpression : SurrealExpression
                         if (nestedFields.Length > 0)
                         {
                             // Create a deconstruct part expression for nested fields
-                            var deconstructPart = new DeconstructPartExpression(
+                            var deconstructPart = new DestructurePartExpression(
                                 fieldName,
                                 nestedFields
                             );
@@ -114,7 +101,7 @@ internal sealed class FieldsExpression : SurrealExpression
                     if (nestedFields.Length > 0)
                     {
                         // Create a deconstruct part expression for nested fields
-                        var deconstructPart = new DeconstructPartExpression(
+                        var deconstructPart = new DestructurePartExpression(
                             fieldName,
                             nestedFields
                         );
@@ -152,6 +139,21 @@ internal sealed class FieldsExpression : SurrealExpression
             .ToImmutableArray<FieldExpression>();
 
         return new FieldsExpression(fields);
+
+        static ImmutableArray<string> GetDeconstructFields(Type type)
+        {
+            return
+            [
+                .. type.GetProperties()
+                    .Where(p => p is { CanRead: true, CanWrite: true })
+                    .Select(p =>
+                    {
+                        var (nestedFieldName, _) = ReflectionExtensions.GetDatabaseFieldName(p);
+                        return nestedFieldName;
+                    })
+                    .Order(),
+            ];
+        }
 
         static bool IsSurrealDbEntity(Type type)
         {

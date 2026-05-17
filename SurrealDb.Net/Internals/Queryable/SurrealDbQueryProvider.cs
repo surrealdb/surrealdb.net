@@ -1,8 +1,10 @@
 ﻿using System.Collections;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using Dahomey.Cbor;
 using Semver;
 using SurrealDb.Net.Internals.Queryable.Visitors;
+using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Internals.Queryable;
 
@@ -104,7 +106,7 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
             var sourceItems = sourceResponse.GetValue<IEnumerable<T>>(0)!;
 
             var inMemoryQueryable = sourceItems.AsQueryable();
-            var rewrittenExpression = new RootQueryableReplaceVisitor(
+            var rewrittenExpression = new RootQueryableReplaceVisitor<T>(
                 sourceQueryable,
                 inMemoryQueryable
             ).Visit(expression)!;
@@ -142,7 +144,7 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
     }
 
     private static bool TryGetFlattenedNestedEnumerableValue<TResult>(
-        SurrealDb.Net.Models.Response.SurrealDbResponse response,
+        SurrealDbResponse response,
         out TResult? value
     )
     {
@@ -164,8 +166,8 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
 
         try
         {
-            var getValueMethod = typeof(SurrealDb.Net.Models.Response.SurrealDbResponse)
-                .GetMethod(nameof(SurrealDb.Net.Models.Response.SurrealDbResponse.GetValue))!
+            var getValueMethod = typeof(SurrealDbResponse)
+                .GetMethod(nameof(SurrealDbResponse.GetValue))!
                 .MakeGenericMethod(nestedEnumerableType);
             var nested = getValueMethod.Invoke(response, [0]);
             if (nested is not IEnumerable outer)
@@ -249,11 +251,7 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
 
         var candidate = resultType.GetGenericArguments()[0];
         bool isAnonymous =
-            Attribute.IsDefined(
-                candidate,
-                typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute),
-                false
-            )
+            Attribute.IsDefined(candidate, typeof(CompilerGeneratedAttribute), false)
             && candidate.Name.Contains("AnonymousType", StringComparison.Ordinal)
             && candidate.IsGenericType;
         if (!isAnonymous)
@@ -285,24 +283,5 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
         };
 
         return sourceQueryable is not null;
-    }
-
-    private sealed class RootQueryableReplaceVisitor(
-        SurrealDbQueryable<T> sourceQueryable,
-        IQueryable<T> replacementQueryable
-    ) : ExpressionVisitor
-    {
-        private readonly SurrealDbQueryable<T> _sourceQueryable = sourceQueryable;
-        private readonly IQueryable<T> _replacementQueryable = replacementQueryable;
-
-        protected override Expression VisitConstant(ConstantExpression node)
-        {
-            if (ReferenceEquals(node.Value, _sourceQueryable))
-            {
-                return Expression.Constant(_replacementQueryable, typeof(IQueryable<T>));
-            }
-
-            return base.VisitConstant(node);
-        }
     }
 }
