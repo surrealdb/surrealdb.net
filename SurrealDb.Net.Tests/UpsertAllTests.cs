@@ -34,7 +34,7 @@ public class UpsertAllTests
                 Status = "PUBLISHED",
             };
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
 
             results = await client.Upsert("post", postUpdate);
         };

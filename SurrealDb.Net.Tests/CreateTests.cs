@@ -23,7 +23,7 @@ public class CreateTests
 
             result = await client.Create<Empty>("empty");
 
-            list = await client.Select<Empty>("empty");
+            list = await client.Select<Empty>("empty").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -58,7 +58,7 @@ public class CreateTests
 
             result = await client.Create("post", post);
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -98,7 +98,7 @@ public class CreateTests
 
             result = await client.Create(post);
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -161,7 +161,7 @@ public class CreateTests
             var tasks = posts.Select(p => client.Create(p));
             await Task.WhenAll(tasks.ToArray());
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -194,7 +194,7 @@ public class CreateTests
 
             result = await client.Create<Post, Post>(new StringRecordId("post:new"), post, default);
 
-            list = await client.Select<Post>("post");
+            list = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();

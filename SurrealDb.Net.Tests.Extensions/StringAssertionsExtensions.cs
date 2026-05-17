@@ -14,7 +14,9 @@ public static class StringAssertionsExtensions
 
         Execute
             .Assertion.ForCondition(
+#pragma warning disable MA0009
                 assertions.Subject != null && Regex.IsMatch(assertions.Subject, nanoidPattern)
+#pragma warning restore MA0009
             )
             .FailWith(
                 $"Expected {{context:string}} to be a nanoid, but found {{0}}",
@@ -63,7 +65,9 @@ public static class StringAssertionsExtensions
             );
 
         Execute
+#pragma warning disable MA0009
             .Assertion.ForCondition(Regex.IsMatch(assertions.Subject, jwtRegexPattern))
+#pragma warning restore MA0009
             .FailWith($"Expected a valid JWT, but found {{0}}.", assertions.Subject);
 
         return new AndConstraint<StringAssertions>(assertions);
@@ -79,7 +83,9 @@ public static class StringAssertionsExtensions
         string escapedSuffix = Regex.Escape(suffix ?? string.Empty);
         string regexPattern = $"^{escapedPrefix}(.*){escapedSuffix}$";
 
+#pragma warning disable MA0009
         var match = Regex.Match(assertions.Subject, regexPattern);
+#pragma warning restore MA0009
 
         if (!match.Success)
         {
