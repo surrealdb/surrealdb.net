@@ -1,0 +1,202 @@
+﻿[
+  {
+    Name: Book,
+    Description: A great book,
+    Price: 19.99,
+    CreatedAt: DateTime_1,
+    Id: {
+      Id: book,
+      Table: product
+    }
+  },
+  {
+    Name: Book,
+    Description: A great book,
+    Price: 19.99,
+    CreatedAt: DateTime_1,
+    Id: {
+      Id: book,
+      Table: product
+    }
+  },
+  {
+    Name: Laptop,
+    Description: A fast laptop,
+    Price: 999.99,
+    CreatedAt: DateTime_2,
+    Id: {
+      Id: laptop,
+      Table: product
+    }
+  },
+  {
+    Name: Mouse,
+    Description: Wireless mouse,
+    Price: 29.99,
+    CreatedAt: DateTime_3,
+    Id: {
+      Id: mouse,
+      Table: product
+    }
+  },
+  {
+    Name: Keyboard,
+    Description: Mechanical keyboard,
+    Price: 89.99,
+    CreatedAt: DateTime_4,
+    Id: {
+      Id: keyboard,
+      Table: product
+    }
+  },
+  {
+    Name: Monitor,
+    Description: 4K Monitor,
+    Price: 399.99,
+    CreatedAt: DateTime_5,
+    Id: {
+      Id: monitor,
+      Table: product
+    }
+  },
+  {
+    Name: Headphones,
+    Description: Noise-cancelling headphones,
+    Price: 149.99,
+    CreatedAt: DateTime_6,
+    Id: {
+      Id: headphones,
+      Table: product
+    }
+  },
+  {
+    Name: USB Hub,
+    Description: 7-port USB hub,
+    Price: 39.99,
+    CreatedAt: DateTime_7,
+    Id: {
+      Id: usb_hub,
+      Table: product
+    }
+  },
+  {
+    Name: External SSD,
+    Description: 1TB external SSD,
+    Price: 129.99,
+    CreatedAt: DateTime_8,
+    Id: {
+      Id: external_ssd,
+      Table: product
+    }
+  },
+  {
+    Name: Mouse,
+    Description: Wireless mouse,
+    Price: 29.99,
+    CreatedAt: DateTime_3,
+    Id: {
+      Id: mouse,
+      Table: product
+    }
+  },
+  {
+    Name: Laptop,
+    Description: A fast laptop,
+    Price: 999.99,
+    CreatedAt: DateTime_2,
+    Id: {
+      Id: laptop,
+      Table: product
+    }
+  },
+  {
+    Name: Monitor,
+    Description: 4K Monitor,
+    Price: 399.99,
+    CreatedAt: DateTime_5,
+    Id: {
+      Id: monitor,
+      Table: product
+    }
+  },
+  {
+    Name: Keyboard,
+    Description: Mechanical keyboard,
+    Price: 89.99,
+    CreatedAt: DateTime_4,
+    Id: {
+      Id: keyboard,
+      Table: product
+    }
+  },
+  {
+    Name: Book,
+    Description: A great book,
+    Price: 19.99,
+    CreatedAt: DateTime_1,
+    Id: {
+      Id: book,
+      Table: product
+    }
+  },
+  {
+    Name: Headphones,
+    Description: Noise-cancelling headphones,
+    Price: 149.99,
+    CreatedAt: DateTime_6,
+    Id: {
+      Id: headphones,
+      Table: product
+    }
+  },
+  {
+    Name: USB Hub,
+    Description: 7-port USB hub,
+    Price: 39.99,
+    CreatedAt: DateTime_7,
+    Id: {
+      Id: usb_hub,
+      Table: product
+    }
+  },
+  {
+    Name: External SSD,
+    Description: 1TB external SSD,
+    Price: 129.99,
+    CreatedAt: DateTime_8,
+    Id: {
+      Id: external_ssd,
+      Table: product
+    }
+  },
+  {
+    Name: Keyboard,
+    Description: Mechanical keyboard,
+    Price: 89.99,
+    CreatedAt: DateTime_4,
+    Id: {
+      Id: keyboard,
+      Table: product
+    }
+  },
+  {
+    Name: Mouse,
+    Description: Wireless mouse,
+    Price: 29.99,
+    CreatedAt: DateTime_3,
+    Id: {
+      Id: mouse,
+      Table: product
+    }
+  },
+  {
+    Name: Book,
+    Description: A great book,
+    Price: 19.99,
+    CreatedAt: DateTime_1,
+    Id: {
+      Id: book,
+      Table: product
+    }
+  }
+]

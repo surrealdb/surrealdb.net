@@ -301,10 +301,7 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
         }
 
         // Handle single DeconstructPartExpression
-        if (
-            idiomExpression.Parts.Length == 1
-            && idiomExpression.Parts[0] is DeconstructPartExpression
-        )
+        if (idiomExpression.Parts is [DestructurePartExpression])
         {
             Visit(idiomExpression.Parts[0]);
             return idiomExpression;
@@ -329,7 +326,7 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
 
     private PartExpression VisitPart(PartExpression partExpression)
     {
-        if (partExpression is DeconstructPartExpression deconstructExpression)
+        if (partExpression is DestructurePartExpression deconstructExpression)
         {
             _surqlQueryBuilder.Append(deconstructExpression.FieldName);
             _surqlQueryBuilder.Append(".{");
@@ -337,11 +334,11 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
             {
                 if (index > 0)
                 {
-                    _surqlQueryBuilder.Append(",");
+                    _surqlQueryBuilder.Append(',');
                 }
                 _surqlQueryBuilder.Append(deconstructExpression.DeconstructFields[index]);
             }
-            _surqlQueryBuilder.Append("}");
+            _surqlQueryBuilder.Append('}');
             return partExpression;
         }
 

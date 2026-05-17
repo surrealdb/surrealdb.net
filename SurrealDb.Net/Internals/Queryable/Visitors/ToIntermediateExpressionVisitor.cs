@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Dahomey.Cbor.Util;
@@ -474,7 +475,7 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
     {
         expression = collectionSelector.Body;
 
-        Type? elementType =
+        var elementType =
             collectionSelector.Body.Type.IsArray ? collectionSelector.Body.Type.GetElementType()
             : collectionSelector.Body.Type.IsGenericType
                 ? collectionSelector.Body.Type.GetGenericArguments()[0]
@@ -484,11 +485,7 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
             return false;
         }
 
-        if (
-            !elementType.IsClass
-            || elementType.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.TableAttribute>()
-                is null
-        )
+        if (!elementType.IsClass || elementType.GetCustomAttribute<TableAttribute>() is null)
         {
             return false;
         }
