@@ -49,6 +49,17 @@ internal sealed class SelectExpression : IntermediateExpression
         Projection = projection ?? select.Projection;
     }
 
+    public SelectExpression(
+        Type resultType,
+        CustomSourceExpression customSource,
+        ProjectionExpression projection
+    )
+        : base(resultType)
+    {
+        Source = customSource;
+        Projection = projection;
+    }
+
     public SelectExpression WithSource(SourceExpression source)
     {
         return new SelectExpression(this) { Source = source };

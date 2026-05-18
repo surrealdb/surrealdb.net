@@ -339,8 +339,11 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             SelectSourceExpression selectSourceExpression => ToSubqueryValueExpression(
                 selectSourceExpression
             ),
+            CustomSourceExpression customSourceExpression => ToCustomValueExpression(
+                customSourceExpression
+            ),
             _ => throw new InvalidCastException(
-                $"Failed to convert source expression of type '{sourceExpression.Type.Name}' to WhatExpression."
+                $"Failed to convert source expression of type '{sourceExpression.Type.Name}' to {nameof(WhatExpression)}."
             ),
         };
         return WhatExpression.From(value);
@@ -355,6 +358,15 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             );
             _currentNestedSelectLevel--;
             return returnedExpression;
+        }
+
+        ValueExpression ToCustomValueExpression(CustomSourceExpression customSourceExpression)
+        {
+            var visited = Visit(customSourceExpression.Custom)?.ToValue();
+            return visited
+                ?? throw new InvalidCastException(
+                    $"Failed to convert {nameof(CustomSourceExpression)} to a value expression."
+                );
         }
     }
 
@@ -481,7 +493,16 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
 
     private Expression? BindCustom(CustomExpression customExpression)
     {
-        return Visit(customExpression.Expression);
+        var inner = Visit(customExpression.Expression);
+        if (customExpression.Flatten)
+        {
+            var valueExpression = inner?.ToValue();
+            if (valueExpression is not null)
+            {
+                return new FunctionValueExpression("array::flatten", [valueExpression]);
+            }
+        }
+        return inner;
     }
 
     private Expression? BindLambda(LambdaIntermediateExpression lambdaExpression)
@@ -1655,6 +1676,11 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 );
             }
 
+            if (valueExpression is DateTimeValueExpression dateTimeValue)
+            {
+                return new DateTimeValueExpression(dateTimeValue.Value.Date);
+            }
+
             return new FunctionValueExpression(
                 "time::floor",
                 [valueExpression, new DurationValueExpression(TimeSpan.FromDays(1))]
@@ -1675,6 +1701,11 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 throw new InvalidCastException(
                     "The first argument of TimeOnly.FromDateTime must be a value expression."
                 );
+            }
+
+            if (valueExpression is DateTimeValueExpression dateTimeValue)
+            {
+                return new DurationValueExpression(dateTimeValue.Value.TimeOfDay);
             }
 
             return new FunctionValueExpression(

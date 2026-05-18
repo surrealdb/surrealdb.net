@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 
 namespace SurrealDb.Net.Internals.Queryable.Expressions.Intermediate;
 
@@ -9,16 +9,18 @@ namespace SurrealDb.Net.Internals.Queryable.Expressions.Intermediate;
 internal sealed class CustomExpression : IntermediateExpression
 {
     public Expression Expression { get; }
+    public bool Flatten { get; }
 
-    public CustomExpression(Expression expression, Type type)
+    public CustomExpression(Expression expression, Type type, bool flatten = false)
         : base(type)
     {
         Expression = expression;
+        Flatten = flatten;
     }
 
     public Expression WithReturnType(Type returnType)
     {
-        return new CustomExpression(Expression, returnType);
+        return new CustomExpression(Expression, returnType, Flatten);
     }
 
     protected override Expression VisitChildren(ExpressionVisitor visitor)
