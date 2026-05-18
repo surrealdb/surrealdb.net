@@ -24,7 +24,6 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
     private readonly Dictionary<string, object?> _parameters;
     private readonly Dictionary<string, object?> _recordIdParameters = [];
     private readonly SemVersion _surrealVersion;
-    private readonly bool _optimizeSelfProjection;
 
     private int _currentNestedSelectLevel = 0;
     private readonly Dictionary<ParameterExpression, int> _parametersNestedLevels = [];
@@ -32,14 +31,12 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
     public SurrealExpressionVisitor(
         Dictionary<ParameterExpression, Expression> sourceExpressionParameters,
         int numberOfNamedValues,
-        SemVersion surrealVersion,
-        bool optimizeSelfProjection = true
+        SemVersion surrealVersion
     )
     {
         _sourceExpressionParameters = sourceExpressionParameters;
         _parameters = new(numberOfNamedValues);
         _surrealVersion = surrealVersion;
-        _optimizeSelfProjection = optimizeSelfProjection;
     }
 
     internal (Expression Expression, IReadOnlyDictionary<string, object?> Parameters) Bind(
@@ -183,10 +180,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 return FieldsExpression.ForType(projectionExpression.Type);
             }
 
-            if (
-                _optimizeSelfProjection
-                && TryGetSourceTypeForSelfProjection(innerExpression, out var sourceType)
-            )
+            if (TryGetSourceTypeForSelfProjection(innerExpression, out var sourceType))
             {
                 return FieldsExpression.ForType(sourceType);
             }

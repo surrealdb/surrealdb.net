@@ -79,8 +79,7 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
             engine.CachedVersion
                 ?? throw new NullReferenceException(
                     "Cannot detect version of the inner SurrealDB engine."
-                ),
-            optimizeSelfProjection: false
+                )
         );
 
         {
@@ -98,22 +97,12 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
         SemVersion version
     )
     {
-        return Translate(expression, version, optimizeSelfProjection: true);
-    }
-
-    private (string Query, IReadOnlyDictionary<string, object?> Parameters) Translate(
-        Expression expression,
-        SemVersion version,
-        bool optimizeSelfProjection
-    )
-    {
         var (intermediateExpression, numberOfNamedValues, sourceExpressionParameters) =
             new ToIntermediateExpressionVisitor().Bind(expression);
         var surrealExpressionResult = new SurrealExpressionVisitor(
             sourceExpressionParameters,
             numberOfNamedValues,
-            version,
-            optimizeSelfProjection
+            version
         ).Bind(intermediateExpression);
         var surrealExpression = (Expressions.Surreal.SurrealExpression)
             surrealExpressionResult.Expression;
