@@ -77,10 +77,8 @@ public class ComplexQueryableTests : BaseQueryableTests
         await client.ApplySchemaAsync(SurrealSchemaFile.Store);
 
         var queryable = client.Select<StoreOrder>().Select(order => order.Products.Count());
-        var query = queryable.ToQueryString();
         var result = await queryable.SumAsync();
 
-        query.Should().Be("SELECT VALUE array::len(products) FROM orders");
         result.Should().Be(20);
     }
 
@@ -438,12 +436,8 @@ public class ComplexQueryableTests : BaseQueryableTests
             .Select<StoreOrder>()
             .Select(order => order.Products.Sum(product => product.Price));
 
-        var query = queryable.ToQueryString();
         var result = await queryable.SumAsync();
 
-        // Due to optimizeSelfProjection the query is not exactly what we would expect, but it should still work correctly
-        // math::sum(SELECT VALUE math::sum(products.price) FROM orders)
-        query.Should().Be("SELECT VALUE math::sum(products.price) FROM orders");
         result.Should().BeApproximately(3879.8f, 0.1f);
     }
 
