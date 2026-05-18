@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 
 namespace SurrealDb.Net.Internals.Queryable.Expressions.Intermediate;
 
@@ -12,6 +12,7 @@ internal sealed class SelectExpression : IntermediateExpression
     public TakeExpression? Take { get; private init; }
     public SkipExpression? Skip { get; private init; }
     public bool SingleValue { get; private init; }
+    public bool? Explain { get; private init; }
 
     private SelectExpression(SelectExpression from)
         : this(from, from.Type) { }
@@ -27,6 +28,7 @@ internal sealed class SelectExpression : IntermediateExpression
         Take = from.Take;
         Skip = from.Skip;
         SingleValue = from.SingleValue;
+        Explain = from.Explain;
     }
 
     public SelectExpression(Type resultType, TableExpression table, ProjectionExpression projection)
@@ -103,6 +105,11 @@ internal sealed class SelectExpression : IntermediateExpression
     public SelectExpression WithSingleValue()
     {
         return new SelectExpression(this) { SingleValue = true };
+    }
+
+    public SelectExpression WithExplain(bool full)
+    {
+        return new SelectExpression(this) { Explain = full };
     }
 
     protected override Expression VisitChildren(ExpressionVisitor visitor)

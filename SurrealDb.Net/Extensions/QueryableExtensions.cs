@@ -1,7 +1,8 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using System.Reflection;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Queryable;
+using SurrealDb.Net.Models;
 
 namespace SurrealDb.Net;
 
@@ -2680,6 +2681,52 @@ public static class QueryableExtensions
         return typeof(Queryable)
             .GetMethods()
             .Where(method => string.Equals(method.Name, methodName, StringComparison.Ordinal));
+    }
+
+    #endregion
+
+    #region Explain
+
+    /// <summary>
+    ///     Appends an <c>EXPLAIN</c> or <c>EXPLAIN FULL</c> clause to the <c>SELECT</c> query,
+    ///     returning the execution plan instead of the actual query results.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         The <c>EXPLAIN</c> clause reveals how SurrealDB plans to execute the query, including
+    ///         which operators and indexes will be used. This is useful for understanding and
+    ///         optimising query performance.
+    ///     </para>
+    ///     <para>
+    ///         When <paramref name="full" /> is <see langword="false" /> (the default), the clause
+    ///         generates <c>EXPLAIN</c> and returns the static query plan without executing the query.
+    ///         When <paramref name="full" /> is <see langword="true" />, the clause generates
+    ///         <c>EXPLAIN FULL</c>, which actually executes the query and augments each plan node
+    ///         with runtime metrics such as row counts, batch counts, and elapsed time.
+    ///     </para>
+    /// </remarks>
+    /// <typeparam name="TSource">The type of the elements of <paramref name="source" />.</typeparam>
+    /// <param name="source">An <see cref="IQueryable{T}" /> representing the <c>SELECT</c> query to explain.</param>
+    /// <param name="full">
+    ///     When <see langword="true" />, appends <c>EXPLAIN FULL</c> and includes runtime execution
+    ///     metrics in the returned plan nodes. Defaults to <see langword="false" />.
+    /// </param>
+    /// <returns>
+    ///     An <see cref="IQueryable{T}" /> of <see cref="ExplainPlan" /> whose single element describes
+    ///     the query execution plan tree.
+    /// </returns>
+    public static IQueryable<ExplainPlan> Explain<TSource>(
+        this IQueryable<TSource> source,
+        bool full = false
+    )
+    {
+        var methodInfo = typeof(QueryableExtensions)
+            .GetMethod(nameof(Explain))!
+            .MakeGenericMethod(typeof(TSource));
+
+        return source.Provider.CreateQuery<ExplainPlan>(
+            Expression.Call(null, methodInfo, source.Expression, Expression.Constant(full))
+        );
     }
 
     #endregion

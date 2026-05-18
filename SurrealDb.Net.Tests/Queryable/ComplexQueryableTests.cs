@@ -2,7 +2,7 @@
 
 namespace SurrealDb.Net.Tests.Queryable;
 
-public class ComplexQueryableTests
+public class ComplexQueryableTests : BaseQueryableTests
 {
     private readonly VerifySettings _verifySettings = new();
 
@@ -49,7 +49,7 @@ public class ComplexQueryableTests
     [WebsocketConnectionStringFixtureGenerator]
     public async Task ShouldGetFullOrdersSortedDescending(string connectionString)
     {
-        var (result, query) = await ExecuteWithSchema(
+        var (result, query) = await ExecuteWithSchemaAsync(
             connectionString,
             SurrealSchemaFile.Store,
             client => client.Select<StoreOrder>().OrderByDescending(d => d.CreatedAt)
@@ -88,7 +88,7 @@ public class ComplexQueryableTests
     [WebsocketConnectionStringFixtureGenerator]
     public async Task ShouldGetPartialOrders(string connectionString)
     {
-        var (result, query) = await ExecuteWithSchema(
+        var (result, query) = await ExecuteWithSchemaAsync(
             connectionString,
             SurrealSchemaFile.Store,
             client =>
@@ -119,7 +119,7 @@ public class ComplexQueryableTests
     [WebsocketConnectionStringFixtureGenerator]
     public async Task ShouldProjectComputedAndConstantFields(string connectionString)
     {
-        var (result, query) = await ExecuteWithSchema(
+        var (result, query) = await ExecuteWithSchemaAsync(
             connectionString,
             SurrealSchemaFile.Store,
             client =>
@@ -148,7 +148,7 @@ public class ComplexQueryableTests
     [WebsocketConnectionStringFixtureGenerator]
     public async Task ShouldGetFirstAndLastOrderDateForCustomer(string connectionString)
     {
-        var (result, query) = await ExecuteWithSchema(
+        var (result, query) = await ExecuteWithSchemaAsync(
             connectionString,
             SurrealSchemaFile.Store,
             client =>
@@ -183,7 +183,7 @@ public class ComplexQueryableTests
     [WebsocketConnectionStringFixtureGenerator]
     public async Task ShouldFlattenOrderedProductsWithSelectMany(string connectionString)
     {
-        var (result, query) = await ExecuteWithSchema(
+        var (result, query) = await ExecuteWithSchemaAsync(
             connectionString,
             SurrealSchemaFile.Store,
             client => client.Select<StoreOrder>().SelectMany(order => order.Products)
@@ -205,7 +205,7 @@ public class ComplexQueryableTests
     {
         const float minPrice = 100;
 
-        var (result, query) = await ExecuteWithSchema(
+        var (result, query) = await ExecuteWithSchemaAsync(
             connectionString,
             SurrealSchemaFile.Store,
             client =>
@@ -241,7 +241,7 @@ public class ComplexQueryableTests
     public async Task ShouldSplitQueryWhenOrderingByFieldOutsideProjection(string connectionString)
     {
         int minTotal = 200;
-        var (result, query) = await ExecuteWithSchema(
+        var (result, query) = await ExecuteWithSchemaAsync(
             connectionString,
             SurrealSchemaFile.Store,
             client =>
@@ -270,7 +270,7 @@ public class ComplexQueryableTests
     public async Task ShouldGetTopOrdersByTotal(string connectionString)
     {
         const int top = 3;
-        var (result, query) = await ExecuteWithSchema(
+        var (result, query) = await ExecuteWithSchemaAsync(
             connectionString,
             SurrealSchemaFile.Store,
             client =>
@@ -313,7 +313,7 @@ public class ComplexQueryableTests
 
         {
             var locations = new List<string> { "Berlin", "Munich" };
-            var (result, query) = await ExecuteWithSchema(
+            var (result, query) = await ExecuteWithSchemaAsync(
                 connectionString,
                 SurrealSchemaFile.Store,
                 client =>
@@ -329,7 +329,7 @@ public class ComplexQueryableTests
 
         {
             var locations = new HashSet<string> { "Berlin", "Munich" };
-            var (result, query) = await ExecuteWithSchema(
+            var (result, query) = await ExecuteWithSchemaAsync(
                 connectionString,
                 SurrealSchemaFile.Store,
                 client =>
@@ -345,7 +345,7 @@ public class ComplexQueryableTests
 
         {
             string[] locations = ["Berlin", "Munich"];
-            var (result, query) = await ExecuteWithSchema(
+            var (result, query) = await ExecuteWithSchemaAsync(
                 connectionString,
                 SurrealSchemaFile.Store,
                 client =>
@@ -364,7 +364,7 @@ public class ComplexQueryableTests
     [WebsocketConnectionStringFixtureGenerator]
     public async Task ShouldRoundSumProductCosts(string connectionString)
     {
-        var (result, query) = await ExecuteWithSchema(
+        var (result, query) = await ExecuteWithSchemaAsync(
             connectionString,
             SurrealSchemaFile.Store,
             client =>
@@ -397,7 +397,7 @@ public class ComplexQueryableTests
     [WebsocketConnectionStringFixtureGenerator]
     public async Task ShouldRoundToIntSumProductCosts(string connectionString)
     {
-        var (result, query) = await ExecuteWithSchema(
+        var (result, query) = await ExecuteWithSchemaAsync(
             connectionString,
             SurrealSchemaFile.Store,
             client =>
@@ -463,24 +463,4 @@ public class ComplexQueryableTests
     );
 
     private record OrderedOrderProjection(RecordId? id, string customer, float total);
-
-    private static async Task<(List<T> Result, string Query)> ExecuteWithSchema<T>(
-        string connectionString,
-        SurrealSchemaFile schema,
-        Func<SurrealDbClient, IQueryable<T>> queryFactory
-    )
-    {
-        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-
-        await using var client = surrealDbClientGenerator.Create(connectionString);
-        await client.Use(dbInfo.Namespace, dbInfo.Database);
-        await client.ApplySchemaAsync(schema);
-
-        var query = queryFactory(client);
-        var queryString = query.ToQueryString();
-        var result = await query.ToListAsync();
-
-        return (result, queryString);
-    }
 }

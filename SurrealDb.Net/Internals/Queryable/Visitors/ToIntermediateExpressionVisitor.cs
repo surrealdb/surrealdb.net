@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -106,7 +106,41 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
             return BindQueryableMethodCall(node);
         }
 
+        if (node.Method.DeclaringType == typeof(QueryableExtensions))
+        {
+            return BindSurrealQueryableMethodCall(node);
+        }
+
         return base.VisitMethodCall(node);
+    }
+
+    private IntermediateExpression BindSurrealQueryableMethodCall(MethodCallExpression node)
+    {
+        if (
+            string.Equals(
+                node.Method.Name,
+                nameof(QueryableExtensions.Explain),
+                StringComparison.Ordinal
+            )
+        )
+        {
+            bool full = node.Arguments[1].ExtractConstant<bool>();
+            return BindExplain(node.Arguments[0], full);
+        }
+
+        throw new NotSupportedException($"The method '{node.Method.Name}' is not supported.");
+    }
+
+    private SelectExpression BindExplain(Expression source, bool full)
+    {
+        var sourceSelect = (SelectExpression)Visit(source);
+        var innerSourceSelect = sourceSelect.WithExplain(full);
+
+        return new SelectExpression(
+            innerSourceSelect.Type,
+            innerSourceSelect,
+            ProjectionExpression.All(innerSourceSelect.Type)
+        );
     }
 
     private IntermediateExpression BindQueryableMethodCall(MethodCallExpression node)
@@ -989,7 +1023,7 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
         return new SelectExpression(
             surrealQueryable.EnumerableElementType,
             new TableExpression(surrealQueryable.FromTable),
-            ExpressionProjectionExpression.All(surrealQueryable.ElementType)
+            ExpressionProjectionExpression.Start(surrealQueryable.ElementType)
         );
     }
 }

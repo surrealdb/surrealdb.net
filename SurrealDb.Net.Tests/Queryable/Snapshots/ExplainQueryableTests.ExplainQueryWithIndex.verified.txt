@@ -1,0 +1,20 @@
+﻿[
+  {
+    Operator: SelectProject,
+    Context: Db,
+    Attributes: {
+      projections: avatar, email, id, password, registered_at, username
+    },
+    Children: [
+      {
+        Operator: IndexScan,
+        Context: Db,
+        Attributes: {
+          access: = 'admin',
+          direction: Forward,
+          index: unique_username
+        }
+      }
+    ]
+  }
+]

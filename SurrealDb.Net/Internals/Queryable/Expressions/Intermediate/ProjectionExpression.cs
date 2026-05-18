@@ -25,6 +25,11 @@ internal abstract class ProjectionExpression : IntermediateExpression
     public abstract ProjectionExpression Unsingle();
 
     public abstract FieldsProjectionExpression ToFieldsProjection();
+
+    public static ProjectionExpression All(Type resultType)
+    {
+        return new AllFieldsProjectionExpression(resultType);
+    }
 }
 
 internal sealed class ExpressionProjectionExpression : ProjectionExpression
@@ -43,7 +48,7 @@ internal sealed class ExpressionProjectionExpression : ProjectionExpression
         Expression = expression;
     }
 
-    public static ExpressionProjectionExpression All(Type resultType)
+    public static ExpressionProjectionExpression Start(Type resultType)
     {
         return new(resultType, canBeSingle: false);
     }
@@ -84,6 +89,29 @@ internal sealed class ExpressionProjectionExpression : ProjectionExpression
     {
         visitor.Visit(Expression);
         return this;
+    }
+}
+
+internal sealed class AllFieldsProjectionExpression : ProjectionExpression
+{
+    public override Expression? InnerExpression { get; }
+
+    public AllFieldsProjectionExpression(Type resultType)
+        : base(resultType, false) { }
+
+    public override ProjectionExpression TrySingle()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override ProjectionExpression Unsingle()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override FieldsProjectionExpression ToFieldsProjection()
+    {
+        throw new NotImplementedException();
     }
 }
 

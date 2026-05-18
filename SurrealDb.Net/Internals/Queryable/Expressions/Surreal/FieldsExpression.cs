@@ -151,7 +151,7 @@ internal sealed class FieldsExpression : SurrealExpression
                         var (nestedFieldName, _) = ReflectionExtensions.GetDatabaseFieldName(p);
                         return nestedFieldName;
                     })
-                    .Order(),
+                    .OrderBy(field => field),
             ];
         }
 

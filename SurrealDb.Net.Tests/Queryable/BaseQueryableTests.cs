@@ -71,4 +71,24 @@ public abstract class BaseQueryableTests
     {
         return new(new SurrealDbQueryProvider<T>(null!, null, null), table);
     }
+
+    protected static async Task<(List<T> Result, string Query)> ExecuteWithSchemaAsync<T>(
+        string connectionString,
+        SurrealSchemaFile schema,
+        Func<SurrealDbClient, IQueryable<T>> queryFactory
+    )
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+        await client.ApplySchemaAsync(schema);
+
+        var query = queryFactory(client);
+        var queryString = query.ToQueryString();
+        var result = await query.ToListAsync();
+
+        return (result, queryString);
+    }
 }
