@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using SurrealDb.Net.Models;
 
 namespace SurrealDb.Net.Internals.Queryable.Expressions.Surreal;
@@ -31,7 +31,8 @@ internal sealed class SelectStatementExpression : SurrealExpression
         OrderingExpression? order,
         LimitExpression? limit,
         StartExpression? start,
-        bool only
+        bool only,
+        ExplainExpression? explain
     )
     {
         Fields = fields;
@@ -42,5 +43,6 @@ internal sealed class SelectStatementExpression : SurrealExpression
         Limit = limit;
         Start = start;
         Only = only;
+        Explain = explain;
     }
 }

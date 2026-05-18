@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -107,6 +107,9 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         var ordering = (OrderingExpression?)Visit(selectExpression.Orders);
         var limit = (LimitExpression?)Visit(selectExpression.Take);
         var start = (StartExpression?)Visit(selectExpression.Skip);
+        var explain = selectExpression.Explain.HasValue
+            ? new ExplainExpression(selectExpression.Explain.Value)
+            : null;
 
         var fieldsIdioms = fields.Fields.Select(f =>
             ((SingleFieldExpression)f).Expression.ToIdiom()
@@ -139,7 +142,8 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                     ordering,
                     limit,
                     start,
-                    false
+                    false,
+                    explain
                 )
             );
 
@@ -151,7 +155,8 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 order: null,
                 limit: null,
                 start: null,
-                selectExpression.SingleValue
+                selectExpression.SingleValue,
+                explain
             );
         }
 
@@ -163,7 +168,8 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             ordering,
             limit,
             start,
-            selectExpression.SingleValue
+            selectExpression.SingleValue,
+            explain
         );
     }
 
@@ -282,6 +288,11 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                     ),
                 ]
             );
+        }
+
+        if (projectionExpression is AllFieldsProjectionExpression)
+        {
+            return new FieldsExpression([new AllFieldExpression()]);
         }
 
         throw new NotSupportedException(
@@ -3050,7 +3061,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                             $"The selector argument '{arg}' is not supported in Enumerable.Select projection."
                         );
                     })
-                    .Order(StringComparer.Ordinal)
+                    .OrderBy(field => field, StringComparer.Ordinal)
                     .ToImmutableArray();
 
                 return new IdiomExpression(
