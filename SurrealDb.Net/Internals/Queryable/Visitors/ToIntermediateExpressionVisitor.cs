@@ -381,9 +381,20 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
         var sourceExpression = Visit(source);
         if (sourceExpression is CustomExpression sourceCustomExpression)
         {
-            // Preserve the top-level SelectMany translation when composed with Select/Where/OrderBy.
-            // The composed operators can still be evaluated in-memory by the provider fallback path.
-            return (IntermediateExpression)sourceCustomExpression.WithReturnType(resultType);
+            // Build a proper "SELECT ... FROM <custom expression>"
+            var elementProjection = ExpressionProjectionExpression.Start(
+                selector.Parameters[0].Type
+            );
+            _sourceExpressionParameters.Add(selector.Parameters[0], elementProjection);
+
+            var innerExpression = Visit(selector.Body);
+            var projection = ExpressionProjectionExpression.From(resultType, innerExpression);
+
+            return new SelectExpression(
+                resultType,
+                new CustomSourceExpression(sourceCustomExpression),
+                projection
+            );
         }
 
         var sourceSelect = (SelectExpression)sourceExpression;
@@ -467,15 +478,14 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
         );
         var arraySubqueryType = genericSubqueryType.MakeArrayType();
 
-        const string memberPropertyName = nameof(FlattenProjector<object>.Values);
+        const string memberPropertyName = nameof(FlattenProjector<>.Values);
 
         var collectionExpression = Visit(collectionSelector.Body);
-        if (
-            TryBuildDeconstructSelectExpression(
-                collectionSelector,
-                out var deconstructSelectExpression
-            )
-        )
+        bool isDeconstruct = TryBuildDeconstructSelectExpression(
+            collectionSelector,
+            out var deconstructSelectExpression
+        );
+        if (isDeconstruct)
         {
             collectionExpression = Visit(deconstructSelectExpression);
         }
@@ -498,7 +508,8 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
             genericSubqueryType,
             memberPropertyName,
             innerQuery,
-            arraySubqueryType
+            arraySubqueryType,
+            flatten: isDeconstruct
         );
     }
 
@@ -566,17 +577,28 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
         var sourceExpression = Visit(source);
         if (sourceExpression is CustomExpression sourceCustomExpression)
         {
-            // Keep SelectMany top-level query shape when composed.
-            return (IntermediateExpression)sourceCustomExpression.WithReturnType(resultType);
+            // Build a proper "SELECT ... FROM <custom expression> WHERE"
+            var elementProjection = ExpressionProjectionExpression.Start(
+                predicate.Parameters[0].Type
+            );
+            _sourceExpressionParameters.Add(predicate.Parameters[0], elementProjection);
+
+            var whereExpression = Visit(predicate.Body);
+
+            return new SelectExpression(
+                resultType,
+                new CustomSourceExpression(sourceCustomExpression),
+                elementProjection
+            ).AppendWhere(whereExpression);
         }
 
         var sourceSelect = (SelectExpression)sourceExpression;
 
         _sourceExpressionParameters.Add(predicate.Parameters[0], sourceSelect.Projection);
 
-        var whereExpression = Visit(predicate.Body);
+        var whereExpressionFromSelect = Visit(predicate.Body);
 
-        return sourceSelect.AppendWhere(whereExpression);
+        return sourceSelect.AppendWhere(whereExpressionFromSelect);
     }
 
     private SelectExpression BindGroup(
@@ -657,19 +679,33 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
         var sourceExpression = Visit(source);
         if (sourceExpression is CustomExpression sourceCustomExpression)
         {
-            // Keep SelectMany top-level query shape when composed.
-            return (IntermediateExpression)sourceCustomExpression.WithReturnType(source.Type);
+            // Build a proper "SELECT ... FROM <custom expression> ORDER BY"
+            var elementProjection = ExpressionProjectionExpression.Start(
+                selector.Parameters[0].Type
+            );
+            _sourceExpressionParameters.Add(selector.Parameters[0], elementProjection);
+
+            var innerExpression = Visit(selector.Body);
+
+            var baseSelect = new SelectExpression(
+                source.Type,
+                new CustomSourceExpression(sourceCustomExpression),
+                elementProjection
+            );
+            return chainable
+                ? baseSelect.AppendOrder(new OrderByInfo(orderType, innerExpression))
+                : baseSelect.WithOrder(new OrderByInfo(orderType, innerExpression));
         }
 
         var sourceSelect = (SelectExpression)sourceExpression;
 
         _sourceExpressionParameters.Add(selector.Parameters[0], sourceSelect.Projection);
 
-        var innerExpression = Visit(selector.Body);
+        var innerExpressionFromSelect = Visit(selector.Body);
 
         return chainable
-            ? sourceSelect.AppendOrder(new OrderByInfo(orderType, innerExpression))
-            : sourceSelect.WithOrder(new OrderByInfo(orderType, innerExpression));
+            ? sourceSelect.AppendOrder(new OrderByInfo(orderType, innerExpressionFromSelect))
+            : sourceSelect.WithOrder(new OrderByInfo(orderType, innerExpressionFromSelect));
     }
 
     private SelectExpression BindTake(Expression source, Expression value)
@@ -705,7 +741,8 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
             typeof(CountProjector<T>),
             nameof(CountProjector<T>.count),
             innerQuery,
-            typeof(CountProjector<T>[])
+            typeof(CountProjector<T>[]),
+            flatten: false
         );
     }
 
@@ -765,7 +802,8 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
             genericSubqueryType,
             memberPropertyName,
             innerQuery,
-            arraySubqueryType
+            arraySubqueryType,
+            flatten: false
         );
     }
 
@@ -868,7 +906,8 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
             genericSubqueryType,
             memberPropertyName,
             innerQuery,
-            arraySubqueryType
+            arraySubqueryType,
+            flatten: false
         );
     }
 
@@ -991,7 +1030,8 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
         Type topLevelProjectionType,
         string exportedPropertyName,
         SelectExpression subqueryInnerQuery,
-        Type subqueryType
+        Type subqueryType,
+        bool flatten
     )
     {
         var subqueryExpression = new SubqueryExpression(subqueryInnerQuery, subqueryType);
@@ -1002,7 +1042,8 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
                 Expression.ArrayIndex(subqueryExpression, Expression.Constant(0)),
                 memberInfo
             ),
-            resultType
+            resultType,
+            flatten
         );
     }
 

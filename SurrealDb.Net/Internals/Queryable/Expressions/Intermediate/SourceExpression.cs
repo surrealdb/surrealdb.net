@@ -50,3 +50,24 @@ internal sealed class SelectSourceExpression : SourceExpression
         return this;
     }
 }
+
+internal sealed class CustomSourceExpression : SourceExpression
+{
+    public CustomExpression Custom { get; }
+
+    public CustomSourceExpression(CustomExpression custom)
+    {
+        Custom = custom;
+    }
+
+    public override SourceExpression MergeProjections(FieldsProjectionExpression fieldsProjection)
+    {
+        throw new NotSupportedException();
+    }
+
+    protected override Expression VisitChildren(ExpressionVisitor visitor)
+    {
+        visitor.Visit(Custom);
+        return this;
+    }
+}

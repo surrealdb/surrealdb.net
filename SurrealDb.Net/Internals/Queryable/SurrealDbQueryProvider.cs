@@ -1,10 +1,6 @@
-﻿using System.Collections;
-using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
-using Dahomey.Cbor;
+﻿using System.Linq.Expressions;
 using Semver;
 using SurrealDb.Net.Internals.Queryable.Visitors;
-using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Internals.Queryable;
 
@@ -76,44 +72,6 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
             return (TResult)result;
         }
 
-        if (
-            TryGetAnonymousEnumerableElementType(typeof(TResult), out _)
-            && TryFindSourceQueryable(expression, out var sourceQueryable)
-        )
-        {
-            await engine.EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
-
-            var (sourceQuery, sourceParameters) = Translate(
-                sourceQueryable!.Expression,
-                engine.CachedVersion
-                    ?? throw new NullReferenceException(
-                        "Cannot detect version of the inner SurrealDB engine."
-                    ),
-                optimizeSelfProjection: true
-            );
-
-            var sourceResponse = await engine
-                .RawQuery(
-                    sourceQuery,
-                    sourceParameters,
-                    _sessionId,
-                    _transactionId,
-                    cancellationToken
-                )
-                .ConfigureAwait(false);
-            sourceResponse.EnsureAllOks();
-
-            var sourceItems = sourceResponse.GetValue<IEnumerable<T>>(0)!;
-
-            var inMemoryQueryable = sourceItems.AsQueryable();
-            var rewrittenExpression = new RootQueryableReplaceVisitor<T>(
-                sourceQueryable,
-                inMemoryQueryable
-            ).Visit(expression)!;
-
-            return inMemoryQueryable.Provider.Execute<TResult>(rewrittenExpression)!;
-        }
-
         await engine.EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
         var (query, parameters) = Translate(
@@ -131,72 +89,7 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
                 .ConfigureAwait(false);
             result.EnsureAllOks();
 
-            try
-            {
-                return result.GetValue<TResult>(0)!;
-            }
-            catch (CborException)
-                when (TryGetFlattenedNestedEnumerableValue(result, out TResult? flattenedValue))
-            {
-                return flattenedValue!;
-            }
-        }
-    }
-
-    private static bool TryGetFlattenedNestedEnumerableValue<TResult>(
-        SurrealDbResponse response,
-        out TResult? value
-    )
-    {
-        value = default;
-
-        var resultType = typeof(TResult);
-        if (
-            !resultType.IsGenericType
-            || resultType.GetGenericTypeDefinition() != typeof(IEnumerable<>)
-        )
-        {
-            return false;
-        }
-
-        var elementType = resultType.GetGenericArguments()[0];
-        var nestedEnumerableType = typeof(IEnumerable<>).MakeGenericType(
-            typeof(IEnumerable<>).MakeGenericType(elementType)
-        );
-
-        try
-        {
-            var getValueMethod = typeof(SurrealDbResponse)
-                .GetMethod(nameof(SurrealDbResponse.GetValue))!
-                .MakeGenericMethod(nestedEnumerableType);
-            var nested = getValueMethod.Invoke(response, [0]);
-            if (nested is not IEnumerable outer)
-            {
-                return false;
-            }
-
-            var listType = typeof(List<>).MakeGenericType(elementType);
-            var flattened = (IList)Activator.CreateInstance(listType)!;
-
-            foreach (var inner in outer)
-            {
-                if (inner is not IEnumerable innerEnumerable)
-                {
-                    return false;
-                }
-
-                foreach (var item in innerEnumerable)
-                {
-                    flattened.Add(item);
-                }
-            }
-
-            value = (TResult)flattened;
-            return true;
-        }
-        catch
-        {
-            return false;
+            return result.GetValue<TResult>(0)!;
         }
     }
 
@@ -235,53 +128,5 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
         );
 
         return (query, surrealExpressionResult.Parameters);
-    }
-
-    private static bool TryGetAnonymousEnumerableElementType(Type resultType, out Type? elementType)
-    {
-        elementType = null;
-
-        if (
-            !resultType.IsGenericType
-            || resultType.GetGenericTypeDefinition() != typeof(IEnumerable<>)
-        )
-        {
-            return false;
-        }
-
-        var candidate = resultType.GetGenericArguments()[0];
-        bool isAnonymous =
-            Attribute.IsDefined(candidate, typeof(CompilerGeneratedAttribute), false)
-            && candidate.Name.Contains("AnonymousType", StringComparison.Ordinal)
-            && candidate.IsGenericType;
-        if (!isAnonymous)
-        {
-            return false;
-        }
-
-        elementType = candidate;
-        return true;
-    }
-
-    private static bool TryFindSourceQueryable(
-        Expression expression,
-        out SurrealDbQueryable<T>? sourceQueryable
-    )
-    {
-        sourceQueryable = expression switch
-        {
-            ConstantExpression { Value: SurrealDbQueryable<T> surrealQueryable } =>
-                surrealQueryable,
-            MethodCallExpression methodCallExpression => methodCallExpression
-                .Arguments.Select(arg =>
-                    TryFindSourceQueryable(arg, out var innerSourceQueryable)
-                        ? innerSourceQueryable
-                        : null
-                )
-                .FirstOrDefault(queryable => queryable is not null),
-            _ => null,
-        };
-
-        return sourceQueryable is not null;
     }
 }

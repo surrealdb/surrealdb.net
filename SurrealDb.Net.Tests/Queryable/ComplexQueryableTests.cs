@@ -165,16 +165,17 @@ public class ComplexQueryableTests : BaseQueryableTests
                     })
         );
 
-        var firstOrderAt = result.Min(item => item.OrderDate);
-        var lastOrderAt = result.Max(item => item.OrderDate);
-
         query
             .Should()
             .Be(
                 """
-                SELECT time::floor(created_at ?? d"0001-01-01T00:00:00.0000000Z", 1d) AS OrderDate, duration::from_nanos(time::nano(created_at ?? d"0001-01-01T00:00:00.0000000Z") % 86400000000000) AS OrderTime FROM orders WHERE time::floor(created_at ?? d"0001-01-01T00:00:00.0000000Z", 1d) >= time::floor(d"0001-01-01T00:00:00.0000000Z", 1d)
+                SELECT time::floor(created_at ?? d"0001-01-01T00:00:00.0000000Z", 1d) AS OrderDate, duration::from_nanos(time::nano(created_at ?? d"0001-01-01T00:00:00.0000000Z") % 86400000000000) AS OrderTime FROM orders WHERE time::floor(created_at ?? d"0001-01-01T00:00:00.0000000Z", 1d) >= d"0001-01-01T00:00:00.0000000Z"
                 """
             );
+
+        var firstOrderAt = result.Min(item => item.OrderDate);
+        var lastOrderAt = result.Max(item => item.OrderDate);
+
         firstOrderAt.Should().BeOnOrBefore(lastOrderAt);
         result.Should().OnlyContain(item => item.OrderTime >= TimeOnly.MinValue);
     }
@@ -192,8 +193,11 @@ public class ComplexQueryableTests : BaseQueryableTests
         query
             .Should()
             .Be(
-                "(SELECT array::flatten(products.{created_at,description,id,name,price}) AS Values FROM orders GROUP ALL)[0].Values"
+                """
+                array::flatten((SELECT array::flatten(products.{created_at,description,id,name,price}) AS Values FROM orders GROUP ALL)[0].Values)
+                """
             );
+
         await Verify(result, _verifySettings);
     }
 
@@ -217,20 +221,12 @@ public class ComplexQueryableTests : BaseQueryableTests
                     .Select(product => new { product.Name, product.Price })
         );
 
-        // TODO : We should get this
         query
             .Should()
             .Be(
                 """
-                SELECT name, price FROM (SELECT array::flatten(products.{created_at,description,id,name,price}) AS Values FROM orders GROUP ALL)[0].Values WHERE price > 100 ORDER BY price
+                SELECT name AS Name, price AS Price FROM array::flatten((SELECT array::flatten(products.{created_at,description,id,name,price}) AS Values FROM orders GROUP ALL)[0].Values) WHERE price > 100 ORDER BY price
                 """
-            );
-
-        // We should not get this
-        query
-            .Should()
-            .Be(
-                "(SELECT array::flatten(products.{created_at,description,id,name,price}) AS Values FROM orders GROUP ALL)[0].Values"
             );
 
         await Verify(result, _verifySettings);
