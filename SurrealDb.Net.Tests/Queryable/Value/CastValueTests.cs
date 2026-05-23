@@ -19,16 +19,17 @@ public class CastValueTests : BaseQueryableTests
     }
 
     [Test]
-    public void EnumToIntUsingParameter()
+    [Arguments(TestEnum.Alpha, 1)]
+    [Arguments(TestEnum.Beta, 2)]
+    public void EnumToIntUsingParameter(TestEnum value, int intValue)
     {
-        TestEnum value = TestEnum.Alpha;
         string query = ToSurql(Posts.Select(p => (int)value));
 
         query
             .Should()
             .Be(
-                """
-                SELECT VALUE 1 FROM post
+                $"""
+                SELECT VALUE {intValue} FROM post
                 """
             );
     }
