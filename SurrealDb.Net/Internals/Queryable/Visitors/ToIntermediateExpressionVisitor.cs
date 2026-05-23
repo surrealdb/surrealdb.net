@@ -404,8 +404,18 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
             // 💡 Ensures correct mapping coming from a "GroupBy" Linq expression
             var keyPropertyInfo = selector
                 .Parameters[0]
-                .Type.GetProperty(nameof(SurrealGrouping<string, string>.Key))!;
+                .Type.GetProperty(nameof(SurrealGrouping<,>.Key))!;
             var g = Expression.MakeMemberAccess(selector.Parameters[0], keyPropertyInfo);
+
+            // 💡 When selector is an anonymous type projection, handle each member separately
+            if (
+                selector.Body is NewExpression { Members: not null } newExpr
+                && newExpr.Type.IsAnonymous()
+            )
+            {
+                return BindAnonymousTypeProjection(sourceSelect, selector, newExpr, resultType);
+            }
+
             var map = new Dictionary<MemberExpression, Expression>
             {
                 { g, ((SelectSourceExpression)sourceSelect.Source).Select.Projection },
@@ -462,6 +472,161 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
 
             return sourceSelect.WithProjection(projection);
         }
+    }
+
+    private SelectExpression BindAnonymousTypeProjection(
+        SelectExpression sourceSelect,
+        LambdaExpression selector,
+        NewExpression newExpr,
+        Type resultType
+    )
+    {
+        // 💡 Key expression from inner grouped subquery
+        var innerSelect = ((SelectSourceExpression)sourceSelect.Source).Select;
+        var keyExpression = innerSelect.Projection.InnerExpression!;
+
+        var gParam = selector.Parameters[0];
+        var keyPropertyInfo = gParam.Type.GetProperty(nameof(SurrealGrouping<,>.Key))!;
+        var gKeyMemberAccess = Expression.MakeMemberAccess(gParam, keyPropertyInfo);
+
+        // Build outer fields; accumulate inner fields to merge
+        var outerFields = new List<FieldProjectionExpression>(newExpr.Members!.Count);
+        var innerFieldsToAdd = new List<FieldProjectionExpression>();
+
+        for (int i = 0; i < newExpr.Members!.Count; i++)
+        {
+            var memberName = newExpr.Members[i].Name;
+            var argExpr = newExpr.Arguments[i];
+
+            if (IsGroupKeyAccess(argExpr, gKeyMemberAccess))
+            {
+                // g.Key → key field expression, present in inner already
+                outerFields.Add(
+                    new FieldProjectionExpression(argExpr.Type, keyExpression, memberName)
+                );
+                continue;
+            }
+
+            if (
+                TryExtractSelectManyFromGrouping(
+                    argExpr,
+                    gParam,
+                    out var collectionFieldExpr,
+                    out _
+                )
+            )
+            {
+                // g.SelectMany(h => h.Field)[.ToHashSet()]
+                // Inner: <array> Field AS memberName
+                // Outer: original expression (will translate to <set> array::flatten(Field) in stage 2)
+                var elementType = collectionFieldExpr!.Type.IsGenericType
+                    ? collectionFieldExpr.Type.GetGenericArguments()[0]
+                    : collectionFieldExpr.Type.GetElementType()!;
+                var arrayType = elementType.MakeArrayType();
+
+                // Add <array> cast field to inner select
+                var toArrayMethod = typeof(Enumerable)
+                    .GetMethods()
+                    .First(m =>
+                        m.Name == nameof(Enumerable.ToArray) && m.GetParameters().Length == 1
+                    )
+                    .MakeGenericMethod(elementType);
+                innerFieldsToAdd.Add(
+                    new FieldProjectionExpression(
+                        arrayType,
+                        Expression.Call(toArrayMethod, collectionFieldExpr),
+                        memberName
+                    )
+                );
+
+                // Outer field uses the original expression (SelectMany/ToHashSet)
+                outerFields.Add(new FieldProjectionExpression(argExpr.Type, argExpr, memberName));
+
+                continue;
+            }
+
+            // Other expressions: pass through as-is
+            outerFields.Add(new FieldProjectionExpression(argExpr.Type, argExpr, memberName));
+        }
+
+        // Merge inner fields into the inner grouped subquery if needed
+        if (innerFieldsToAdd.Count > 0)
+        {
+            var innerProjectionToMerge = new FieldsProjectionExpression(
+                resultType,
+                [.. innerFieldsToAdd]
+            );
+            sourceSelect = sourceSelect.WithSource(
+                sourceSelect.Source.MergeProjections(innerProjectionToMerge)
+            );
+        }
+
+        var outerProjection = new FieldsProjectionExpression(resultType, [.. outerFields]);
+        _sourceExpressionParameters.Add(selector.Parameters[0], outerProjection);
+
+        return sourceSelect.WithProjection(outerProjection);
+    }
+
+    private static bool IsGroupKeyAccess(Expression expression, MemberExpression gKeyMemberAccess)
+    {
+        return expression is MemberExpression memberExpression
+            && memberExpression.Expression == gKeyMemberAccess.Expression
+            && memberExpression.Member == gKeyMemberAccess.Member;
+    }
+
+    private static bool TryExtractSelectManyFromGrouping(
+        Expression expression,
+        ParameterExpression gParam,
+        out Expression? collectionFieldExprression,
+        out bool castToSet
+    )
+    {
+        collectionFieldExprression = null;
+        castToSet = false;
+
+        // Detect: g.SelectMany(h => h.Field).ToHashSet() or g.SelectMany(h => h.Field)
+        var innerExpression = expression;
+
+        // Strip ToHashSet() wrapper
+        if (
+            innerExpression is MethodCallExpression
+            {
+                Method.Name: nameof(Enumerable.ToHashSet),
+                Arguments.Count: 1
+            } toHashSetCall
+        )
+        {
+            castToSet = true;
+            innerExpression = toHashSetCall.Arguments[0];
+        }
+
+        // Match SelectMany(g, h => h.Field)
+        if (
+            innerExpression
+                is MethodCallExpression
+                {
+                    Method.Name: nameof(Enumerable.SelectMany),
+                    Arguments.Count: 2
+                } selectManyCall
+            && selectManyCall.Arguments[0] == gParam
+        )
+        {
+            var lambdaArg = selectManyCall.Arguments[1];
+            LambdaExpression? lambda = lambdaArg switch
+            {
+                LambdaExpression l => l,
+                UnaryExpression { NodeType: ExpressionType.Quote } u => (LambdaExpression)u.Operand,
+                _ => null,
+            };
+
+            if (lambda?.Body is MemberExpression memberBody)
+            {
+                collectionFieldExprression = memberBody;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private CustomExpression BindSelectMany(

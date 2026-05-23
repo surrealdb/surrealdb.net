@@ -22,9 +22,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.1, )",
-        "resolved": "10.0.1",
-        "contentHash": "ISahzLHsHY7vrwqr2p1YWZ+gsxoBRtH7gWRDK8fDUst9pp2He0GiesaqEfeX0V8QMCJM3eNEHGGpnIcPjFo2NQ=="
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "AA/yhzFHNtQZXLdqjzujPy25G8EWwGWsAnxOE2zYSBoT/8QHP6ketN3CToD3DFreO653ipUwnKHo22B8AlBMCw=="
       },
       "System.Reactive": {
         "type": "Transitive",
@@ -88,6 +88,22 @@
           "Microsoft.IO.RecyclableMemoryStream": "3.0.0",
           "System.Reactive": "6.0.0"
         }
+      }
+    },
+    "net10.0/linux-x64": {
+      "Microsoft.DotNet.ILCompiler": {
+        "type": "Direct",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "2H7j1NltkQx04sPWBkUtFrZNBtro7vwsxRtdThP0oDj6Sn3ouGHCQlxATZ4Me2aJE67+KiXMX2V1IHDjt1uIpw==",
+        "dependencies": {
+          "runtime.linux-x64.Microsoft.DotNet.ILCompiler": "10.0.7"
+        }
+      },
+      "runtime.linux-x64.Microsoft.DotNet.ILCompiler": {
+        "type": "Transitive",
+        "resolved": "10.0.7",
+        "contentHash": "bz+Di9NJXvaWTvoma5Pf9JrgFj6MGkbPo9dlWRo+jOHXDEme511jeWVEBWoPdoDe6BjDWRngGi9P9EUBCCgzgw=="
       }
     }
   }

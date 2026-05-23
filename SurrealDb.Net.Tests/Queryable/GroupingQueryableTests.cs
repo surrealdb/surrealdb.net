@@ -121,20 +121,21 @@ public class GroupingQueryableTests : BaseQueryableTests
             );
     }
 
-    // TODO : Project to anonymous type
+    [Test]
+    public void ShouldGroupBySingleFieldAndProjectToAnonymousTyoe()
+    {
+        string query = ToSurql(
+            Users
+                .GroupBy(u => u.Age)
+                .Select(g => new { Age = g.Key, Tags = g.SelectMany(h => h.Tags).ToHashSet() })
+        );
 
-    // [Test]
-    // [Skip("TODO")]
-    // public void ShouldGroupBySingleFieldAndAggregateSumViaProjection()
-    // {
-    //     string query = ToSurql(Posts.GroupBy(p => p.Status).Select(g => g..Sum()));
-    //
-    //     query
-    //         .Should()
-    //         .Be(
-    //             """
-    //             SELECT count() FROM post GROUP BY Status
-    //             """
-    //         );
-    // }
+        query
+            .Should()
+            .Be(
+                """
+                SELECT Age, <set> array::flatten(Tags) AS Tags FROM (SELECT Age, <array> Tags AS Tags FROM user GROUP BY Age)
+                """
+            );
+    }
 }

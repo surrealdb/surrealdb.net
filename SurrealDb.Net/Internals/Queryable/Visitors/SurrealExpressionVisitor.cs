@@ -313,10 +313,22 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         var valueExpression = innerExpression?.ToValue();
         if (valueExpression is not null)
         {
-            var alias = string.IsNullOrWhiteSpace(fieldProjectionExpression.Alias)
+            IdiomExpression? aliasIdiom = string.IsNullOrWhiteSpace(fieldProjectionExpression.Alias)
                 ? null
                 : new IdiomExpression([new FieldPartExpression(fieldProjectionExpression.Alias)]);
-            return new SingleFieldExpression(valueExpression, alias);
+
+            // Suppress redundant alias when field name == alias (e.g. "Age AS Age" → "Age")
+            if (
+                aliasIdiom is not null
+                && valueExpression
+                    is IdiomValueExpression { Idiom.IsSingleFieldPart: true } idiomValue
+                && idiomValue.Idiom.IsSame(aliasIdiom)
+            )
+            {
+                aliasIdiom = null;
+            }
+
+            return new SingleFieldExpression(valueExpression, aliasIdiom);
         }
 
         throw new NotSupportedException(
@@ -3110,14 +3122,41 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         }
         if (node.Method.Name.Equals(nameof(Enumerable.SelectMany), StringComparison.Ordinal))
         {
+            if (node.Arguments.Count == 2)
+            {
+                LambdaExpression? lambda = node.Arguments[1] switch
+                {
+                    LambdaIntermediateExpression lambdaIntermediate =>
+                        lambdaIntermediate.Expression,
+                    LambdaExpression lambdaExpression => lambdaExpression,
+                    UnaryExpression
+                    {
+                        NodeType: ExpressionType.Quote,
+                        Operand: LambdaExpression lambdaExpression
+                    } => lambdaExpression,
+                    _ => null,
+                };
+                if (lambda is not null)
+                {
+                    var fieldValue = Visit(lambda.Body)?.ToValue();
+                    if (fieldValue is null)
+                    {
+                        throw new InvalidCastException(
+                            $"The selector of {node.Method.DeclaringType!.Name}.SelectMany must be a value expression."
+                        );
+                    }
+                    return new FunctionValueExpression("array::flatten", [fieldValue]);
+                }
+            }
+
             var valueExpression = Visit(node.Arguments[0])?.ToValue();
             if (valueExpression is null)
             {
                 throw new InvalidCastException(
-                    $"The first argument of {node.Method.DeclaringType!.Name}.Reverse must be a value expression."
+                    $"The first argument of {node.Method.DeclaringType!.Name}.SelectMany must be a value expression."
                 );
             }
-            return new FunctionValueExpression("array::reverse", [valueExpression]);
+            return new FunctionValueExpression("array::flatten", [valueExpression]);
         }
         if (node.Method.Name.Equals(nameof(Enumerable.Skip), StringComparison.Ordinal))
         {
@@ -3210,7 +3249,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                     $"The first argument of {node.Method.DeclaringType!.Name}.ToArray must be a value expression."
                 );
             }
-            if (valueExpression is IdiomValueExpression)
+            if (valueExpression is IdiomValueExpression && !node.Arguments[0].Type.IsHashSet())
             {
                 return valueExpression;
             }
