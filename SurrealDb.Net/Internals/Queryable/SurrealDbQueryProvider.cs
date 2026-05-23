@@ -106,13 +106,16 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
         ).Bind(intermediateExpression);
         var surrealExpression = (Expressions.Surreal.SurrealExpression)
             surrealExpressionResult.Expression;
-        // TODO : Check and replace "always true" operations
-        // TODO : Check and replace SELECT FROM record ID if operation "== RecordId"
+        // TODO : Check and replace "always true" operations (+ avoid when caching query)
+        var afterToRecordIdExpression = new ToRecordIdExpressionVisitor().Transform(
+            surrealExpression,
+            surrealExpressionResult.Parameters
+        ); // TODO : Avoid when caching query
         int approximatedQueryLength = new ApproximateQueryLengthExpressionVisitor().Approximate(
-            surrealExpression
+            afterToRecordIdExpression
         );
         string query = new QueryGeneratorExpressionVisitor().Translate(
-            surrealExpression,
+            afterToRecordIdExpression,
             approximatedQueryLength
         );
 
