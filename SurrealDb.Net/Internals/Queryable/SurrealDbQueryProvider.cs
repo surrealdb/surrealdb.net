@@ -1,4 +1,6 @@
-﻿using System.Linq.Expressions;
+﻿using System.Collections.Concurrent;
+using System.Collections.Immutable;
+using System.Linq.Expressions;
 using Semver;
 using SurrealDb.Net.Internals.Queryable.Visitors;
 
@@ -92,13 +94,42 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
         }
     }
 
+    private static readonly ConcurrentDictionary<
+        CachedQueryKey,
+        (string Query, HashSet<string> Parameters)
+    > _cachedQueries = new(
+        comparer: new CachedQueryKeyComparer(),
+        capacity: 0,
+        concurrencyLevel: Environment.ProcessorCount * 2
+    );
+
     public (string Query, IReadOnlyDictionary<string, object?> Parameters) Translate(
         Expression expression,
         SemVersion version
     )
     {
+        var (afterCacheExpression, cachedKey) = new CacheQueryExpressionVisitor().Bind(expression);
+
+        if (cachedKey.HasValue && _cachedQueries.TryGetValue(cachedKey.Value, out var cachedQuery))
+        {
+            if (cachedQuery.Parameters.Count > 0)
+            {
+                // Run a simplified Visitor to extract current parameters
+                var parameters = new ExtractParametersExpressionVisitor().Bind(
+                    afterCacheExpression,
+                    cachedQuery.Parameters
+                );
+                return (cachedQuery.Query, parameters);
+            }
+
+            return (cachedQuery.Query, ImmutableDictionary<string, object?>.Empty);
+        }
+
         var (intermediateExpression, numberOfNamedValues, sourceExpressionParameters) =
-            new ToIntermediateExpressionVisitor().Bind(expression);
+            new ToIntermediateExpressionVisitor().Bind(afterCacheExpression);
+
+        bool isQueryCached = cachedKey.HasValue;
+
         var surrealExpressionResult = new SurrealExpressionVisitor(
             sourceExpressionParameters,
             numberOfNamedValues,
@@ -106,18 +137,33 @@ public sealed class SurrealDbQueryProvider<T> : ISurrealDbQueryProvider, IAsyncQ
         ).Bind(intermediateExpression);
         var surrealExpression = (Expressions.Surreal.SurrealExpression)
             surrealExpressionResult.Expression;
-        // TODO : Check and replace "always true" operations (+ avoid when caching query)
-        var afterToRecordIdExpression = new ToRecordIdExpressionVisitor().Transform(
-            surrealExpression,
-            surrealExpressionResult.Parameters
-        ); // TODO : Avoid when caching query
+
+        if (!isQueryCached)
+        {
+            // TODO : Check and replace "always true" operations
+            var afterToRecordIdExpression = new ToRecordIdExpressionVisitor().Transform(
+                surrealExpression,
+                surrealExpressionResult.Parameters
+            );
+
+            surrealExpression = afterToRecordIdExpression;
+        }
+
         int approximatedQueryLength = new ApproximateQueryLengthExpressionVisitor().Approximate(
-            afterToRecordIdExpression
+            surrealExpression
         );
         string query = new QueryGeneratorExpressionVisitor().Translate(
-            afterToRecordIdExpression,
+            surrealExpression,
             approximatedQueryLength
         );
+
+        if (cachedKey.HasValue)
+        {
+            _cachedQueries.TryAdd(
+                cachedKey.Value,
+                (query, surrealExpressionResult.Parameters.Keys.ToHashSet())
+            );
+        }
 
         return (query, surrealExpressionResult.Parameters);
     }
