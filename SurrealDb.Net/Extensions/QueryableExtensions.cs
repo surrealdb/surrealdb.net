@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using SurrealDb.Net.Internals.Constants;
 using SurrealDb.Net.Internals.Queryable;
 using SurrealDb.Net.Models;
@@ -2730,4 +2731,31 @@ public static class QueryableExtensions
     }
 
     #endregion
+
+    #region Cached
+
+    public static IQueryable<TSource> Cached<TSource>(
+        this IQueryable<TSource> source,
+        [CallerMemberName] string memberName = "",
+        [CallerFilePath] string sourceFilePath = "",
+        [CallerLineNumber] int sourceLineNumber = 0
+    )
+    {
+        var methodInfo = typeof(QueryableExtensions)
+            .GetMethod(nameof(Cached))!
+            .MakeGenericMethod(typeof(TSource));
+
+        return source.Provider.CreateQuery<TSource>(
+            Expression.Call(
+                null,
+                methodInfo,
+                source.Expression,
+                Expression.Constant(memberName),
+                Expression.Constant(sourceFilePath),
+                Expression.Constant(sourceLineNumber)
+            )
+        );
+    }
+
+    #endregion-
 }
