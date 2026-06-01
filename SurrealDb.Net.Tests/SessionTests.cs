@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Models.Sessions;
+﻿using SurrealDb.Net.Internals;
+using SurrealDb.Net.Models.Sessions;
 
 namespace SurrealDb.Net.Tests;
 
@@ -14,7 +15,14 @@ public class SessionTests
         await using var client = surrealDbClientGenerator.Create(connectionString);
         bool result = await client.SupportsSession();
 
-        result.Should().BeTrue();
+        if (client.Engine is SurrealDbHttpEngine)
+        {
+            result.Should().BeFalse();
+        }
+        else
+        {
+            result.Should().BeTrue();
+        }
     }
 
     [Test]
@@ -38,6 +46,16 @@ public class SessionTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
         await using var client = surrealDbClientGenerator.Create(connectionString);
+
+        bool supportsSession = await client.SupportsSession();
+        if (client.Engine is SurrealDbHttpEngine)
+        {
+            supportsSession.Should().BeFalse();
+            return;
+        }
+
+        supportsSession.Should().BeTrue();
+
         var result = await client.Sessions();
 
         result.Should().BeEquivalentTo(Array.Empty<Guid>());
@@ -51,6 +69,15 @@ public class SessionTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
         await using var client = surrealDbClientGenerator.Create(connectionString);
+
+        bool supportsSession = await client.SupportsSession();
+        if (client.Engine is SurrealDbHttpEngine)
+        {
+            supportsSession.Should().BeFalse();
+            return;
+        }
+
+        supportsSession.Should().BeTrue();
 
         var session1 = await client.CreateSession();
         var session2 = await client.CreateSession();

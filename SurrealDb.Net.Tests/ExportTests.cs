@@ -1,5 +1,4 @@
-﻿using System.Text;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Semver;
 
 namespace SurrealDb.Net.Tests;
@@ -50,13 +49,14 @@ public class ExportTests
 
     private void UseSnapshotDirectory(SemVersion version)
     {
-        var majorVersion = IsV3Compatible(version) switch
+        string versionFolder = version switch
         {
-            true => 3,
-            false => version.Major,
+            not null when version.Major == 3 && version.Minor >= 1 => "v3.1",
+            not null when IsV3Compatible(version) => "v3",
+            not null => $"v{version.Major}",
+            _ => throw new NullReferenceException(),
         };
 
-        string versionFolder = $"v{majorVersion}";
         _verifySettings.UseDirectory($"Snapshots/{versionFolder}");
     }
 
