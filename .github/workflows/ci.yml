@@ -85,6 +85,7 @@ jobs:
             "v2.4.0",
             "v2.6.1",
             "v3.0.5",
+            "v3.1.2",
           ]
     steps:
       - name: Checkout
@@ -137,7 +138,7 @@ jobs:
           --coverage-output-format cobertura
 
       - name: Upload Coverage
-        if: matrix.surrealdb_version == 'v2.4.0'
+        if: matrix.surrealdb_version == 'v3.1.2'
         uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5
         with:
           fail_ci_if_error: false
@@ -210,4 +211,3 @@ jobs:
       - name: Run lint
         working-directory: ./rust-embedded
         run: cargo clippy -- -Dwarnings
-

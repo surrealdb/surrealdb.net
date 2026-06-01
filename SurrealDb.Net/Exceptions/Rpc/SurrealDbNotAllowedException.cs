@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Helpers;
 
 namespace SurrealDb.Net.Exceptions.Rpc;
