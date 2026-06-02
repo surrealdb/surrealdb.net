@@ -184,7 +184,7 @@ public class WeatherForecastController : ControllerBase
   [HttpGet]
   public Task<IEnumerable<WeatherForecast>> GetAll(CancellationToken cancellationToken)
   {
-    return _db.Select<WeatherForecast>(Table, cancellationToken);
+    return _db.Select<WeatherForecast>(Table).ToListAsync(cancellationToken);
   }
 
   [HttpGet("{id}")]

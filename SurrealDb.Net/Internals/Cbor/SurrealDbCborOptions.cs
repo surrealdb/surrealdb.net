@@ -5,6 +5,7 @@ using SurrealDb.Net.Internals.Cbor.Converters.Spatial;
 using SurrealDb.Net.Internals.Errors;
 using SurrealDb.Net.Internals.Http;
 using SurrealDb.Net.Internals.Ws;
+using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.Response;
 
@@ -49,6 +50,7 @@ public static class SurrealDbCborOptions
         );
         RegisterWsEngineConverters(options);
         options.Registry.ConverterRegistry.RegisterConverter(typeof(Tokens), new TokensConverter());
+        RegisterExplainConverters(options);
 
         return options;
     }
@@ -94,6 +96,14 @@ public static class SurrealDbCborOptions
         options.Registry.ConverterRegistry.RegisterConverter(
             typeof(ISurrealDbWsResponse),
             new SurrealDbWsResponseConverter(options)
+        );
+    }
+
+    private static void RegisterExplainConverters(CborOptions options)
+    {
+        options.Registry.ConverterRegistry.RegisterConverter(
+            typeof(ExplainPlan),
+            new ExplainPlanConverter()
         );
     }
 }

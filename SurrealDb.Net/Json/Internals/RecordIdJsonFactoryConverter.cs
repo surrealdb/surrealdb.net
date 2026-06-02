@@ -24,8 +24,11 @@ internal sealed class RecordIdJsonFactoryConverter : JsonConverterFactory
             return true;
 
         if (
-            typeToConvert.Namespace == ConverterTypeConstants.ModelsNamespace
-            && typeToConvert.Name == "RecordIdOf`1"
+            string.Equals(
+                typeToConvert.Namespace,
+                ConverterTypeConstants.ModelsNamespace,
+                StringComparison.Ordinal
+            ) && string.Equals(typeToConvert.Name, "RecordIdOf`1", StringComparison.Ordinal)
         )
             return true;
 

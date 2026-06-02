@@ -51,7 +51,7 @@ internal sealed class RangeBoundConverter<T> : CborConverterBase<RangeBound<T>>
                 writer.WriteSemanticTag(CborTagConstants.TAG_EXCLUSIVE_BOUND);
                 break;
             default:
-                throw new NotImplementedException("The range bound type is not currently handled.");
+                throw new NotSupportedException("The range bound type is not currently handled.");
         }
 
         _valueConverter.Write(ref writer, value.Value);
