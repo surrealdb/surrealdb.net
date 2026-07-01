@@ -7,6 +7,8 @@
   <ItemGroup>
     <PackageReference Include="Bogus" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!-- Force a patched Microsoft.OpenApi version: 2.0.0 (pulled in by Microsoft.AspNetCore.OpenApi 10.0.7) has a known high severity vulnerability (GHSA-v5pm-xwqc-g5wc) -->
+    <PackageReference Include="Microsoft.OpenApi" VersionOverride="2.9.0" />
     <PackageReference Include="Scalar.AspNetCore" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
   </ItemGroup>
