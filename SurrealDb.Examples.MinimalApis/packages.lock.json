@@ -16,18 +16,24 @@
       },
       "DotNet.ReproducibleBuilds": {
         "type": "Direct",
-        "requested": "[1.2.39, )",
-        "resolved": "1.2.39",
-        "contentHash": "fcFN01tDTIQqDuTwr1jUQK/geofiwjG5DycJQOnC72i1SsLAk1ELe+apBOuZ11UMQG8YKFZG1FgvjZPbqHyatg=="
+        "requested": "[2.0.2, )",
+        "resolved": "2.0.2",
+        "contentHash": "VaHoEN6YHp0jXucxm67vfuRy8zo9ufiKSuaZ4ZudRi8xmWcEFMKxfCsg2nvYNvdISFTURDu+IHqADGh53+Bamw=="
       },
       "Microsoft.AspNetCore.OpenApi": {
         "type": "Direct",
-        "requested": "[9.0.0, )",
-        "resolved": "9.0.0",
-        "contentHash": "FqUK5j1EOPNuFT7IafltZQ3cakqhSwVzH5ZW1MhZDe4pPXs9sJ2M5jom1Omsu+mwF2tNKKlRAzLRHQTZzbd+6Q==",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "vKiAcGXG0BwNVw3bOjjWRLnp9tR18dR7MiwpvC94h0yFS+zfnzGHzS/JmmgwUdRixrGxrlIMRAWrVc+2DfAGlg==",
         "dependencies": {
-          "Microsoft.OpenApi": "1.6.17"
+          "Microsoft.OpenApi": "2.0.0"
         }
+      },
+      "Microsoft.OpenApi": {
+        "type": "Direct",
+        "requested": "[2.9.0, )",
+        "resolved": "2.9.0",
+        "contentHash": "uS2awDkgUvVhd735HEcNcOQdwbIDCAK3V1QzgWoszd/FPDLLVv9eF+fImmdJiGLIKKWJv2DMJQ7OSR9gYLd+uw=="
       },
       "Scalar.AspNetCore": {
         "type": "Direct",
@@ -41,11 +47,6 @@
         "resolved": "7.0.0",
         "contentHash": "rJJony+jsxvpfJM9ZGVxjp0DVpalZv8cAhiMSLW6L2hgUWb7k5qPVuzQHWXtkT8lrG1hQ8vWeR+HUwgCQm9J3A=="
       },
-      "Microsoft.OpenApi": {
-        "type": "Transitive",
-        "resolved": "1.6.17",
-        "contentHash": "Le+kehlmrlQfuDFUt1zZ2dVwrhFQtKREdKBo+rexOwaCoYP0/qpgT9tLxCsZjsgR5Itk1UKPcbgO+FyaNid/bA=="
-      },
       "System.Reactive": {
         "type": "Transitive",
         "resolved": "6.0.0",
@@ -55,8 +56,8 @@
         "type": "Project",
         "dependencies": {
           "ConcurrentHashSet": "[1.3.0, )",
-          "Dahomey.Cbor": "[1.26.1, )",
-          "Microsoft.AspNetCore.JsonPatch.SystemTextJson": "[10.0.1, )",
+          "Dahomey.Cbor": "[1.26.3, )",
+          "Microsoft.AspNetCore.JsonPatch.SystemTextJson": "[10.0.7, )",
           "Microsoft.IO.RecyclableMemoryStream": "[3.0.1, )",
           "Microsoft.Spatial": "[7.22.0, )",
           "Semver": "[3.0.0, )",
@@ -71,15 +72,15 @@
       },
       "Dahomey.Cbor": {
         "type": "CentralTransitive",
-        "requested": "[1.26.1, )",
-        "resolved": "1.26.1",
-        "contentHash": "zSCSf5mAm8Dl15pvKbGjbL7J4Xf7d6vn4InbFQJaEzzM7mfg6sz6iak8atZQ3cERtu2I5WoNgIinLddmDi7wug=="
+        "requested": "[1.26.3, )",
+        "resolved": "1.26.3",
+        "contentHash": "E7QwyTY9Z6uAkshpyzJ+d63ZE4r4Hx8s+qdbN1Weo5nuFa5PPJzH3q3TvF9hpIZSQ9Aj7gTyxRD4yxbVAlAIuQ=="
       },
       "Microsoft.AspNetCore.JsonPatch.SystemTextJson": {
         "type": "CentralTransitive",
-        "requested": "[10.0.1, )",
-        "resolved": "10.0.1",
-        "contentHash": "JgE1YPUhIWN8OMEHhExKzb2BnR3As884ued0yNqrORidJ9haK9DRBuDFN/PZj8mjgZsPjmnWd3vYiW8WqeUbdQ=="
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "etq8h1XwDw0x5a+6ysEDR4vO3Ktqh29TTswkIbv3WEyIXbrtbRYRb3b+HMr7JdySMFn7utIbFla938iNhxR/0w=="
       },
       "Microsoft.IO.RecyclableMemoryStream": {
         "type": "CentralTransitive",
