@@ -47,6 +47,43 @@ public class ComplexQueryableTests : BaseQueryableTests
 
     [Test]
     [WebsocketConnectionStringFixtureGenerator]
+    public async Task ShouldSelectRelatedProductNamesForUserThroughSharedPurchases(
+        string connectionString
+    )
+    {
+        var (result, query) = await ExecuteWithSchemaAsync(
+            connectionString,
+            SurrealSchemaFile.Store,
+            client =>
+                client
+                    .Select<StoreUser>()
+                    .Where(user => user.Name == "Frank Founder")
+                    .Select(user =>
+                        user.Out<Purchased, StoreProduct>()
+                            .SelectMany(p =>
+                                p.In<Purchased, StoreUser>()
+                                    .SelectMany(u =>
+                                        u.Out<Purchased, StoreProduct>()
+                                            .Select(p => p.Name)
+                                            .Distinct()
+                                            .Order()
+                                    )
+                            )
+                    )
+        );
+        query
+            .Should()
+            .Be(
+                """
+                SELECT VALUE array::flatten(array::flatten(array::sort::asc(array::distinct($this->purchased->product<-purchased<-user->purchased->product.name)))) FROM user WHERE name == "Frank Founder"
+                """
+            );
+
+        await Verify(result, _verifySettings);
+    }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
     public async Task ShouldGetFullOrdersSortedDescending(string connectionString)
     {
         var (result, query) = await ExecuteWithSchemaAsync(

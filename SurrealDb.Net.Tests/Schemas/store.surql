@@ -92,3 +92,32 @@ CREATE orders:7 SET user = user:frank, products = [product:laptop, product:monit
 CREATE orders:8 SET user = user:bob, products = [product:book, product:headphones], total = 169.98;
 CREATE orders:9 SET user = user:charlie, products = [product:usb_hub, product:external_ssd], total = 169.98;
 CREATE orders:10 SET user = user:diana, products = [product:keyboard, product:mouse, product:book], total = 139.97;
+
+
+DEFINE TABLE purchased TYPE RELATION IN user OUT product SCHEMAFULL
+    PERMISSIONS
+        FOR select, create, update, delete WHERE $auth.id != NONE;
+
+DEFINE FIELD quantity ON purchased TYPE int DEFAULT 1;
+DEFINE FIELD order ON purchased TYPE option<record<orders>>;
+DEFINE FIELD purchased_at ON purchased TYPE datetime DEFAULT time::now();
+
+RELATE user:alice->purchased->product:book SET quantity = 1, order = orders:1;
+RELATE user:bob->purchased->product:book SET quantity = 1, order = orders:2;
+RELATE user:bob->purchased->product:laptop SET quantity = 1, order = orders:2;
+RELATE user:charlie->purchased->product:mouse SET quantity = 1, order = orders:3;
+RELATE user:charlie->purchased->product:keyboard SET quantity = 1, order = orders:3;
+RELATE user:diana->purchased->product:monitor SET quantity = 1, order = orders:4;
+RELATE user:alice->purchased->product:headphones SET quantity = 1, order = orders:5;
+RELATE user:alice->purchased->product:usb_hub SET quantity = 1, order = orders:5;
+RELATE user:eve->purchased->product:external_ssd SET quantity = 1, order = orders:6;
+RELATE user:eve->purchased->product:mouse SET quantity = 1, order = orders:6;
+RELATE user:frank->purchased->product:laptop SET quantity = 1, order = orders:7;
+RELATE user:frank->purchased->product:monitor SET quantity = 1, order = orders:7;
+RELATE user:frank->purchased->product:keyboard SET quantity = 1, order = orders:7;
+RELATE user:bob->purchased->product:headphones SET quantity = 1, order = orders:8;
+RELATE user:charlie->purchased->product:usb_hub SET quantity = 1, order = orders:9;
+RELATE user:charlie->purchased->product:external_ssd SET quantity = 1, order = orders:9;
+RELATE user:diana->purchased->product:keyboard SET quantity = 1, order = orders:10;
+RELATE user:diana->purchased->product:mouse SET quantity = 1, order = orders:10;
+RELATE user:diana->purchased->product:book SET quantity = 1, order = orders:10;

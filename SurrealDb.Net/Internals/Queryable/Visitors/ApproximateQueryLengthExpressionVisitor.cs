@@ -315,6 +315,9 @@ internal sealed class ApproximateQueryLengthExpressionVisitor : ExpressionVisito
             case RepeatRecursePartExpression:
                 _length += 2; // ".@"
                 break;
+            case GraphPartExpression graphPart:
+                _length += graphPart.EdgeTable.Length + graphPart.NodeTable.Length + 4;
+                break;
             case WherePartExpression wherePart:
                 _length += 8; // "[WHERE " + "]"
                 Visit(wherePart.Value);

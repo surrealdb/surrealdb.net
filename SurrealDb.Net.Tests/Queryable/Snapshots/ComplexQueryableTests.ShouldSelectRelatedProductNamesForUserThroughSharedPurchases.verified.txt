@@ -1,0 +1,12 @@
+[
+  [
+    Book,
+    External SSD,
+    Headphones,
+    Keyboard,
+    Laptop,
+    Monitor,
+    Mouse,
+    USB Hub
+  ]
+]

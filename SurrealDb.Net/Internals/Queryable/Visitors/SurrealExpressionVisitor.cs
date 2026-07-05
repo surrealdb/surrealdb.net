@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -21,6 +21,8 @@ namespace SurrealDb.Net.Internals.Queryable.Visitors;
 internal sealed class SurrealExpressionVisitor : ExpressionVisitor
 {
     private readonly Dictionary<ParameterExpression, Expression> _sourceExpressionParameters;
+    private readonly Dictionary<ParameterExpression, Expression> _graphSourceExpressionParameters =
+    [];
     private readonly Dictionary<string, object?> _parameters;
     private readonly Dictionary<string, object?> _recordIdParameters = [];
     private readonly SemVersion _surrealVersion;
@@ -910,6 +912,37 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         if (source is ParameterExpression parameterExpression)
         {
             if (
+                _graphSourceExpressionParameters.TryGetValue(
+                    parameterExpression,
+                    out var graphSourceExpression
+                )
+                && graphSourceExpression != node.Expression
+            )
+            {
+                var resolvedGraphSource = graphSourceExpression
+                    is ValueExpression
+                        or IdiomExpression
+                    ? graphSourceExpression
+                    : Visit(graphSourceExpression);
+                if (resolvedGraphSource is ValueExpression graphSourceValueExpression)
+                {
+                    return new IdiomExpression(
+                        [
+                            new StartPartExpression(graphSourceValueExpression),
+                            new FieldPartExpression(fieldName),
+                        ]
+                    );
+                }
+
+                if (resolvedGraphSource is IdiomExpression graphSourceIdiomExpression)
+                {
+                    return new IdiomExpression(
+                        [.. graphSourceIdiomExpression.Parts, new FieldPartExpression(fieldName)]
+                    );
+                }
+            }
+
+            if (
                 parameterExpression.Type.IsAnonymous()
                 && _sourceExpressionParameters.TryGetValue(
                     parameterExpression,
@@ -1476,6 +1509,15 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             return BindSurrealDbFunctionMethodCall(node, surrealDbFunctionAttribute);
         }
 
+        if (
+            typeof(GraphQueryableExtensions).Equals(node.Method.DeclaringType)
+            && node.Method.IsGenericMethod
+            && node.Arguments.Count == 1
+        )
+        {
+            return BindGraphTraversalMethodCall(node);
+        }
+
         // TODO : Dictionary?
         if (node.Method.DeclaringType == typeof(string))
         {
@@ -1788,6 +1830,81 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             .ToImmutableArray();
 
         return new FunctionValueExpression(functionName, parameters);
+    }
+
+    private Surreal.ValueExpression BindGraphTraversalMethodCall(MethodCallExpression node)
+    {
+        var sourceExpression = Visit(node.Arguments[0]);
+        Surreal.ValueExpression? sourceValue = ToGraphSourceValueExpression(sourceExpression);
+        if (sourceValue is not IdiomValueExpression sourceIdiom)
+        {
+            throw new InvalidCastException(
+                $"The source argument of {node.Method.Name} must be an idiom expression."
+            );
+        }
+
+        var genericArguments = node.Method.GetGenericArguments();
+        var edgeTable = GetTableName(genericArguments[0]);
+        var nodeTable = GetTableName(genericArguments[1]);
+        var direction = node.Method.Name switch
+        {
+            nameof(GraphQueryableExtensions.Out) => GraphDirection.Out,
+            nameof(GraphQueryableExtensions.In) => GraphDirection.In,
+            _ => throw new NotSupportedException(
+                $"Graph traversal method {node.Method.Name} is not supported."
+            ),
+        };
+
+        return IdiomExpression
+            .Chain(sourceIdiom.Idiom, new GraphPartExpression(direction, edgeTable, nodeTable))
+            .ToValue();
+    }
+
+    private Surreal.ValueExpression? ToGraphSourceValueExpression(Expression? expression)
+    {
+        if (expression is ParameterExpression parameterExpression)
+        {
+            if (
+                _graphSourceExpressionParameters.TryGetValue(
+                    parameterExpression,
+                    out var sourceExpression
+                )
+                && sourceExpression != expression
+            )
+            {
+                return ToGraphSourceValueExpression(Visit(sourceExpression));
+            }
+
+            var parameterLevel = _parametersNestedLevels.GetValueOrDefault(
+                parameterExpression,
+                _currentNestedSelectLevel
+            );
+
+            if (_currentNestedSelectLevel == parameterLevel)
+            {
+                return new IdiomExpression(
+                    [new StartPartExpression(new ParameterValueExpression("this"))]
+                ).ToValue();
+            }
+
+            var parentsParts = Enumerable
+                .Range(0, _currentNestedSelectLevel - parameterLevel)
+                .Select<int, PartExpression>(index =>
+                    index == 0
+                        ? new StartPartExpression(new ParameterValueExpression("parent"))
+                        : new FieldPartExpression("$parent")
+                );
+
+            return new IdiomExpression([.. parentsParts]).ToValue();
+        }
+
+        return expression?.ToValue();
+    }
+
+    private static string GetTableName(Type type)
+    {
+        var tableAttribute = type.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.TableAttribute>();
+        return string.IsNullOrWhiteSpace(tableAttribute?.Name) ? type.Name : tableAttribute.Name;
     }
 
     private Expression BindStringMethodCall(MethodCallExpression node)
@@ -3113,9 +3230,82 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
 
             if (sourceExpression is IdiomExpression)
             {
+                LambdaExpression? lambda = node.Arguments[1] switch
+                {
+                    LambdaIntermediateExpression lambdaIntermediate =>
+                        lambdaIntermediate.Expression,
+                    LambdaExpression lambdaExpression => lambdaExpression,
+                    UnaryExpression
+                    {
+                        NodeType: ExpressionType.Quote,
+                        Operand: LambdaExpression lambdaExpression,
+                    } => lambdaExpression,
+                    _ => null,
+                };
+                if (lambda is not null)
+                {
+                    bool addedSourceParameter = _graphSourceExpressionParameters.TryAdd(
+                        lambda.Parameters[0],
+                        sourceExpression
+                    );
+                    try
+                    {
+                        var selectedValue = Visit(lambda.Body)?.ToValue();
+                        if (selectedValue is not null)
+                        {
+                            return selectedValue;
+                        }
+                    }
+                    finally
+                    {
+                        if (addedSourceParameter)
+                        {
+                            _graphSourceExpressionParameters.Remove(lambda.Parameters[0]);
+                        }
+                    }
+                }
+
                 throw new InvalidCastException(
                     $"The selector of {node.Method.DeclaringType!.Name}.Select is not supported for idiom expressions."
                 );
+            }
+
+            if (sourceExpression is IdiomValueExpression)
+            {
+                LambdaExpression? lambda = node.Arguments[1] switch
+                {
+                    LambdaIntermediateExpression lambdaIntermediate =>
+                        lambdaIntermediate.Expression,
+                    LambdaExpression lambdaExpression => lambdaExpression,
+                    UnaryExpression
+                    {
+                        NodeType: ExpressionType.Quote,
+                        Operand: LambdaExpression lambdaExpression,
+                    } => lambdaExpression,
+                    _ => null,
+                };
+                if (lambda is not null)
+                {
+                    bool addedSourceParameter = _graphSourceExpressionParameters.TryAdd(
+                        lambda.Parameters[0],
+                        sourceExpression
+                    );
+                    try
+                    {
+                        var selectedValue = Visit(lambda.Body)?.ToValue();
+                        if (selectedValue is not null)
+                        {
+                            return selectedValue;
+                        }
+                    }
+                    finally
+                    {
+                        if (addedSourceParameter)
+                        {
+                            _graphSourceExpressionParameters.Remove(lambda.Parameters[0]);
+                        }
+                    }
+                }
             }
 
             return base.VisitMethodCall(node);
@@ -3138,7 +3328,23 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 };
                 if (lambda is not null)
                 {
-                    var fieldValue = Visit(lambda.Body)?.ToValue();
+                    bool addedSourceParameter = _graphSourceExpressionParameters.TryAdd(
+                        lambda.Parameters[0],
+                        node.Arguments[0]
+                    );
+                    ValueExpression? fieldValue;
+                    try
+                    {
+                        fieldValue = Visit(lambda.Body)?.ToValue();
+                    }
+                    finally
+                    {
+                        if (addedSourceParameter)
+                        {
+                            _graphSourceExpressionParameters.Remove(lambda.Parameters[0]);
+                        }
+                    }
+
                     if (fieldValue is null)
                     {
                         throw new InvalidCastException(

@@ -80,13 +80,41 @@ internal sealed class WherePartExpression : PartExpression
     }
 }
 
-internal sealed class GraphPartExpression : PartExpression
+internal sealed class GraphPartExpression : PartExpression, IPrintableExpression
 {
-    // TODO
-    private GraphPartExpression()
+    public GraphDirection Direction { get; }
+    public string EdgeTable { get; }
+    public string NodeTable { get; }
+
+    public GraphPartExpression(GraphDirection direction, string edgeTable, string nodeTable)
     {
-        throw new NotImplementedException();
+        Direction = direction;
+        EdgeTable = edgeTable;
+        NodeTable = nodeTable;
     }
+
+    public void AppendTo(StringBuilder stringBuilder)
+    {
+        if (Direction == GraphDirection.Out)
+        {
+            stringBuilder.Append("->");
+            stringBuilder.Append(EdgeTable);
+            stringBuilder.Append("->");
+            stringBuilder.Append(NodeTable);
+            return;
+        }
+
+        stringBuilder.Append("<-");
+        stringBuilder.Append(EdgeTable);
+        stringBuilder.Append("<-");
+        stringBuilder.Append(NodeTable);
+    }
+}
+
+internal enum GraphDirection
+{
+    Out,
+    In,
 }
 
 internal sealed class ValuePartExpression : PartExpression
