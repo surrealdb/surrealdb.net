@@ -15,7 +15,6 @@ using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Cbor;
 using SurrealDb.Net.Internals.DependencyInjection;
 using SurrealDb.Net.Internals.Extensions;
-using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Models.LiveQuery;
 using SurrealDb.Net.Internals.Stream;
 using SurrealDb.Net.Models;

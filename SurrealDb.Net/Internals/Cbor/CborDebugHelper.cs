@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace SurrealDb.Net.Internals.Helpers;
+namespace SurrealDb.Net.Internals.Cbor;
 
 internal static class CborDebugHelper
 {

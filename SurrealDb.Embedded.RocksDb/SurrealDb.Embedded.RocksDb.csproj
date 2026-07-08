@@ -30,7 +30,7 @@
     <Compile Include="..\SurrealDb.Net\Internals\Extensions\StringExtensions.cs" Link="Internals\Extensions\StringExtensions.cs" />
     <Compile Include="..\SurrealDb.Net\Internals\Extensions\SurrealDbLoggerExtensions.cs" Link="Internals\Extensions\SurrealDbLoggerExtensions.cs" />
     <Compile Include="..\SurrealDb.Net\Internals\Stream\MemoryStreamProvider.cs" Link="Internals\Stream\MemoryStreamProvider.cs" />
-    <Compile Include="..\SurrealDb.Net\Internals\Helpers\CborDebugHelper.cs" Link="Internals\Helpers\CborDebugHelper.cs" />
+    <Compile Include="..\SurrealDb.Net\Internals\Cbor\CborDebugHelper.cs" Link="Internals\Cbor\CborDebugHelper.cs" />
     <Compile Include="..\SurrealDb.Net\Internals\Sessions\SessionInfo.cs" Link="Internals\Sessions\SessionInfo.cs" />
   </ItemGroup>
 
