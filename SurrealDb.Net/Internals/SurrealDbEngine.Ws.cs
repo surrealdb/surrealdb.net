@@ -164,102 +164,111 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 Observable.FromAsync(
                     async (cancellationToken) =>
                     {
-#if DEBUG
+                        // 💡 A failure to process a single message (e.g. an unexpected CBOR payload)
+                        // must not terminate the underlying Rx subscription,
+                        // otherwise all subsequent responses would be silently dropped
+                        // and every pending request would end up in timeout.
                         try
                         {
-#endif
-                        ISurrealDbWsResponse? response = null;
+                            ISurrealDbWsResponse? response = null;
 
-                        if (message.MessageType == WebSocketMessageType.Binary)
-                        {
-                            using var stream =
-                                message.Stream
-                                ?? MemoryStreamProvider.MemoryStreamManager.GetStream(
-                                    message.Binary!
-                                );
-
-                            if (
-                                _surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug)
-                                == true
-                            )
+                            if (message.MessageType == WebSocketMessageType.Binary)
                             {
-                                string cborData = CborDebugHelper.CborBinaryToHexa(stream);
-                                _surrealDbLoggerFactory?.Serialization?.LogSerializationDataDeserialized(
-                                    cborData
-                                );
-                            }
+                                using var stream =
+                                    message.Stream
+                                    ?? MemoryStreamProvider.MemoryStreamManager.GetStream(
+                                        message.Binary!
+                                    );
 
-                            response = await CborSerializer
-                                .DeserializeAsync<ISurrealDbWsResponse>(
-                                    stream,
-                                    GetCborOptions(),
-                                    cancellationToken
+                                if (
+                                    _surrealDbLoggerFactory?.Serialization?.IsEnabled(
+                                        LogLevel.Debug
+                                    ) == true
                                 )
-                                .ConfigureAwait(false);
-                        }
-
-                        if (response is SurrealDbWsLiveResponse surrealDbWsLiveResponse)
-                        {
-                            var liveQueryUuid = surrealDbWsLiveResponse.Result.Id;
-
-                            if (
-                                _liveQueryChannelSubscriptionsPerQuery.TryGetValue(
-                                    liveQueryUuid,
-                                    out var liveQueryChannelSubscriptions
-                                )
-                            )
-                            {
-                                var tasks = liveQueryChannelSubscriptions.Select(liveQueryChannel =>
                                 {
-                                    return liveQueryChannel.WriteAsync(surrealDbWsLiveResponse);
-                                });
+                                    string cborData = CborDebugHelper.CborBinaryToHexa(stream);
+                                    _surrealDbLoggerFactory?.Serialization?.LogSerializationDataDeserialized(
+                                        cborData
+                                    );
+                                }
 
-                                await Task.WhenAll(tasks).ConfigureAwait(false);
+                                response = await CborSerializer
+                                    .DeserializeAsync<ISurrealDbWsResponse>(
+                                        stream,
+                                        GetCborOptions(),
+                                        cancellationToken
+                                    )
+                                    .ConfigureAwait(false);
                             }
 
-                            return;
-                        }
-
-                        if (
-                            response is ISurrealDbWsStandardResponse surrealDbWsStandardResponse
-#if NET9_0_OR_GREATER
-                            && _responseTasks.TryRemove(
-                                surrealDbWsStandardResponse.Id,
-                                out var responseTaskCompletionSource
-                            )
-#else
-                            && _responseTaskHandler.TryRemove(
-                                surrealDbWsStandardResponse.Id,
-                                out var responseTaskCompletionSource
-                            )
-#endif
-                        )
-                        {
-                            switch (response)
+                            if (response is SurrealDbWsLiveResponse surrealDbWsLiveResponse)
                             {
-                                case SurrealDbWsOkResponse okResponse:
-                                    responseTaskCompletionSource.SetResult(okResponse);
-                                    break;
-                                case SurrealDbWsErrorResponse errorResponse:
-                                    responseTaskCompletionSource.SetException(
-                                        errorResponse.Error.ToException()
+                                var liveQueryUuid = surrealDbWsLiveResponse.Result.Id;
+
+                                if (
+                                    _liveQueryChannelSubscriptionsPerQuery.TryGetValue(
+                                        liveQueryUuid,
+                                        out var liveQueryChannelSubscriptions
+                                    )
+                                )
+                                {
+                                    var tasks = liveQueryChannelSubscriptions.Select(
+                                        liveQueryChannel =>
+                                        {
+                                            return liveQueryChannel.WriteAsync(
+                                                surrealDbWsLiveResponse
+                                            );
+                                        }
                                     );
-                                    break;
-                                default:
-                                    responseTaskCompletionSource.SetException(
-                                        new UnknownResponseTypeException()
-                                    );
-                                    break;
+
+                                    await Task.WhenAll(tasks).ConfigureAwait(false);
+                                }
+
+                                return;
                             }
-                        }
-#if DEBUG
+
+                            if (
+                                response is ISurrealDbWsStandardResponse surrealDbWsStandardResponse
+#if NET9_0_OR_GREATER
+                                && _responseTasks.TryRemove(
+                                    surrealDbWsStandardResponse.Id,
+                                    out var responseTaskCompletionSource
+                                )
+#else
+                                && _responseTaskHandler.TryRemove(
+                                    surrealDbWsStandardResponse.Id,
+                                    out var responseTaskCompletionSource
+                                )
+#endif
+                            )
+                            {
+                                switch (response)
+                                {
+                                    case SurrealDbWsOkResponse okResponse:
+                                        responseTaskCompletionSource.SetResult(okResponse);
+                                        break;
+                                    case SurrealDbWsErrorResponse errorResponse:
+                                        responseTaskCompletionSource.SetException(
+                                            errorResponse.Error.ToException()
+                                        );
+                                        break;
+                                    default:
+                                        responseTaskCompletionSource.SetException(
+                                            new UnknownResponseTypeException()
+                                        );
+                                        break;
+                                }
+                            }
                         }
                         catch (Exception ex)
                         {
+#if DEBUG
                             Debug.WriteLine(ex.Message);
-                            throw;
-                        }
 #endif
+                            _surrealDbLoggerFactory?.Connection?.LogReceivedMessageProcessingFailed(
+                                ex
+                            );
+                        }
                     }
                 )
             )
