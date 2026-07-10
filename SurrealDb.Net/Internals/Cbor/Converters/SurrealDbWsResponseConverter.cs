@@ -66,7 +66,15 @@ internal sealed class SurrealDbWsResponseConverter : CborConverterBase<ISurrealD
 
             if (key.SequenceEqual("session"u8))
             {
-                session = _guidConverter.Read(ref reader);
+                if (reader.GetCurrentDataItemType() == CborDataItemType.Null)
+                {
+                    reader.ReadNull();
+                    session = null;
+                }
+                else
+                {
+                    session = _guidConverter.Read(ref reader);
+                }
                 continue;
             }
 
