@@ -309,4 +309,3 @@ Note that the support for .NET standard 2.1 will be maintained until further not
 
 - [Contributing guidelines](./CONTRIBUTING.md)
 - [Setup the project for contributions](./GET_STARTED.md)
-
