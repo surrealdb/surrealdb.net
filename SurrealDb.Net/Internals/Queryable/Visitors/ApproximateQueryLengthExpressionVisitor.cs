@@ -317,6 +317,19 @@ internal sealed class ApproximateQueryLengthExpressionVisitor : ExpressionVisito
                 break;
             case GraphPartExpression graphPart:
                 _length += graphPart.EdgeTable.Length + graphPart.NodeTable.Length + 4;
+                if (graphPart.EdgeWhere is not null)
+                {
+                    _length += " WHERE ()".Length;
+                    Visit(graphPart.EdgeWhere);
+                }
+                break;
+            case GraphEdgePartExpression graphEdgePart:
+                _length += graphEdgePart.EdgeTable.Length + 2;
+                if (graphEdgePart.EdgeWhere is not null)
+                {
+                    _length += " WHERE ()".Length;
+                    Visit(graphEdgePart.EdgeWhere);
+                }
                 break;
             case WherePartExpression wherePart:
                 _length += 8; // "[WHERE " + "]"
@@ -325,6 +338,10 @@ internal sealed class ApproximateQueryLengthExpressionVisitor : ExpressionVisito
             case ValuePartExpression valuePart:
                 _length += 2; // "[" + "]"
                 Visit(valuePart.Value);
+                break;
+            case ObjectPartExpression objectPart:
+                _length += 1; // "."
+                Visit(objectPart.Value);
                 break;
             case StartPartExpression startPart:
                 Visit(startPart.Value);
@@ -411,6 +428,17 @@ internal sealed class ApproximateQueryLengthExpressionVisitor : ExpressionVisito
             // Composite value expressions
             case IdiomValueExpression idiomValue:
                 Visit(idiomValue.Idiom);
+                break;
+            case GraphTraversalValueExpression graphTraversal:
+                _length += graphTraversal.FlattenDepth * "array::flatten()".Length;
+                Visit(graphTraversal.Idiom);
+                break;
+            case EdgeIdiomValueExpression edgeIdiom:
+                Visit(edgeIdiom.Idiom);
+                break;
+            case DelayedFlattenValueExpression delayedFlatten:
+                _length += delayedFlatten.FlattenDepth * "array::flatten()".Length;
+                Visit(delayedFlatten.Value);
                 break;
             case UnaryValueExpression unary:
                 _length += GetOperatorLength(unary.Operator);

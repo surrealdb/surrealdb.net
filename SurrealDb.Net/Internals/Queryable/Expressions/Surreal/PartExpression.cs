@@ -80,34 +80,47 @@ internal sealed class WherePartExpression : PartExpression
     }
 }
 
-internal sealed class GraphPartExpression : PartExpression, IPrintableExpression
+internal sealed class GraphPartExpression : PartExpression
 {
     public GraphDirection Direction { get; }
     public string EdgeTable { get; }
     public string NodeTable { get; }
+    public ValueExpression? EdgeWhere { get; }
 
-    public GraphPartExpression(GraphDirection direction, string edgeTable, string nodeTable)
+    public GraphPartExpression(
+        GraphDirection direction,
+        string edgeTable,
+        string nodeTable,
+        ValueExpression? edgeWhere = null
+    )
     {
         Direction = direction;
         EdgeTable = edgeTable;
         NodeTable = nodeTable;
+        EdgeWhere = edgeWhere;
     }
 
-    public void AppendTo(StringBuilder stringBuilder)
+    public GraphPartExpression WithEdgeWhere(ValueExpression edgeWhere)
     {
-        if (Direction == GraphDirection.Out)
-        {
-            stringBuilder.Append("->");
-            stringBuilder.Append(EdgeTable);
-            stringBuilder.Append("->");
-            stringBuilder.Append(NodeTable);
-            return;
-        }
+        return new GraphPartExpression(Direction, EdgeTable, NodeTable, edgeWhere);
+    }
+}
 
-        stringBuilder.Append("<-");
-        stringBuilder.Append(EdgeTable);
-        stringBuilder.Append("<-");
-        stringBuilder.Append(NodeTable);
+internal sealed class GraphEdgePartExpression : PartExpression
+{
+    public GraphDirection Direction { get; }
+    public string EdgeTable { get; }
+    public ValueExpression? EdgeWhere { get; }
+
+    public GraphEdgePartExpression(
+        GraphDirection direction,
+        string edgeTable,
+        ValueExpression? edgeWhere = null
+    )
+    {
+        Direction = direction;
+        EdgeTable = edgeTable;
+        EdgeWhere = edgeWhere;
     }
 }
 
@@ -122,6 +135,16 @@ internal sealed class ValuePartExpression : PartExpression
     public ValueExpression Value { get; }
 
     public ValuePartExpression(ValueExpression value)
+    {
+        Value = value;
+    }
+}
+
+internal sealed class ObjectPartExpression : PartExpression
+{
+    public ObjectValueExpression Value { get; }
+
+    public ObjectPartExpression(ObjectValueExpression value)
     {
         Value = value;
     }

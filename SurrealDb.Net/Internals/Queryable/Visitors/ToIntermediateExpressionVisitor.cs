@@ -3,6 +3,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Dahomey.Cbor.Util;
+using SurrealDb.Net;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Queryable.Expressions.Intermediate;
 using SurrealDb.Net.Internals.Queryable.Expressions.Intermediate.Projectors;
@@ -100,6 +101,11 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
 
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
+        if (node.Method.DeclaringType == typeof(GraphQueryableExtensions))
+        {
+            return node;
+        }
+
         // TODO
         if (node.Method.DeclaringType == typeof(System.Linq.Queryable))
         {
@@ -650,9 +656,26 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
             collectionSelector,
             out var deconstructSelectExpression
         );
+        bool isGraphTraversal = ContainsGraphTraversal(collectionSelector.Body);
         if (isDeconstruct)
         {
             collectionExpression = Visit(deconstructSelectExpression);
+        }
+
+        if (isGraphTraversal)
+        {
+            var graphProjection = ExpressionProjectionExpression.From(
+                collectionExpression.Type,
+                collectionExpression
+            );
+            _sourceExpressionParameters.Add(collectionSelector.Parameters[0], graphProjection);
+            var graphQuery = sourceSelect.WithProjection(graphProjection);
+
+            return new CustomExpression(
+                new SubqueryExpression(graphQuery, resultType),
+                resultType,
+                flatten: true
+            );
         }
 
         ProjectionExpression innerProjection = new AggregationFieldProjectionExpression(
@@ -676,6 +699,15 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
             arraySubqueryType,
             flatten: isDeconstruct
         );
+    }
+
+    private static bool ContainsGraphTraversal(Expression expression)
+    {
+        return expression is MethodCallExpression methodCall
+            && (
+                methodCall.Method.DeclaringType == typeof(GraphQueryableExtensions)
+                || methodCall.Arguments.Any(ContainsGraphTraversal)
+            );
     }
 
     private static bool TryBuildDeconstructSelectExpression(

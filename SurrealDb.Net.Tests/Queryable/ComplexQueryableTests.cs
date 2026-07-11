@@ -60,15 +60,11 @@ public class ComplexQueryableTests : BaseQueryableTests
                     .Where(user => user.Name == "Frank Founder")
                     .Select(user =>
                         user.Out<Purchased, StoreProduct>()
-                            .SelectMany(p =>
-                                p.In<Purchased, StoreUser>()
-                                    .SelectMany(u =>
-                                        u.Out<Purchased, StoreProduct>()
-                                            .Select(p => p.Name)
-                                            .Distinct()
-                                            .Order()
-                                    )
-                            )
+                            .In<Purchased, StoreUser>()
+                            .Out<Purchased, StoreProduct>()
+                            .Select(p => p.Name)
+                            .Distinct()
+                            .Order()
                     )
         );
         query
@@ -76,6 +72,38 @@ public class ComplexQueryableTests : BaseQueryableTests
             .Be(
                 """
                 SELECT VALUE array::flatten(array::flatten(array::sort::asc(array::distinct($this->purchased->product<-purchased<-user->purchased->product.name)))) FROM user WHERE name == "Frank Founder"
+                """
+            );
+
+        await Verify(result, _verifySettings);
+    }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
+    public async Task ShouldSelectGroupOfPurchasedMoreThanOnce(string connectionString)
+    {
+        var (result, query) = await ExecuteWithSchemaAsync(
+            connectionString,
+            SurrealSchemaFile.Store,
+            client =>
+                client
+                    .Select<StoreUser>()
+                    .SelectMany(user =>
+                        user.Out<Purchased, StoreProduct>()
+                            .Where(purchase => purchase.Edge.Quantity > 1)
+                            .Select(purchase => new
+                            {
+                                purchase.Node.Name,
+                                PurchasedSales = purchase.Edge.Quantity * purchase.Node.Price,
+                            })
+                    )
+                    .OrderBy(x => x.PurchasedSales)
+        );
+        query
+            .Should()
+            .Be(
+                """
+                SELECT Name, PurchasedSales FROM array::flatten((SELECT VALUE $this->(purchased WHERE quantity > 1).{ Name: out.name, PurchasedSales: <float> quantity * out.price } FROM user)) ORDER BY PurchasedSales
                 """
             );
 

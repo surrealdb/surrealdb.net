@@ -893,6 +893,40 @@ internal sealed class IdiomValueExpression : ValueExpression
     }
 }
 
+internal sealed class GraphTraversalValueExpression : ValueExpression
+{
+    public IdiomExpression Idiom { get; }
+    public int FlattenDepth { get; }
+
+    public GraphTraversalValueExpression(IdiomExpression idiom, int flattenDepth)
+    {
+        Idiom = idiom;
+        FlattenDepth = flattenDepth;
+    }
+}
+
+internal sealed class EdgeIdiomValueExpression : ValueExpression
+{
+    public IdiomExpression Idiom { get; }
+
+    public EdgeIdiomValueExpression(IdiomExpression idiom)
+    {
+        Idiom = idiom;
+    }
+}
+
+internal sealed class DelayedFlattenValueExpression : ValueExpression
+{
+    public ValueExpression Value { get; }
+    public int FlattenDepth { get; }
+
+    public DelayedFlattenValueExpression(ValueExpression value, int flattenDepth)
+    {
+        Value = value;
+        FlattenDepth = flattenDepth;
+    }
+}
+
 internal sealed class TableValueExpression
     : ValueExpression,
         IPrintableExpression,

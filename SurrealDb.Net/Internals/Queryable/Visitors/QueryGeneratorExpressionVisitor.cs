@@ -342,6 +342,32 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
             return partExpression;
         }
 
+        if (partExpression is GraphPartExpression graphPartExpression)
+        {
+            bool isOut = graphPartExpression.Direction == GraphDirection.Out;
+            _surqlQueryBuilder.Append(isOut ? "->" : "<-");
+            VisitGraphEdge(graphPartExpression.EdgeTable, graphPartExpression.EdgeWhere);
+            _surqlQueryBuilder.Append(isOut ? "->" : "<-");
+            _surqlQueryBuilder.Append(graphPartExpression.NodeTable);
+            return partExpression;
+        }
+
+        if (partExpression is GraphEdgePartExpression graphEdgePartExpression)
+        {
+            _surqlQueryBuilder.Append(
+                graphEdgePartExpression.Direction == GraphDirection.Out ? "->" : "<-"
+            );
+            VisitGraphEdge(graphEdgePartExpression.EdgeTable, graphEdgePartExpression.EdgeWhere);
+            return partExpression;
+        }
+
+        if (partExpression is ObjectPartExpression objectPartExpression)
+        {
+            _surqlQueryBuilder.Append('.');
+            VisitObject(objectPartExpression.Value, orderFields: true);
+            return partExpression;
+        }
+
         if (partExpression is IPrintableExpression printableExpression)
         {
             printableExpression.AppendTo(_surqlQueryBuilder);
@@ -379,6 +405,21 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
         return partExpression;
     }
 
+    private void VisitGraphEdge(string edgeTable, ValueExpression? edgeWhere)
+    {
+        if (edgeWhere is null)
+        {
+            _surqlQueryBuilder.Append(edgeTable);
+            return;
+        }
+
+        _surqlQueryBuilder.Append('(');
+        _surqlQueryBuilder.Append(edgeTable);
+        _surqlQueryBuilder.Append(" WHERE ");
+        Visit(edgeWhere);
+        _surqlQueryBuilder.Append(')');
+    }
+
     private ValueExpression VisitValue(ValueExpression valueExpression)
     {
         if (valueExpression is IPrintableExpression printableExpression)
@@ -389,6 +430,27 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
         if (valueExpression is IdiomValueExpression idiomExpression)
         {
             Visit(idiomExpression.Idiom);
+        }
+
+        if (valueExpression is GraphTraversalValueExpression graphTraversalExpression)
+        {
+            VisitFlattenedValue(
+                graphTraversalExpression.Idiom,
+                graphTraversalExpression.FlattenDepth
+            );
+        }
+
+        if (valueExpression is EdgeIdiomValueExpression edgeIdiomExpression)
+        {
+            Visit(edgeIdiomExpression.Idiom);
+        }
+
+        if (valueExpression is DelayedFlattenValueExpression delayedFlattenExpression)
+        {
+            VisitFlattenedValue(
+                delayedFlattenExpression.Value,
+                delayedFlattenExpression.FlattenDepth
+            );
         }
 
         if (valueExpression is UnaryValueExpression unaryExpression)
@@ -472,34 +534,7 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
 
         if (valueExpression is ObjectValueExpression objectExpression)
         {
-            _surqlQueryBuilder.Append('{');
-            _surqlQueryBuilder.Append(' ');
-            int index = 0;
-            foreach (var (key, value) in objectExpression.Fields)
-            {
-                if (index > 0)
-                {
-                    _surqlQueryBuilder.Append(", ");
-                }
-
-                bool shouldEscapeObjectKey = ShouldEscapeObjectKey(key);
-                if (shouldEscapeObjectKey)
-                {
-                    _surqlQueryBuilder.Append('"');
-                }
-                _surqlQueryBuilder.Append(key);
-                if (shouldEscapeObjectKey)
-                {
-                    _surqlQueryBuilder.Append('"');
-                }
-                _surqlQueryBuilder.Append(':');
-                _surqlQueryBuilder.Append(' ');
-                Visit(value);
-
-                index++;
-            }
-            _surqlQueryBuilder.Append(' ');
-            _surqlQueryBuilder.Append('}');
+            VisitObject(objectExpression, orderFields: false);
         }
 
         if (valueExpression is RangeValueExpression rangeExpression)
@@ -597,6 +632,58 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
         }
 
         return valueExpression;
+    }
+
+    private void VisitObject(ObjectValueExpression objectExpression, bool orderFields)
+    {
+        _surqlQueryBuilder.Append('{');
+        _surqlQueryBuilder.Append(' ');
+
+        IEnumerable<KeyValuePair<string, ValueExpression>> fields = orderFields
+            ? objectExpression.Fields.OrderBy(field => field.Key, StringComparer.Ordinal)
+            : objectExpression.Fields;
+        int index = 0;
+        foreach (var (key, value) in fields)
+        {
+            if (index > 0)
+            {
+                _surqlQueryBuilder.Append(", ");
+            }
+
+            bool shouldEscapeObjectKey = ShouldEscapeObjectKey(key);
+            if (shouldEscapeObjectKey)
+            {
+                _surqlQueryBuilder.Append('"');
+            }
+            _surqlQueryBuilder.Append(key);
+            if (shouldEscapeObjectKey)
+            {
+                _surqlQueryBuilder.Append('"');
+            }
+            _surqlQueryBuilder.Append(':');
+            _surqlQueryBuilder.Append(' ');
+            Visit(value);
+
+            index++;
+        }
+
+        _surqlQueryBuilder.Append(' ');
+        _surqlQueryBuilder.Append('}');
+    }
+
+    private void VisitFlattenedValue(Expression expression, int flattenDepth)
+    {
+        for (int i = 0; i < flattenDepth; i++)
+        {
+            _surqlQueryBuilder.Append("array::flatten(");
+        }
+
+        Visit(expression);
+
+        for (int i = 0; i < flattenDepth; i++)
+        {
+            _surqlQueryBuilder.Append(')');
+        }
     }
 
     private static bool IsBindingPowerLowerThan(

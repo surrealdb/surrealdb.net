@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
+using Dahomey.Cbor.Util;
 using SurrealDb.Net.Internals.Extensions;
 
 namespace SurrealDb.Net.Internals.Queryable.Expressions.Surreal;
@@ -34,9 +35,10 @@ internal sealed class FieldsExpression : SurrealExpression
 
     public static FieldsExpression ForType(Type returnType)
     {
+        bool isAnonymousType = returnType.IsAnonymous();
         var properties = returnType
             .GetProperties()
-            .Where(property => property is { CanRead: true, CanWrite: true })
+            .Where(property => property.CanRead && (property.CanWrite || isAnonymousType))
             .ToArray();
 
         // Keep historical alphabetical order for simple models,
