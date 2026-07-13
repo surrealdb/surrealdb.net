@@ -2,6 +2,7 @@ using Dahomey.Cbor;
 using SurrealDb.Net.Internals.Cbor.Converters;
 using SurrealDb.Net.Internals.Cbor.Converters.Numerics;
 using SurrealDb.Net.Internals.Cbor.Converters.Spatial;
+using SurrealDb.Net.Internals.Cbor.Mappings;
 using SurrealDb.Net.Internals.Errors;
 using SurrealDb.Net.Internals.Http;
 using SurrealDb.Net.Internals.Ws;
@@ -20,6 +21,10 @@ public static class SurrealDbCborOptions
         {
             DefaultNamingConvention = new SurrealDbCborNamingConvention(),
         };
+
+        options.Registry.ObjectMappingConventionRegistry.RegisterProvider(
+            new RecordIdObjectMappingConventionProvider()
+        );
 
         options.Registry.ConverterRegistry.RegisterConverterProvider(
             new PrimitiveConverterProvider()
