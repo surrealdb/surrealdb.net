@@ -1,6 +1,22 @@
 ﻿using System.Text;
+using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Tests;
+
+/// <summary>
+/// A record type that implements <see cref="IRecord"/> directly (as opposed to inheriting
+/// <see cref="Record"/>) and does NOT redeclare the <c>[CborProperty("id")]</c> /
+/// <c>[CborIgnoreIfDefault]</c> attributes carried by <see cref="IRecord.Id"/>. This mirrors the
+/// scenario reported in https://github.com/surrealdb/surrealdb.net/issues/212, where such a class
+/// ends up with its <c>Id</c> serialized twice: once as the literal member name "Id" (riding
+/// along in the CBOR payload) and once as the RPC's own "id" positional argument.
+/// </summary>
+public class RawIdRecord : IRecord
+{
+    public RecordId? Id { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+}
 
 public class CreateTests
 {
@@ -206,5 +222,47 @@ public class CreateTests
         result!.Content.Should().Be("This is a new article created using the .NET SDK");
         result!.CreatedAt.Should().NotBeNull();
         result!.Status.Should().Be("DRAFT");
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    public async Task ShouldCreateRecordImplementingIRecordDirectlyWithoutDuplicateIdField(
+        string connectionString
+    )
+    {
+        List<string>? fieldNames = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            await using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            var record = new RawIdRecord
+            {
+                Id = new RecordIdOfString("raw_id_record", "one"),
+                Name = "Alice",
+            };
+
+            await client.Create(record);
+
+            var response = await client.RawQuery(
+                "SELECT VALUE object::keys($this) FROM raw_id_record;"
+            );
+
+            var okResult = (SurrealDbOkResult)response[0];
+            fieldNames = okResult.GetValue<List<List<string>>>()!.Single();
+        };
+
+        await func.Should().NotThrowAsync();
+
+        fieldNames.Should().NotBeNull();
+        fieldNames!
+            .Count(fieldName => string.Equals(fieldName, "id", StringComparison.OrdinalIgnoreCase))
+            .Should()
+            .Be(1);
+        fieldNames.Should().NotContain("Id");
     }
 }
