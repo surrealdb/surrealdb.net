@@ -1,6 +1,6 @@
 ﻿@using SurrealDb.Examples.Blazor.Server.Models
 @using SurrealDb.Net
-@inject SurrealDbClient Client
+@inject SurrealDbSession Session
 
 <div class="card">
     <div class="card-title">@Task.Title</div>
@@ -24,6 +24,6 @@
     private Task DeleteTaskAsync()
     {
         var @event = new DeleteTask { Task = Task.Id };
-        return Client.Create(DeleteTask.Table, @event);
+        return Session.Create(DeleteTask.Table, @event);
     }
 }

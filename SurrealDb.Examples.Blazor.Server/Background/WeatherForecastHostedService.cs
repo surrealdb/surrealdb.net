@@ -6,16 +6,16 @@ namespace SurrealDb.Examples.Blazor.Server.Background;
 public class WeatherForecastHostedService : BackgroundService
 {
     private readonly ILogger<WeatherForecastHostedService> _logger;
-    private readonly ISurrealDbClient _surrealDbClient;
+    private readonly IServiceProvider _serviceProvider;
     private readonly WeatherForecastFaker _weatherForecastFaker = new();
 
     public WeatherForecastHostedService(
         ILogger<WeatherForecastHostedService> logger,
-        ISurrealDbClient surrealDbClient
+        IServiceProvider serviceProvider
     )
     {
         _logger = logger;
-        _surrealDbClient = surrealDbClient;
+        _serviceProvider = serviceProvider;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -42,6 +42,9 @@ public class WeatherForecastHostedService : BackgroundService
         var weatherForecast = _weatherForecastFaker.Generate(1).Single();
         weatherForecast.Date = DateTime.Now;
 
-        await _surrealDbClient.Create(WeatherForecast.Table, weatherForecast);
+        await using var scope = _serviceProvider.CreateAsyncScope();
+        await using var db = scope.ServiceProvider.GetRequiredService<ISurrealDbSession>();
+
+        await db.Create(WeatherForecast.Table, weatherForecast);
     }
 }

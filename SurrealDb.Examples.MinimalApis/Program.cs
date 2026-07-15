@@ -1,5 +1,6 @@
-﻿using Scalar.AspNetCore;
+using Scalar.AspNetCore;
 using SurrealDb.Examples.MinimalApis.Models;
+using SurrealDb.MinimalApis.Extensions;
 using SurrealDb.Net;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
@@ -34,7 +35,7 @@ app.UseHttpsRedirection();
 app.MapGroup("/api")
     .MapSurrealEndpoints<WeatherForecast>(
         "/weatherForecast",
-        new() { Tags = ["WeatherForecast"], EnableMutations = false }
+        new() { Tags = ["WeatherForecast"], Requests = SurrealDbMinimalApisRequests.Queries }
     )
     .MapSurrealEndpoints<Todo>("/todo", new() { Tags = ["Todo"] });
 
