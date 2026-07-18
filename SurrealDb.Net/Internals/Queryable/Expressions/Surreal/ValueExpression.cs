@@ -1155,6 +1155,11 @@ internal sealed class BinaryValueExpression : ValueExpression
         return new BinaryValueExpression(left, new SimpleOperator(OperatorType.Or), right);
     }
 
+    public static BinaryValueExpression And(ValueExpression left, ValueExpression right)
+    {
+        return new BinaryValueExpression(left, new SimpleOperator(OperatorType.And), right);
+    }
+
     public static BinaryValueExpression Add(ValueExpression left, ValueExpression right)
     {
         return new BinaryValueExpression(left, new SimpleOperator(OperatorType.Add), right);

@@ -2009,21 +2009,31 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         }
 
         var lambda = ExtractLambda(node.Arguments[1]);
+        return BindGraphPredicate(graphTraversal, lambda);
+    }
+
+    private ValueExpression BindGraphPredicate(
+        GraphTraversalValueExpression graphTraversal,
+        LambdaExpression lambda
+    )
+    {
         bool addedSourceParameter = _graphSourceExpressionParameters.TryAdd(
             lambda.Parameters[0],
             graphTraversal
         );
+        bool isGraphStep = IsGraphStepType(lambda.Parameters[0].Type);
         bool addedLocalEdgeParameter =
-            IsGraphStepType(lambda.Parameters[0].Type)
-            && _localGraphEdgeParameters.Add(lambda.Parameters[0]);
+            isGraphStep && _localGraphEdgeParameters.Add(lambda.Parameters[0]);
         bool addedLocalNodeParameter = _localGraphNodeParameters.Add(lambda.Parameters[0]);
+        bool addedLocalProjectionParameter =
+            isGraphStep && _localGraphProjectionParameters.Add(lambda.Parameters[0]);
         ValueExpression predicateValue;
         try
         {
             predicateValue =
                 Visit(lambda.Body)?.ToValue()
                 ?? throw new InvalidCastException(
-                    $"The predicate of {node.Method.Name} must be a value expression."
+                    "The graph traversal predicate must be a value expression."
                 );
         }
         finally
@@ -2040,20 +2050,14 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             {
                 _localGraphNodeParameters.Remove(lambda.Parameters[0]);
             }
+            if (addedLocalProjectionParameter)
+            {
+                _localGraphProjectionParameters.Remove(lambda.Parameters[0]);
+            }
         }
 
         bool containsEdge = ContainsExpression<EdgeIdiomValueExpression>(predicateValue);
-        bool containsNodeTraversal = ContainsExpression<GraphTraversalValueExpression>(
-            predicateValue
-        );
-        if (containsEdge && containsNodeTraversal)
-        {
-            throw new NotSupportedException(
-                "Graph traversal predicates cannot mix Edge and Node access in the same Where expression."
-            );
-        }
-
-        if (containsEdge)
+        if (isGraphStep || containsEdge)
         {
             return WithLastGraphPartEdgeWhere(graphTraversal, predicateValue);
         }
@@ -3042,10 +3046,9 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             node.Arguments is [ParameterExpression parameter, ..]
             && _sourceExpressionParameters.ContainsKey(parameter);
 
-        // TODO : OrderBy, Where, etc... -- Implement Closures
         if (
             node.Method.Name.Equals(nameof(Enumerable.Any), StringComparison.Ordinal)
-            && node.Arguments.Count == 1
+            && node.Arguments.Count is 1 or 2
         )
         {
             var valueExpression = Visit(node.Arguments[0])?.ToValue();
@@ -3055,7 +3058,22 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                     $"The first argument of {node.Method.DeclaringType!.Name}.Any must be a value expression."
                 );
             }
-            // TODO : second arg?
+
+            if (
+                node.Arguments.Count == 2
+                && valueExpression is GraphTraversalValueExpression graphTraversal
+            )
+            {
+                valueExpression = BindGraphPredicate(
+                    graphTraversal,
+                    ExtractLambda(node.Arguments[1])
+                );
+            }
+            else if (node.Arguments.Count == 2)
+            {
+                return base.VisitMethodCall(node);
+            }
+
             return UnaryValueExpression.Not(
                 new FunctionValueExpression("array::is_empty", [valueExpression])
             );
@@ -3176,7 +3194,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         }
         if (
             node.Method.Name.Equals(nameof(Enumerable.Count), StringComparison.Ordinal)
-            && node.Arguments.Count == 1
+            && node.Arguments.Count is 1 or 2
         )
         {
             if (isFirstParamLambdaParameter)
@@ -3191,7 +3209,22 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                     $"The first argument of {node.Method.DeclaringType!.Name}.Count must be a value expression."
                 );
             }
-            // TODO : second arg?
+
+            if (
+                node.Arguments.Count == 2
+                && valueExpression is GraphTraversalValueExpression graphTraversal
+            )
+            {
+                valueExpression = BindGraphPredicate(
+                    graphTraversal,
+                    ExtractLambda(node.Arguments[1])
+                );
+            }
+            else if (node.Arguments.Count == 2)
+            {
+                return base.VisitMethodCall(node);
+            }
+
             return new FunctionValueExpression("array::len", [valueExpression]);
         }
         if (
@@ -3447,6 +3480,57 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                     start: null,
                     only: false,
                     explain: null
+                )
+            );
+        }
+        if (
+            node.Method.Name is nameof(Enumerable.ThenBy) or nameof(Enumerable.ThenByDescending)
+            && node.Arguments.Count == 2
+        )
+        {
+            var sourceValue = Visit(node.Arguments[0])?.ToValue();
+            if (
+                sourceValue
+                is not SubqueryValueExpression
+                {
+                    Expression: SelectStatementExpression
+                    {
+                        Order: ListOrderingExpression ordering
+                    } select
+                }
+            )
+            {
+                return base.VisitMethodCall(node);
+            }
+
+            var keySelector = ExtractLambda(node.Arguments[1]);
+            var keyValue = Visit(keySelector.Body)?.ToValue();
+            if (keyValue is not IdiomValueExpression keyIdiom)
+            {
+                throw new NotSupportedException(
+                    $"The key selector of {node.Method.DeclaringType!.Name}.{node.Method.Name} must resolve to a field."
+                );
+            }
+
+            var orderType =
+                node.Method.Name == nameof(Enumerable.ThenBy)
+                    ? OrderType.Ascending
+                    : OrderType.Descending;
+            var updatedOrdering = new ListOrderingExpression(
+                [.. ordering.Orders, new SurrealOrder(keyIdiom.Idiom, orderType)]
+            );
+
+            return new SubqueryValueExpression(
+                new SelectStatementExpression(
+                    select.Fields,
+                    select.What,
+                    select.Cond,
+                    select.Group,
+                    updatedOrdering,
+                    select.Limit,
+                    select.Start,
+                    select.Only,
+                    select.Explain
                 )
             );
         }
@@ -3739,10 +3823,22 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         {
             if (node.Arguments.Count == 1)
             {
-                return new FunctionValueExpression(
-                    "math::sum",
-                    [new ParameterValueExpression("this")]
-                );
+                if (isFirstParamLambdaParameter)
+                {
+                    return new FunctionValueExpression(
+                        "math::sum",
+                        [new ParameterValueExpression("this")]
+                    );
+                }
+
+                var valueExpression1 = Visit(node.Arguments[0])?.ToValue();
+                if (valueExpression1 is null)
+                {
+                    throw new InvalidCastException(
+                        $"The first argument of {node.Method.DeclaringType!.Name}.Sum must be a value expression."
+                    );
+                }
+                return new FunctionValueExpression("math::sum", [valueExpression1]);
             }
 
             var valueExpression2 = Visit(node.Arguments[1])?.ToValue();
@@ -4655,9 +4751,13 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             );
         }
 
+        var combinedEdgeWhere = graphPart.EdgeWhere is null
+            ? edgeWhere
+            : BinaryValueExpression.And(graphPart.EdgeWhere, edgeWhere);
+
         return new GraphTraversalValueExpression(
             new IdiomExpression(
-                [.. parts.RemoveAt(parts.Length - 1), graphPart.WithEdgeWhere(edgeWhere)]
+                [.. parts.RemoveAt(parts.Length - 1), graphPart.WithEdgeWhere(combinedEdgeWhere)]
             ),
             graphTraversal.FlattenDepth
         );

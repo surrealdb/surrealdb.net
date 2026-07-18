@@ -103,7 +103,7 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
     {
         if (node.Method.DeclaringType == typeof(GraphQueryableExtensions))
         {
-            return node;
+            return VisitGraphMethodCall(node);
         }
 
         // TODO
@@ -118,6 +118,48 @@ internal sealed class ToIntermediateExpressionVisitor : ExpressionVisitor
         }
 
         return base.VisitMethodCall(node);
+    }
+
+    private Expression VisitGraphMethodCall(MethodCallExpression node)
+    {
+        var arguments = node
+            .Arguments.Select(argument =>
+            {
+                bool isQuoted =
+                    argument
+                        is UnaryExpression
+                        {
+                            NodeType: ExpressionType.Quote,
+                            Operand: LambdaExpression
+                        };
+                var lambda = argument switch
+                {
+                    UnaryExpression
+                    {
+                        NodeType: ExpressionType.Quote,
+                        Operand: LambdaExpression quotedLambda
+                    } => quotedLambda,
+                    LambdaExpression lambdaExpression => lambdaExpression,
+                    _ => null,
+                };
+                if (lambda is null)
+                {
+                    return Visit(argument);
+                }
+
+                var body = Visit(lambda.Body);
+                var updatedLambda = Expression.Lambda(
+                    lambda.Type,
+                    body,
+                    lambda.Name,
+                    lambda.TailCall,
+                    lambda.Parameters
+                );
+                return isQuoted ? Expression.Quote(updatedLambda) : updatedLambda;
+            })
+            .ToArray();
+
+        return node.Update(Visit(node.Object), arguments);
     }
 
     private IntermediateExpression BindSurrealQueryableMethodCall(MethodCallExpression node)
