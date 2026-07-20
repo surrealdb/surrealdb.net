@@ -3,12 +3,17 @@ using SurrealDb.Net.Models;
 
 namespace SurrealDb.Net;
 
-public interface IGraphTraversal<out TNode> : IEnumerable<TNode>
+public interface IGraphTraversal;
+
+public interface IGraphTraversal<out TNode> : IGraphTraversal, IEnumerable<TNode>
     where TNode : IRecord;
 
 public interface IGraphTraversal<out TEdge, out TNode> : IGraphTraversal<TNode>
     where TEdge : IRelationRecord
     where TNode : IRecord;
+
+public interface IGraphEdgeTraversal<out TEdge> : IGraphTraversal
+    where TEdge : IRelationRecord;
 
 public sealed class GraphStep<TEdge, TNode>
     where TEdge : IRelationRecord
@@ -21,6 +26,22 @@ public sealed class GraphStep<TEdge, TNode>
 
 public static class GraphQueryableExtensions
 {
+    public static IGraphEdgeTraversal<TEdge> Out<TEdge>(this IRecord source)
+        where TEdge : IRelationRecord
+    {
+        throw new NotSupportedException(
+            "Graph traversal methods are only supported in LINQ queries."
+        );
+    }
+
+    public static IGraphEdgeTraversal<TEdge> Out<TEdge>(this IGraphTraversal source)
+        where TEdge : IRelationRecord
+    {
+        throw new NotSupportedException(
+            "Graph traversal methods are only supported in LINQ queries."
+        );
+    }
+
     public static IGraphTraversal<TEdge, TNode> Out<TEdge, TNode>(this IRecord source)
         where TEdge : IRelationRecord
         where TNode : IRecord
@@ -41,6 +62,31 @@ public static class GraphQueryableExtensions
         );
     }
 
+    public static IGraphTraversal<TEdge, TNode> Out<TEdge, TNode>(this IGraphTraversal source)
+        where TEdge : IRelationRecord
+        where TNode : IRecord
+    {
+        throw new NotSupportedException(
+            "Graph traversal methods are only supported in LINQ queries."
+        );
+    }
+
+    public static IGraphEdgeTraversal<TEdge> In<TEdge>(this IRecord source)
+        where TEdge : IRelationRecord
+    {
+        throw new NotSupportedException(
+            "Graph traversal methods are only supported in LINQ queries."
+        );
+    }
+
+    public static IGraphEdgeTraversal<TEdge> In<TEdge>(this IGraphTraversal source)
+        where TEdge : IRelationRecord
+    {
+        throw new NotSupportedException(
+            "Graph traversal methods are only supported in LINQ queries."
+        );
+    }
+
     public static IGraphTraversal<TEdge, TNode> In<TEdge, TNode>(this IRecord source)
         where TEdge : IRelationRecord
         where TNode : IRecord
@@ -55,6 +101,37 @@ public static class GraphQueryableExtensions
     )
         where TEdge : IRelationRecord
         where TNode : IRecord
+    {
+        throw new NotSupportedException(
+            "Graph traversal methods are only supported in LINQ queries."
+        );
+    }
+
+    public static IGraphTraversal<TEdge, TNode> In<TEdge, TNode>(this IGraphTraversal source)
+        where TEdge : IRelationRecord
+        where TNode : IRecord
+    {
+        throw new NotSupportedException(
+            "Graph traversal methods are only supported in LINQ queries."
+        );
+    }
+
+    public static IGraphEdgeTraversal<TEdge> Where<TEdge>(
+        this IGraphEdgeTraversal<TEdge> source,
+        Expression<Func<TEdge, bool>> predicate
+    )
+        where TEdge : IRelationRecord
+    {
+        throw new NotSupportedException(
+            "Graph traversal methods are only supported in LINQ queries."
+        );
+    }
+
+    public static IEnumerable<TResult> Select<TEdge, TResult>(
+        this IGraphEdgeTraversal<TEdge> source,
+        Expression<Func<TEdge, TResult>> selector
+    )
+        where TEdge : IRelationRecord
     {
         throw new NotSupportedException(
             "Graph traversal methods are only supported in LINQ queries."

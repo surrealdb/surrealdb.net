@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using Dahomey.Cbor.Util;
+using SurrealDb.Net.Attributes;
 using SurrealDb.Net.Internals.Extensions;
 
 namespace SurrealDb.Net.Internals.Queryable.Expressions.Surreal;
@@ -38,7 +39,11 @@ internal sealed class FieldsExpression : SurrealExpression
         bool isAnonymousType = returnType.IsAnonymous();
         var properties = returnType
             .GetProperties()
-            .Where(property => property.CanRead && (property.CanWrite || isAnonymousType))
+            .Where(property =>
+                property.CanRead
+                && (property.CanWrite || isAnonymousType)
+                && !IsGraphNavigationProperty(property)
+            )
             .ToArray();
 
         // Keep historical alphabetical order for simple models,
@@ -148,6 +153,7 @@ internal sealed class FieldsExpression : SurrealExpression
             [
                 .. type.GetProperties()
                     .Where(p => p is { CanRead: true, CanWrite: true })
+                    .Where(p => !IsGraphNavigationProperty(p))
                     .Select(p =>
                     {
                         var (nestedFieldName, _) = ReflectionExtensions.GetDatabaseFieldName(p);
@@ -183,6 +189,12 @@ internal sealed class FieldsExpression : SurrealExpression
             }
 
             return IsSurrealDbEntity(propertyType);
+        }
+
+        static bool IsGraphNavigationProperty(PropertyInfo property)
+        {
+            return property.GetCustomAttribute<SurrealInAttribute>(inherit: true) is not null
+                || property.GetCustomAttribute<SurrealOutAttribute>(inherit: true) is not null;
         }
     }
 

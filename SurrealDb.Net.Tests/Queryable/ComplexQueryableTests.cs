@@ -59,10 +59,10 @@ public class ComplexQueryableTests : BaseQueryableTests
                     .Select<StoreUser>()
                     .Where(user => user.Name == "Frank Founder")
                     .Select(user =>
-                        user.Out<Purchased, StoreProduct>()
-                            .In<Purchased, StoreUser>()
-                            .Out<Purchased, StoreProduct>()
-                            .Select(p => p.Name)
+                        user.Out<Purchased>()
+                            .In<Purchased>()
+                            .Out<Purchased>()
+                            .Select(p => p.Product.Name)
                             .Distinct()
                             .Order()
                     )
@@ -89,12 +89,12 @@ public class ComplexQueryableTests : BaseQueryableTests
                 client
                     .Select<StoreUser>()
                     .SelectMany(user =>
-                        user.Out<Purchased, StoreProduct>()
-                            .Where(purchase => purchase.Edge.Quantity > 1)
+                        user.Out<Purchased>()
+                            .Where(purchase => purchase.Quantity > 1)
                             .Select(purchase => new
                             {
-                                purchase.Node.Name,
-                                PurchasedSales = purchase.Edge.Quantity * purchase.Node.Price,
+                                purchase.Product.Name,
+                                PurchasedSales = purchase.Quantity * purchase.Product.Price,
                             })
                     )
                     .OrderBy(x => x.PurchasedSales)

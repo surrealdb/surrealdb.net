@@ -5,6 +5,117 @@ namespace SurrealDb.Net.Tests.Queryable;
 public class GraphQueryableTests : BaseQueryableTests
 {
     [Test]
+    public void ShouldRejectUnprojectedAttributedTraversal()
+    {
+        Action action = () => ToSurql(Users.Select(user => user.Out<Purchased>()));
+
+        action
+            .Should()
+            .Throw<NotSupportedException>()
+            .WithMessage("A single-type graph traversal must be projected with Select*");
+    }
+
+    [Test]
+    public void ShouldRejectMissingGraphEndpointAttribute()
+    {
+        Action action = () => ToSurql(Users.Select(user => user.Out<MissingEndpointRelation>()));
+
+        action
+            .Should()
+            .Throw<NotSupportedException>()
+            .WithMessage("*exactly one*SurrealOutAttribute*");
+    }
+
+    [Test]
+    public void ShouldRejectDuplicateGraphEndpointAttributes()
+    {
+        Action action = () => ToSurql(Users.Select(user => user.Out<DuplicateEndpointRelation>()));
+
+        action
+            .Should()
+            .Throw<NotSupportedException>()
+            .WithMessage("*exactly one*SurrealOutAttribute*");
+    }
+
+    [Test]
+    public void ShouldRejectInvalidGraphEndpointType()
+    {
+        Action action = () => ToSurql(Users.Select(user => user.Out<InvalidEndpointRelation>()));
+
+        action.Should().Throw<NotSupportedException>().WithMessage("*must implement IRecord*");
+    }
+
+    [Test]
+    public void ShouldNavigateOutThroughAttributedRelation()
+    {
+        string query = ToSurql(
+            Users.Select(u => u.Out<Purchased>().Select(purchase => purchase.Product))
+        );
+
+        query.Should().Be("SELECT VALUE $this->purchased->product FROM user");
+    }
+
+    [Test]
+    public void ShouldNavigateInThroughAttributedRelation()
+    {
+        string query = ToSurql(
+            Products.Select(p => p.In<Purchased>().Select(purchase => purchase.User))
+        );
+
+        query.Should().Be("SELECT VALUE $this<-purchased<-user FROM product");
+    }
+
+    [Test]
+    public void ShouldChainAttributedGraphTraversals()
+    {
+        string query = ToSurql(
+            Products.Select(p =>
+                p.In<Purchased>().Out<Purchased>().Select(purchase => purchase.Product.Name)
+            )
+        );
+
+        query
+            .Should()
+            .Be(
+                "SELECT VALUE array::flatten($this<-purchased<-user->purchased->product.name) FROM product"
+            );
+    }
+
+    [Test]
+    public void ShouldFilterAttributedGraphTraversalEdgeAndEndpoint()
+    {
+        string query = ToSurql(
+            Users.Select(user =>
+                user.Out<Purchased>()
+                    .Where(purchase => purchase.Quantity > 1 && purchase.Product.Price > 100)
+                    .Select(purchase => purchase.Product.Name)
+            )
+        );
+
+        query
+            .Should()
+            .Be(
+                "SELECT VALUE $this->(purchased WHERE quantity > 1 && out.price > 100)->product.name FROM user"
+            );
+    }
+
+    [Test]
+    public void ShouldMixAttributedAndTypedGraphTraversals()
+    {
+        string query = ToSurql(
+            Products.Select(product =>
+                product.In<Purchased>().Out<Purchased, StoreProduct>().Select(p => p.Name)
+            )
+        );
+
+        query
+            .Should()
+            .Be(
+                "SELECT VALUE array::flatten($this<-purchased<-user->purchased->product.name) FROM product"
+            );
+    }
+
+    [Test]
     public void ShouldNavigateOutThroughRelation()
     {
         string query = ToSurql(Users.Select(u => u.Out<Purchased, StoreProduct>()));
@@ -506,5 +617,25 @@ public class GraphQueryableTests : BaseQueryableTests
                 SELECT VALUE math::sum($this->purchased.quantity) FROM user
                 """
             );
+    }
+
+    [System.ComponentModel.DataAnnotations.Schema.Table("missing_endpoint")]
+    private sealed class MissingEndpointRelation : SurrealDbRelationRecord;
+
+    [System.ComponentModel.DataAnnotations.Schema.Table("duplicate_endpoint")]
+    private sealed class DuplicateEndpointRelation : SurrealDbRelationRecord
+    {
+        [SurrealDb.Net.Attributes.SurrealOut]
+        public StoreProduct FirstProduct { get; } = default!;
+
+        [SurrealDb.Net.Attributes.SurrealOut]
+        public StoreProduct SecondProduct { get; } = default!;
+    }
+
+    [System.ComponentModel.DataAnnotations.Schema.Table("invalid_endpoint")]
+    private sealed class InvalidEndpointRelation : SurrealDbRelationRecord
+    {
+        [SurrealDb.Net.Attributes.SurrealOut]
+        public string Product { get; } = string.Empty;
     }
 }

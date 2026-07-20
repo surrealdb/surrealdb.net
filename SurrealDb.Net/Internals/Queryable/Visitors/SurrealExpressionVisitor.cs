@@ -191,6 +191,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             }
 
             var valueExpression = Visit(innerExpression)?.ToValue();
+            ThrowIfUnprojectedEdgeTraversal(valueExpression);
             if (valueExpression is ObjectValueExpression objectValueExpression)
             {
                 // TODO : Check if projection can be merged?
@@ -318,6 +319,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         var valueExpression = innerExpression?.ToValue();
         if (valueExpression is not null)
         {
+            ThrowIfUnprojectedEdgeTraversal(valueExpression);
             IdiomExpression? aliasIdiom = string.IsNullOrWhiteSpace(fieldProjectionExpression.Alias)
                 ? null
                 : new IdiomExpression([new FieldPartExpression(fieldProjectionExpression.Alias)]);
@@ -912,6 +914,29 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
 
         var source = Visit(node.Expression);
         if (
+            source is ParameterExpression edgeParameter
+            && _localGraphEdgeParameters.Contains(edgeParameter)
+            && !IsGraphStepType(edgeParameter.Type)
+            && _graphSourceExpressionParameters.ContainsKey(edgeParameter)
+        )
+        {
+            string edgeField = node.Member switch
+            {
+                PropertyInfo property
+                    when property.GetCustomAttribute<SurrealInAttribute>(inherit: true)
+                        is not null => "in",
+                PropertyInfo property
+                    when property.GetCustomAttribute<SurrealOutAttribute>(inherit: true)
+                        is not null => "out",
+                _ => ReflectionExtensions.GetDatabaseFieldName(node.Member).fieldName,
+            };
+
+            return new EdgeIdiomValueExpression(
+                new IdiomExpression([new FieldPartExpression(edgeField)])
+            );
+        }
+
+        if (
             source is ParameterExpression graphStepParameter
             && IsGraphStepType(graphStepParameter.Type)
             && _graphSourceExpressionParameters.TryGetValue(
@@ -1006,7 +1031,8 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                             graphTraversalValueExpression.Idiom,
                             new FieldPartExpression(fieldName)
                         ),
-                        graphTraversalValueExpression.FlattenDepth
+                        graphTraversalValueExpression.FlattenDepth,
+                        graphTraversalValueExpression.RequiresProjection
                     );
                 }
 
@@ -1088,7 +1114,8 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                     sourceGraphTraversalValueExpression.Idiom,
                     new FieldPartExpression(fieldName)
                 ),
-                sourceGraphTraversalValueExpression.FlattenDepth
+                sourceGraphTraversalValueExpression.FlattenDepth,
+                sourceGraphTraversalValueExpression.RequiresProjection
             );
         }
 
@@ -1973,9 +2000,6 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             ),
         };
 
-        var genericArguments = node.Method.GetGenericArguments();
-        var edgeTable = GetTableName(genericArguments[0]);
-        var nodeTable = GetTableName(genericArguments[1]);
         var direction = node.Method.Name switch
         {
             nameof(GraphQueryableExtensions.Out) => GraphDirection.Out,
@@ -1984,6 +2008,14 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 $"Graph traversal method {node.Method.Name} is not supported."
             ),
         };
+        var genericArguments = node.Method.GetGenericArguments();
+        var edgeType = genericArguments[0];
+        var edgeTable = GetTableName(edgeType);
+        var nodeType =
+            genericArguments.Length == 2
+                ? genericArguments[1]
+                : GetGraphEndpointProperty(edgeType, direction).PropertyType;
+        var nodeTable = GetTableName(nodeType);
         int flattenDepth =
             sourceValue is GraphTraversalValueExpression
                 ? sourceFlattenDepth + 1
@@ -1994,7 +2026,8 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 sourceIdiom,
                 new GraphPartExpression(direction, edgeTable, nodeTable)
             ),
-            flattenDepth
+            flattenDepth,
+            requiresProjection: genericArguments.Length == 1
         );
     }
 
@@ -2009,12 +2042,17 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         }
 
         var lambda = ExtractLambda(node.Arguments[1]);
-        return BindGraphPredicate(graphTraversal, lambda);
+        return BindGraphPredicate(
+            graphTraversal,
+            lambda,
+            IsGraphEdgeTraversalType(node.Arguments[0].Type)
+        );
     }
 
     private ValueExpression BindGraphPredicate(
         GraphTraversalValueExpression graphTraversal,
-        LambdaExpression lambda
+        LambdaExpression lambda,
+        bool isEdgeTraversal = false
     )
     {
         bool addedSourceParameter = _graphSourceExpressionParameters.TryAdd(
@@ -2023,10 +2061,11 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         );
         bool isGraphStep = IsGraphStepType(lambda.Parameters[0].Type);
         bool addedLocalEdgeParameter =
-            isGraphStep && _localGraphEdgeParameters.Add(lambda.Parameters[0]);
+            (isGraphStep || isEdgeTraversal) && _localGraphEdgeParameters.Add(lambda.Parameters[0]);
         bool addedLocalNodeParameter = _localGraphNodeParameters.Add(lambda.Parameters[0]);
         bool addedLocalProjectionParameter =
-            isGraphStep && _localGraphProjectionParameters.Add(lambda.Parameters[0]);
+            (isGraphStep || isEdgeTraversal)
+            && _localGraphProjectionParameters.Add(lambda.Parameters[0]);
         ValueExpression predicateValue;
         try
         {
@@ -2057,14 +2096,15 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         }
 
         bool containsEdge = ContainsExpression<EdgeIdiomValueExpression>(predicateValue);
-        if (isGraphStep || containsEdge)
+        if (isGraphStep || isEdgeTraversal || containsEdge)
         {
             return WithLastGraphPartEdgeWhere(graphTraversal, predicateValue);
         }
 
         return new GraphTraversalValueExpression(
             IdiomExpression.Chain(graphTraversal.Idiom, new WherePartExpression(predicateValue)),
-            graphTraversal.FlattenDepth
+            graphTraversal.FlattenDepth,
+            graphTraversal.RequiresProjection
         );
     }
 
@@ -2083,11 +2123,13 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             lambda.Parameters[0],
             graphTraversal
         );
+        bool isEdgeTraversal = IsGraphEdgeTraversalType(node.Arguments[0].Type);
         bool useLocalGraphProjection =
-            IsGraphStepType(lambda.Parameters[0].Type)
+            (IsGraphStepType(lambda.Parameters[0].Type) || isEdgeTraversal)
             && lambda.Body is NewExpression or MemberInitExpression;
         bool addedLocalEdgeParameter =
-            useLocalGraphProjection && _localGraphEdgeParameters.Add(lambda.Parameters[0]);
+            (useLocalGraphProjection || isEdgeTraversal)
+            && _localGraphEdgeParameters.Add(lambda.Parameters[0]);
         bool addedLocalNodeParameter =
             useLocalGraphProjection && _localGraphNodeParameters.Add(lambda.Parameters[0]);
         bool addedLocalProjectionParameter =
@@ -2108,7 +2150,23 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                         edgeTraversal.Idiom,
                         new ObjectPartExpression(objectValue)
                     ),
-                    edgeTraversal.FlattenDepth
+                    edgeTraversal.FlattenDepth,
+                    requiresProjection: false
+                );
+            }
+
+            if (isEdgeTraversal && projectedValue is EdgeIdiomValueExpression edgeIdiom)
+            {
+                if (TryProjectGraphEndpoint(graphTraversal, edgeIdiom, out var endpointProjection))
+                {
+                    return endpointProjection;
+                }
+
+                var edgeTraversal = ToLastEdgeTraversal(graphTraversal);
+                return new GraphTraversalValueExpression(
+                    new IdiomExpression([.. edgeTraversal.Idiom.Parts, .. edgeIdiom.Idiom.Parts]),
+                    edgeTraversal.FlattenDepth,
+                    requiresProjection: false
                 );
             }
 
@@ -4738,6 +4796,44 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(GraphStep<,>);
     }
 
+    private static bool IsGraphEdgeTraversalType(Type type)
+    {
+        return type.IsGenericType
+            && type.GetGenericTypeDefinition() == typeof(IGraphEdgeTraversal<>);
+    }
+
+    private static PropertyInfo GetGraphEndpointProperty(Type edgeType, GraphDirection direction)
+    {
+        var attributeType =
+            direction == GraphDirection.Out
+                ? typeof(SurrealOutAttribute)
+                : typeof(SurrealInAttribute);
+        var properties = edgeType
+            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .Where(property =>
+                property.GetCustomAttribute(attributeType, inherit: true) is not null
+            )
+            .ToArray();
+
+        if (properties.Length != 1)
+        {
+            string attributeName = attributeType.Name;
+            throw new NotSupportedException(
+                $"Edge type '{edgeType.Name}' must declare exactly one public property marked with [{attributeName}] for {direction.ToString().ToLowerInvariant()} traversal."
+            );
+        }
+
+        var property = properties[0];
+        if (!typeof(IRecord).IsAssignableFrom(property.PropertyType))
+        {
+            throw new NotSupportedException(
+                $"Graph endpoint property '{edgeType.Name}.{property.Name}' must implement {nameof(IRecord)}."
+            );
+        }
+
+        return property;
+    }
+
     private static GraphTraversalValueExpression WithLastGraphPartEdgeWhere(
         GraphTraversalValueExpression graphTraversal,
         ValueExpression edgeWhere
@@ -4759,7 +4855,8 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             new IdiomExpression(
                 [.. parts.RemoveAt(parts.Length - 1), graphPart.WithEdgeWhere(combinedEdgeWhere)]
             ),
-            graphTraversal.FlattenDepth
+            graphTraversal.FlattenDepth,
+            graphTraversal.RequiresProjection
         );
     }
 
@@ -4786,8 +4883,48 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                     ),
                 ]
             ),
-            graphTraversal.FlattenDepth
+            graphTraversal.FlattenDepth,
+            graphTraversal.RequiresProjection
         );
+    }
+
+    private static bool TryProjectGraphEndpoint(
+        GraphTraversalValueExpression graphTraversal,
+        EdgeIdiomValueExpression edgeIdiom,
+        [NotNullWhen(true)] out GraphTraversalValueExpression? projection
+    )
+    {
+        projection = null;
+        if (
+            graphTraversal.Idiom.Parts is not [.., GraphPartExpression graphPart]
+            || edgeIdiom.Idiom.Parts is not [FieldPartExpression endpoint, .. var remaining]
+        )
+        {
+            return false;
+        }
+
+        string expectedEndpoint = graphPart.Direction == GraphDirection.Out ? "out" : "in";
+        if (!endpoint.FieldName.Equals(expectedEndpoint, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        projection = new GraphTraversalValueExpression(
+            new IdiomExpression([.. graphTraversal.Idiom.Parts, .. remaining]),
+            graphTraversal.FlattenDepth,
+            requiresProjection: false
+        );
+        return true;
+    }
+
+    private static void ThrowIfUnprojectedEdgeTraversal(ValueExpression? expression)
+    {
+        if (expression is GraphTraversalValueExpression { RequiresProjection: true })
+        {
+            throw new NotSupportedException(
+                "A single-type graph traversal must be projected with Select before it can be materialized. Use Out<TEdge, TNode>() or In<TEdge, TNode>() to materialize typed endpoint nodes directly."
+            );
+        }
     }
 
     private static bool ContainsExpression<TExpression>(Expression expression)

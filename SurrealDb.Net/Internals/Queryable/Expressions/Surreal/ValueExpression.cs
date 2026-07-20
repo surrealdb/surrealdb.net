@@ -897,11 +897,17 @@ internal sealed class GraphTraversalValueExpression : ValueExpression
 {
     public IdiomExpression Idiom { get; }
     public int FlattenDepth { get; }
+    public bool RequiresProjection { get; }
 
-    public GraphTraversalValueExpression(IdiomExpression idiom, int flattenDepth)
+    public GraphTraversalValueExpression(
+        IdiomExpression idiom,
+        int flattenDepth,
+        bool requiresProjection = false
+    )
     {
         Idiom = idiom;
         FlattenDepth = flattenDepth;
+        RequiresProjection = requiresProjection;
     }
 }
 
