@@ -902,7 +902,7 @@ internal sealed class GraphTraversalValueExpression : ValueExpression
     public GraphTraversalValueExpression(
         IdiomExpression idiom,
         int flattenDepth,
-        bool requiresProjection = false
+        bool requiresProjection
     )
     {
         Idiom = idiom;
@@ -911,13 +911,24 @@ internal sealed class GraphTraversalValueExpression : ValueExpression
     }
 }
 
-internal sealed class EdgeIdiomValueExpression : ValueExpression
+internal class EdgeIdiomValueExpression : ValueExpression
 {
     public IdiomExpression Idiom { get; }
 
     public EdgeIdiomValueExpression(IdiomExpression idiom)
     {
         Idiom = idiom;
+    }
+}
+
+internal sealed class GraphEndpointIdiomValueExpression : EdgeIdiomValueExpression
+{
+    public GraphDirection Direction { get; }
+
+    public GraphEndpointIdiomValueExpression(IdiomExpression idiom, GraphDirection direction)
+        : base(idiom)
+    {
+        Direction = direction;
     }
 }
 

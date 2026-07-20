@@ -920,19 +920,24 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             && _graphSourceExpressionParameters.ContainsKey(edgeParameter)
         )
         {
-            string edgeField = node.Member switch
+            var edgeMetadata = GraphEdgeMetadataResolver.Get(edgeParameter.Type);
+            if (edgeMetadata.TryGetEndpointDirection(node.Member, out var endpointDirection))
             {
-                PropertyInfo property
-                    when property.GetCustomAttribute<SurrealInAttribute>(inherit: true)
-                        is not null => "in",
-                PropertyInfo property
-                    when property.GetCustomAttribute<SurrealOutAttribute>(inherit: true)
-                        is not null => "out",
-                _ => ReflectionExtensions.GetDatabaseFieldName(node.Member).fieldName,
-            };
+                string endpointField = endpointDirection == GraphDirection.Out ? "out" : "in";
+                return new GraphEndpointIdiomValueExpression(
+                    new IdiomExpression([new FieldPartExpression(endpointField)]),
+                    endpointDirection
+                );
+            }
 
             return new EdgeIdiomValueExpression(
-                new IdiomExpression([new FieldPartExpression(edgeField)])
+                new IdiomExpression(
+                    [
+                        new FieldPartExpression(
+                            ReflectionExtensions.GetDatabaseFieldName(node.Member).fieldName
+                        ),
+                    ]
+                )
             );
         }
 
@@ -1116,6 +1121,17 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 ),
                 sourceGraphTraversalValueExpression.FlattenDepth,
                 sourceGraphTraversalValueExpression.RequiresProjection
+            );
+        }
+
+        if (source is GraphEndpointIdiomValueExpression graphEndpointIdiomValueExpression)
+        {
+            return new GraphEndpointIdiomValueExpression(
+                IdiomExpression.Chain(
+                    graphEndpointIdiomValueExpression.Idiom,
+                    new FieldPartExpression(fieldName)
+                ),
+                graphEndpointIdiomValueExpression.Direction
             );
         }
 
@@ -2014,7 +2030,10 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         var nodeType =
             genericArguments.Length == 2
                 ? genericArguments[1]
-                : GetGraphEndpointProperty(edgeType, direction).PropertyType;
+                : GraphEdgeMetadataResolver
+                    .Get(edgeType)
+                    .GetEndpointProperty(direction)
+                    .PropertyType;
         var nodeTable = GetTableName(nodeType);
         int flattenDepth =
             sourceValue is GraphTraversalValueExpression
@@ -2055,45 +2074,20 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         bool isEdgeTraversal = false
     )
     {
-        bool addedSourceParameter = _graphSourceExpressionParameters.TryAdd(
-            lambda.Parameters[0],
-            graphTraversal
-        );
         bool isGraphStep = IsGraphStepType(lambda.Parameters[0].Type);
-        bool addedLocalEdgeParameter =
-            (isGraphStep || isEdgeTraversal) && _localGraphEdgeParameters.Add(lambda.Parameters[0]);
-        bool addedLocalNodeParameter = _localGraphNodeParameters.Add(lambda.Parameters[0]);
-        bool addedLocalProjectionParameter =
-            (isGraphStep || isEdgeTraversal)
-            && _localGraphProjectionParameters.Add(lambda.Parameters[0]);
-        ValueExpression predicateValue;
-        try
-        {
-            predicateValue =
-                Visit(lambda.Body)?.ToValue()
-                ?? throw new InvalidCastException(
-                    "The graph traversal predicate must be a value expression."
-                );
-        }
-        finally
-        {
-            if (addedSourceParameter)
-            {
-                _graphSourceExpressionParameters.Remove(lambda.Parameters[0]);
-            }
-            if (addedLocalEdgeParameter)
-            {
-                _localGraphEdgeParameters.Remove(lambda.Parameters[0]);
-            }
-            if (addedLocalNodeParameter)
-            {
-                _localGraphNodeParameters.Remove(lambda.Parameters[0]);
-            }
-            if (addedLocalProjectionParameter)
-            {
-                _localGraphProjectionParameters.Remove(lambda.Parameters[0]);
-            }
-        }
+        using var graphScope = new GraphLambdaScope(
+            this,
+            lambda.Parameters[0],
+            graphTraversal,
+            bindEdge: isGraphStep || isEdgeTraversal,
+            bindNode: true,
+            bindProjection: isGraphStep || isEdgeTraversal
+        );
+        var predicateValue =
+            Visit(lambda.Body)?.ToValue()
+            ?? throw new InvalidCastException(
+                "The graph traversal predicate must be a value expression."
+            );
 
         bool containsEdge = ContainsExpression<EdgeIdiomValueExpression>(predicateValue);
         if (isGraphStep || isEdgeTraversal || containsEdge)
@@ -2119,78 +2113,57 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         }
 
         var lambda = ExtractLambda(node.Arguments[1]);
-        bool addedSourceParameter = _graphSourceExpressionParameters.TryAdd(
-            lambda.Parameters[0],
-            graphTraversal
-        );
         bool isEdgeTraversal = IsGraphEdgeTraversalType(node.Arguments[0].Type);
         bool useLocalGraphProjection =
             (IsGraphStepType(lambda.Parameters[0].Type) || isEdgeTraversal)
             && lambda.Body is NewExpression or MemberInitExpression;
-        bool addedLocalEdgeParameter =
-            (useLocalGraphProjection || isEdgeTraversal)
-            && _localGraphEdgeParameters.Add(lambda.Parameters[0]);
-        bool addedLocalNodeParameter =
-            useLocalGraphProjection && _localGraphNodeParameters.Add(lambda.Parameters[0]);
-        bool addedLocalProjectionParameter =
-            useLocalGraphProjection && _localGraphProjectionParameters.Add(lambda.Parameters[0]);
-        try
+        using var graphScope = new GraphLambdaScope(
+            this,
+            lambda.Parameters[0],
+            graphTraversal,
+            bindEdge: useLocalGraphProjection || isEdgeTraversal,
+            bindNode: useLocalGraphProjection,
+            bindProjection: useLocalGraphProjection
+        );
+        var projectedValue =
+            Visit(lambda.Body)?.ToValue()
+            ?? throw new InvalidCastException(
+                $"The selector of {node.Method.Name} must be a value expression."
+            );
+
+        if (useLocalGraphProjection && projectedValue is ObjectValueExpression objectValue)
         {
-            var projectedValue =
-                Visit(lambda.Body)?.ToValue()
-                ?? throw new InvalidCastException(
-                    $"The selector of {node.Method.Name} must be a value expression."
-                );
-
-            if (useLocalGraphProjection && projectedValue is ObjectValueExpression objectValue)
-            {
-                var edgeTraversal = ToLastEdgeTraversal(graphTraversal);
-                return new GraphTraversalValueExpression(
-                    IdiomExpression.Chain(
-                        edgeTraversal.Idiom,
-                        new ObjectPartExpression(objectValue)
-                    ),
-                    edgeTraversal.FlattenDepth,
-                    requiresProjection: false
-                );
-            }
-
-            if (isEdgeTraversal && projectedValue is EdgeIdiomValueExpression edgeIdiom)
-            {
-                if (TryProjectGraphEndpoint(graphTraversal, edgeIdiom, out var endpointProjection))
-                {
-                    return endpointProjection;
-                }
-
-                var edgeTraversal = ToLastEdgeTraversal(graphTraversal);
-                return new GraphTraversalValueExpression(
-                    new IdiomExpression([.. edgeTraversal.Idiom.Parts, .. edgeIdiom.Idiom.Parts]),
-                    edgeTraversal.FlattenDepth,
-                    requiresProjection: false
-                );
-            }
-
-            return projectedValue;
+            var edgeTraversal = ToLastEdgeTraversal(graphTraversal);
+            return new GraphTraversalValueExpression(
+                IdiomExpression.Chain(edgeTraversal.Idiom, new ObjectPartExpression(objectValue)),
+                edgeTraversal.FlattenDepth,
+                requiresProjection: false
+            );
         }
-        finally
+
+        if (isEdgeTraversal && projectedValue is EdgeIdiomValueExpression edgeIdiom)
         {
-            if (addedSourceParameter)
+            if (
+                edgeIdiom is GraphEndpointIdiomValueExpression endpointIdiom
+                && TryProjectGraphEndpoint(
+                    graphTraversal,
+                    endpointIdiom,
+                    out var endpointProjection
+                )
+            )
             {
-                _graphSourceExpressionParameters.Remove(lambda.Parameters[0]);
+                return endpointProjection;
             }
-            if (addedLocalEdgeParameter)
-            {
-                _localGraphEdgeParameters.Remove(lambda.Parameters[0]);
-            }
-            if (addedLocalNodeParameter)
-            {
-                _localGraphNodeParameters.Remove(lambda.Parameters[0]);
-            }
-            if (addedLocalProjectionParameter)
-            {
-                _localGraphProjectionParameters.Remove(lambda.Parameters[0]);
-            }
+
+            var edgeTraversal = ToLastEdgeTraversal(graphTraversal);
+            return new GraphTraversalValueExpression(
+                new IdiomExpression([.. edgeTraversal.Idiom.Parts, .. edgeIdiom.Idiom.Parts]),
+                edgeTraversal.FlattenDepth,
+                requiresProjection: false
+            );
         }
+
+        return projectedValue;
     }
 
     private ValueExpression? ToGraphSourceValueExpression(Expression? expression)
@@ -4791,6 +4764,54 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         };
     }
 
+    private readonly struct GraphLambdaScope : IDisposable
+    {
+        private readonly SurrealExpressionVisitor _visitor;
+        private readonly ParameterExpression _parameter;
+        private readonly bool _removeSource;
+        private readonly bool _removeEdge;
+        private readonly bool _removeNode;
+        private readonly bool _removeProjection;
+
+        public GraphLambdaScope(
+            SurrealExpressionVisitor visitor,
+            ParameterExpression parameter,
+            GraphTraversalValueExpression source,
+            bool bindEdge,
+            bool bindNode,
+            bool bindProjection
+        )
+        {
+            _visitor = visitor;
+            _parameter = parameter;
+            _removeSource = visitor._graphSourceExpressionParameters.TryAdd(parameter, source);
+            _removeEdge = bindEdge && visitor._localGraphEdgeParameters.Add(parameter);
+            _removeNode = bindNode && visitor._localGraphNodeParameters.Add(parameter);
+            _removeProjection =
+                bindProjection && visitor._localGraphProjectionParameters.Add(parameter);
+        }
+
+        public void Dispose()
+        {
+            if (_removeSource)
+            {
+                _visitor._graphSourceExpressionParameters.Remove(_parameter);
+            }
+            if (_removeEdge)
+            {
+                _visitor._localGraphEdgeParameters.Remove(_parameter);
+            }
+            if (_removeNode)
+            {
+                _visitor._localGraphNodeParameters.Remove(_parameter);
+            }
+            if (_removeProjection)
+            {
+                _visitor._localGraphProjectionParameters.Remove(_parameter);
+            }
+        }
+    }
+
     private static bool IsGraphStepType(Type type)
     {
         return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(GraphStep<,>);
@@ -4800,38 +4821,6 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
     {
         return type.IsGenericType
             && type.GetGenericTypeDefinition() == typeof(IGraphEdgeTraversal<>);
-    }
-
-    private static PropertyInfo GetGraphEndpointProperty(Type edgeType, GraphDirection direction)
-    {
-        var attributeType =
-            direction == GraphDirection.Out
-                ? typeof(SurrealOutAttribute)
-                : typeof(SurrealInAttribute);
-        var properties = edgeType
-            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Where(property =>
-                property.GetCustomAttribute(attributeType, inherit: true) is not null
-            )
-            .ToArray();
-
-        if (properties.Length != 1)
-        {
-            string attributeName = attributeType.Name;
-            throw new NotSupportedException(
-                $"Edge type '{edgeType.Name}' must declare exactly one public property marked with [{attributeName}] for {direction.ToString().ToLowerInvariant()} traversal."
-            );
-        }
-
-        var property = properties[0];
-        if (!typeof(IRecord).IsAssignableFrom(property.PropertyType))
-        {
-            throw new NotSupportedException(
-                $"Graph endpoint property '{edgeType.Name}.{property.Name}' must implement {nameof(IRecord)}."
-            );
-        }
-
-        return property;
     }
 
     private static GraphTraversalValueExpression WithLastGraphPartEdgeWhere(
@@ -4890,21 +4879,20 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
 
     private static bool TryProjectGraphEndpoint(
         GraphTraversalValueExpression graphTraversal,
-        EdgeIdiomValueExpression edgeIdiom,
+        GraphEndpointIdiomValueExpression edgeIdiom,
         [NotNullWhen(true)] out GraphTraversalValueExpression? projection
     )
     {
         projection = null;
         if (
             graphTraversal.Idiom.Parts is not [.., GraphPartExpression graphPart]
-            || edgeIdiom.Idiom.Parts is not [FieldPartExpression endpoint, .. var remaining]
+            || edgeIdiom.Idiom.Parts is not [FieldPartExpression, .. var remaining]
         )
         {
             return false;
         }
 
-        string expectedEndpoint = graphPart.Direction == GraphDirection.Out ? "out" : "in";
-        if (!endpoint.FieldName.Equals(expectedEndpoint, StringComparison.Ordinal))
+        if (edgeIdiom.Direction != graphPart.Direction)
         {
             return false;
         }

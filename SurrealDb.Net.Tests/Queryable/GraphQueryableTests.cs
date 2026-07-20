@@ -46,6 +46,46 @@ public class GraphQueryableTests : BaseQueryableTests
     }
 
     [Test]
+    public void ShouldRejectAmbiguousGraphEndpointProperty()
+    {
+        Action action = () => ToSurql(Users.Select(user => user.Out<AmbiguousEndpointRelation>()));
+
+        action.Should().Throw<NotSupportedException>().WithMessage("*cannot be marked with both*");
+    }
+
+    [Test]
+    public void ShouldRejectUnprojectedAttributedTraversalChain()
+    {
+        Action action = () =>
+            ToSurql(Products.Select(product => product.In<Purchased>().Out<Purchased>()));
+
+        action
+            .Should()
+            .Throw<NotSupportedException>()
+            .WithMessage("A single-type graph traversal must be projected with Select*");
+    }
+
+    [Test]
+    public void ShouldNotTreatRelationOutIdAsAttributedEndpointNavigation()
+    {
+        string query = ToSurql(
+            Users.Select(user => user.Out<Purchased>().Select(purchase => purchase.Out))
+        );
+
+        query.Should().Be("SELECT VALUE $this->purchased.out FROM user");
+    }
+
+    [Test]
+    public void ShouldNotTreatMappedOutFieldAsAttributedEndpointNavigation()
+    {
+        string query = ToSurql(
+            Users.Select(user => user.Out<CollidingEndpointRelation>().Select(edge => edge.RawOut))
+        );
+
+        query.Should().Be("SELECT VALUE $this->colliding_endpoint.out FROM user");
+    }
+
+    [Test]
     public void ShouldNavigateOutThroughAttributedRelation()
     {
         string query = ToSurql(
@@ -635,7 +675,31 @@ public class GraphQueryableTests : BaseQueryableTests
     [System.ComponentModel.DataAnnotations.Schema.Table("invalid_endpoint")]
     private sealed class InvalidEndpointRelation : SurrealDbRelationRecord
     {
+        [SurrealDb.Net.Attributes.SurrealIn]
+        public string User { get; } = string.Empty;
+
         [SurrealDb.Net.Attributes.SurrealOut]
-        public string Product { get; } = string.Empty;
+        public StoreProduct Product { get; } = default!;
+    }
+
+    [System.ComponentModel.DataAnnotations.Schema.Table("ambiguous_endpoint")]
+    private sealed class AmbiguousEndpointRelation : SurrealDbRelationRecord
+    {
+        [SurrealDb.Net.Attributes.SurrealIn]
+        [SurrealDb.Net.Attributes.SurrealOut]
+        public StoreUser User { get; } = default!;
+    }
+
+    [System.ComponentModel.DataAnnotations.Schema.Table("colliding_endpoint")]
+    private sealed class CollidingEndpointRelation : SurrealDbRelationRecord
+    {
+        [SurrealDb.Net.Attributes.SurrealIn]
+        public StoreUser User { get; } = default!;
+
+        [SurrealDb.Net.Attributes.SurrealOut]
+        public StoreProduct Product { get; } = default!;
+
+        [System.ComponentModel.DataAnnotations.Schema.Column("out")]
+        public string RawOut { get; } = string.Empty;
     }
 }
