@@ -116,6 +116,51 @@ public static class GraphQueryableExtensions
         );
     }
 
+    public static IGraphEdgeTraversal<TEdge> Both<TEdge>(this IRecord source)
+        where TEdge : IRelationRecord
+    {
+        throw new NotSupportedException(
+            "Graph traversal methods are only supported in LINQ queries."
+        );
+    }
+
+    public static IGraphEdgeTraversal<TEdge> Both<TEdge>(this IGraphTraversal source)
+        where TEdge : IRelationRecord
+    {
+        throw new NotSupportedException(
+            "Graph traversal methods are only supported in LINQ queries."
+        );
+    }
+
+    public static IGraphTraversal<TEdge, TNode> Both<TEdge, TNode>(this IRecord source)
+        where TEdge : IRelationRecord
+        where TNode : IRecord
+    {
+        throw new NotSupportedException(
+            "Graph traversal methods are only supported in LINQ queries."
+        );
+    }
+
+    public static IGraphTraversal<TEdge, TNode> Both<TEdge, TNode>(
+        this IGraphTraversal<IRecord> source
+    )
+        where TEdge : IRelationRecord
+        where TNode : IRecord
+    {
+        throw new NotSupportedException(
+            "Graph traversal methods are only supported in LINQ queries."
+        );
+    }
+
+    public static IGraphTraversal<TEdge, TNode> Both<TEdge, TNode>(this IGraphTraversal source)
+        where TEdge : IRelationRecord
+        where TNode : IRecord
+    {
+        throw new NotSupportedException(
+            "Graph traversal methods are only supported in LINQ queries."
+        );
+    }
+
     public static IGraphEdgeTraversal<TEdge> Where<TEdge>(
         this IGraphEdgeTraversal<TEdge> source,
         Expression<Func<TEdge, bool>> predicate

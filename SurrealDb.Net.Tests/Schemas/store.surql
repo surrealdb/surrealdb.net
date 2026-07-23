@@ -121,3 +121,13 @@ RELATE user:charlie->purchased->product:external_ssd SET quantity = 1, order = o
 RELATE user:diana->purchased->product:keyboard SET quantity = 2, order = orders:10;
 RELATE user:diana->purchased->product:mouse SET quantity = 2, order = orders:10;
 RELATE user:diana->purchased->product:book SET quantity = 1, order = orders:10;
+
+
+DEFINE TABLE friends TYPE RELATION IN user OUT user SCHEMAFULL
+    PERMISSIONS
+        FOR select, create, update, delete WHERE $auth.id != NONE;
+
+RELATE user:alice->friends->user:bob;
+RELATE user:charlie->friends->user:bob;
+RELATE user:bob->friends->user:diana;
+RELATE user:diana->friends->user:eve;

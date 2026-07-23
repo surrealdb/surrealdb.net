@@ -20,7 +20,17 @@ internal sealed class GraphEdgeMetadata
 
     public PropertyInfo GetEndpointProperty(GraphDirection direction)
     {
-        return direction == GraphDirection.Out ? OutProperty : InProperty;
+        return direction switch
+        {
+            GraphDirection.Out => OutProperty,
+            GraphDirection.In => InProperty,
+            GraphDirection.Both when InProperty.PropertyType == OutProperty.PropertyType =>
+                InProperty,
+            GraphDirection.Both => throw new NotSupportedException(
+                $"Bidirectional traversal of edge type '{InProperty.DeclaringType?.Name}' requires [{nameof(SurrealInAttribute)}] and [{nameof(SurrealOutAttribute)}] properties to use the same endpoint type."
+            ),
+            _ => throw new ArgumentOutOfRangeException(nameof(direction)),
+        };
     }
 
     public bool TryGetEndpointDirection(MemberInfo member, out GraphDirection direction)

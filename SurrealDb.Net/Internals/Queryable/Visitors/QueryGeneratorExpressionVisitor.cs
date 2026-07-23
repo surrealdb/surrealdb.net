@@ -344,19 +344,17 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
 
         if (partExpression is GraphPartExpression graphPartExpression)
         {
-            bool isOut = graphPartExpression.Direction == GraphDirection.Out;
-            _surqlQueryBuilder.Append(isOut ? "->" : "<-");
+            string arrow = GetGraphArrow(graphPartExpression.Direction);
+            _surqlQueryBuilder.Append(arrow);
             VisitGraphEdge(graphPartExpression.EdgeTable, graphPartExpression.EdgeWhere);
-            _surqlQueryBuilder.Append(isOut ? "->" : "<-");
+            _surqlQueryBuilder.Append(arrow);
             _surqlQueryBuilder.Append(graphPartExpression.NodeTable);
             return partExpression;
         }
 
         if (partExpression is GraphEdgePartExpression graphEdgePartExpression)
         {
-            _surqlQueryBuilder.Append(
-                graphEdgePartExpression.Direction == GraphDirection.Out ? "->" : "<-"
-            );
+            _surqlQueryBuilder.Append(GetGraphArrow(graphEdgePartExpression.Direction));
             VisitGraphEdge(graphEdgePartExpression.EdgeTable, graphEdgePartExpression.EdgeWhere);
             return partExpression;
         }
@@ -404,6 +402,15 @@ internal sealed class QueryGeneratorExpressionVisitor : ExpressionVisitor
 
         return partExpression;
     }
+
+    private static string GetGraphArrow(GraphDirection direction) =>
+        direction switch
+        {
+            GraphDirection.Out => "->",
+            GraphDirection.In => "<-",
+            GraphDirection.Both => "<->",
+            _ => throw new ArgumentOutOfRangeException(nameof(direction)),
+        };
 
     private void VisitGraphEdge(string edgeTable, ValueExpression? edgeWhere)
     {

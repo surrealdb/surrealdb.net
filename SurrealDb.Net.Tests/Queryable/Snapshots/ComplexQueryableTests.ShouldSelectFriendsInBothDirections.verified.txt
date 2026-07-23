@@ -1,0 +1,8 @@
+[
+  [
+    Alice Example,
+    Bob Buyer,
+    Charlie Client,
+    Diana Designer
+  ]
+]

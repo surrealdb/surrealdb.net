@@ -80,6 +80,35 @@ public class ComplexQueryableTests : BaseQueryableTests
 
     [Test]
     [WebsocketConnectionStringFixtureGenerator]
+    public async Task ShouldSelectFriendsInBothDirections(string connectionString)
+    {
+        var (result, query) = await ExecuteWithSchemaAsync(
+            connectionString,
+            SurrealSchemaFile.Store,
+            client =>
+                client
+                    .Select<StoreUser>()
+                    .Where(user => user.Name == "Bob Buyer")
+                    .Select(user =>
+                        user.Both<Friends, StoreUser>()
+                            .Select(friend => friend.Name)
+                            .Distinct()
+                            .Order()
+                    )
+        );
+        query
+            .Should()
+            .Be(
+                """
+                SELECT VALUE array::sort::asc(array::distinct($this<->friends<->user.name)) FROM user WHERE name == "Bob Buyer"
+                """
+            );
+
+        await Verify(result, _verifySettings);
+    }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
     public async Task ShouldSelectGroupOfPurchasedMoreThanOnce(string connectionString)
     {
         var (result, query) = await ExecuteWithSchemaAsync(

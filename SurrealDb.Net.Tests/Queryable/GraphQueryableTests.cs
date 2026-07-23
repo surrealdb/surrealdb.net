@@ -122,6 +122,80 @@ public class GraphQueryableTests : BaseQueryableTests
     }
 
     [Test]
+    public void ShouldTraverseTypedRelationInBothDirections()
+    {
+        string query = ToSurql(
+            Users.Select(user => user.Both<Friends, StoreUser>().Select(friend => friend.Name))
+        );
+
+        query.Should().Be("SELECT VALUE $this<->friends<->user.name FROM user");
+    }
+
+    [Test]
+    public void ShouldProjectBidirectionalTraversalEdgeField()
+    {
+        string query = ToSurql(
+            Users.Select(user => user.Both<Friends>().Select(friendship => friendship.Id))
+        );
+
+        query.Should().Be("SELECT VALUE $this<->friends.id FROM user");
+    }
+
+    [Test]
+    public void ShouldRejectEndpointProjectionOnBidirectionalEdgeTraversal()
+    {
+        Action action = () =>
+            ToSurql(
+                Users.Select(user =>
+                    user.Both<Friends>().Select(friendship => friendship.FirstUser.Name)
+                )
+            );
+
+        action
+            .Should()
+            .Throw<NotSupportedException>()
+            .WithMessage("*Both<TEdge>() only supports edge fields*Both<TEdge, TNode>()*");
+    }
+
+    [Test]
+    public void ShouldRejectEndpointFilterOnBidirectionalEdgeTraversal()
+    {
+        Action action = () =>
+            ToSurql(
+                Users.Select(user =>
+                    user.Both<Friends>()
+                        .Where(friendship => friendship.FirstUser.Name == "Alice Example")
+                        .Select(friendship => friendship.Id)
+                )
+            );
+
+        action
+            .Should()
+            .Throw<NotSupportedException>()
+            .WithMessage("*Both<TEdge>() only supports edge fields*Both<TEdge, TNode>()*");
+    }
+
+    [Test]
+    public void ShouldRejectBidirectionalTraversalWithDifferentEndpointTypes()
+    {
+        Action action = () =>
+            ToSurql(Users.Select(user => user.Both<Purchased>().Select(p => p.Product.Name)));
+
+        action.Should().Throw<NotSupportedException>().WithMessage("*requires*same endpoint type*");
+    }
+
+    [Test]
+    public void ShouldRejectBidirectionalTraversalWithWrongExplicitEndpointType()
+    {
+        Action action = () => ToSurql(Users.Select(user => user.Both<Friends, StoreProduct>()));
+
+        action
+            .Should()
+            .Throw<NotSupportedException>()
+            .WithMessage("*must use endpoint type 'StoreUser'*");
+    }
+
+    [Test]
     public void ShouldFilterAttributedGraphTraversalEdgeAndEndpoint()
     {
         string query = ToSurql(

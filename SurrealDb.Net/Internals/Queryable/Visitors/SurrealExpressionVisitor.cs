@@ -1667,7 +1667,8 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             return node.Method.Name switch
             {
                 nameof(GraphQueryableExtensions.Out)
-                or nameof(GraphQueryableExtensions.In) when node.Arguments.Count == 1 =>
+                or nameof(GraphQueryableExtensions.In)
+                or nameof(GraphQueryableExtensions.Both) when node.Arguments.Count == 1 =>
                     BindGraphTraversalMethodCall(node),
                 nameof(GraphQueryableExtensions.Where) when node.Arguments.Count == 2 =>
                     BindGraphWhereMethodCall(node),
@@ -2020,6 +2021,7 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         {
             nameof(GraphQueryableExtensions.Out) => GraphDirection.Out,
             nameof(GraphQueryableExtensions.In) => GraphDirection.In,
+            nameof(GraphQueryableExtensions.Both) => GraphDirection.Both,
             _ => throw new NotSupportedException(
                 $"Graph traversal method {node.Method.Name} is not supported."
             ),
@@ -2027,13 +2029,17 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         var genericArguments = node.Method.GetGenericArguments();
         var edgeType = genericArguments[0];
         var edgeTable = GetTableName(edgeType);
-        var nodeType =
-            genericArguments.Length == 2
-                ? genericArguments[1]
-                : GraphEdgeMetadataResolver
-                    .Get(edgeType)
-                    .GetEndpointProperty(direction)
-                    .PropertyType;
+        var endpointType = GraphEdgeMetadataResolver
+            .Get(edgeType)
+            .GetEndpointProperty(direction)
+            .PropertyType;
+        var nodeType = genericArguments.Length == 2 ? genericArguments[1] : endpointType;
+        if (direction == GraphDirection.Both && nodeType != endpointType)
+        {
+            throw new NotSupportedException(
+                $"Bidirectional traversal of edge type '{edgeType.Name}' must use endpoint type '{endpointType.Name}'."
+            );
+        }
         var nodeTable = GetTableName(nodeType);
         int flattenDepth =
             sourceValue is GraphTraversalValueExpression
@@ -2089,6 +2095,8 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
                 "The graph traversal predicate must be a value expression."
             );
 
+        ThrowIfBothEdgeTraversalUsesEndpoint(graphTraversal, predicateValue, isEdgeTraversal);
+
         bool containsEdge = ContainsExpression<EdgeIdiomValueExpression>(predicateValue);
         if (isGraphStep || isEdgeTraversal || containsEdge)
         {
@@ -2130,6 +2138,8 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
             ?? throw new InvalidCastException(
                 $"The selector of {node.Method.Name} must be a value expression."
             );
+
+        ThrowIfBothEdgeTraversalUsesEndpoint(graphTraversal, projectedValue, isEdgeTraversal);
 
         if (useLocalGraphProjection && projectedValue is ObjectValueExpression objectValue)
         {
@@ -4905,12 +4915,31 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         return true;
     }
 
+    private static void ThrowIfBothEdgeTraversalUsesEndpoint(
+        GraphTraversalValueExpression graphTraversal,
+        ValueExpression value,
+        bool isEdgeTraversal
+    )
+    {
+        if (
+            isEdgeTraversal
+            && graphTraversal.Idiom.Parts
+                is [.., GraphPartExpression { Direction: GraphDirection.Both }]
+            && ContainsExpression<GraphEndpointIdiomValueExpression>(value)
+        )
+        {
+            throw new NotSupportedException(
+                "Both<TEdge>() only supports edge fields. Use Both<TEdge, TNode>() to traverse endpoint nodes."
+            );
+        }
+    }
+
     private static void ThrowIfUnprojectedEdgeTraversal(ValueExpression? expression)
     {
         if (expression is GraphTraversalValueExpression { RequiresProjection: true })
         {
             throw new NotSupportedException(
-                "A single-type graph traversal must be projected with Select before it can be materialized. Use Out<TEdge, TNode>() or In<TEdge, TNode>() to materialize typed endpoint nodes directly."
+                "A single-type graph traversal must be projected with Select before it can be materialized. Use Out<TEdge, TNode>(), In<TEdge, TNode>(), or Both<TEdge, TNode>() to materialize typed endpoint nodes directly."
             );
         }
     }

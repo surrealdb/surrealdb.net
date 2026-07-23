@@ -128,6 +128,7 @@ internal enum GraphDirection
 {
     Out,
     In,
+    Both,
 }
 
 internal sealed class ValuePartExpression : PartExpression
