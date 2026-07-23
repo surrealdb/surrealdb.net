@@ -2029,16 +2029,30 @@ internal sealed class SurrealExpressionVisitor : ExpressionVisitor
         var genericArguments = node.Method.GetGenericArguments();
         var edgeType = genericArguments[0];
         var edgeTable = GetTableName(edgeType);
-        var endpointType = GraphEdgeMetadataResolver
-            .Get(edgeType)
-            .GetEndpointProperty(direction)
-            .PropertyType;
-        var nodeType = genericArguments.Length == 2 ? genericArguments[1] : endpointType;
-        if (direction == GraphDirection.Both && nodeType != endpointType)
+        Type nodeType;
+        if (direction == GraphDirection.Both)
         {
-            throw new NotSupportedException(
-                $"Bidirectional traversal of edge type '{edgeType.Name}' must use endpoint type '{endpointType.Name}'."
-            );
+            var endpointType = GraphEdgeMetadataResolver
+                .Get(edgeType)
+                .GetEndpointProperty(direction)
+                .PropertyType;
+            nodeType = genericArguments.Length == 2 ? genericArguments[1] : endpointType;
+            if (nodeType != endpointType)
+            {
+                throw new NotSupportedException(
+                    $"Bidirectional traversal of edge type '{edgeType.Name}' must use endpoint type '{endpointType.Name}'."
+                );
+            }
+        }
+        else
+        {
+            nodeType =
+                genericArguments.Length == 2
+                    ? genericArguments[1]
+                    : GraphEdgeMetadataResolver
+                        .Get(edgeType)
+                        .GetEndpointProperty(direction)
+                        .PropertyType;
         }
         var nodeTable = GetTableName(nodeType);
         int flattenDepth =

@@ -258,6 +258,26 @@ public class GraphQueryableTests : BaseQueryableTests
     }
 
     [Test]
+    public void ShouldNavigateTypedOutWithoutEndpointAttributes()
+    {
+        string query = ToSurql(
+            Users.Select(user => user.Out<MissingEndpointRelation, StoreProduct>())
+        );
+
+        query.Should().Be("SELECT VALUE $this->missing_endpoint->product FROM user");
+    }
+
+    [Test]
+    public void ShouldNavigateTypedInWithoutEndpointAttributes()
+    {
+        string query = ToSurql(
+            Products.Select(product => product.In<MissingEndpointRelation, StoreUser>())
+        );
+
+        query.Should().Be("SELECT VALUE $this<-missing_endpoint<-user FROM product");
+    }
+
+    [Test]
     public void ShouldChainGraphTraversals()
     {
         string query = ToSurql(
