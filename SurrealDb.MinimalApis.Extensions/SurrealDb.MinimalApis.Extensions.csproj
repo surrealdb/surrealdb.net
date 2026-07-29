@@ -21,6 +21,9 @@
     <EmbeddedResource Include="..\SurrealDb.MinimalApis.Extensions.Reference\SurrealDbMinimalApisOptions.cs" Link="SurrealDbMinimalApisOptions.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="..\SurrealDb.MinimalApis.Extensions.Reference\SurrealDbMinimalApisRequests.cs" Link="SurrealDbMinimalApisRequests.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

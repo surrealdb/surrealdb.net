@@ -14,14 +14,14 @@ public class WeatherForecastController : ControllerBase
 {
     internal const string Table = "weatherForecast";
 
-    private readonly ISurrealDbClient _surrealDbClient;
+    private readonly ISurrealDbSession _db;
 
     /// <summary>
     /// Constructor
     /// </summary>
-    public WeatherForecastController(ISurrealDbClient surrealDbClient)
+    public WeatherForecastController(ISurrealDbSession db)
     {
-        _surrealDbClient = surrealDbClient;
+        _db = db;
     }
 
     /// <summary>
@@ -30,7 +30,7 @@ public class WeatherForecastController : ControllerBase
     [HttpGet]
     public Task<IEnumerable<WeatherForecast>> GetAll(CancellationToken cancellationToken)
     {
-        return _surrealDbClient.Select<WeatherForecast>(Table, cancellationToken);
+        return _db.Select<WeatherForecast>(Table, cancellationToken);
     }
 
     /// <summary>
@@ -39,10 +39,7 @@ public class WeatherForecastController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(string id, CancellationToken cancellationToken)
     {
-        var weatherForecast = await _surrealDbClient.Select<WeatherForecast>(
-            (Table, id),
-            cancellationToken
-        );
+        var weatherForecast = await _db.Select<WeatherForecast>((Table, id), cancellationToken);
 
         if (weatherForecast is null)
             return NotFound();
@@ -67,7 +64,7 @@ public class WeatherForecastController : ControllerBase
             Summary = data.Summary,
         };
 
-        return _surrealDbClient.Create(Table, weatherForecast, cancellationToken);
+        return _db.Create(Table, weatherForecast, cancellationToken);
     }
 
     /// <summary>
@@ -76,7 +73,7 @@ public class WeatherForecastController : ControllerBase
     [HttpPut]
     public Task<WeatherForecast> Update(WeatherForecast data, CancellationToken cancellationToken)
     {
-        return _surrealDbClient.Upsert(data, cancellationToken);
+        return _db.Upsert(data, cancellationToken);
     }
 
     /// <summary>
@@ -88,7 +85,7 @@ public class WeatherForecastController : ControllerBase
         CancellationToken cancellationToken
     )
     {
-        return _surrealDbClient.Patch(Table, patches, cancellationToken);
+        return _db.Patch(Table, patches, cancellationToken);
     }
 
     /// <summary>
@@ -101,7 +98,7 @@ public class WeatherForecastController : ControllerBase
         CancellationToken cancellationToken
     )
     {
-        return _surrealDbClient.Patch((Table, id), patches, cancellationToken);
+        return _db.Patch((Table, id), patches, cancellationToken);
     }
 
     /// <summary>
@@ -110,7 +107,7 @@ public class WeatherForecastController : ControllerBase
     [HttpDelete]
     public Task DeleteAll(CancellationToken cancellationToken)
     {
-        return _surrealDbClient.Delete(Table, cancellationToken);
+        return _db.Delete(Table, cancellationToken);
     }
 
     /// <summary>
@@ -119,7 +116,7 @@ public class WeatherForecastController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
     {
-        bool success = await _surrealDbClient.Delete((Table, id), cancellationToken);
+        bool success = await _db.Delete((Table, id), cancellationToken);
 
         if (!success)
             return NotFound();

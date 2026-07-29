@@ -8,6 +8,7 @@ namespace SurrealDb.Examples.MinimalApis.Models;
 /// <summary>
 /// Weather forecast model.
 /// </summary>
+[Table(Table)]
 public class WeatherForecast : IRecord
 {
     internal const string Table = "weatherForecast";

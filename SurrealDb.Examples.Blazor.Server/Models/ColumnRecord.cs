@@ -4,6 +4,7 @@ using SurrealDb.Net.Models;
 
 namespace SurrealDb.Examples.Blazor.Server.Models;
 
+[Table(Table)]
 public class ColumnRecord : Record
 {
     internal const string Table = "column";

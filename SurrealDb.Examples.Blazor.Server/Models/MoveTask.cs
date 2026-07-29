@@ -3,6 +3,7 @@ using SurrealDb.Net.Models;
 
 namespace SurrealDb.Examples.Blazor.Server.Models;
 
+[Table(Table)]
 public class MoveTask : Record
 {
     internal const string Table = "move_task";
