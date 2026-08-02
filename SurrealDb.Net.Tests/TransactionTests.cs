@@ -59,7 +59,7 @@ public class TransactionTests
     }
 
     [Test]
-    [WebsocketConnectionStringFixtureGenerator]
+    [ConnectionStringFixtureGenerator]
     [SinceSurrealVersion("3.0")]
     public async Task CommitTransaction(string connectionString)
     {

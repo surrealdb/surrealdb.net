@@ -1688,7 +1688,9 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             };
 
             var sessionBytes = sessionId.HasValue ? sessionId.Value.ToByteArray() : [];
-            var transactionBytes = transactionId.HasValue ? transactionId.Value.ToByteArray() : [];
+            var transactionBytes = transactionId.HasValue
+                ? transactionId.Value.ToByteArray(bigEndian: true)
+                : [];
 
             fixed (byte* session = sessionBytes.AsSpan())
             fixed (byte* transaction = transactionBytes.AsSpan())
