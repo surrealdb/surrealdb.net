@@ -1687,7 +1687,9 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 callback = &NativeBindings.FailureCallback,
             };
 
-            var sessionBytes = sessionId.HasValue ? sessionId.Value.ToByteArray() : [];
+            var sessionBytes = sessionId.HasValue
+                ? sessionId.Value.ToByteArray(bigEndian: true)
+                : [];
             var transactionBytes = transactionId.HasValue
                 ? transactionId.Value.ToByteArray(bigEndian: true)
                 : [];
