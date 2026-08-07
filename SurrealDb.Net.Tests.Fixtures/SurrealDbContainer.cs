@@ -13,17 +13,18 @@ public sealed class SurrealDbContainer : IAsyncDisposable
 
     private IContainer? _container;
 
+    private static bool IsEnvironmentVariableEnabled(string environmentVariableName)
+    {
+        var value = Environment.GetEnvironmentVariable(environmentVariableName);
+
+        return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(value, "1", StringComparison.Ordinal);
+    }
+
     public static bool ShouldUseTestContainers()
     {
-        var ci = Environment.GetEnvironmentVariable("CI");
-        var disableTestContainers = Environment.GetEnvironmentVariable("DISABLE_TESTCONTAINERS");
-
-        bool isCi =
-            string.Equals(ci, "true", StringComparison.OrdinalIgnoreCase)
-            || (ci is not null && ci != "false");
-        bool isDisabled =
-            disableTestContainers == "1"
-            || string.Equals(disableTestContainers, "true", StringComparison.OrdinalIgnoreCase);
+        bool isCi = IsEnvironmentVariableEnabled("CI");
+        bool isDisabled = IsEnvironmentVariableEnabled("DISABLE_TESTCONTAINERS");
 
         return !isCi && !isDisabled;
     }
