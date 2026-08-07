@@ -88,7 +88,11 @@ public class SurrealDbClient : BaseSurrealDbClient
             string absoluteNakedPath = endpointUri.AbsolutePath.EndsWith('/')
                 ? endpointUri.AbsolutePath[..^1]
                 : endpointUri.AbsolutePath;
-            return new Uri(endpointUri, $"{absoluteNakedPath}/rpc");
+
+            var rewrittenUri = new Uri(endpointUri, $"{absoluteNakedPath}/rpc");
+            configuration.Endpoint = rewrittenUri.ToString();
+
+            return rewrittenUri;
         }
 
         return endpointUri;

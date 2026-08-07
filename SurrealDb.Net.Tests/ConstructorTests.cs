@@ -1,4 +1,6 @@
-﻿namespace SurrealDb.Net.Tests;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+namespace SurrealDb.Net.Tests;
 
 public class ConstructorTests
 {
@@ -82,5 +84,21 @@ public class ConstructorTests
         act.Should()
             .Throw<NotSupportedException>()
             .WithMessage("The protocol 'abc' is not supported.");
+    }
+
+    [Test]
+    [Property("issue", "#266")]
+    [Arguments("ws://127.0.0.1:8000", "ws://127.0.0.1:8000/rpc")]
+    [Arguments("wss://cloud.SurrealDb.com", "wss://cloud.surrealdb.com/rpc")]
+    [Arguments("ws://127.0.0.1:8000/", "ws://127.0.0.1:8000/rpc")]
+    [Arguments("wss://cloud.SurrealDb.com/", "wss://cloud.surrealdb.com/rpc")]
+    public async Task ShouldRewriteEndpointToUseRpcOnWsEngine(string endpoint, string expected)
+    {
+        await using var client = new SurrealDbClient(new SurrealDbOptions { Endpoint = endpoint });
+
+        client.Uri.AbsoluteUri.Should().Be(expected);
+        client
+            .Engine.Uri.AbsoluteUri.Should()
+            .Be(expected, "the WS engine must connect to the same /rpc endpoint as the client Uri");
     }
 }
