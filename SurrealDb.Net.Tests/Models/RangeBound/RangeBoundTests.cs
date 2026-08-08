@@ -8,7 +8,7 @@ public class RangeBoundTests
         var bound = new RangeBound<int>();
 
         bound.Value.Should().Be(0);
-        bound.Type.Should().Be(RangeBoundType.Unknown);
+        bound.Type.Should().Be(RangeBoundType.Unbounded);
     }
 
     [Test]

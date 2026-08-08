@@ -1,7 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SurrealDb.Net.Tests;
 
+[Table("user")]
 public class User : SurrealDbRecord
 {
     [Column("username")]

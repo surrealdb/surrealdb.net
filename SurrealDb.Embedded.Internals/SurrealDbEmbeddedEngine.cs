@@ -5,11 +5,13 @@ using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Semver;
 using SurrealDb.Embedded.Options;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Exceptions.Embedded;
 using SurrealDb.Net.Exceptions.Methods;
 using SurrealDb.Net.Exceptions.Serialization;
+using SurrealDb.Net.Extensions;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Cbor;
@@ -17,6 +19,7 @@ using SurrealDb.Net.Internals.DependencyInjection;
 using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Models.LiveQuery;
+using SurrealDb.Net.Internals.Queryable;
 using SurrealDb.Net.Internals.Stream;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
@@ -49,6 +52,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public string Id => _id.ToString();
 #endif
     public Uri Uri { get; private set; } = new("unknown://");
+    public SemVersion? CachedVersion { get; private set; }
     public EmbeddedSessionInfos SessionInfos { get; } = new();
 
     static SurrealDbEmbeddedEngine()
@@ -197,7 +201,9 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
             PreConnect();
 
+#pragma warning disable MA0004
             await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
+#pragma warning restore MA0004
 
             await CborSerializer
                 .SerializeAsync(_options, stream, GetCborOptions(), cancellationToken)
@@ -437,7 +443,9 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         cancellationToken.Register(timeoutCts.Cancel);
 
+#pragma warning disable MA0004
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
+#pragma warning restore MA0004
 
         try
         {
@@ -1040,7 +1048,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             .ConfigureAwait(false);
     }
 
-    public async Task<IEnumerable<T>> Select<T>(
+    public async Task<IEnumerable<T>> SelectAll<T>(
         string table,
         Guid? sessionId,
         Guid? transactionId,
@@ -1055,6 +1063,14 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
+    }
+
+    public IQueryable<T> Select<T>(string? table, Guid? sessionId, Guid? transactionId)
+    {
+        return new SurrealDbQueryable<T>(
+            new SurrealDbQueryProvider<T>(this, sessionId, transactionId),
+            table
+        );
     }
 
     public async Task<T?> Select<T>(
@@ -1460,7 +1476,19 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             .ConfigureAwait(false);
 
         const string VERSION_PREFIX = "surrealdb-";
-        return version.Replace(VERSION_PREFIX, string.Empty);
+        version = version.Replace(VERSION_PREFIX, string.Empty);
+
+        CachedVersion = version.ToSemver();
+
+        return version;
+    }
+
+    public async Task EnsureVersionIsSetAsync(CancellationToken cancellationToken)
+    {
+        if (CachedVersion is not null)
+            return;
+
+        await Version(cancellationToken).ConfigureAwait(false);
     }
 
     private async Task ApplyRootConfigurationAsync(CancellationToken cancellationToken)
@@ -1572,7 +1600,9 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 .ConfigureAwait(false);
         }
 
+#pragma warning disable MA0004
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
+#pragma warning restore MA0004
 
         try
         {

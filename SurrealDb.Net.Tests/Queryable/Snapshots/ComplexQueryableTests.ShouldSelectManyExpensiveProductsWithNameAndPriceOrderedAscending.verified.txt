@@ -1,0 +1,34 @@
+﻿[
+  {
+    Name: External SSD,
+    Price: 129.99
+  },
+  {
+    Name: External SSD,
+    Price: 129.99
+  },
+  {
+    Name: Headphones,
+    Price: 149.99
+  },
+  {
+    Name: Headphones,
+    Price: 149.99
+  },
+  {
+    Name: Monitor,
+    Price: 399.99
+  },
+  {
+    Name: Monitor,
+    Price: 399.99
+  },
+  {
+    Name: Laptop,
+    Price: 999.99
+  },
+  {
+    Name: Laptop,
+    Price: 999.99
+  }
+]

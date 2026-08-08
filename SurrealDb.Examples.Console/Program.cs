@@ -24,7 +24,7 @@ var updated = await db.Merge<ResponsibilityMerge, Person>(
 );
 Console.WriteLine(ToJsonString(updated));
 
-var people = await db.Select<Person>(TABLE);
+var people = await db.Select<Person>(TABLE).ToListAsync();
 Console.WriteLine(ToJsonString(people));
 
 var queryResponse = await db.Query(

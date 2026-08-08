@@ -1,0 +1,142 @@
+﻿[
+  {
+    customer: Alice Example,
+    total: 19.99,
+    products: [
+      {
+        name: Book,
+        description: A great book
+      }
+    ]
+  },
+  {
+    customer: Bob Buyer,
+    total: 1019.98,
+    products: [
+      {
+        name: Book,
+        description: A great book
+      },
+      {
+        name: Laptop,
+        description: A fast laptop
+      }
+    ]
+  },
+  {
+    customer: Charlie Client,
+    total: 119.98,
+    products: [
+      {
+        name: Mouse,
+        description: Wireless mouse
+      },
+      {
+        name: Keyboard,
+        description: Mechanical keyboard
+      }
+    ]
+  },
+  {
+    customer: Diana Designer,
+    total: 399.99,
+    products: [
+      {
+        name: Monitor,
+        description: 4K Monitor
+      }
+    ]
+  },
+  {
+    customer: Alice Example,
+    total: 189.98,
+    products: [
+      {
+        name: Headphones,
+        description: Noise-cancelling headphones
+      },
+      {
+        name: USB Hub,
+        description: 7-port USB hub
+      }
+    ]
+  },
+  {
+    customer: Eve Engineer,
+    total: 159.98,
+    products: [
+      {
+        name: External SSD,
+        description: 1TB external SSD
+      },
+      {
+        name: Mouse,
+        description: Wireless mouse
+      }
+    ]
+  },
+  {
+    customer: Frank Founder,
+    total: 1489.97,
+    products: [
+      {
+        name: Laptop,
+        description: A fast laptop
+      },
+      {
+        name: Monitor,
+        description: 4K Monitor
+      },
+      {
+        name: Keyboard,
+        description: Mechanical keyboard
+      }
+    ]
+  },
+  {
+    customer: Bob Buyer,
+    total: 169.98,
+    products: [
+      {
+        name: Book,
+        description: A great book
+      },
+      {
+        name: Headphones,
+        description: Noise-cancelling headphones
+      }
+    ]
+  },
+  {
+    customer: Charlie Client,
+    total: 169.98,
+    products: [
+      {
+        name: USB Hub,
+        description: 7-port USB hub
+      },
+      {
+        name: External SSD,
+        description: 1TB external SSD
+      }
+    ]
+  },
+  {
+    customer: Diana Designer,
+    total: 139.97,
+    products: [
+      {
+        name: Keyboard,
+        description: Mechanical keyboard
+      },
+      {
+        name: Mouse,
+        description: Wireless mouse
+      },
+      {
+        name: Book,
+        description: A great book
+      }
+    ]
+  }
+]

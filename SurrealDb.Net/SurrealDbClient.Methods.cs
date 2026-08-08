@@ -87,7 +87,7 @@ public abstract partial class BaseSurrealDbClient
         else
         {
             SessionState = Models.Sessions.SessionState.Closed;
-            await Engine.DisposeAsync();
+            await Engine.DisposeAsync().ConfigureAwait(false);
         }
     }
 
@@ -125,8 +125,10 @@ public abstract partial class BaseSurrealDbClient
             && wrapper.Version.Satisfies(SemVersionRange.AtLeast(new(2, 1), true));
 
         using var response = shouldUsePostRequest
-            ? await wrapper.HttpClient.PostAsync(exportUri, httpContent, cancellationToken)
-            : await wrapper.HttpClient.GetAsync(exportUri, cancellationToken);
+            ? await wrapper
+                .HttpClient.PostAsync(exportUri, httpContent, cancellationToken)
+                .ConfigureAwait(false)
+            : await wrapper.HttpClient.GetAsync(exportUri, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
 #if NET6_0_OR_GREATER
@@ -627,12 +629,9 @@ public abstract partial class BaseSurrealDbClient
         return Engine.Run<T>(name, version, args, SessionId, TransactionId, cancellationToken);
     }
 
-    public Task<IEnumerable<T>> Select<T>(
-        string table,
-        CancellationToken cancellationToken = default
-    )
+    public IQueryable<T> Select<T>(string? table = null)
     {
-        return Engine.Select<T>(table, SessionId, TransactionId, cancellationToken);
+        return Engine.Select<T>(table, SessionId, TransactionId);
     }
 
     public Task<T?> Select<T>(RecordId recordId, CancellationToken cancellationToken = default)

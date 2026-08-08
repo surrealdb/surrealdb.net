@@ -8,7 +8,13 @@ internal sealed class RangeConverterProvider : CborConverterProviderBase
 {
     public override ICborConverter? GetConverter(Type type, CborOptions options)
     {
-        if (type.Namespace == ConverterTypeConstants.ModelsNamespace && type.Name == "Range`2")
+        if (
+            string.Equals(
+                type.Namespace,
+                ConverterTypeConstants.ModelsNamespace,
+                StringComparison.Ordinal
+            ) && string.Equals(type.Name, "Range`2", StringComparison.Ordinal)
+        )
         {
             return CreateGenericConverter(
                 options,
