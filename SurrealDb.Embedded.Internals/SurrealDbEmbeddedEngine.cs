@@ -1560,15 +1560,16 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             throw;
         }
 
-        if (
-            sessionId.HasValue
-            && _sessionizer is not null
-            && _sessionizer.Get(sessionId.Value, out var newSessionInfo)
-            && newSessionInfo is EmbeddedSessionInfo newEmbeddedSessionInfo
-        )
+        if (sessionId.HasValue && _sessionizer is not null)
         {
-            _sessionizer.TryRemove(sessionId.Value);
-            await CreateSession(sessionId.Value, newEmbeddedSessionInfo, cancellationToken)
+            await _sessionizer
+                .EnsureAttachedAsync(
+                    sessionId.Value,
+                    info =>
+                        info is EmbeddedSessionInfo embeddedSessionInfo
+                            ? CreateSession(sessionId.Value, embeddedSessionInfo, cancellationToken)
+                            : Task.CompletedTask
+                )
                 .ConfigureAwait(false);
         }
 

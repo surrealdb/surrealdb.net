@@ -1520,15 +1520,17 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             await Connect(cancellationToken).ConfigureAwait(false);
         }
 
-        if (
-            request.SessionId.HasValue
-            && _sessionizer is not null
-            && _sessionizer.Get(request.SessionId.Value, out var newSessionInfo)
-            && newSessionInfo is RpcSessionInfo newRpcSessionInfo
-        )
+        if (request.SessionId.HasValue && _sessionizer is not null)
         {
-            _sessionizer.TryRemove(request.SessionId.Value);
-            await CreateSession(request.SessionId.Value, newRpcSessionInfo, cancellationToken)
+            var sessionId = request.SessionId.Value;
+            await _sessionizer
+                .EnsureAttachedAsync(
+                    sessionId,
+                    info =>
+                        info is RpcSessionInfo rpcSessionInfo
+                            ? CreateSession(sessionId, rpcSessionInfo, cancellationToken)
+                            : Task.CompletedTask
+                )
                 .ConfigureAwait(false);
         }
 
