@@ -2086,15 +2086,16 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             throw;
         }
 
-        if (
-            sessionId.HasValue
-            && _sessionizer is not null
-            && _sessionizer.Get(sessionId.Value, out var newSessionInfo)
-            && newSessionInfo is RpcSessionInfo newRpcSessionInfo
-        )
+        if (sessionId.HasValue && _sessionizer is not null)
         {
-            _sessionizer.TryRemove(sessionId.Value);
-            await CreateSession(sessionId.Value, newRpcSessionInfo, cancellationToken)
+            await _sessionizer
+                .EnsureAttachedAsync(
+                    sessionId.Value,
+                    info =>
+                        info is RpcSessionInfo rpcSessionInfo
+                            ? CreateSession(sessionId.Value, rpcSessionInfo, cancellationToken)
+                            : Task.CompletedTask
+                )
                 .ConfigureAwait(false);
         }
 

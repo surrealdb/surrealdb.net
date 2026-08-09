@@ -5,7 +5,7 @@ namespace SurrealDb.Net;
 public interface ISurrealDbSharedSession
 {
     /// <summary>
-    /// Returns the unique session id. <c>null</c> is this is the default session.
+    /// Returns the unique session id. <c>null</c> if this is the default session.
     /// </summary>
     Guid? SessionId { get; }
 
