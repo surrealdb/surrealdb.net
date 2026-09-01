@@ -47,7 +47,7 @@ internal sealed class RecordIdOfTConverter<T> : CborConverterBase<RecordIdOf<T>>
             ?? throw new CborException("Expected a string as the first element of the array");
         var id = CborSerializer.Deserialize<T>(reader.ReadDataItem(), _options);
 
-        return new RecordIdOf<T>(table, id);
+        return new RecordIdOf<T>(table, id, _options);
     }
 
     public override void Write(ref CborWriter writer, RecordIdOf<T> value)

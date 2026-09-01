@@ -8,6 +8,8 @@
 /// <typeparam name="TId">The type of <see cref="RecordIdOf{TId}.Id"/> property.</typeparam>
 public class RecordIdOf<TId> : RecordId
 {
+    private readonly Lazy<ReadOnlyMemory<byte>> _serializedId;
+
     /// <summary>
     /// Id part of the record id.
     /// </summary>
@@ -22,6 +24,25 @@ public class RecordIdOf<TId> : RecordId
         : base(table)
     {
         Id = id;
+        _serializedId = new Lazy<ReadOnlyMemory<byte>>(
+            () => SerializeId(Internals.Cbor.SurrealDbCborOptions.Default.Value)
+        );
+    }
+
+    internal RecordIdOf(string table, TId id, Dahomey.Cbor.CborOptions options)
+        : base(table)
+    {
+        Id = id;
+        _serializedId = new Lazy<ReadOnlyMemory<byte>>(() => SerializeId(options));
+    }
+
+    internal override ReadOnlyMemory<byte> GetSerializedId() => _serializedId.Value;
+
+    private ReadOnlyMemory<byte> SerializeId(Dahomey.Cbor.CborOptions options)
+    {
+        var bufferWriter = new System.Buffers.ArrayBufferWriter<byte>();
+        Dahomey.Cbor.Cbor.Serialize(Id, bufferWriter, options);
+        return bufferWriter.WrittenMemory.ToArray();
     }
 
     public override T DeserializeId<T>()
@@ -52,36 +73,9 @@ public class RecordIdOf<TId> : RecordId
         return false;
     }
 
-    public override bool Equals(RecordId? other)
-    {
-        if (other is null)
-            return false;
+    public override bool Equals(RecordId? other) => base.Equals(other);
 
-        if (ReferenceEquals(this, other))
-            return true;
+    public override bool Equals(object? obj) => base.Equals(obj);
 
-        if (Table != other.Table)
-            return false;
-
-        if (other is RecordIdOf<TId> otherRecordIdOf)
-            return (Id is null && otherRecordIdOf.Id is null) || Id!.Equals(otherRecordIdOf.Id);
-
-        if (!other.TryDeserializeId(out TId otherId))
-            return false;
-
-        return (Id is null && otherId is null) || Id!.Equals(otherId);
-    }
-
-    public override bool Equals(object? obj)
-    {
-        if (obj is RecordId other)
-            return Equals(other);
-
-        return base.Equals(obj);
-    }
-
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(Table, Id);
-    }
+    public override int GetHashCode() => base.GetHashCode();
 }

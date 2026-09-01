@@ -34,6 +34,18 @@ public partial class RecordId : IEquatable<RecordId>
         _serializedCborId = id;
     }
 
+    internal virtual ReadOnlyMemory<byte> GetSerializedId()
+    {
+        if (!_serializedCborId.HasValue)
+        {
+            throw new InvalidOperationException(
+                $"Failed to execute {nameof(GetSerializedId)}, the record id does not contain the serialized id part."
+            );
+        }
+
+        return _serializedCborId.Value;
+    }
+
     /// <summary>
     /// Deserialize the non-generic id part stored in the record id to the type <typeparamref name="T"/>.
     /// </summary>
@@ -98,16 +110,10 @@ public partial class RecordId : IEquatable<RecordId>
         if (ReferenceEquals(this, other))
             return true;
 
-        if (Table != other.Table)
+        if (!string.Equals(Table, other.Table, StringComparison.Ordinal))
             return false;
 
-        if (!_serializedCborId.HasValue && other._serializedCborId.HasValue)
-            return other.Equals(this);
-
-        if (!_serializedCborId.HasValue || !other._serializedCborId.HasValue)
-            return false;
-
-        return _serializedCborId.Value.Span.SequenceEqual(other._serializedCborId.Value.Span);
+        return GetSerializedId().Span.SequenceEqual(other.GetSerializedId().Span);
     }
 
     public override bool Equals(object? obj)
@@ -120,13 +126,16 @@ public partial class RecordId : IEquatable<RecordId>
 
     public override int GetHashCode()
     {
-        if (!_serializedCborId.HasValue)
-        {
-            throw new InvalidOperationException(
-                $"Failed to execute {nameof(GetHashCode)}, the record id does not contain the serialized id part."
-            );
-        }
+        var hashCode = new HashCode();
+        hashCode.Add(Table, StringComparer.Ordinal);
 
-        return HashCode.Combine(Table, _serializedCborId.Value);
+#if NET8_0_OR_GREATER
+        hashCode.AddBytes(GetSerializedId().Span);
+#else
+        foreach (byte value in GetSerializedId().Span)
+            hashCode.Add(value);
+#endif
+
+        return hashCode.ToHashCode();
     }
 }
