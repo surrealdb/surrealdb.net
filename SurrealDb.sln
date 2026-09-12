@@ -67,6 +67,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.Embedded.SurrealK
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.Embedded.Internals", "SurrealDb.Embedded.Internals\SurrealDb.Embedded.Internals.csproj", "{8ED80F32-D22A-4267-9BDE-865223C99020}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AgentMemory", "AgentMemory", "{1D50E24F-8036-45C8-9386-AAF8A2EECEC9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurrealDb.AgentMemory", "SurrealDb.AgentMemory\SurrealDb.AgentMemory.csproj", "{02E2C543-EB95-40C2-802C-E1C0AE035D26}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -157,6 +161,10 @@ Global
 		{8ED80F32-D22A-4267-9BDE-865223C99020}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8ED80F32-D22A-4267-9BDE-865223C99020}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8ED80F32-D22A-4267-9BDE-865223C99020}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02E2C543-EB95-40C2-802C-E1C0AE035D26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02E2C543-EB95-40C2-802C-E1C0AE035D26}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02E2C543-EB95-40C2-802C-E1C0AE035D26}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02E2C543-EB95-40C2-802C-E1C0AE035D26}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -183,6 +191,7 @@ Global
 		{94D34588-23C7-40CA-8ADB-6057603DA031} = {ED80259F-C52A-4936-9345-E8E3ABE19FBF}
 		{E7048C18-3B7E-4B00-8550-3FBDF10910E0} = {ED80259F-C52A-4936-9345-E8E3ABE19FBF}
 		{8ED80F32-D22A-4267-9BDE-865223C99020} = {ED80259F-C52A-4936-9345-E8E3ABE19FBF}
+		{02E2C543-EB95-40C2-802C-E1C0AE035D26} = {1D50E24F-8036-45C8-9386-AAF8A2EECEC9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {70C100EF-E131-45C0-9515-02FC4823BA20}
