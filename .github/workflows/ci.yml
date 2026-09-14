@@ -38,6 +38,20 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
 
+      - name: Restore embedded mode
+        run: git restore Directory.Build.props
+
+      - name: Check unexpected changes
+        run: |
+          status=$(git status --porcelain)
+          if [ -n "$status" ]; then
+            while IFS= read -r line; do
+              file="${line:3}"
+              echo "::error file=${file}::Unexpected change after build: ${line}"
+            done <<< "$status"
+            exit 1
+          fi
+
   build:
     needs: [embedded-build]
     runs-on: ubuntu-latest
