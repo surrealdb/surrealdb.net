@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+
+    <IsPackable>true</IsPackable>
+    <PackageId>SurrealDb.AgentMemory</PackageId>
+    <Description>The official Agent Memory client for C#.</Description>
+    <PackageTags>SurrealDB Surreal AgentMemory</PackageTags>
+    <Version>0.2.1</Version>
+    
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+
+</Project>
