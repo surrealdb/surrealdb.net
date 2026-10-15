@@ -127,6 +127,9 @@ public sealed class SurrealDbQueryStreamFinishedFrame : SurrealDbQueryStreamFram
     /// <summary>
     /// Whether the statement produced one value rather than a list of rows.
     /// </summary>
+    /// <remarks>
+    /// On connections that cannot stream, a statement whose single value is an array is reported as rows.
+    /// </remarks>
     public bool Single { get; }
 
     /// <summary>

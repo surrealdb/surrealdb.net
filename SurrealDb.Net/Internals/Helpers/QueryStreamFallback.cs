@@ -38,6 +38,8 @@ internal static class QueryStreamFallback
                 case SurrealDbOkResult okResult:
                 {
                     var value = okResult.RawResult;
+                    // 💡 A buffered answer does not say whether a statement returns a single value,
+                    // so an array is taken for rows, as it is for most statements that return one
                     bool isList = !value.IsEmpty && value.Span[0] >> 5 == CBOR_MAJOR_TYPE_ARRAY;
 
                     yield return isList

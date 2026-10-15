@@ -621,7 +621,9 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     /// </summary>
     /// <remarks>
     /// Results are streamed over WebSocket connections to SurrealDB v3.3 and later.
-    /// Other connections read the whole answer first and then return it as the same frames.
+    /// Other connections read the whole answer first and then return it as the same frames,
+    /// except that the answer does not say which statements return a single value:
+    /// a statement whose value is an array, e.g. <c>RETURN [1, 2]</c>, is then returned as rows rather than as a value.
     /// Leaving the enumeration early cancels the query on the server.
     /// Frames that arrive faster than they are read are buffered in memory,
     /// so that a slow reader never holds up the other requests of the connection.

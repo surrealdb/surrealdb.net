@@ -200,15 +200,15 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                     try
                     {
                         response = DeserializeMessage(message);
+
+                        if (TryRouteQueryStreamResponse(response))
+                        {
+                            return Observable.Empty<Unit>();
+                        }
                     }
                     catch (Exception ex)
                     {
                         OnReceivedMessageProcessingFailed(ex);
-                        return Observable.Empty<Unit>();
-                    }
-
-                    if (TryRouteQueryStreamResponse(response))
-                    {
                         return Observable.Empty<Unit>();
                     }
 
@@ -2302,14 +2302,17 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         {
             switch (response)
             {
+                // 💡 The request may have been cancelled or timed out in the meantime
                 case SurrealDbWsOkResponse okResponse:
-                    responseTaskCompletionSource.SetResult(okResponse);
+                    responseTaskCompletionSource.TrySetResult(okResponse);
                     break;
                 case SurrealDbWsErrorResponse errorResponse:
-                    responseTaskCompletionSource.SetException(errorResponse.Error.ToException());
+                    responseTaskCompletionSource.TrySetException(errorResponse.Error.ToException());
                     break;
                 default:
-                    responseTaskCompletionSource.SetException(new UnknownResponseTypeException());
+                    responseTaskCompletionSource.TrySetException(
+                        new UnknownResponseTypeException()
+                    );
                     break;
             }
         }
