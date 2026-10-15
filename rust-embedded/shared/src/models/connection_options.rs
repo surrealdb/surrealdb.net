@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use std::collections::HashSet;
-use surrealdb::dbs::capabilities;
+use surrealdb_rpc::capabilities;
 use surrealdb_types::Value;
 
 #[derive(Debug, Default)]

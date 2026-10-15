@@ -60,6 +60,9 @@ namespace SurrealDb.Embedded.Internals
         [DllImport(__DllName, EntryPoint = "free_u8_buffer", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         internal static extern void free_u8_buffer(ByteBuffer* buffer);
 
+        /// <summary>
+        ///  Shuts the engine down and waits for it, so that its storage can be opened again right away.
+        /// </summary>
         [DllImport(__DllName, EntryPoint = "dispose", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         internal static extern void dispose(int id);
 
