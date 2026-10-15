@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals;
+using SurrealDb.Net.Models.Sessions;
 
 namespace SurrealDb.Net.Tests;
 
@@ -213,5 +214,53 @@ public class TransactionTests
         await func.Should().NotThrowAsync();
 
         afterCommitList.Should().HaveCount(2);
+    }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldNotCloseSessionWhenDisposedAsAsyncDisposable(string connectionString)
+    {
+        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        await client.ApplySchemaAsync(SurrealSchemaFile.Post);
+
+        await using var session = await client.CreateSession();
+
+        await session.Use(dbInfo.Namespace, dbInfo.Database);
+        if (!options.IsEmbedded)
+        {
+            await session.SignIn(
+                new RootAuth { Username = options.Username!, Password = options.Password! }
+            );
+        }
+
+        var transaction = await session.BeginTransaction();
+
+        _ = await transaction.Create(
+            "post",
+            new Post
+            {
+                Title = "A new article",
+                Content = "This is a new article created using a transaction",
+            }
+        );
+
+        // 💡 Dispose through the interface, as `await using` on an ISurrealDbSession or DI would
+        await ((IAsyncDisposable)transaction).DisposeAsync();
+
+        session.SessionState.Should().Be(SessionState.Open);
+
+        var sessions = await client.Sessions();
+        sessions.Should().Contain(session.SessionId!.Value);
+
+        var posts = await session.Select<Post>("post");
+        posts.Should().HaveCount(2);
     }
 }
