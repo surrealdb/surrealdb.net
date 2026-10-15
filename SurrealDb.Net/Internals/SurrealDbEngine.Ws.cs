@@ -333,6 +333,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     )
     {
         await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
+        await WaitForTransactionStreamsAsync(transactionId, cancellationToken)
+            .ConfigureAwait(false);
 
         await SendRequestAsync(
                 "cancel",
@@ -360,6 +362,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     )
     {
         await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
+        await WaitForTransactionStreamsAsync(transactionId, cancellationToken)
+            .ConfigureAwait(false);
 
         await SendRequestAsync(
                 "commit",
@@ -1315,15 +1319,102 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         }
         finally
         {
-            if (_queryStreams.TryRemove(id, out _) && !isEnded)
+            if (isEnded)
+            {
+                _queryStreams.TryRemove(id, out _);
+            }
+            else if (_queryStreams.ContainsKey(id))
             {
                 // 💡 Stops the query on the server when the stream is left early
-                _ = CancelQueryStreamAsync(id, sessionId);
+                AbandonQueryStream(id, queryStream, sessionId, transactionId);
             }
         }
     }
 
-    private async Task CancelQueryStreamAsync(string id, Guid? sessionId)
+    /// <summary>
+    /// Streams left early within a transaction, by transaction id: they must end before the transaction does.
+    /// </summary>
+    private readonly ConcurrentDictionary<
+        Guid,
+        ConcurrentDictionary<string, Task>
+    > _transactionStreams = new();
+
+    /// <summary>
+    /// Stops a stream that nobody reads any more.
+    /// Outside a transaction, it is forgotten at once. Within a transaction, its frames are read until it ends,
+    /// because committing or cancelling the transaction while the server still runs the stream would end
+    /// the transaction under it.
+    /// </summary>
+    private void AbandonQueryStream(
+        string id,
+        Channel<SurrealDbWsOkResponse> queryStream,
+        Guid? sessionId,
+        Guid? transactionId
+    )
+    {
+        if (!transactionId.HasValue)
+        {
+            _queryStreams.TryRemove(id, out _);
+            _ = CancelQueryStreamAsync(id, sessionId);
+            return;
+        }
+
+        var streams = _transactionStreams.GetOrAdd(transactionId.Value, _ => new());
+        streams[id] = DrainQueryStreamAsync(id, queryStream, sessionId, transactionId.Value);
+    }
+
+    private async Task DrainQueryStreamAsync(
+        string id,
+        Channel<SurrealDbWsOkResponse> queryStream,
+        Guid? sessionId,
+        Guid transactionId
+    )
+    {
+        try
+        {
+            // 💡 A refused cancellation means the server knows no such stream: it never started, or it has
+            // already ended, and then its end frame is already queued, since responses arrive in order
+            bool isRunning = await CancelQueryStreamAsync(id, sessionId).ConfigureAwait(false);
+
+            while (true)
+            {
+                if (!queryStream.Reader.TryRead(out var response))
+                {
+                    if (!isRunning)
+                    {
+                        break;
+                    }
+
+                    if (!await queryStream.Reader.WaitToReadAsync().ConfigureAwait(false))
+                    {
+                        break;
+                    }
+
+                    continue;
+                }
+
+                if (response.GetValue<SurrealDbQueryStreamFrame>() is SurrealDbQueryStreamEndFrame)
+                {
+                    break;
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // 💡 The connection is gone, and the transaction with it
+        }
+        finally
+        {
+            _queryStreams.TryRemove(id, out _);
+            if (_transactionStreams.TryGetValue(transactionId, out var streams))
+            {
+                streams.TryRemove(id, out _);
+            }
+        }
+    }
+
+    /// <returns>Whether the server stopped a running stream.</returns>
+    private async Task<bool> CancelQueryStreamAsync(string id, Guid? sessionId)
     {
         try
         {
@@ -1336,10 +1427,37 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                     CancellationToken.None
                 )
                 .ConfigureAwait(false);
+            return true;
         }
         catch (Exception)
         {
             // 💡 The query may have ended in the meantime, or the connection may be gone
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Waits for the streams left early within a transaction to end.
+    /// </summary>
+    private async Task WaitForTransactionStreamsAsync(
+        Guid transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        if (!_transactionStreams.TryRemove(transactionId, out var streams) || streams.IsEmpty)
+        {
+            return;
+        }
+
+        var allStreamsEnded = Task.WhenAll(streams.Values);
+        var completedTask = await Task.WhenAny(
+                allStreamsEnded,
+                Task.Delay(Timeout.Infinite, cancellationToken)
+            )
+            .ConfigureAwait(false);
+        if (completedTask != allStreamsEnded)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
         }
     }
 
@@ -2801,14 +2919,16 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 #endif
             if (queryStream is not null && !isQueryStreamOpen)
             {
-                _queryStreams.TryRemove(id, out _);
-
                 // 💡 Given up before the server answered (cancellation, timeout),
                 // the query may already run on the server and must be stopped there
                 var openingTask = taskCompletionSource.Task;
                 if (isRequestSent && !openingTask.IsCompletedSuccessfully && !openingTask.IsFaulted)
                 {
-                    _ = CancelQueryStreamAsync(id, sessionId);
+                    AbandonQueryStream(id, queryStream, sessionId, transactionId);
+                }
+                else
+                {
+                    _queryStreams.TryRemove(id, out _);
                 }
             }
         }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Models.Response;
 
@@ -229,5 +230,50 @@ public class QueryStreamTests
         }
 
         total.Should().Be(count);
+    }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.3")]
+    public async Task ShouldCommitAfterLeavingTransactionalStreamEarly(string connectionString)
+    {
+        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        const int count = 5000;
+        var items = Enumerable.Range(1, count).Select(n => new Item { N = n }).ToList();
+        await client.RawQuery(
+            "INSERT INTO item $items RETURN NONE;",
+            new Dictionary<string, object?> { { "items", items } }
+        );
+
+        await using var session = await client.CreateSession();
+        await session.Use(dbInfo.Namespace, dbInfo.Database);
+        await session.SignIn(
+            new RootAuth { Username = options.Username!, Password = options.Password! }
+        );
+
+        await using var transaction = await session.BeginTransaction();
+        await transaction.RawQuery("CREATE marker:1;");
+
+        await foreach (var frame in transaction.RawQueryStream("SELECT n FROM item;"))
+        {
+            if (frame is SurrealDbQueryStreamRowsFrame)
+            {
+                break;
+            }
+        }
+
+        // 💡 The commit waits for the stream to end on the server
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        await transaction.Commit(cts.Token);
+
+        var markers = await client.RawQuery("SELECT * FROM marker;");
+        markers.GetValue<List<object>>(0).Should().HaveCount(1);
     }
 }
