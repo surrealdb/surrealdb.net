@@ -1,7 +1,8 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Text;
 using Semver;
 using SurrealDb.Net.Internals;
+using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -405,6 +406,32 @@ public abstract partial class BaseSurrealDbClient
             parameters ?? ImmutableDictionary<string, object?>.Empty,
             SessionId,
             TransactionId,
+            cancellationToken
+        );
+    }
+
+    public IAsyncEnumerable<SurrealDbQueryStreamFrame> RawQueryStream(
+        string query,
+        IReadOnlyDictionary<string, object?>? parameters = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var queryParameters = parameters ?? ImmutableDictionary<string, object?>.Empty;
+
+        if (Engine is SurrealDbWsEngine wsEngine)
+        {
+            return wsEngine.RawQueryStream(
+                query,
+                queryParameters,
+                SessionId,
+                TransactionId,
+                cancellationToken
+            );
+        }
+
+        // 💡 Other protocols cannot stream, the whole answer is read before it is split into frames
+        return QueryStreamFallback.ToFramesAsync(
+            ct => Engine.RawQuery(query, queryParameters, SessionId, TransactionId, ct),
             cancellationToken
         );
     }
