@@ -1598,7 +1598,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         )
         {
             _sessionizer.TryRemove(sessionId.Value);
-            await CreateSession(sessionId.Value, newEmbeddedSessionInfo, cancellationToken)
+            // 💡 The provided state is shared by every scope, each session needs its own copy
+            await CreateSession(
+                    sessionId.Value,
+                    new EmbeddedSessionInfo(newEmbeddedSessionInfo),
+                    cancellationToken
+                )
                 .ConfigureAwait(false);
         }
 

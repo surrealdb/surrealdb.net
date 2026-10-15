@@ -2114,7 +2114,12 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         )
         {
             _sessionizer.TryRemove(sessionId.Value);
-            await CreateSession(sessionId.Value, newRpcSessionInfo, cancellationToken)
+            // 💡 The provided state is shared by every scope, each session needs its own copy
+            await CreateSession(
+                    sessionId.Value,
+                    new RpcSessionInfo(newRpcSessionInfo),
+                    cancellationToken
+                )
                 .ConfigureAwait(false);
         }
 
