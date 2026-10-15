@@ -127,6 +127,8 @@ SELECT xyz FROM post;
     [ConnectionStringFixtureGenerator]
     public async Task ShouldIterateOnOkResults(string connectionString)
     {
+        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
+
         SurrealDbResponse? response = null;
 
         Func<Task> func = async () =>
@@ -158,7 +160,10 @@ CANCEL TRANSACTION;
         await func.Should().NotThrowAsync();
 
         response.Should().NotBeNull();
-        response!.Oks.Should().NotBeNull().And.HaveCount(3);
+
+        // 💡 Since SurrealDB v3.4, the CANCEL statement of a failed transaction has a result of its own
+        int expectedCount = version.Major > 3 || (version.Major == 3 && version.Minor >= 4) ? 4 : 3;
+        response!.Oks.Should().NotBeNull().And.HaveCount(expectedCount);
     }
 
     [Test]
