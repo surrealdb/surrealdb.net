@@ -303,6 +303,33 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
         where T : IRelationRecord;
 
     /// <summary>
+    /// Issues a new access token and a new refresh token from a refresh token,
+    /// and authenticates the current session with them.<br />
+    /// The refresh token given is revoked: only the returned one can be used next.
+    /// Refresh tokens are issued by record access methods defined <c>WITH REFRESH</c>.
+    /// </summary>
+    /// <param name="tokens">The access and refresh tokens, as returned by a sign in, sign up or a previous refresh.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The new access and refresh tokens.</returns>
+    /// <exception cref="ArgumentException">When no refresh token is provided.</exception>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<Tokens> Refresh(Tokens tokens, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Revokes a refresh token, so it can no longer be used to issue new access tokens.
+    /// The current session stays authenticated.
+    /// </summary>
+    /// <param name="tokens">The tokens holding the refresh token to revoke.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="ArgumentException">When no refresh token is provided.</exception>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task Revoke(Tokens tokens, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Invalidates the authentication for the current connection.<br />
     /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/invalidate">
     /// `Invalidate` on surrealdb.com/docs
