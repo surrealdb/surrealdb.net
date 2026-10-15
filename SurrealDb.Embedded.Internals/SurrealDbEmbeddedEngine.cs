@@ -1167,6 +1167,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.Set(key, value);
     }
 
     public Task SignIn(
@@ -1256,6 +1258,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.Unset(key);
     }
 
     public async Task<T> Update<T>(
@@ -1512,6 +1516,18 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             {
                 _surrealDbLoggerFactory?.Connection?.LogConnectionNamespaceSet(session.Ns);
             }
+        }
+
+        foreach (var (key, value) in session.Variables.ToArray())
+        {
+            await SendRequestAsync<Unit>(
+                    Method.Set,
+                    [key, value],
+                    sessionId,
+                    null,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
         }
     }
 
