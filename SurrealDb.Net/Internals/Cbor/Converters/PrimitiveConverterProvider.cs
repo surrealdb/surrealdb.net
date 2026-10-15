@@ -49,6 +49,10 @@ internal sealed class PrimitiveConverterProvider : CborConverterProviderBase
         {
             return new StringRecordIdConverter();
         }
+        if (type == typeof(Table))
+        {
+            return new TableConverter();
+        }
 
 #if NET6_0_OR_GREATER
         if (type == typeof(DateOnly))

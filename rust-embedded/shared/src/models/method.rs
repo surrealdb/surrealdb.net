@@ -23,6 +23,7 @@ pub enum Method {
     Begin = 21,
     Commit = 22,
     Cancel = 23,
+    Reset = 24,
 }
 
 impl From<Method> for surrealdb::rpc::Method {
@@ -51,6 +52,7 @@ impl From<Method> for surrealdb::rpc::Method {
             Method::Begin => surrealdb::rpc::Method::Begin,
             Method::Commit => surrealdb::rpc::Method::Commit,
             Method::Cancel => surrealdb::rpc::Method::Cancel,
+            Method::Reset => surrealdb::rpc::Method::Reset,
         }
     }
 }

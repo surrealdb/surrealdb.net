@@ -2,6 +2,7 @@
 using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
+using SurrealDb.Net.Models;
 using SurrealDb.Net.Internals.Formatters;
 using SurrealDb.Net.Internals.Parsers;
 
@@ -11,6 +12,12 @@ internal class TimeOnlyConverter : CborConverterBase<TimeOnly>
 {
     public override TimeOnly Read(ref CborReader reader)
     {
+        if (reader.GetCurrentDataItemType() == CborDataItemType.String)
+        {
+            // 💡 A duration sent as a string (CBOR tag 13)
+            return TimeOnlyParser.Convert(new Duration(reader.ReadString()!).ToTimeSpan());
+        }
+
         reader.ReadBeginArray();
 
         int size = reader.ReadSize();
