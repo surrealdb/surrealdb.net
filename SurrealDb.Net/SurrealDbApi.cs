@@ -112,8 +112,11 @@ public sealed class SurrealDbApi
         }
 
         int status = response.GetValue<int>(1);
-        var responseHeaders =
-            response.GetValue<Dictionary<string, string>>(2) ?? new Dictionary<string, string>();
+        // 💡 Header names are case-insensitive
+        var responseHeaders = new Dictionary<string, string>(
+            response.GetValue<Dictionary<string, string>>(2) ?? new Dictionary<string, string>(),
+            StringComparer.OrdinalIgnoreCase
+        );
         var body = (SurrealDbOkResult)response[3];
 
         return new SurrealDbApiResponse(fullPath, method, status, responseHeaders, body);

@@ -97,6 +97,7 @@ public class ApiTests
         echo.Method.Should().Be("post");
         echo.Path.Should().Be("/users/echo");
         echo.Headers.Should().Contain("x-answer", "42");
+        echo.Headers["X-Answer"].Should().Be("42");
 
         var body = echo.GetBody<EchoBody>()!;
         body.Header.Should().Be("yes");
