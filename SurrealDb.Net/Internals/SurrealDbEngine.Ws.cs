@@ -375,6 +375,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.SetBearerAuth(tokens.Access);
     }
 
     public async Task<Guid> Begin(Guid? sessionId, CancellationToken cancellationToken)
@@ -455,17 +457,18 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
     public async Task<Guid> CreateSession(Guid from, CancellationToken cancellationToken)
     {
-        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
+        var fromState = SessionInfos.Get(from) ?? throw new InvalidSessionException(from);
 
         var newId = Guid.NewGuid();
-        var newState = SessionInfos.Clone(from, newId);
-
-        await Attach(newId, cancellationToken).ConfigureAwait(false);
-        SessionInfos.Set(newId, newState);
+        await CreateSession(newId, new RpcSessionInfo(fromState), cancellationToken)
+            .ConfigureAwait(false);
 
         return newId;
     }
 
+    /// <summary>
+    /// Attaches a new session on the server, then replays the given state on it (namespace, database and auth).
+    /// </summary>
     private async Task CreateSession(
         Guid sessionId,
         RpcSessionInfo sessionInfo,
@@ -477,7 +480,24 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         await Attach(sessionId, cancellationToken).ConfigureAwait(false);
         SessionInfos.Set(sessionId, sessionInfo);
 
-        await ApplyConfigurationAsync(sessionId, null, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await ApplyConfigurationAsync(sessionId, null, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            SessionInfos.Remove(sessionId);
+            try
+            {
+                await Detach(sessionId, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch
+            {
+                // 💡 The original failure matters more than a failed cleanup
+            }
+
+            throw;
+        }
     }
 
     public async Task Connect(CancellationToken cancellationToken)
