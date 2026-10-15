@@ -26,7 +26,9 @@ public class SurrealDbSession : BaseSurrealDbClient, ISurrealDbSession
         }
         if (!(await SupportsTransactions(cancellationToken)))
         {
-            throw new NotSupportedException("Transactions are not supported.");
+            throw new NotSupportedException(
+                "Transactions are not supported by this connection. They need SurrealDB 3.0 or later, over a WebSocket or embedded connection."
+            );
         }
 
         var transactionId = await Engine.Begin(SessionId, cancellationToken).ConfigureAwait(false);
