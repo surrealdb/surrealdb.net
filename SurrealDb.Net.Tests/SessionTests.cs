@@ -160,6 +160,32 @@ public class SessionTests
     [Test]
     [ConnectionStringFixtureGenerator]
     [SinceSurrealVersion("3.0")]
+    public async Task ForkSessionShouldKeepVariables(string connectionString)
+    {
+        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+        if (new Uri(options.Endpoint!).Scheme is "http" or "https")
+            return;
+
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+
+        await using var session = await client.CreateSession();
+        await session.Use(dbInfo.Namespace, dbInfo.Database);
+        await session.Set("answer", 42);
+        await session.Set("removed", "value");
+        await session.Unset("removed");
+
+        await using var fork = await session.ForkSession();
+
+        var response = await fork.RawQuery("RETURN [$answer, $removed];");
+        response.GetValue<int?[]>(0).Should().Equal(42, null);
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
     public async Task CloseSession(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();

@@ -1391,6 +1391,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.Set(key, value);
     }
 
     public Task SignIn(
@@ -1567,6 +1569,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.Unset(key);
     }
 
     public async Task<T> Update<T>(
@@ -2015,6 +2019,20 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                     _parameters.Logging.SensitiveDataLoggingEnabled
                 )
             );
+        }
+
+        // 💡 Variables are replayed last, once the session is authenticated
+        foreach (var (key, value) in session.Variables.ToArray())
+        {
+            await SendRequestAsync(
+                    "let",
+                    [key, value],
+                    sessionId,
+                    transactionId,
+                    SurrealDbWsRequestPriority.High,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
         }
     }
 
