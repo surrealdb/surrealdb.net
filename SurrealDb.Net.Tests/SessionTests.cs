@@ -100,9 +100,37 @@ public class SessionTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
         await using var client = surrealDbClientGenerator.Create(connectionString);
+        if (client.Engine is SurrealDbHttpEngine)
+        {
+            return;
+        }
+
         await using var result = await client.CreateSession();
 
         result.SessionId.Should().NotBeNull();
+    }
+
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldNotCreateSessionOverHttp(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        if (client.Engine is not SurrealDbHttpEngine)
+        {
+            return;
+        }
+
+        Func<Task> createSession = () => client.CreateSession();
+        await createSession
+            .Should()
+            .ThrowAsync<NotSupportedException>()
+            .WithMessage("Sessions are not supported over HTTP*");
+
+        Func<Task> listSessions = () => client.Sessions();
+        await listSessions.Should().ThrowAsync<NotSupportedException>();
     }
 
     [Test]
@@ -113,6 +141,11 @@ public class SessionTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
         await using var client = surrealDbClientGenerator.Create(connectionString);
+        if (client.Engine is SurrealDbHttpEngine)
+        {
+            return;
+        }
+
         var firstSession = await client.CreateSession();
         await using var result = await firstSession.ForkSession();
 
@@ -129,6 +162,11 @@ public class SessionTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
         await using var client = surrealDbClientGenerator.Create(connectionString);
+        if (client.Engine is SurrealDbHttpEngine)
+        {
+            return;
+        }
+
         var result = await client.CreateSession();
         await result.CloseSession();
 
