@@ -112,6 +112,7 @@ public interface ISurrealDbEngine
     )
         where T : IRelationRecord;
     Task Invalidate(Guid? sessionId, Guid? transactionId, CancellationToken cancellationToken);
+    Task Reset(Guid? sessionId, CancellationToken cancellationToken);
     Task Kill(
         Guid queryUuid,
         SurrealDbLiveQueryClosureReason reason,
@@ -381,8 +382,20 @@ public interface ISurrealDbEngine
     )
         where TOutput : IRecord;
     Task Use(
-        string ns,
-        string db,
+        string? ns,
+        string? db,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
+    Task UseNs(
+        string? ns,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
+    Task UseDb(
+        string? db,
         Guid? sessionId,
         Guid? transactionId,
         CancellationToken cancellationToken

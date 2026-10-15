@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Net.Http.Headers;
@@ -928,31 +928,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         throw new NotSupportedException();
     }
 
-    public Task<bool> TryResetAsync()
+    public Task Reset(Guid? sessionId, CancellationToken _)
     {
-        try
-        {
-            if (_pendingRequests > 0)
-            {
-                throw new SurrealDbResetException(
-                    "Cannot reset client while requests are pending."
-                );
-            }
-
-#if ENABLE_HTTP_RESET
-            var request = new SurrealDbHttpRequest { Method = "reset" };
-            await ExecuteRequestAsync(request, CancellationToken.None).ConfigureAwait(false);
-
-            _config.Reset(_parameters);
-            return true;
-#else
-            return Task.FromResult(false);
-#endif
-        }
-        catch (Exception)
-        {
-            return Task.FromResult(false);
-        }
+        // 💡 Each HTTP request runs in a new server session, built from the client-side state
+        SessionInfos.Get(sessionId)?.Reset();
+        return Task.CompletedTask;
     }
 
     public Task Unset(string key, Guid? sessionId, Guid? transactionId, CancellationToken _)
@@ -1165,8 +1145,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     }
 
     public async Task Use(
-        string ns,
-        string db,
+        string? ns,
+        string? db,
         Guid? sessionId,
         Guid? transactionId,
         CancellationToken cancellationToken
@@ -1176,6 +1156,34 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         await ExecuteRequestAsync(request, sessionId, cancellationToken).ConfigureAwait(false);
 
         SessionInfos.Get(sessionId)?.Use(ns, db);
+    }
+
+    public async Task UseNs(
+        string? ns,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        // 💡 NONE leaves the database unchanged
+        var request = new SurrealDbHttpRequest { Method = "use", Parameters = [ns, new None()] };
+        await ExecuteRequestAsync(request, sessionId, cancellationToken).ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.UseNs(ns);
+    }
+
+    public async Task UseDb(
+        string? db,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        // 💡 NONE leaves the namespace unchanged
+        var request = new SurrealDbHttpRequest { Method = "use", Parameters = [new None(), db] };
+        await ExecuteRequestAsync(request, sessionId, cancellationToken).ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.UseDb(db);
     }
 
     public async Task<string> Version(CancellationToken cancellationToken)
@@ -1239,15 +1247,19 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         headers.Add(HttpConstants.ACCEPT_HEADER_NAME, ["application/cbor"]);
 
-        if (version?.Major > 1)
+        string nsHeaderName =
+            version?.Major > 1 ? HttpConstants.NS_HEADER_NAME_V2 : HttpConstants.NS_HEADER_NAME;
+        string dbHeaderName =
+            version?.Major > 1 ? HttpConstants.DB_HEADER_NAME_V2 : HttpConstants.DB_HEADER_NAME;
+
+        // 💡 No header at all when cleared, as an empty header would select an empty name
+        if (ns is not null)
         {
-            headers.Add(HttpConstants.NS_HEADER_NAME_V2, ns);
-            headers.Add(HttpConstants.DB_HEADER_NAME_V2, db);
+            headers.Add(nsHeaderName, ns);
         }
-        else
+        if (db is not null)
         {
-            headers.Add(HttpConstants.NS_HEADER_NAME, ns);
-            headers.Add(HttpConstants.DB_HEADER_NAME, db);
+            headers.Add(dbHeaderName, db);
         }
     }
 
