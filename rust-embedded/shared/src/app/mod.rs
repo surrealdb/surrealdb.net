@@ -166,6 +166,14 @@ impl SurrealEmbeddedEngine {
         encode(result.into_value())
     }
 
+    /// Stops the maintenance tasks and closes the storage engine, releasing its files.
+    pub async fn shutdown(&self) {
+        let inner = self.0.read().await;
+        // Open transactions would otherwise keep the storage busy
+        inner.transactions.clear();
+        inner.kvs.shutdown().await.ok();
+    }
+
     pub async fn import(&self, input: String) -> anyhow::Result<()> {
         let inner = self.0.read().await;
 
