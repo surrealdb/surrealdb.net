@@ -1,8 +1,11 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.WebSockets;
+using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading.Channels;
 using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -92,6 +95,14 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     private readonly WsResponseTaskHandler _responseTaskHandler;
 #endif
 
+    /// <summary>
+    /// Open streaming queries, by request id.
+    /// </summary>
+    private readonly ConcurrentDictionary<string, Channel<SurrealDbWsOkResponse>> _queryStreams =
+        new();
+
+    private static readonly SemVersion QueryStreamMinVersion = new(3, 3, 0);
+
     private bool _isInitialized;
 
     public Uri Uri { get; }
@@ -180,126 +191,49 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         _receiverSubscription = _wsClient
             .MessageReceived.ObserveOn(TaskPoolScheduler.Default)
             .Select(message =>
-                Observable.FromAsync(
+            {
+                // 💡 Messages are handled concurrently, but the frames of a streaming query must keep their order:
+                // while a stream is open, messages are read here, one after the other
+                if (!_queryStreams.IsEmpty)
+                {
+                    ISurrealDbWsResponse? response;
+                    try
+                    {
+                        response = DeserializeMessage(message);
+                    }
+                    catch (Exception ex)
+                    {
+                        OnReceivedMessageProcessingFailed(ex);
+                        return Observable.Empty<Unit>();
+                    }
+
+                    if (TryRouteQueryStreamResponse(response))
+                    {
+                        return Observable.Empty<Unit>();
+                    }
+
+                    return Observable.FromAsync(_ => HandleResponseAsync(response));
+                }
+
+                return Observable.FromAsync(
                     async (cancellationToken) =>
                     {
-                        // 💡 A failure to process a single message (e.g. an unexpected CBOR payload)
-                        // must not terminate the underlying Rx subscription,
-                        // otherwise all subsequent responses would be silently dropped
-                        // and every pending request would end up in timeout.
+                        ISurrealDbWsResponse? response;
                         try
                         {
-                            ISurrealDbWsResponse? response = null;
-
-                            if (message.MessageType == WebSocketMessageType.Binary)
-                            {
-                                using var stream =
-                                    message.Stream
-                                    ?? MemoryStreamProvider.MemoryStreamManager.GetStream(
-                                        message.Binary!
-                                    );
-
-                                if (
-                                    _surrealDbLoggerFactory?.Serialization?.IsEnabled(
-                                        LogLevel.Debug
-                                    ) == true
-                                )
-                                {
-                                    string cborData = CborDebugHelper.CborBinaryToHexa(stream);
-                                    _surrealDbLoggerFactory?.Serialization?.LogSerializationDataDeserialized(
-                                        cborData
-                                    );
-                                }
-
-                                response = await CborSerializer
-                                    .DeserializeAsync<ISurrealDbWsResponse>(
-                                        stream,
-                                        GetCborOptions(),
-                                        cancellationToken
-                                    )
-                                    .ConfigureAwait(false);
-                            }
-
-                            if (response is SurrealDbWsLiveResponse surrealDbWsLiveResponse)
-                            {
-                                var liveQueryUuid = surrealDbWsLiveResponse.Result.Id;
-                                if (
-                                    _liveQueryIdsByServerId.TryGetValue(
-                                        liveQueryUuid,
-                                        out var originalLiveQueryUuid
-                                    )
-                                )
-                                {
-                                    liveQueryUuid = originalLiveQueryUuid;
-                                }
-
-                                if (
-                                    _liveQueryChannelSubscriptionsPerQuery.TryGetValue(
-                                        liveQueryUuid,
-                                        out var liveQueryChannelSubscriptions
-                                    )
-                                )
-                                {
-                                    var tasks = liveQueryChannelSubscriptions.Select(
-                                        liveQueryChannel =>
-                                        {
-                                            return liveQueryChannel.WriteAsync(
-                                                surrealDbWsLiveResponse
-                                            );
-                                        }
-                                    );
-
-                                    await Task.WhenAll(tasks).ConfigureAwait(false);
-                                }
-
-                                return;
-                            }
-
-                            if (
-                                response is ISurrealDbWsStandardResponse surrealDbWsStandardResponse
-#if NET9_0_OR_GREATER
-                                && _responseTasks.TryRemove(
-                                    surrealDbWsStandardResponse.Id,
-                                    out var responseTaskCompletionSource
-                                )
-#else
-                                && _responseTaskHandler.TryRemove(
-                                    surrealDbWsStandardResponse.Id,
-                                    out var responseTaskCompletionSource
-                                )
-#endif
-                            )
-                            {
-                                switch (response)
-                                {
-                                    case SurrealDbWsOkResponse okResponse:
-                                        responseTaskCompletionSource.SetResult(okResponse);
-                                        break;
-                                    case SurrealDbWsErrorResponse errorResponse:
-                                        responseTaskCompletionSource.SetException(
-                                            errorResponse.Error.ToException()
-                                        );
-                                        break;
-                                    default:
-                                        responseTaskCompletionSource.SetException(
-                                            new UnknownResponseTypeException()
-                                        );
-                                        break;
-                                }
-                            }
+                            response = await DeserializeMessageAsync(message, cancellationToken)
+                                .ConfigureAwait(false);
                         }
                         catch (Exception ex)
                         {
-#if DEBUG
-                            Debug.WriteLine(ex.Message);
-#endif
-                            _surrealDbLoggerFactory?.Connection?.LogReceivedMessageProcessingFailed(
-                                ex
-                            );
+                            OnReceivedMessageProcessingFailed(ex);
+                            return;
                         }
+
+                        await HandleResponseAsync(response).ConfigureAwait(false);
                     }
-                )
-            )
+                );
+            })
             .Merge()
             .Subscribe();
 
@@ -751,6 +685,12 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             value.TrySetCanceled();
         }
 #endif
+        foreach (var (key, value) in _queryStreams)
+        {
+            _queryStreams.TryRemove(key, out _);
+            value.Writer.TryComplete(new EngineDisposedSurrealDbException());
+        }
+
         _wsEngines.TryRemove(_id, out _);
 
         _wsClient.Dispose();
@@ -1282,6 +1222,122 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
         var list = dbResponse.GetValue<List<ISurrealDbResult>>() ?? [];
         return new SurrealDbResponse(list);
+    }
+
+    public IAsyncEnumerable<SurrealDbQueryStreamFrame> RawQueryStream(
+        string query,
+        IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        return RawQueryStreamAsync(query, parameters, sessionId, transactionId, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<SurrealDbQueryStreamFrame> RawQueryStreamAsync(
+        string query,
+        IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
+        Guid? transactionId,
+        [EnumeratorCancellation] CancellationToken cancellationToken
+    )
+    {
+        await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
+
+        if (
+            _version is null
+            || _version.WithoutPrereleaseOrMetadata().CompareSortOrderTo(QueryStreamMinVersion) < 0
+        )
+        {
+            // 💡 query_stream is available since SurrealDB v3.3
+            var response = await RawQuery(
+                    query,
+                    parameters,
+                    sessionId,
+                    transactionId,
+                    SurrealDbWsRequestPriority.Normal,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+
+            foreach (var frame in QueryStreamFallback.ToFrames(response))
+            {
+                yield return frame;
+            }
+
+            yield break;
+        }
+
+        var queryStream = Channel.CreateUnbounded<SurrealDbWsOkResponse>(
+            new UnboundedChannelOptions { SingleReader = true }
+        );
+
+        var firstResponse = await SendRequestAsync(
+                "query_stream",
+                [query, parameters],
+                sessionId,
+                transactionId,
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken,
+                queryStream
+            )
+            .ConfigureAwait(false);
+
+        string id = firstResponse.Id;
+        bool isEnded = false;
+
+        try
+        {
+            while (
+                await queryStream.Reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)
+            )
+            {
+                while (queryStream.Reader.TryRead(out var response))
+                {
+                    var frame =
+                        response.GetValue<SurrealDbQueryStreamFrame>()
+                        ?? throw new UnknownResponseTypeException();
+
+                    isEnded = frame is SurrealDbQueryStreamEndFrame;
+
+                    yield return frame;
+
+                    if (isEnded)
+                    {
+                        yield break;
+                    }
+                }
+            }
+        }
+        finally
+        {
+            if (_queryStreams.TryRemove(id, out _) && !isEnded)
+            {
+                // 💡 Stops the query on the server when the stream is left early
+                _ = CancelQueryStreamAsync(id, sessionId);
+            }
+        }
+    }
+
+    private async Task CancelQueryStreamAsync(string id, Guid? sessionId)
+    {
+        try
+        {
+            await SendRequestAsync(
+                    "query_cancel",
+                    [id],
+                    sessionId,
+                    null,
+                    SurrealDbWsRequestPriority.Normal,
+                    CancellationToken.None
+                )
+                .ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            // 💡 The query may have ended in the meantime, or the connection may be gone
+        }
     }
 
     public async Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
@@ -2079,6 +2135,183 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         }
     }
 
+    private void LogReceivedMessage(System.IO.Stream stream)
+    {
+        if (_surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
+        {
+            string cborData = CborDebugHelper.CborBinaryToHexa(stream);
+            _surrealDbLoggerFactory?.Serialization?.LogSerializationDataDeserialized(cborData);
+        }
+    }
+
+    private async Task<ISurrealDbWsResponse?> DeserializeMessageAsync(
+        ResponseMessage message,
+        CancellationToken cancellationToken
+    )
+    {
+        if (message.MessageType != WebSocketMessageType.Binary)
+        {
+            return null;
+        }
+
+        using var stream =
+            message.Stream ?? MemoryStreamProvider.MemoryStreamManager.GetStream(message.Binary!);
+
+        LogReceivedMessage(stream);
+
+        return await CborSerializer
+            .DeserializeAsync<ISurrealDbWsResponse>(stream, GetCborOptions(), cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private ISurrealDbWsResponse? DeserializeMessage(ResponseMessage message)
+    {
+        if (message.MessageType != WebSocketMessageType.Binary)
+        {
+            return null;
+        }
+
+        if (message.Stream is null)
+        {
+            return CborSerializer.Deserialize<ISurrealDbWsResponse>(
+                message.Binary!,
+                GetCborOptions()
+            );
+        }
+
+        using var stream = message.Stream;
+
+        LogReceivedMessage(stream);
+
+        stream.Position = 0;
+        if (stream is MemoryStream memoryStream && memoryStream.TryGetBuffer(out var buffer))
+        {
+            return CborSerializer.Deserialize<ISurrealDbWsResponse>(
+                buffer.AsSpan(0, (int)memoryStream.Length),
+                GetCborOptions()
+            );
+        }
+
+        using var copy = MemoryStreamProvider.MemoryStreamManager.GetStream();
+        stream.CopyTo(copy);
+        return CborSerializer.Deserialize<ISurrealDbWsResponse>(copy.ToArray(), GetCborOptions());
+    }
+
+    private void OnReceivedMessageProcessingFailed(Exception ex)
+    {
+        // 💡 A failure to process a single message (e.g. an unexpected CBOR payload)
+        // must not terminate the underlying Rx subscription,
+        // otherwise all subsequent responses would be silently dropped
+        // and every pending request would end up in timeout.
+#if DEBUG
+        Debug.WriteLine(ex.Message);
+#endif
+        _surrealDbLoggerFactory?.Connection?.LogReceivedMessageProcessingFailed(ex);
+    }
+
+    /// <summary>
+    /// Sends a response to the streaming query it belongs to, if any.
+    /// </summary>
+    private bool TryRouteQueryStreamResponse(ISurrealDbWsResponse? response)
+    {
+        if (
+            response is not ISurrealDbWsStandardResponse standardResponse
+            || !_queryStreams.TryGetValue(standardResponse.Id, out var channel)
+        )
+        {
+            return false;
+        }
+
+        switch (response)
+        {
+            case SurrealDbWsOkResponse okResponse:
+                channel.Writer.TryWrite(okResponse);
+                break;
+            case SurrealDbWsErrorResponse errorResponse:
+                channel.Writer.TryComplete(errorResponse.Error.ToException());
+                break;
+        }
+
+        // 💡 The first frame also completes the request that opened the stream
+        CompleteResponseTask(response);
+        return true;
+    }
+
+    private async Task HandleResponseAsync(ISurrealDbWsResponse? response)
+    {
+        try
+        {
+            if (response is SurrealDbWsLiveResponse surrealDbWsLiveResponse)
+            {
+                var liveQueryUuid = surrealDbWsLiveResponse.Result.Id;
+                if (
+                    _liveQueryIdsByServerId.TryGetValue(
+                        liveQueryUuid,
+                        out var originalLiveQueryUuid
+                    )
+                )
+                {
+                    liveQueryUuid = originalLiveQueryUuid;
+                }
+
+                if (
+                    _liveQueryChannelSubscriptionsPerQuery.TryGetValue(
+                        liveQueryUuid,
+                        out var liveQueryChannelSubscriptions
+                    )
+                )
+                {
+                    var tasks = liveQueryChannelSubscriptions.Select(liveQueryChannel =>
+                    {
+                        return liveQueryChannel.WriteAsync(surrealDbWsLiveResponse);
+                    });
+
+                    await Task.WhenAll(tasks).ConfigureAwait(false);
+                }
+
+                return;
+            }
+
+            CompleteResponseTask(response);
+        }
+        catch (Exception ex)
+        {
+            OnReceivedMessageProcessingFailed(ex);
+        }
+    }
+
+    private void CompleteResponseTask(ISurrealDbWsResponse? response)
+    {
+        if (
+            response is ISurrealDbWsStandardResponse surrealDbWsStandardResponse
+#if NET9_0_OR_GREATER
+            && _responseTasks.TryRemove(
+                surrealDbWsStandardResponse.Id,
+                out var responseTaskCompletionSource
+            )
+#else
+            && _responseTaskHandler.TryRemove(
+                surrealDbWsStandardResponse.Id,
+                out var responseTaskCompletionSource
+            )
+#endif
+        )
+        {
+            switch (response)
+            {
+                case SurrealDbWsOkResponse okResponse:
+                    responseTaskCompletionSource.SetResult(okResponse);
+                    break;
+                case SurrealDbWsErrorResponse errorResponse:
+                    responseTaskCompletionSource.SetException(errorResponse.Error.ToException());
+                    break;
+                default:
+                    responseTaskCompletionSource.SetException(new UnknownResponseTypeException());
+                    break;
+            }
+        }
+    }
+
     private void OnDisconnection(DisconnectionInfo info)
     {
         if (_disposing)
@@ -2117,6 +2350,15 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             }
         }
 #endif
+
+        // 💡 The rest of a streaming query will never arrive
+        foreach (var (key, value) in _queryStreams)
+        {
+            if (_queryStreams.TryRemove(key, out _))
+            {
+                value.Writer.TryComplete(connectionLostException);
+            }
+        }
 
         // 💡 Live queries that cannot be started again are closed, the others wait for the reconnection
         foreach (var (key, value) in _liveQueryChannelSubscriptionsPerQuery)
@@ -2382,7 +2624,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         Guid? sessionId,
         Guid? transactionId,
         SurrealDbWsRequestPriority priority,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        Channel<SurrealDbWsOkResponse>? queryStream = null
     )
     {
         long executionStartTime = Stopwatch.GetTimestamp();
@@ -2460,6 +2703,14 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         } while (!_responseTaskHandler.TryAdd(id, priority, taskCompletionSource));
 #endif
 
+        if (queryStream is not null)
+        {
+            // 💡 Registered before sending, so that no frame is missed
+            _queryStreams.TryAdd(id, queryStream);
+        }
+
+        bool isQueryStreamOpen = false;
+
 #if !NET9_0_OR_GREATER
         await _responseTaskHandler.WaitUntilAsync(priority).ConfigureAwait(false);
 #endif
@@ -2512,6 +2763,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 SurrealDbLoggerExtensions.FormatExecutionTime(executionTime)
             );
 
+            isQueryStreamOpen = queryStream is not null;
             return result;
         }
         catch (MessageNotSentSurrealDbException)
@@ -2539,6 +2791,10 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 #else
             _responseTaskHandler.TryRemove(id, out _);
 #endif
+            if (queryStream is not null && !isQueryStreamOpen)
+            {
+                _queryStreams.TryRemove(id, out _);
+            }
         }
     }
 

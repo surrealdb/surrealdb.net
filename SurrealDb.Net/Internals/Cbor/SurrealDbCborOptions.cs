@@ -1,4 +1,4 @@
-using Dahomey.Cbor;
+﻿using Dahomey.Cbor;
 using SurrealDb.Net.Internals.Cbor.Converters;
 using SurrealDb.Net.Internals.Cbor.Converters.Numerics;
 using SurrealDb.Net.Internals.Cbor.Converters.Spatial;
@@ -80,6 +80,10 @@ public static class SurrealDbCborOptions
         options.Registry.ConverterRegistry.RegisterConverter(
             typeof(ISurrealDbResult),
             new SurrealDbResultConverter(options)
+        );
+        options.Registry.ConverterRegistry.RegisterConverter(
+            typeof(SurrealDbQueryStreamFrame),
+            new SurrealDbQueryStreamFrameConverter(options)
         );
 
         options.Registry.ConverterRegistry.RegisterConverter(
