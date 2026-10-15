@@ -15,6 +15,7 @@
       <Compile Include="..\SurrealDb.Net\Internals\Stream\MemoryStreamProvider.cs" Link="Internals\Stream\MemoryStreamProvider.cs" />
       <Compile Include="..\SurrealDb.Net\Internals\Helpers\CborDebugHelper.cs" Link="Internals\Helpers\CborDebugHelper.cs" />
       <Compile Include="..\SurrealDb.Net\Internals\Sessions\SessionInfo.cs" Link="Internals\Sessions\SessionInfo.cs" />
+      <Compile Include="..\SurrealDb.Net\Internals\ConnectionStatusTracker.cs" Link="Internals\ConnectionStatusTracker.cs" />
     </ItemGroup>
 
     <ItemGroup>

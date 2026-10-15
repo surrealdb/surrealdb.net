@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Reactive.Concurrency;
@@ -82,6 +82,13 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     private TaskCompletionSource<bool> _replayCompletion = CreateCompletedReplay();
     private volatile bool _disposing;
 
+    private readonly ConnectionStatusTracker _statusTracker;
+
+    /// <summary>
+    /// Failed reconnection attempts since the connection was lost.
+    /// </summary>
+    private int _failedReconnectAttempts;
+
 #if NET9_0_OR_GREATER
     private static readonly ConcurrentHashSet<string> _allResponseTaskIds = [];
     private static readonly SurrealDbWsSendRequestChannel _sendRequestChannel = new();
@@ -96,6 +103,14 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
     public Uri Uri { get; }
     public RpcSessionInfos SessionInfos { get; } = new();
+
+    public ConnectionStatus Status => _statusTracker.Status;
+
+    public event EventHandler<ConnectionStatusChangedEventArgs>? StatusChanged
+    {
+        add => _statusTracker.StatusChanged += value;
+        remove => _statusTracker.StatusChanged -= value;
+    }
 
 #if NET9_0_OR_GREATER
     static SurrealDbWsEngine()
@@ -150,6 +165,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
         Uri = new Uri(parameters.Endpoint!);
         _id = id;
+        _statusTracker = new(this);
         _parameters = parameters;
         _configureCborOptions = configureCborOptions;
         _surrealDbLoggerFactory = surrealDbLoggerFactory;
@@ -170,7 +186,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         {
             IsTextMessageConversionEnabled = false,
             IsStreamDisposedAutomatically = false,
-            ErrorReconnectTimeout = TimeSpan.FromSeconds(10),
+            // 💡 Set before each new attempt, see OnDisconnection
+            ErrorReconnectTimeout = parameters.Reconnect.RetryDelay,
         };
         _pinger = new(Ping);
 #if !NET9_0_OR_GREATER
@@ -503,27 +520,80 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         _surrealDbLoggerFactory?.Connection?.LogConnectionAttempt(_parameters.Endpoint!);
 
         _isInitialized = false;
+        _statusTracker.Set(ConnectionStatus.Connecting);
 
-        await _wsClient.StartOrFail().ConfigureAwait(false);
-
-        await ApplyRootConfigurationAsync(cancellationToken).ConfigureAwait(false);
-
-        string version = await Version(SurrealDbWsRequestPriority.High, cancellationToken)
-            .ConfigureAwait(false);
-        _version = version.ToSemver();
-
-        if (_version.CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
+        try
         {
-            throw new SurrealDbConnectException(
-                "CBOR is only supported on SurrealDB 1.4.0 or later."
-            );
+            await _wsClient.StartOrFail().ConfigureAwait(false);
+
+            await ApplyRootConfigurationAsync(cancellationToken).ConfigureAwait(false);
+
+            string version = await Version(SurrealDbWsRequestPriority.High, cancellationToken)
+                .ConfigureAwait(false);
+            _version = version.ToSemver();
+
+            if (_version.CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
+            {
+                throw new SurrealDbConnectException(
+                    "CBOR is only supported on SurrealDB 1.4.0 or later."
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            _statusTracker.Set(ConnectionStatus.Disconnected, ex);
+            throw;
         }
 
         _pinger.Start();
         _isInitialized = true;
         _replayCompletion.TrySetResult(true);
+        _statusTracker.Set(ConnectionStatus.Connected);
 
         _surrealDbLoggerFactory?.Connection?.LogConnectionSuccess(_parameters.Endpoint!);
+    }
+
+    /// <summary>
+    /// Connects again after the client stopped reconnecting, and restores the connection state.
+    /// </summary>
+    private async Task ReconnectAfterGivingUpAsync(CancellationToken cancellationToken)
+    {
+        _surrealDbLoggerFactory?.Connection?.LogConnectionAttempt(_parameters.Endpoint!);
+
+        Interlocked.Exchange(ref _failedReconnectAttempts, 0);
+        if (_replayCompletion.Task.IsCompleted)
+        {
+            _replayCompletion = new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously
+            );
+        }
+        _statusTracker.Set(ConnectionStatus.Connecting);
+
+        try
+        {
+            if (_wsClient.IsStarted)
+            {
+                // 💡 The state is restored once the reconnection is notified
+                await _wsClient.ReconnectOrFail().ConfigureAwait(false);
+            }
+            else
+            {
+                await _wsClient.StartOrFail().ConfigureAwait(false);
+                await ApplyReconnectConfigurationAsync(cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (Exception ex)
+        {
+            _statusTracker.Set(ConnectionStatus.Disconnected, ex);
+
+            var exception = new SurrealDbConnectionException(
+                "Could not connect to the server.",
+                "ConnectionLost",
+                ex
+            );
+            _replayCompletion.TrySetException(exception);
+            throw exception;
+        }
     }
 
     public async Task<T> Create<T>(
@@ -756,6 +826,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         _wsClient.Dispose();
         _semaphoreConnect.Dispose();
 
+        _statusTracker.Set(ConnectionStatus.Disconnected);
         _disposed = true;
     }
 
@@ -2017,6 +2088,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
             await ResubscribeLiveQueriesAsync(cancellationToken).ConfigureAwait(false);
 
+            Interlocked.Exchange(ref _failedReconnectAttempts, 0);
+            _statusTracker.Set(ConnectionStatus.Connected);
             replayCompletion.TrySetResult(true);
         }
         catch (OperationCanceledException)
@@ -2028,6 +2101,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             _surrealDbLoggerFactory?.Connection?.LogConnectionReplayFailed("root session", ex);
 
             // 💡 Let pending requests go through, they will report their own errors
+            Interlocked.Exchange(ref _failedReconnectAttempts, 0);
+            _statusTracker.Set(ConnectionStatus.Connected);
             replayCompletion.TrySetResult(false);
         }
     }
@@ -2084,6 +2159,39 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         if (_disposing)
         {
             // 💡 Live queries are closed by DisposeAsync
+            _statusTracker.Set(ConnectionStatus.Disconnected);
+            return;
+        }
+
+        var status = _statusTracker.Status;
+        if (status is ConnectionStatus.Connecting or ConnectionStatus.Disconnected)
+        {
+            // 💡 A failed connection is reported to the caller of Connect
+            return;
+        }
+
+        var reconnect = _parameters.Reconnect;
+
+        if (info.Type == DisconnectionType.Error)
+        {
+            // 💡 A reconnection attempt failed
+            int failedAttempts = Interlocked.Increment(ref _failedReconnectAttempts);
+
+            if (!reconnect.AllowsAttempt(failedAttempts))
+            {
+                info.CancelReconnection = true;
+                GiveUpReconnecting(failedAttempts, info.Exception);
+                return;
+            }
+
+            // 💡 Read by the websocket client right after this event, before the next attempt
+            var delay = reconnect.GetDelay(failedAttempts);
+            _wsClient.ErrorReconnectTimeout = delay;
+            _surrealDbLoggerFactory?.Connection?.LogConnectionReconnectScheduled(
+                failedAttempts + 1,
+                delay,
+                info.Exception
+            );
             return;
         }
 
@@ -2126,6 +2234,48 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 _ = CloseLiveQueryChannelsAsync(key, SurrealDbLiveQueryClosureReason.SocketClosed);
             }
         }
+
+        if (!reconnect.Enabled)
+        {
+            info.CancelReconnection = true;
+            GiveUpReconnecting(0, info.Exception);
+            return;
+        }
+
+        Interlocked.Exchange(ref _failedReconnectAttempts, 0);
+        _wsClient.ErrorReconnectTimeout = reconnect.RetryDelay;
+        _statusTracker.Set(ConnectionStatus.Reconnecting, info.Exception);
+    }
+
+    private void GiveUpReconnecting(int failedAttempts, Exception? exception)
+    {
+        _surrealDbLoggerFactory?.Connection?.LogConnectionReconnectAbandoned(
+            failedAttempts,
+            exception
+        );
+
+        _statusTracker.Set(ConnectionStatus.Disconnected, exception);
+
+        // 💡 Pending requests fail now, the next request connects again
+        _replayCompletion.TrySetException(
+            new SurrealDbConnectionException(
+                "The connection was lost and the client stopped reconnecting.",
+                "ConnectionLost",
+                exception
+            )
+        );
+
+        foreach (var queryUuid in _liveQueryDefinitions.Keys.ToArray())
+        {
+            if (_liveQueryDefinitions.TryRemove(queryUuid, out _))
+            {
+                _ = CloseLiveQueryChannelsAsync(
+                    queryUuid,
+                    SurrealDbLiveQueryClosureReason.SocketClosed
+                );
+            }
+        }
+        _liveQueryIdsByServerId.Clear();
     }
 
     private async Task CloseLiveQueryChannelsAsync(
@@ -2319,7 +2469,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
     private async Task Ping(CancellationToken cancellationToken)
     {
-        if (_wsClient.IsStarted)
+        // 💡 No ping while reconnecting, or once the client stopped reconnecting
+        if (_wsClient.IsStarted && _statusTracker.Status == ConnectionStatus.Connected)
         {
             await SendRequestAsync(
                     "ping",
@@ -2342,13 +2493,21 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        if (!_wsClient.IsStarted || (requireInitialized && !_isInitialized))
+        if (
+            !_wsClient.IsStarted
+            || (requireInitialized && !_isInitialized)
+            || ShouldReconnectAfterGivingUp()
+        )
         {
             await _semaphoreConnect.WaitAsync(cancellationToken).ConfigureAwait(false);
 
             try
             {
-                if (!_wsClient.IsStarted)
+                if (ShouldReconnectAfterGivingUp())
+                {
+                    await ReconnectAfterGivingUpAsync(cancellationToken).ConfigureAwait(false);
+                }
+                else if (!_wsClient.IsStarted)
                 {
                     await Connect(cancellationToken).ConfigureAwait(false);
                 }
@@ -2358,6 +2517,16 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 _semaphoreConnect.Release();
             }
         }
+    }
+
+    /// <summary>
+    /// The client was connected, then stopped reconnecting after the connection was lost.
+    /// </summary>
+    private bool ShouldReconnectAfterGivingUp()
+    {
+        return _isInitialized
+            && !_disposing
+            && _statusTracker.Status == ConnectionStatus.Disconnected;
     }
 
     private async Task EnsureVersionIsSetAsync(CancellationToken cancellationToken)
@@ -2560,6 +2729,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 throw new EngineDisposedSurrealDbException();
             }
 
+            // 💡 Rethrows when the client stopped reconnecting
+            await replayTask.ConfigureAwait(false);
             return;
         }
 

@@ -72,6 +72,11 @@ public sealed class SurrealDbOptions
     /// </summary>
     public TimeSpan? RequestTimeout { get; set; }
 
+    /// <summary>
+    /// How a WebSocket client reconnects after the connection is lost.
+    /// </summary>
+    public ReconnectOptions Reconnect { get; set; } = new();
+
     public SurrealDbOptions() { }
 
     public SurrealDbOptions(string endpoint)
@@ -90,6 +95,7 @@ public sealed class SurrealDbOptions
         AuthLevel = clone.AuthLevel;
         Logging = clone.Logging;
         RequestTimeout = clone.RequestTimeout;
+        Reconnect = new ReconnectOptions(clone.Reconnect);
     }
 
     public static SurrealDbOptionsBuilder Create()
