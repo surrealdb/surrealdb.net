@@ -1365,52 +1365,52 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         var ns = useConfiguration is not null ? useConfiguration.Ns : session!.Ns;
         var db = useConfiguration is not null ? useConfiguration.Db : session!.Db;
-        SetNsDbHttpClientHeaders(client, _version, ns, db);
+        SetNsDbHttpClientHeaders(client.DefaultRequestHeaders, _version, ns, db);
 
         var auth = overridedAuth ?? session!.Auth;
-        SetAuthHttpClientHeaders(client, auth);
+        SetAuthHttpClientHeaders(client.DefaultRequestHeaders, auth);
     }
 
     internal static void SetNsDbHttpClientHeaders(
-        HttpClient client,
+        HttpRequestHeaders headers,
         SemVersion? version,
         string? ns,
         string? db
     )
     {
-        client.DefaultRequestHeaders.Remove(HttpConstants.ACCEPT_HEADER_NAME);
+        headers.Remove(HttpConstants.ACCEPT_HEADER_NAME);
 
         if (version?.Major > 1)
         {
-            client.DefaultRequestHeaders.Remove(HttpConstants.NS_HEADER_NAME_V2);
-            client.DefaultRequestHeaders.Remove(HttpConstants.DB_HEADER_NAME_V2);
+            headers.Remove(HttpConstants.NS_HEADER_NAME_V2);
+            headers.Remove(HttpConstants.DB_HEADER_NAME_V2);
         }
         else
         {
-            client.DefaultRequestHeaders.Remove(HttpConstants.NS_HEADER_NAME);
-            client.DefaultRequestHeaders.Remove(HttpConstants.DB_HEADER_NAME);
+            headers.Remove(HttpConstants.NS_HEADER_NAME);
+            headers.Remove(HttpConstants.DB_HEADER_NAME);
         }
 
-        client.DefaultRequestHeaders.Add(HttpConstants.ACCEPT_HEADER_NAME, ["application/cbor"]);
+        headers.Add(HttpConstants.ACCEPT_HEADER_NAME, ["application/cbor"]);
 
         if (version?.Major > 1)
         {
-            client.DefaultRequestHeaders.Add(HttpConstants.NS_HEADER_NAME_V2, ns);
-            client.DefaultRequestHeaders.Add(HttpConstants.DB_HEADER_NAME_V2, db);
+            headers.Add(HttpConstants.NS_HEADER_NAME_V2, ns);
+            headers.Add(HttpConstants.DB_HEADER_NAME_V2, db);
         }
         else
         {
-            client.DefaultRequestHeaders.Add(HttpConstants.NS_HEADER_NAME, ns);
-            client.DefaultRequestHeaders.Add(HttpConstants.DB_HEADER_NAME, db);
+            headers.Add(HttpConstants.NS_HEADER_NAME, ns);
+            headers.Add(HttpConstants.DB_HEADER_NAME, db);
         }
     }
 
-    internal static void SetAuthHttpClientHeaders(HttpClient client, IAuth? auth)
+    internal static void SetAuthHttpClientHeaders(HttpRequestHeaders headers, IAuth? auth)
     {
         switch (auth)
         {
             case BearerAuth bearerAuth:
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                headers.Authorization = new AuthenticationHeaderValue(
                     AuthConstants.BEARER,
                     bearerAuth.Token
                 );
@@ -1422,16 +1422,31 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
                         $"{systemAuth.Auth.Username}:{systemAuth.Auth.Password}"
                     )
                 );
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                headers.Authorization = new AuthenticationHeaderValue(
                     AuthConstants.BASIC,
                     credentials
                 );
                 break;
             }
             case NoAuth:
-                client.DefaultRequestHeaders.Authorization = null;
+                headers.Authorization = null;
                 break;
         }
+    }
+
+    /// <summary>
+    /// Returns the <see cref="HttpClient"/> to use for the HTTP endpoints outside of RPC (e.g. import and export).
+    /// Headers must be set on each request since the client can be shared.
+    /// </summary>
+    internal HttpClientWrapper CreateEndpointHttpClientWrapper()
+    {
+        if (_httpClientFactory is not null)
+        {
+            string httpClientName = HttpClientHelper.GetHttpClientName(Uri);
+            return new HttpClientWrapper(_httpClientFactory.CreateClient(httpClientName), true);
+        }
+
+        return new HttpClientWrapper(SharedHttpClient.Instance, false);
     }
 
     private HttpClient GetHttpClient()
