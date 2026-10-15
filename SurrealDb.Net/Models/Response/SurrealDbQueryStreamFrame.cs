@@ -191,3 +191,13 @@ public sealed class SurrealDbQueryStreamEndFrame : SurrealDbQueryStreamFrame
         Error = error;
     }
 }
+
+/// <summary>
+/// A frame of a kind this client does not know, sent by a newer server. The protocol says to ignore it.
+/// </summary>
+internal sealed class SurrealDbQueryStreamUnknownFrame : SurrealDbQueryStreamFrame
+{
+    public static readonly SurrealDbQueryStreamUnknownFrame Instance = new();
+
+    private SurrealDbQueryStreamUnknownFrame() { }
+}

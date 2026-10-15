@@ -115,7 +115,8 @@ internal sealed class SurrealDbQueryStreamFrameConverter
                 ReadError(error)
             ),
             "end" => new SurrealDbQueryStreamEndFrame(results, time, ReadError(error)),
-            _ => throw new CborException($"'{stream}' is not a valid stream frame."),
+            // 💡 Kinds of frames added by a newer server are ignored
+            _ => SurrealDbQueryStreamUnknownFrame.Instance,
         };
     }
 
