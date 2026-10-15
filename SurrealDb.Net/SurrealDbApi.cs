@@ -83,7 +83,7 @@ public sealed class SurrealDbApi
             { "headers", headers },
             { "query", new Dictionary<string, string>(request.Query) },
         };
-        if (request.Body is not null)
+        if (request.HasBody)
         {
             invokeRequest.Add("body", request.Body);
         }
@@ -125,11 +125,25 @@ public sealed class SurrealDbApi
     }
 
     /// <summary>
-    /// Invokes an API with a <c>POST</c> request.
+    /// Invokes an API with a <c>POST</c> request without a body.
     /// </summary>
     public Task<SurrealDbApiResponse> Post(
         string path,
-        object? body = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return Invoke(path, new SurrealDbApiRequest { Method = "post" }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Invokes an API with a <c>POST</c> request.
+    /// </summary>
+    /// <param name="path">The path of the API, appended to the prefix of this instance.</param>
+    /// <param name="body">The body of the request. <c>null</c> is sent as <c>NULL</c>.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    public Task<SurrealDbApiResponse> Post(
+        string path,
+        object? body,
         CancellationToken cancellationToken = default
     )
     {
@@ -141,11 +155,25 @@ public sealed class SurrealDbApi
     }
 
     /// <summary>
-    /// Invokes an API with a <c>PUT</c> request.
+    /// Invokes an API with a <c>PUT</c> request without a body.
     /// </summary>
     public Task<SurrealDbApiResponse> Put(
         string path,
-        object? body = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return Invoke(path, new SurrealDbApiRequest { Method = "put" }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Invokes an API with a <c>PUT</c> request.
+    /// </summary>
+    /// <param name="path">The path of the API, appended to the prefix of this instance.</param>
+    /// <param name="body">The body of the request. <c>null</c> is sent as <c>NULL</c>.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    public Task<SurrealDbApiResponse> Put(
+        string path,
+        object? body,
         CancellationToken cancellationToken = default
     )
     {
@@ -157,11 +185,25 @@ public sealed class SurrealDbApi
     }
 
     /// <summary>
-    /// Invokes an API with a <c>DELETE</c> request.
+    /// Invokes an API with a <c>DELETE</c> request without a body.
     /// </summary>
     public Task<SurrealDbApiResponse> Delete(
         string path,
-        object? body = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return Invoke(path, new SurrealDbApiRequest { Method = "delete" }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Invokes an API with a <c>DELETE</c> request.
+    /// </summary>
+    /// <param name="path">The path of the API, appended to the prefix of this instance.</param>
+    /// <param name="body">The body of the request. <c>null</c> is sent as <c>NULL</c>.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    public Task<SurrealDbApiResponse> Delete(
+        string path,
+        object? body,
         CancellationToken cancellationToken = default
     )
     {
@@ -173,11 +215,25 @@ public sealed class SurrealDbApi
     }
 
     /// <summary>
-    /// Invokes an API with a <c>PATCH</c> request.
+    /// Invokes an API with a <c>PATCH</c> request without a body.
     /// </summary>
     public Task<SurrealDbApiResponse> Patch(
         string path,
-        object? body = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return Invoke(path, new SurrealDbApiRequest { Method = "patch" }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Invokes an API with a <c>PATCH</c> request.
+    /// </summary>
+    /// <param name="path">The path of the API, appended to the prefix of this instance.</param>
+    /// <param name="body">The body of the request. <c>null</c> is sent as <c>NULL</c>.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    public Task<SurrealDbApiResponse> Patch(
+        string path,
+        object? body,
         CancellationToken cancellationToken = default
     )
     {
@@ -189,11 +245,25 @@ public sealed class SurrealDbApi
     }
 
     /// <summary>
-    /// Invokes an API with a <c>TRACE</c> request.
+    /// Invokes an API with a <c>TRACE</c> request without a body.
     /// </summary>
     public Task<SurrealDbApiResponse> Trace(
         string path,
-        object? body = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return Invoke(path, new SurrealDbApiRequest { Method = "trace" }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Invokes an API with a <c>TRACE</c> request.
+    /// </summary>
+    /// <param name="path">The path of the API, appended to the prefix of this instance.</param>
+    /// <param name="body">The body of the request. <c>null</c> is sent as <c>NULL</c>.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    public Task<SurrealDbApiResponse> Trace(
+        string path,
+        object? body,
         CancellationToken cancellationToken = default
     )
     {

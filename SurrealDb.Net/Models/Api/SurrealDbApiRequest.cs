@@ -10,10 +10,26 @@ public sealed class SurrealDbApiRequest
     /// </summary>
     public string Method { get; set; } = "get";
 
+    private object? _body;
+
     /// <summary>
-    /// The body of the request, if any.
+    /// The body of the request. Leave it unset to send no body (<c>NONE</c>),
+    /// or set it to <c>null</c> to send a <c>NULL</c> body.
     /// </summary>
-    public object? Body { get; set; }
+    public object? Body
+    {
+        get => _body;
+        set
+        {
+            _body = value;
+            HasBody = true;
+        }
+    }
+
+    /// <summary>
+    /// Whether <see cref="Body"/> was set, even to <c>null</c>.
+    /// </summary>
+    public bool HasBody { get; private set; }
 
     /// <summary>
     /// The headers of the request.

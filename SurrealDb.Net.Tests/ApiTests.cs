@@ -17,6 +17,9 @@ public class ApiTests
                 headers: { "x-answer": "42" },
             };
         };
+        DEFINE API "/body" FOR post THEN {
+            RETURN { status: 200, body: { none: $request.body == NONE, null: $request.body == NULL } };
+        };
         """;
 
     private static async Task<SurrealDbClient> CreateClientAsync(
@@ -117,5 +120,54 @@ public class ApiTests
         act.Should()
             .Throw<SurrealDbApiException>()
             .WithMessage("The API GET /missing answered with status 404.");
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldDistinguishNullBodyFromNoBody(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        await using var client = await CreateClientAsync(
+            surrealDbClientGenerator,
+            connectionString
+        );
+
+        var noBody = await client.Api().Post("/body");
+        noBody
+            .GetBody<Dictionary<string, bool>>()
+            .Should()
+            .BeEquivalentTo(new Dictionary<string, bool> { ["none"] = true, ["null"] = false });
+
+        var nullBody = await client.Api().Post("/body", null);
+        nullBody
+            .GetBody<Dictionary<string, bool>>()
+            .Should()
+            .BeEquivalentTo(new Dictionary<string, bool> { ["none"] = false, ["null"] = true });
+
+        var nullRequestBody = await client
+            .Api()
+            .Invoke("/body", new SurrealDbApiRequest { Method = "post", Body = null });
+        nullRequestBody.GetBody<Dictionary<string, bool>>()!["null"].Should().BeTrue();
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldInvokeWhenSessionHasVariablesOfTheSameName(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        await using var client = await CreateClientAsync(
+            surrealDbClientGenerator,
+            connectionString
+        );
+
+        await client.Set("path", "/elsewhere");
+        await client.Set("request", "something else");
+
+        var response = await client.Api().Get("/hello");
+
+        response.Status.Should().Be(200);
+        response.GetBody<Dictionary<string, string>>().Should().Contain("hello", "world");
     }
 }
