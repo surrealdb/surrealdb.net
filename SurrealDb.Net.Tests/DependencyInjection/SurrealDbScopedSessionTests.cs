@@ -53,6 +53,33 @@ public class SurrealDbScopedSessionTests
     }
 
     [Test]
+    [WebsocketConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldNotShareSessionStateBetweenScopes(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator().Configure(
+            connectionString,
+            lifetime: ServiceLifetime.Scoped
+        );
+        var dbInfo1 = surrealDbClientGenerator.GenerateDatabaseInfo();
+        var dbInfo2 = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var scope1 = surrealDbClientGenerator.CreateAsyncScope()!;
+        await using var scope2 = surrealDbClientGenerator.CreateAsyncScope()!;
+
+        var client1 = scope1.ServiceProvider.GetRequiredService<SurrealDbSession>();
+        var client2 = scope2.ServiceProvider.GetRequiredService<SurrealDbSession>();
+
+        await client1.Use(dbInfo1.Namespace, dbInfo1.Database);
+        await client2.Use(dbInfo2.Namespace, dbInfo2.Database);
+
+        // 💡 This state is what a reconnection or a fork replays
+        var sessionInfos = ((SurrealDbWsEngine)client1.Engine).SessionInfos;
+        sessionInfos.Get(client1.SessionId)!.Ns.Should().Be(dbInfo1.Namespace);
+        sessionInfos.Get(client2.SessionId)!.Ns.Should().Be(dbInfo2.Namespace);
+    }
+
+    [Test]
     [ConnectionStringFixtureGenerator]
     [SinceSurrealVersion("3.0")]
     public async Task ShouldKeepNamespaceAndDatabasePerScope(string connectionString)

@@ -127,6 +127,16 @@ internal static partial class SurrealDbLoggerExtensions
         Exception exception
     );
 
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Failed to restore the connection state after a reconnection: {step}."
+    )]
+    public static partial void LogConnectionReplayFailed(
+        this ILogger logger,
+        string step,
+        Exception exception
+    );
+
     [LoggerMessage(Level = LogLevel.Debug, Message = "CBOR data serialized: {data}")]
     public static partial void LogSerializationDataSerialized(this ILogger logger, string data);
 

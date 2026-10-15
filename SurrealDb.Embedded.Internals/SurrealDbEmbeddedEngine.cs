@@ -168,15 +168,18 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
     public async Task<Guid> CreateSession(Guid from, CancellationToken cancellationToken)
     {
-        var newId = Guid.NewGuid();
-        var newState = SessionInfos.Clone(from, newId);
+        var fromState = SessionInfos.Get(from)!;
 
-        await Attach(newId, cancellationToken).ConfigureAwait(false);
-        SessionInfos.Set(newId, newState);
+        var newId = Guid.NewGuid();
+        await CreateSession(newId, new EmbeddedSessionInfo(fromState), cancellationToken)
+            .ConfigureAwait(false);
 
         return newId;
     }
 
+    /// <summary>
+    /// Attaches a new session, then replays the given state on it (namespace and database).
+    /// </summary>
     private async Task CreateSession(
         Guid sessionId,
         EmbeddedSessionInfo sessionInfo,
@@ -185,6 +188,25 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     {
         await Attach(sessionId, cancellationToken).ConfigureAwait(false);
         SessionInfos.Set(sessionId, sessionInfo);
+
+        try
+        {
+            await ApplyConfigurationAsync(sessionId, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            SessionInfos.Remove(sessionId);
+            try
+            {
+                await Detach(sessionId, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch
+            {
+                // 💡 The original failure matters more than a failed cleanup
+            }
+
+            throw;
+        }
     }
 
     partial void PreConnect();
@@ -1145,6 +1167,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.Set(key, value);
     }
 
     public Task SignIn(
@@ -1234,6 +1258,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.Unset(key);
     }
 
     public async Task<T> Update<T>(
@@ -1446,6 +1472,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.Use(ns, db);
     }
 
     public async Task<string> Version(CancellationToken cancellationToken)
@@ -1463,13 +1491,19 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         return version.Replace(VERSION_PREFIX, string.Empty);
     }
 
-    private async Task ApplyRootConfigurationAsync(CancellationToken cancellationToken)
+    private Task ApplyRootConfigurationAsync(CancellationToken cancellationToken)
     {
-        var session = SessionInfos.Get(null)!;
+        return ApplyConfigurationAsync(null, cancellationToken);
+    }
+
+    private async Task ApplyConfigurationAsync(Guid? sessionId, CancellationToken cancellationToken)
+    {
+        var session = SessionInfos.Get(sessionId)!;
 
         if (session.Ns is not null)
         {
-            await Use(session.Ns, session.Db!, null, null, cancellationToken).ConfigureAwait(false);
+            await Use(session.Ns, session.Db!, sessionId, null, cancellationToken)
+                .ConfigureAwait(false);
 
             if (session.Db is not null)
             {
@@ -1482,6 +1516,18 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             {
                 _surrealDbLoggerFactory?.Connection?.LogConnectionNamespaceSet(session.Ns);
             }
+        }
+
+        foreach (var (key, value) in session.Variables.ToArray())
+        {
+            await SendRequestAsync<Unit>(
+                    Method.Set,
+                    [key, value],
+                    sessionId,
+                    null,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
         }
     }
 
@@ -1568,7 +1614,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         )
         {
             _sessionizer.TryRemove(sessionId.Value);
-            await CreateSession(sessionId.Value, newEmbeddedSessionInfo, cancellationToken)
+            // 💡 The provided state is shared by every scope, each session needs its own copy
+            await CreateSession(
+                    sessionId.Value,
+                    new EmbeddedSessionInfo(newEmbeddedSessionInfo),
+                    cancellationToken
+                )
                 .ConfigureAwait(false);
         }
 
