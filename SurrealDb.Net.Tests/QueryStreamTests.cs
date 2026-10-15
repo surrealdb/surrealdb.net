@@ -276,4 +276,73 @@ public class QueryStreamTests
         var markers = await client.RawQuery("SELECT * FROM marker;");
         markers.GetValue<List<object>>(0).Should().HaveCount(1);
     }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.3")]
+    public async Task ShouldWaitForTransactionalStreamBeingReadBeforeCommitting(
+        string connectionString
+    )
+    {
+        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        const int count = 5000;
+        var items = Enumerable.Range(1, count).Select(n => new Item { N = n }).ToList();
+        await client.RawQuery(
+            "INSERT INTO item $items RETURN NONE;",
+            new Dictionary<string, object?> { { "items", items } }
+        );
+
+        await using var session = await client.CreateSession();
+        await session.Use(dbInfo.Namespace, dbInfo.Database);
+        await session.SignIn(
+            new RootAuth { Username = options.Username!, Password = options.Password! }
+        );
+
+        await using var transaction = await session.BeginTransaction();
+        await transaction.RawQuery("CREATE marker:1;");
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        Task? commitTask = null;
+        bool isCommittedWhileReading = false;
+        int total = 0;
+        SurrealDbQueryStreamEndFrame? endFrame = null;
+
+        await foreach (var frame in transaction.RawQueryStream("SELECT n FROM item;"))
+        {
+            if (commitTask is null)
+            {
+                // 💡 Commits from elsewhere while the stream is still being read
+                commitTask = Task.Run(() => transaction.Commit(cts.Token));
+                await Task.Delay(500);
+                isCommittedWhileReading = commitTask.IsCompleted;
+            }
+
+            switch (frame)
+            {
+                case SurrealDbQueryStreamRowsFrame rows:
+                    total += rows.GetValues<Item>().Count;
+                    break;
+                case SurrealDbQueryStreamEndFrame end:
+                    endFrame = end;
+                    break;
+            }
+        }
+
+        await commitTask!;
+
+        isCommittedWhileReading.Should().BeFalse();
+        endFrame.Should().NotBeNull();
+        endFrame!.IsOk.Should().BeTrue();
+        total.Should().Be(count);
+
+        var markers = await client.RawQuery("SELECT * FROM marker;");
+        markers.GetValue<List<object>>(0).Should().HaveCount(1);
+    }
 }

@@ -625,6 +625,8 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     /// except that the answer does not say which statements return a single value:
     /// a statement whose value is an array, e.g. <c>RETURN [1, 2]</c>, is then returned as rows rather than as a value.
     /// Leaving the enumeration early cancels the query on the server.
+    /// Within a transaction, committing or cancelling it waits until the stream has ended,
+    /// so finish or leave the enumeration first rather than committing from inside it.
     /// Frames that arrive faster than they are read are buffered in memory,
     /// so that a slow reader never holds up the other requests of the connection.
     /// </remarks>
