@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Text;
 using Semver;
 using SurrealDb.Net.Internals;
@@ -203,6 +203,11 @@ public abstract partial class BaseSurrealDbClient
         where T : IRelationRecord
     {
         return Engine.InsertRelation(table, data, SessionId, TransactionId, cancellationToken);
+    }
+
+    public SurrealDbApi Api(string? prefix = null)
+    {
+        return new SurrealDbApi(this, prefix);
     }
 
     public Task Invalidate(CancellationToken cancellationToken = default)

@@ -316,6 +316,15 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     Task Invalidate(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Invokes the APIs defined with <c>DEFINE API</c>, in the current session and transaction.
+    /// </summary>
+    /// <remarks>
+    /// This method is only supported by SurrealDB v3.0.0 or higher.
+    /// </remarks>
+    /// <param name="prefix">A path prefix applied to every request, e.g. <c>/users</c>.</param>
+    SurrealDbApi Api(string? prefix = null);
+
+    /// <summary>
     /// Kills an active live query.<br />
     /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/kill">
     /// `Kill` on surrealdb.com/docs

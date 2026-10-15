@@ -1,0 +1,121 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Models.Api;
+
+namespace SurrealDb.Net.Tests;
+
+public class ApiTests
+{
+    private const string DEFINE_APIS = """
+        DEFINE API "/hello" FOR get THEN {
+            RETURN { status: 200, body: { hello: $request.query.name ?? "world" } };
+        };
+        DEFINE API "/users/echo" FOR post, put THEN {
+            RETURN {
+                status: 201,
+                body: { got: $request.body, header: $request.headers["x-test"] },
+                headers: { "x-answer": "42" },
+            };
+        };
+        """;
+
+    private static async Task<SurrealDbClient> CreateClientAsync(
+        SurrealDbClientGenerator surrealDbClientGenerator,
+        string connectionString
+    )
+    {
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+        (await client.RawQuery(DEFINE_APIS)).EnsureAllOks();
+
+        return client;
+    }
+
+    public class EchoBody
+    {
+        [Column("got")]
+        public Dictionary<string, int> Got { get; set; } = new();
+
+        [Column("header")]
+        public string? Header { get; set; }
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldInvokeGet(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        await using var client = await CreateClientAsync(
+            surrealDbClientGenerator,
+            connectionString
+        );
+
+        var response = await client.Api().Get("/hello");
+
+        response.Status.Should().Be(200);
+        response.IsSuccessStatusCode.Should().BeTrue();
+        response.GetBody<Dictionary<string, string>>().Should().Contain("hello", "world");
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldSendQueryHeadersAndBody(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        await using var client = await CreateClientAsync(
+            surrealDbClientGenerator,
+            connectionString
+        );
+
+        var hello = await client
+            .Api()
+            .Invoke(
+                "hello",
+                new SurrealDbApiRequest
+                {
+                    Query = new Dictionary<string, string> { ["name"] = "bob" },
+                }
+            );
+        hello.GetBody<Dictionary<string, string>>().Should().Contain("hello", "bob");
+
+        var echo = await client
+            .Api("/users")
+            .Header("x-test", "yes")
+            .Post("/echo", new Dictionary<string, object?> { ["a"] = 1 });
+
+        echo.Status.Should().Be(201);
+        echo.Method.Should().Be("post");
+        echo.Path.Should().Be("/users/echo");
+        echo.Headers.Should().Contain("x-answer", "42");
+
+        var body = echo.GetBody<EchoBody>()!;
+        body.Header.Should().Be("yes");
+        body.Got.Should().Contain("a", 1);
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldReportUnsuccessfulStatus(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        await using var client = await CreateClientAsync(
+            surrealDbClientGenerator,
+            connectionString
+        );
+
+        var response = await client.Api().Get("/missing");
+
+        response.Status.Should().Be(404);
+        response.IsSuccessStatusCode.Should().BeFalse();
+
+        var act = () => response.EnsureSuccessStatusCode();
+        act.Should()
+            .Throw<SurrealDbApiException>()
+            .WithMessage("The API GET /missing answered with status 404.");
+    }
+}
