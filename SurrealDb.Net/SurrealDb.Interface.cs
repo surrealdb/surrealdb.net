@@ -623,6 +623,8 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     /// Results are streamed over WebSocket connections to SurrealDB v3.3 and later.
     /// Other connections read the whole answer first and then return it as the same frames.
     /// Leaving the enumeration early cancels the query on the server.
+    /// Frames that arrive faster than they are read are buffered in memory,
+    /// so that a slow reader never holds up the other requests of the connection.
     /// </remarks>
     /// <param name="query">The SurrealQL query.</param>
     /// <param name="parameters">A list of parameters to be used inside the SurrealQL query.</param>

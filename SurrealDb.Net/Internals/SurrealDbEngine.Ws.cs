@@ -1269,6 +1269,9 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             yield break;
         }
 
+        // 💡 Unbounded on purpose: the server only slows down when the socket is not read,
+        // which would stall every other request of this connection, and deadlock a consumer
+        // that sends requests while it reads the stream
         var queryStream = Channel.CreateUnbounded<SurrealDbWsOkResponse>(
             new UnboundedChannelOptions { SingleReader = true }
         );
@@ -2710,6 +2713,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         }
 
         bool isQueryStreamOpen = false;
+        bool isRequestSent = false;
 
 #if !NET9_0_OR_GREATER
         await _responseTaskHandler.WaitUntilAsync(priority).ConfigureAwait(false);
@@ -2743,6 +2747,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 #else
             await SendInnerRequestAsync(request).ConfigureAwait(false);
 #endif
+            isRequestSent = true;
 
             var result = await taskCompletionSource.Task.ConfigureAwait(false);
 
@@ -2794,6 +2799,14 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             if (queryStream is not null && !isQueryStreamOpen)
             {
                 _queryStreams.TryRemove(id, out _);
+
+                // 💡 Given up before the server answered (cancellation, timeout),
+                // the query may already run on the server and must be stopped there
+                var openingTask = taskCompletionSource.Task;
+                if (isRequestSent && !openingTask.IsCompletedSuccessfully && !openingTask.IsFaulted)
+                {
+                    _ = CancelQueryStreamAsync(id, sessionId);
+                }
             }
         }
     }
