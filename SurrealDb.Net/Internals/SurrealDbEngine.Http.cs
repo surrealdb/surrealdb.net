@@ -1269,7 +1269,6 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         "authenticate",
         "refresh",
         "revoke",
-        "version",
     ];
 
     private readonly SemaphoreSlim _authRenewalLock = new(1, 1);
@@ -1279,7 +1278,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     /// or forgets it once expired when <see cref="SurrealDbOptions.InvalidateOnExpiry"/> is set.
     /// A failed renewal is logged: the request then reports the expired token itself.
     /// </summary>
-    private async Task RenewAuthIfExpiringAsync(
+    internal async Task RenewAuthIfExpiringAsync(
         Guid? sessionId,
         CancellationToken cancellationToken
     )

@@ -70,6 +70,10 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
             case SurrealDbHttpEngine httpEngine:
                 // 💡 Ensures underlying engine is started to retrieve some information
                 await httpEngine.Connect(cancellationToken).ConfigureAwait(false);
+                // 💡 The request below bypasses the engine, so its token is renewed here
+                await httpEngine
+                    .RenewAuthIfExpiringAsync(SessionId, cancellationToken)
+                    .ConfigureAwait(false);
 
                 {
                     var session = httpEngine.SessionInfos.Get(SessionId)!;
@@ -85,6 +89,10 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
             case SurrealDbWsEngine wsEngine:
                 // 💡 Ensures underlying engine is started to retrieve some information
                 await wsEngine.InternalConnectAsync(true, cancellationToken).ConfigureAwait(false);
+                // 💡 The request below bypasses the engine, so its token is renewed here
+                await wsEngine
+                    .RenewAuthIfExpiringAsync(SessionId, cancellationToken)
+                    .ConfigureAwait(false);
 
                 {
                     var session = wsEngine.SessionInfos.Get(SessionId)!;

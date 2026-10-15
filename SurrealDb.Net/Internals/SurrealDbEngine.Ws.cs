@@ -2522,7 +2522,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     /// or invalidates the session once the token has expired when <see cref="SurrealDbOptions.InvalidateOnExpiry"/> is set.
     /// A failed renewal is logged: the request then reports the expired token itself.
     /// </summary>
-    private async Task RenewAuthIfExpiringAsync(
+    internal async Task RenewAuthIfExpiringAsync(
         Guid? sessionId,
         CancellationToken cancellationToken
     )

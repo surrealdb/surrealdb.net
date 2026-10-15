@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Internals;
+using SurrealDb.Net.Internals.Auth;
 
 namespace SurrealDb.Net.Tests;
 
@@ -222,5 +223,34 @@ public class RefreshTests
             .GetValue<string>(0)
             .Should()
             .StartWith("user:");
+    }
+
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldRenewExpiredAccessTokenBeforeExport(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var (client, tokens) = await SignUpAsync(surrealDbClientGenerator, connectionString);
+        await using var __ = client;
+
+        await Task.Delay(TokenDuration + TimeSpan.FromSeconds(1));
+
+        // 💡 Export is a separate HTTP request, even over WebSocket. A record user may not export,
+        // but the request must at least be sent with a renewed token
+        try
+        {
+            await client.Export();
+        }
+        catch (Exception) { }
+
+        var sessionInfos = client.Engine switch
+        {
+            SurrealDbWsEngine wsEngine => wsEngine.SessionInfos,
+            SurrealDbHttpEngine httpEngine => httpEngine.SessionInfos,
+            _ => throw new NotSupportedException(),
+        };
+        var auth = sessionInfos.Get(null)!.Auth.Should().BeOfType<BearerAuth>().Subject;
+        auth.Token.Should().NotBe(tokens.Access);
     }
 }
