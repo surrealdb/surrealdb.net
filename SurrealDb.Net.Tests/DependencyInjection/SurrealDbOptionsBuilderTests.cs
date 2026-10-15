@@ -330,4 +330,28 @@ public class SurrealDbOptionsBuilderTests
                 $"Invalid connection string: {connectionString} (Parameter 'connectionString')"
             );
     }
+
+    [Test]
+    public void ShouldCreateWithTokenExpirySettings()
+    {
+        var options = new SurrealDbOptionsBuilder()
+            .WithEndpoint("ws://127.0.0.1:8000/rpc")
+            .WithInvalidateOnExpiry()
+            .WithExpiryMargin(TimeSpan.FromSeconds(10))
+            .Build();
+
+        options.InvalidateOnExpiry.Should().BeTrue();
+        options.ExpiryMargin.Should().Be(TimeSpan.FromSeconds(10));
+    }
+
+    [Test]
+    public void ShouldDefaultToRenewingTokensOneMinuteBeforeExpiry()
+    {
+        var options = new SurrealDbOptionsBuilder()
+            .WithEndpoint("ws://127.0.0.1:8000/rpc")
+            .Build();
+
+        options.InvalidateOnExpiry.Should().BeFalse();
+        options.ExpiryMargin.Should().Be(TimeSpan.FromSeconds(60));
+    }
 }

@@ -128,6 +128,12 @@ internal static partial class SurrealDbLoggerExtensions
     );
 
     [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Failed to renew the access token before it expires."
+    )]
+    public static partial void LogAuthRenewalFailed(this ILogger logger, Exception exception);
+
+    [LoggerMessage(
         Level = LogLevel.Error,
         Message = "Failed to restore the connection state after a reconnection: {step}."
     )]

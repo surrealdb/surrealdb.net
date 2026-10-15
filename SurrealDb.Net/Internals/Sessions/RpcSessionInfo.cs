@@ -15,10 +15,8 @@ internal sealed class RpcSessionInfo : SessionInfo
     {
         Auth = from.Auth switch
         {
-            InternalSystemAuth internalSystemAuth => new InternalSystemAuth(
-                internalSystemAuth.Auth
-            ),
-            BearerAuth bearerAuth => new BearerAuth(bearerAuth.Token),
+            InternalSystemAuth internalSystemAuth => internalSystemAuth with { },
+            BearerAuth bearerAuth => bearerAuth with { },
             _ => Auth,
         };
     }
@@ -64,9 +62,20 @@ internal sealed class RpcSessionInfo : SessionInfo
         SetSystemAuth(auth);
     }
 
-    public void SetBearerAuth(string token)
+    public void SetBearerAuth(string token, string? refresh = null)
     {
-        Auth = new BearerAuth(token);
+        Auth = new BearerAuth(token, refresh);
+    }
+
+    /// <summary>
+    /// Forgets the refresh token, if it is the one given.
+    /// </summary>
+    public void ForgetRefreshToken(string refresh)
+    {
+        if (Auth is BearerAuth bearerAuth && bearerAuth.Refresh == refresh)
+        {
+            Auth = bearerAuth with { Refresh = null };
+        }
     }
 
     public void ResetAuth()

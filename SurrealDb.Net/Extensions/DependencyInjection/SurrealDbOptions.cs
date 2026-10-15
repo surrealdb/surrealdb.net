@@ -72,6 +72,19 @@ public sealed class SurrealDbOptions
     /// </summary>
     public TimeSpan? RequestTimeout { get; set; }
 
+    /// <summary>
+    /// When <c>false</c> (the default), an access token about to expire is renewed before it does:
+    /// with its refresh token when there is one, otherwise by signing in again with the credentials
+    /// of a system user (root, namespace or database).
+    /// When <c>true</c>, the session is invalidated once its access token has expired instead.
+    /// </summary>
+    public bool InvalidateOnExpiry { get; set; }
+
+    /// <summary>
+    /// How long before an access token expires to renew it. Defaults to 60 seconds.
+    /// </summary>
+    public TimeSpan ExpiryMargin { get; set; } = TimeSpan.FromSeconds(60);
+
     public SurrealDbOptions() { }
 
     public SurrealDbOptions(string endpoint)
@@ -90,6 +103,8 @@ public sealed class SurrealDbOptions
         AuthLevel = clone.AuthLevel;
         Logging = clone.Logging;
         RequestTimeout = clone.RequestTimeout;
+        InvalidateOnExpiry = clone.InvalidateOnExpiry;
+        ExpiryMargin = clone.ExpiryMargin;
     }
 
     public static SurrealDbOptionsBuilder Create()

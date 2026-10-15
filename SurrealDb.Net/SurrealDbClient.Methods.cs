@@ -26,6 +26,30 @@ public abstract partial class BaseSurrealDbClient
         return Engine.Authenticate(tokens, SessionId, TransactionId, cancellationToken);
     }
 
+    public Task<Tokens> Refresh(Tokens tokens, CancellationToken cancellationToken = default)
+    {
+        EnsureRefreshToken(tokens);
+        return Engine.Refresh(tokens, SessionId, TransactionId, cancellationToken);
+    }
+
+    public Task Revoke(Tokens tokens, CancellationToken cancellationToken = default)
+    {
+        EnsureRefreshToken(tokens);
+        return Engine.Revoke(tokens, SessionId, TransactionId, cancellationToken);
+    }
+
+    private static void EnsureRefreshToken(Tokens tokens)
+    {
+        if (tokens is null)
+        {
+            throw new ArgumentNullException(nameof(tokens));
+        }
+        if (string.IsNullOrEmpty(tokens.Refresh))
+        {
+            throw new ArgumentException("A refresh token is required.", nameof(tokens));
+        }
+    }
+
     public Task Connect(CancellationToken cancellationToken = default)
     {
         return Engine.Connect(cancellationToken);
