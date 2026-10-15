@@ -2401,10 +2401,15 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 )
                 .ConfigureAwait(false);
 
-            // 💡 Renew tokens ahead of time, so idle sessions (e.g. only listening to live queries) stay authenticated
-            foreach (var sessionId in SessionInfos.Enumerate())
+            // 💡 Renew tokens ahead of time, so idle sessions (e.g. only listening to live queries) stay authenticated.
+            // Not while sessions are being restored after a reconnection: the restoration renews them itself
+            if (_replayCompletion.Task.IsCompleted)
             {
-                await RenewAuthIfExpiringAsync(sessionId, cancellationToken).ConfigureAwait(false);
+                foreach (var sessionId in SessionInfos.Enumerate())
+                {
+                    await RenewAuthIfExpiringAsync(sessionId, cancellationToken)
+                        .ConfigureAwait(false);
+                }
             }
         }
     }
@@ -2431,6 +2436,35 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     /// </summary>
     /// <returns>Whether the session is authenticated with a token.</returns>
     private async Task<bool> RestoreBearerAuthAsync(
+        BearerAuth bearerAuth,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        // 💡 A refresh token can be used once: never renew concurrently with a periodic renewal
+        await _authRenewalLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            // 💡 The tokens may have been renewed while waiting
+            var currentAuth = SessionInfos.Get(sessionId)?.Auth as BearerAuth ?? bearerAuth;
+
+            return await RestoreBearerAuthLockedAsync(
+                    currentAuth,
+                    sessionId,
+                    transactionId,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            _authRenewalLock.Release();
+        }
+    }
+
+    private async Task<bool> RestoreBearerAuthLockedAsync(
         BearerAuth bearerAuth,
         Guid? sessionId,
         Guid? transactionId,

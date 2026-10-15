@@ -83,7 +83,25 @@ public sealed class SurrealDbOptions
     /// <summary>
     /// How long before an access token expires to renew it. Defaults to 60 seconds.
     /// </summary>
-    public TimeSpan ExpiryMargin { get; set; } = TimeSpan.FromSeconds(60);
+    /// <exception cref="ArgumentOutOfRangeException">The margin is negative.</exception>
+    public TimeSpan ExpiryMargin
+    {
+        get => _expiryMargin;
+        set
+        {
+            if (value < TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(ExpiryMargin),
+                    "The expiry margin cannot be negative."
+                );
+            }
+
+            _expiryMargin = value;
+        }
+    }
+
+    private TimeSpan _expiryMargin = TimeSpan.FromSeconds(60);
 
     public SurrealDbOptions() { }
 

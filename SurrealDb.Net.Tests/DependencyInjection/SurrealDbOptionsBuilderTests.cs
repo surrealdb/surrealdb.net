@@ -354,4 +354,15 @@ public class SurrealDbOptionsBuilderTests
         options.InvalidateOnExpiry.Should().BeFalse();
         options.ExpiryMargin.Should().Be(TimeSpan.FromSeconds(60));
     }
+
+    [Test]
+    public void ShouldRejectNegativeExpiryMarginOnOptions()
+    {
+        var options = new SurrealDbOptions();
+
+        Action act = () => options.ExpiryMargin = TimeSpan.FromSeconds(-10);
+
+        act.Should().Throw<ArgumentOutOfRangeException>();
+        options.ExpiryMargin.Should().Be(TimeSpan.FromSeconds(60));
+    }
 }
