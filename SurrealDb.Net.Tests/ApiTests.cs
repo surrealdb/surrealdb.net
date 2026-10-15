@@ -17,6 +17,9 @@ public class ApiTests
                 headers: { "x-answer": "42" },
             };
         };
+        DEFINE API "/users" FOR get THEN {
+            RETURN { status: 200, body: { root: true } };
+        };
         DEFINE API "/body" FOR post THEN {
             RETURN { status: 200, body: { none: $request.body == NONE, null: $request.body == NULL } };
         };
@@ -169,5 +172,43 @@ public class ApiTests
 
         response.Status.Should().Be(200);
         response.GetBody<Dictionary<string, string>>().Should().Contain("hello", "world");
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldInvokePrefixRoot(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        await using var client = await CreateClientAsync(
+            surrealDbClientGenerator,
+            connectionString
+        );
+
+        var response = await client.Api("users/").Get("/");
+
+        response.Path.Should().Be("/users");
+        response.Status.Should().Be(200);
+        response.GetBody<Dictionary<string, bool>>().Should().Contain("root", true);
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldRemoveHeaderWhateverItsCase(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        await using var client = await CreateClientAsync(
+            surrealDbClientGenerator,
+            connectionString
+        );
+
+        var echo = await client
+            .Api("/users")
+            .Header("X-Test", "yes")
+            .Header("x-test", null)
+            .Post("/echo", new Dictionary<string, object?> { ["a"] = 1 });
+
+        echo.GetBody<EchoBody>()!.Header.Should().BeNull();
     }
 }

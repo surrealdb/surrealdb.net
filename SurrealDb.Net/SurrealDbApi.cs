@@ -25,12 +25,18 @@ public sealed class SurrealDbApi
 
     private readonly ISurrealDbSharedMethods _client;
     private readonly string _prefix;
-    private readonly Dictionary<string, string> _headers = new();
+
+    // 💡 Header names are case-insensitive
+    private readonly Dictionary<string, string> _headers = new(StringComparer.OrdinalIgnoreCase);
 
     internal SurrealDbApi(ISurrealDbSharedMethods client, string? prefix)
     {
         _client = client;
         _prefix = prefix?.TrimEnd('/') ?? string.Empty;
+        if (_prefix.Length > 0 && !_prefix.StartsWith("/", StringComparison.Ordinal))
+        {
+            _prefix = $"/{_prefix}";
+        }
     }
 
     /// <summary>
@@ -71,7 +77,7 @@ public sealed class SurrealDbApi
         string fullPath = NormalizePath(path);
         string method = request.Method.ToLowerInvariant();
 
-        var headers = new Dictionary<string, string>(_headers);
+        var headers = new Dictionary<string, string>(_headers, StringComparer.OrdinalIgnoreCase);
         foreach (var header in request.Headers)
         {
             headers[header.Key] = header.Value;
@@ -277,6 +283,13 @@ public sealed class SurrealDbApi
     private string NormalizePath(string path)
     {
         string normalizedPath = path.StartsWith("/", StringComparison.Ordinal) ? path : $"/{path}";
-        return _prefix.Length == 0 ? normalizedPath : $"{_prefix}{normalizedPath}";
+
+        if (_prefix.Length == 0)
+        {
+            return normalizedPath;
+        }
+
+        // 💡 The root of a prefix is the prefix itself, e.g. Api("/users").Get("/") invokes "/users"
+        return normalizedPath == "/" ? _prefix : $"{_prefix}{normalizedPath}";
     }
 }
