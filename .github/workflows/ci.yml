@@ -73,7 +73,10 @@ jobs:
   test:
     needs: [embedded-build]
     runs-on: ubuntu-latest
+    # The nightly build can break before a release, its failures are reported without failing the workflow
+    continue-on-error: ${{ matrix.surrealdb_version == 'nightly' }}
     strategy:
+      fail-fast: false
       matrix:
         surrealdb_version:
           [
@@ -86,6 +89,8 @@ jobs:
             "v2.6.1",
             "v3.0.5",
             "v3.1.2",
+            "v3.3.4",
+            "nightly",
           ]
     steps:
       - name: Checkout
@@ -98,7 +103,12 @@ jobs:
           path: ./rust-embedded/target/debug
 
       - name: Download SurrealDB
-        run: curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh -s -- --version ${{ matrix.surrealdb_version }}
+        run: |
+          if [ "${{ matrix.surrealdb_version }}" == "nightly" ]; then
+            curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh -s -- --nightly
+          else
+            curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh -s -- --version ${{ matrix.surrealdb_version }}
+          fi
 
       - name: Run SurrealDB root
         run: |
@@ -138,7 +148,7 @@ jobs:
           --coverage-output-format cobertura
 
       - name: Upload Coverage
-        if: matrix.surrealdb_version == 'v3.1.2'
+        if: matrix.surrealdb_version == 'v3.3.4'
         uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5
         with:
           fail_ci_if_error: false
