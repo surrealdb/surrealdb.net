@@ -28,13 +28,17 @@ internal static class ImportResponseReader
         byte[] body = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
 #endif
 
-        string? mediaType = response.Content.Headers.ContentType?.MediaType;
+        // 💡 Media types are case-insensitive
+        bool isCbor = string.Equals(
+            response.Content.Headers.ContentType?.MediaType,
+            "application/cbor",
+            StringComparison.OrdinalIgnoreCase
+        );
 
         // 💡 Failed statements are listed as query results, other failures as an error message
-        var errors =
-            mediaType == "application/cbor"
-                ? ReadErrorResults(body, cborOptions)
-                : Array.Empty<ISurrealDbErrorResult>();
+        var errors = isCbor
+            ? ReadErrorResults(body, cborOptions)
+            : Array.Empty<ISurrealDbErrorResult>();
 
         if (response.IsSuccessStatusCode && errors.Count == 0)
         {
@@ -44,7 +48,7 @@ internal static class ImportResponseReader
         string message =
             errors.Count > 0
                 ? FormatErrors(errors)
-                : $"The import failed: {ReadErrorMessage(body, mediaType) ?? response.ReasonPhrase}";
+                : $"The import failed: {ReadErrorMessage(body, isCbor) ?? response.ReasonPhrase}";
 
         throw new SurrealDbImportException(response.StatusCode, errors, message);
     }
@@ -72,14 +76,14 @@ internal static class ImportResponseReader
         }
     }
 
-    private static string? ReadErrorMessage(byte[] body, string? mediaType)
+    private static string? ReadErrorMessage(byte[] body, bool isCbor)
     {
         if (body.Length == 0)
         {
             return null;
         }
 
-        if (mediaType != "application/cbor")
+        if (!isCbor)
         {
             try
             {
