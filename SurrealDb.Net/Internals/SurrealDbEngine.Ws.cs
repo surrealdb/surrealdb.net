@@ -2358,35 +2358,12 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             }
         }
 
-        if (session.Auth is BearerAuth bearerAuth)
+        if (
+            session.Auth is BearerAuth bearerAuth
+            && await RestoreBearerAuthAsync(bearerAuth, sessionId, transactionId, cancellationToken)
+                .ConfigureAwait(false)
+        )
         {
-            // 💡 An access token that expired while disconnected is renewed with its refresh token
-            if (
-                bearerAuth.Refresh is not null
-                && JwtHelper.ExpiresWithin(bearerAuth.Token, _parameters.ExpiryMargin)
-            )
-            {
-                await Refresh(
-                        new Tokens(bearerAuth.Token, bearerAuth.Refresh),
-                        sessionId,
-                        transactionId,
-                        SurrealDbWsRequestPriority.High,
-                        cancellationToken
-                    )
-                    .ConfigureAwait(false);
-            }
-            else
-            {
-                await Authenticate(
-                        new Tokens(bearerAuth.Token, bearerAuth.Refresh),
-                        SurrealDbWsRequestPriority.High,
-                        sessionId,
-                        transactionId,
-                        cancellationToken
-                    )
-                    .ConfigureAwait(false);
-            }
-
             _surrealDbLoggerFactory?.Connection?.LogConnectionSignedViaJwt(
                 SurrealDbLoggerExtensions.FormatParameterValue(
                     bearerAuth.Token,
@@ -2448,6 +2425,63 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     ];
 
     private readonly SemaphoreSlim _authRenewalLock = new(1, 1);
+
+    /// <summary>
+    /// Authenticates a session again after a reconnection, applying the same renewal rules as before each request.
+    /// </summary>
+    /// <returns>Whether the session is authenticated with a token.</returns>
+    private async Task<bool> RestoreBearerAuthAsync(
+        BearerAuth bearerAuth,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        bool isExpired = JwtHelper.ExpiresWithin(bearerAuth.Token, TimeSpan.Zero);
+
+        // 💡 A token that expires soon is renewed, unless the session must end with its token
+        if (
+            !_parameters.InvalidateOnExpiry
+            && bearerAuth.Refresh is not null
+            && JwtHelper.ExpiresWithin(bearerAuth.Token, _parameters.ExpiryMargin)
+        )
+        {
+            try
+            {
+                await Refresh(
+                        new Tokens(bearerAuth.Token, bearerAuth.Refresh),
+                        sessionId,
+                        transactionId,
+                        SurrealDbWsRequestPriority.High,
+                        cancellationToken
+                    )
+                    .ConfigureAwait(false);
+                return true;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _surrealDbLoggerFactory?.Connection?.LogAuthRenewalFailed(ex);
+            }
+        }
+
+        if (isExpired)
+        {
+            // 💡 The new connection starts unauthenticated: the session is left so instead of failing to restore it
+            SessionInfos.Get(sessionId)?.ResetAuth();
+            _surrealDbLoggerFactory?.Connection?.LogAuthExpiredWhileDisconnected();
+            return false;
+        }
+
+        await Authenticate(
+                new Tokens(bearerAuth.Token, bearerAuth.Refresh),
+                SurrealDbWsRequestPriority.High,
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        return true;
+    }
 
     /// <summary>
     /// Renews the access token of a session when it is about to expire, using its refresh token,

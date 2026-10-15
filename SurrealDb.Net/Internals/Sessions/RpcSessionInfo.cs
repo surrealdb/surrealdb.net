@@ -16,7 +16,9 @@ internal sealed class RpcSessionInfo : SessionInfo
         Auth = from.Auth switch
         {
             InternalSystemAuth internalSystemAuth => internalSystemAuth with { },
-            BearerAuth bearerAuth => bearerAuth with { },
+            // 💡 A refresh token can be used once: it stays with the original session,
+            // otherwise the first copy to renew would revoke it for all the others
+            BearerAuth bearerAuth => bearerAuth with { Refresh = null },
             _ => Auth,
         };
     }

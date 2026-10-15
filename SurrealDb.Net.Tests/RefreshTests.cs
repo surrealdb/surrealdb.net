@@ -157,4 +157,70 @@ public class RefreshTests
         var response = await client.RawQuery("RETURN $auth;");
         response.GetValue<object?>(0).Should().BeNull();
     }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldInvalidateOnExpiryWhenRestoringSession(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var (client, _) = await SignUpAsync(
+            surrealDbClientGenerator,
+            connectionString,
+            options => options.InvalidateOnExpiry = true
+        );
+        await using var __ = client;
+
+        await Task.Delay(TokenDuration + TimeSpan.FromSeconds(1));
+
+        // 💡 The expired token is neither renewed nor sent again when the session is restored
+        await ((SurrealDbWsEngine)client.Engine).ForceReconnectAsync();
+
+        var response = await client.RawQuery("RETURN $auth;");
+        response.GetValue<object?>(0).Should().BeNull();
+    }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldKeepRefreshTokenWithOriginalSessionWhenForking(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var (client, _) = await SignUpAsync(surrealDbClientGenerator, connectionString);
+        await using var __ = client;
+
+        var names = (await client.RawQuery("RETURN [session::ns(), session::db()];")).GetValue<
+            List<string>
+        >(0)!;
+
+        await using var session = await client.CreateSession();
+        await session.Use(names[0], names[1]);
+        await session.SignIn(
+            new AccountAuthParams
+            {
+                Namespace = names[0],
+                Database = names[1],
+                Access = "account",
+                Name = "john",
+                Pass = "secret",
+            }
+        );
+
+        await using var fork = await session.ForkSession();
+
+        await Task.Delay(TokenDuration + TimeSpan.FromSeconds(1));
+
+        // 💡 The fork must not use the single-use refresh token of the original session
+        (await fork.RawQuery("RETURN <string> $auth.id;"))
+            .GetValue<string>(0)
+            .Should()
+            .StartWith("user:");
+
+        await ((SurrealDbWsEngine)client.Engine).ForceReconnectAsync();
+
+        (await session.RawQuery("RETURN <string> $auth.id;"))
+            .GetValue<string>(0)
+            .Should()
+            .StartWith("user:");
+    }
 }
