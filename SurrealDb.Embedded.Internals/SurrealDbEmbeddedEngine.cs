@@ -51,6 +51,16 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public Uri Uri { get; private set; } = new("unknown://");
     public EmbeddedSessionInfos SessionInfos { get; } = new();
 
+    public ConnectionStatus Status => _statusTracker.Status;
+
+    public event EventHandler<ConnectionStatusChangedEventArgs>? StatusChanged
+    {
+        add => _statusTracker.StatusChanged += value;
+        remove => _statusTracker.StatusChanged -= value;
+    }
+
+    private readonly ConnectionStatusTracker _statusTracker;
+
     static SurrealDbEmbeddedEngine()
     {
         NativeMethods.create_global_runtime();
@@ -58,6 +68,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
     public SurrealDbEmbeddedEngine()
     {
+        _statusTracker = new(this);
         _id = Interlocked.Increment(ref _globalId);
     }
 
@@ -302,7 +313,17 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 }
             }
 
-            await taskCompletionSource.Task.ConfigureAwait(false);
+            _statusTracker.Set(ConnectionStatus.Connecting);
+
+            try
+            {
+                await taskCompletionSource.Task.ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _statusTracker.Set(ConnectionStatus.Disconnected, ex);
+                throw;
+            }
 
             _isConnected = true;
         }
@@ -310,6 +331,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         await ApplyRootConfigurationAsync(cancellationToken).ConfigureAwait(false);
 
         _isInitialized = true;
+        _statusTracker.Set(ConnectionStatus.Connected);
     }
 
     public async Task<T> Create<T>(
@@ -440,6 +462,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
         NativeMethods.dispose(_id);
 
+        _statusTracker.Set(ConnectionStatus.Disconnected);
         _disposed = true;
     }
 
