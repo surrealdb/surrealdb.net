@@ -77,7 +77,7 @@ public abstract partial class BaseSurrealDbClient
         return Engine.Delete(recordId, SessionId, TransactionId, cancellationToken);
     }
 
-    public async ValueTask DisposeAsync()
+    public virtual async ValueTask DisposeAsync()
     {
         if (SessionId.HasValue)
         {
