@@ -1,7 +1,8 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Exceptions.Rpc;
 using SurrealDb.Net.Extensions.DependencyInjection;
+using SurrealDb.Net.Internals;
 
 namespace SurrealDb.Net.Tests;
 
@@ -141,8 +142,19 @@ public class ConnectionStatusTests
         client.Status.Should().Be(ConnectionStatus.Connected);
 
         proxy.DropConnections();
-        await WaitForStatusAsync(client, ConnectionStatus.Reconnecting);
-        await WaitForStatusAsync(client, ConnectionStatus.Connected);
+
+        // 💡 A local reconnection can be over before the status is polled, so wait for the events
+        var stopwatch = Stopwatch.StartNew();
+        while (Statuses(changes).Length < 4)
+        {
+            if (stopwatch.Elapsed > TimeSpan.FromSeconds(15))
+            {
+                throw new TimeoutException(
+                    $"Expected 4 status changes, got {string.Join(", ", Statuses(changes))}."
+                );
+            }
+            await Task.Delay(20);
+        }
 
         var response = await client.RawQuery("RETURN [session::ns(), session::db()];");
         response.GetValue<string[]>(0).Should().Equal(dbInfo.Namespace, dbInfo.Database);
@@ -270,5 +282,123 @@ public class ConnectionStatusTests
 
         await client.DisposeAsync();
         client.Status.Should().Be(ConnectionStatus.Disconnected);
+    }
+
+    [Test]
+    public void ShouldNotifyEveryHandlerWhenOneThrows()
+    {
+        var tracker = new ConnectionStatusTracker(this);
+        var received = new List<ConnectionStatus>();
+        tracker.StatusChanged += (_, _) => throw new InvalidOperationException();
+        tracker.StatusChanged += (_, e) => received.Add(e.Status);
+
+        tracker.Set(ConnectionStatus.Connecting);
+        tracker.Set(ConnectionStatus.Connected);
+
+        received.Should().Equal(ConnectionStatus.Connecting, ConnectionStatus.Connected);
+    }
+
+    [Test]
+    public async Task ShouldNotifyChangesInTheOrderTheyWereMade()
+    {
+        var tracker = new ConnectionStatusTracker(this);
+        var changes = new List<ConnectionStatusChangedEventArgs>();
+        tracker.StatusChanged += (_, e) =>
+        {
+            lock (changes)
+            {
+                changes.Add(e);
+            }
+            Thread.SpinWait(100);
+        };
+
+        await Task.WhenAll(
+            Enumerable
+                .Range(0, 8)
+                .Select(thread =>
+                    Task.Run(() =>
+                    {
+                        for (int index = 0; index < 500; index++)
+                        {
+                            tracker.Set(
+                                (index + thread) % 2 == 0
+                                    ? ConnectionStatus.Connected
+                                    : ConnectionStatus.Disconnected
+                            );
+                        }
+                    })
+                )
+        );
+
+        // 💡 Each change starts from the status the previous one ended on
+        for (int index = 1; index < changes.Count; index++)
+        {
+            changes[index].PreviousStatus.Should().Be(changes[index - 1].Status);
+        }
+        changes[^1].Status.Should().Be(tracker.Status);
+    }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldNotReconnectWhenNoAttemptIsAllowed(string connectionString)
+    {
+        var (options, proxy) = CreateProxiedOptions(
+            connectionString,
+            reconnect => reconnect.Attempts = 0
+        );
+        await using var _ = proxy;
+
+        await using var client = new SurrealDbClient(options);
+        var changes = RecordStatusChanges(client);
+        await client.Connect();
+
+        proxy.DropConnections();
+        await WaitForStatusAsync(client, ConnectionStatus.Disconnected);
+
+        Statuses(changes)
+            .Should()
+            .Equal(
+                ConnectionStatus.Connecting,
+                ConnectionStatus.Connected,
+                ConnectionStatus.Disconnected
+            );
+    }
+
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
+    public async Task ShouldReportHttpStatusFromRequestOutcomes(string connectionString)
+    {
+        if (!connectionString.Contains("http://"))
+            return;
+
+        var (options, proxy) = CreateProxiedOptions(connectionString);
+        await using var _ = proxy;
+
+        await using var client = new SurrealDbClient(options);
+        await client.Connect();
+        client.Status.Should().Be(ConnectionStatus.Connected);
+
+        proxy.Stop();
+
+        (await client.Health()).Should().BeFalse();
+        client.Status.Should().Be(ConnectionStatus.Disconnected);
+
+        proxy.Start();
+
+        // 💡 A successful request means the server can be reached again
+        await client.RawQuery("RETURN 1;");
+        client.Status.Should().Be(ConnectionStatus.Connected);
+
+        proxy.Stop();
+
+        Func<Task> whileServerIsDown = () => client.RawQuery("RETURN 1;");
+        await whileServerIsDown.Should().ThrowAsync<HttpRequestException>();
+        client.Status.Should().Be(ConnectionStatus.Disconnected);
+
+        proxy.Start();
+
+        await client.RawQuery("RETURN 1;");
+        client.Status.Should().Be(ConnectionStatus.Connected);
     }
 }

@@ -328,7 +328,15 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             _isConnected = true;
         }
 
-        await ApplyRootConfigurationAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await ApplyRootConfigurationAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _statusTracker.Set(ConnectionStatus.Disconnected, ex);
+            throw;
+        }
 
         _isInitialized = true;
         _statusTracker.Set(ConnectionStatus.Connected);

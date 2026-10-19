@@ -2235,7 +2235,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             }
         }
 
-        if (!reconnect.Enabled)
+        if (!reconnect.AllowsAttempt(0))
         {
             info.CancelReconnection = true;
             GiveUpReconnecting(0, info.Exception);

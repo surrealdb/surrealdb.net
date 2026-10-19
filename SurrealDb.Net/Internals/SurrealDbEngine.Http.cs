@@ -330,8 +330,10 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
             return response.IsSuccessStatusCode;
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
+            // 💡 Leaves a connection attempt in progress to report its own outcome
+            _statusTracker.SetIf(ConnectionStatus.Connected, ConnectionStatus.Disconnected, ex);
             return false;
         }
     }
@@ -1403,6 +1405,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             using var response = await wrapper
                 .Instance.SendAsync(httpRequest, cancellationToken)
                 .ConfigureAwait(false);
+
+            // 💡 The server answered: a connection lost by an earlier request is back
+            _statusTracker.SetIf(ConnectionStatus.Disconnected, ConnectionStatus.Connected);
 
             surrealDbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
                 .ConfigureAwait(false);
