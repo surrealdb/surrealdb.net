@@ -1292,7 +1292,10 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     /// <summary>
     /// Switch to a specific namespace, keeping the selected database.
     /// </summary>
-    /// <param name="ns">Name of the namespace, or <c>null</c> to clear the selected namespace</param>
+    /// <param name="ns">
+    /// Name of the namespace, or <c>null</c> to clear the selected namespace,
+    /// which also clears the selected database since a database belongs to a namespace
+    /// </param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="HttpRequestException"></exception>

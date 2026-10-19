@@ -1,3 +1,4 @@
+﻿using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Internals;
 
@@ -84,5 +85,28 @@ public class ResetTests
         Func<Task> infoForRoot = async () =>
             (await client.RawQuery("INFO FOR ROOT;")).EnsureAllOks();
         await infoForRoot.Should().ThrowAsync<SurrealDbException>();
+    }
+
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldResetScopedSessionBeforeItsFirstRequest(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+        surrealDbClientGenerator.Configure(
+            connectionString,
+            dbInfo.Namespace,
+            dbInfo.Database,
+            ServiceLifetime.Scoped
+        );
+
+        await using var scope = surrealDbClientGenerator.CreateAsyncScope()!;
+        var session = scope.ServiceProvider.GetRequiredService<SurrealDbSession>();
+
+        await session.Reset();
+
+        var response = await session.RawQuery("RETURN [session::ns(), session::db()];");
+        response.GetValue<string?[]>(0).Should().Equal(null, null);
     }
 }

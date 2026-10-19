@@ -38,6 +38,12 @@ internal abstract class SessionInfo : ISessionInfo
     public void UseNs(string? ns)
     {
         Ns = ns;
+
+        // 💡 As on the server, a database cannot stay selected without a namespace
+        if (ns is null)
+        {
+            Db = null;
+        }
     }
 
     public void UseDb(string? db)

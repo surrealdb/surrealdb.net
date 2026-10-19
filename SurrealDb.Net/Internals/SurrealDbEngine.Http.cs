@@ -401,6 +401,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public Task Invalidate(Guid? sessionId, Guid? transactionId, CancellationToken _)
     {
+        CreateDeferredSessionInfo(sessionId);
         SessionInfos.Get(sessionId)?.ResetAuth();
         return Task.CompletedTask;
     }
@@ -931,6 +932,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     public Task Reset(Guid? sessionId, CancellationToken _)
     {
         // 💡 Each HTTP request runs in a new server session, built from the client-side state
+        CreateDeferredSessionInfo(sessionId);
         SessionInfos.Get(sessionId)?.Reset();
         return Task.CompletedTask;
     }
@@ -946,6 +948,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             throw new ArgumentException("Variable name is not valid.", nameof(key));
         }
 
+        CreateDeferredSessionInfo(sessionId);
         SessionInfos.Get(sessionId)?.Unset(key);
         return Task.CompletedTask;
     }
@@ -1345,6 +1348,23 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             throw new NotImplementedException();
     }
 
+    /// <summary>
+    /// Creates the state of a scoped session on first use, from the state it was given.
+    /// </summary>
+    private void CreateDeferredSessionInfo(Guid? sessionId)
+    {
+        if (
+            sessionId.HasValue
+            && _sessionizer is not null
+            && _sessionizer.Get(sessionId.Value, out var newSessionInfo)
+            && newSessionInfo is RpcSessionInfo newRpcSessionInfo
+        )
+        {
+            _sessionizer.TryRemove(sessionId.Value);
+            SessionInfos.Set(sessionId.Value, new RpcSessionInfo(newRpcSessionInfo));
+        }
+    }
+
     /// <param name="request">The RPC request.</param>
     /// <param name="sessionId">
     /// The client-side session whose namespace, database and auth are sent as headers.
@@ -1364,16 +1384,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             await Connect(cancellationToken).ConfigureAwait(false);
         }
 
-        if (
-            sessionId.HasValue
-            && _sessionizer is not null
-            && _sessionizer.Get(sessionId.Value, out var newSessionInfo)
-            && newSessionInfo is RpcSessionInfo newRpcSessionInfo
-        )
-        {
-            _sessionizer.TryRemove(sessionId.Value);
-            SessionInfos.Set(sessionId.Value, new RpcSessionInfo(newRpcSessionInfo));
-        }
+        CreateDeferredSessionInfo(sessionId);
 
         using var wrapper = CreateEndpointHttpClientWrapper();
         using var body = CreateBodyContent(_configureCborOptions, request, _surrealDbLoggerFactory);
