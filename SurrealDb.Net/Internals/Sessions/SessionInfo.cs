@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Collections.Concurrent;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SurrealDb.Net.Internals.Sessions;
 
@@ -7,7 +8,8 @@ internal abstract class SessionInfo : ISessionInfo
     public string? Ns { get; private set; }
     public string? Db { get; private set; }
 
-    private readonly Dictionary<string, object?> _variables = new();
+    // 💡 Concurrent, since requests of a session can set and unset variables at the same time
+    private readonly ConcurrentDictionary<string, object?> _variables = new();
     public IReadOnlyDictionary<string, object?> Variables => _variables;
 
     protected SessionInfo() { }
@@ -19,7 +21,7 @@ internal abstract class SessionInfo : ISessionInfo
 
         foreach (var (key, value) in from.Variables)
         {
-            _variables.Add(key, value);
+            _variables[key] = value;
         }
     }
 
@@ -42,6 +44,6 @@ internal abstract class SessionInfo : ISessionInfo
 
     public void Unset(string key)
     {
-        _variables.Remove(key);
+        _variables.TryRemove(key, out _);
     }
 }
