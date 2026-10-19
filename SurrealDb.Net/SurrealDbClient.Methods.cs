@@ -124,9 +124,12 @@ public abstract partial class BaseSurrealDbClient
             wrapper.Version is not null
             && wrapper.Version.Satisfies(SemVersionRange.AtLeast(new(2, 1), true));
 
-        using var response = shouldUsePostRequest
-            ? await wrapper.HttpClient.PostAsync(exportUri, httpContent, cancellationToken)
-            : await wrapper.HttpClient.GetAsync(exportUri, cancellationToken);
+        using var request = shouldUsePostRequest
+            ? wrapper.CreateRequest(HttpMethod.Post, exportUri, httpContent)
+            : wrapper.CreateRequest(HttpMethod.Get, exportUri, null);
+        using var response = await wrapper
+            .HttpClient.SendAsync(request, cancellationToken)
+            .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
 #if NET6_0_OR_GREATER
@@ -164,8 +167,9 @@ public abstract partial class BaseSurrealDbClient
 
         using var httpContent = new StringContent(input, Encoding.UTF8, "text/plain");
 
+        using var request = wrapper.CreateRequest(HttpMethod.Post, importUri, httpContent);
         using var response = await wrapper
-            .HttpClient.PostAsync(importUri, httpContent, cancellationToken)
+            .HttpClient.SendAsync(request, cancellationToken)
             .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
     }
