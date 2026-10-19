@@ -78,4 +78,56 @@ public class SurrealDbScopedSessionTests
         sessionInfos.Get(client1.SessionId)!.Ns.Should().Be(dbInfo1.Namespace);
         sessionInfos.Get(client2.SessionId)!.Ns.Should().Be(dbInfo2.Namespace);
     }
+
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldNotShareSessionStateBetweenScopesOverHttp(string connectionString)
+    {
+        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+        if (new Uri(options.Endpoint!).Scheme is not ("http" or "https"))
+            return;
+
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator().Configure(
+            connectionString,
+            lifetime: ServiceLifetime.Scoped
+        );
+        var dbInfo1 = surrealDbClientGenerator.GenerateDatabaseInfo();
+        var dbInfo2 = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var scope1 = surrealDbClientGenerator.CreateAsyncScope()!;
+        await using var scope2 = surrealDbClientGenerator.CreateAsyncScope()!;
+
+        var client1 = scope1.ServiceProvider.GetRequiredService<SurrealDbSession>();
+        var client2 = scope2.ServiceProvider.GetRequiredService<SurrealDbSession>();
+        var engine = (SurrealDbHttpEngine)client1.Engine;
+
+        foreach (var client in new[] { client1, client2 })
+        {
+            // 💡 The first request of a session creates its state, whatever the server answers
+            try
+            {
+                await engine.Attach(client.SessionId!.Value, CancellationToken.None);
+            }
+            catch (Exception) { }
+        }
+
+        await engine.Use(
+            dbInfo1.Namespace,
+            dbInfo1.Database,
+            client1.SessionId,
+            null,
+            CancellationToken.None
+        );
+        await engine.Use(
+            dbInfo2.Namespace,
+            dbInfo2.Database,
+            client2.SessionId,
+            null,
+            CancellationToken.None
+        );
+
+        engine.SessionInfos.Get(client1.SessionId)!.Ns.Should().Be(dbInfo1.Namespace);
+        engine.SessionInfos.Get(client2.SessionId)!.Ns.Should().Be(dbInfo2.Namespace);
+    }
 }
