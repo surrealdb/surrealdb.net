@@ -68,6 +68,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     /// Normal requests wait for it, so they never run on a half-restored connection.
     /// </summary>
     private TaskCompletionSource<bool> _replayCompletion = CreateCompletedReplay();
+    private readonly object _replayLock = new();
     private volatile bool _disposing;
 
 #if NET9_0_OR_GREATER
@@ -299,11 +300,9 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         _wsClient.DisconnectionHappened.Subscribe(
             async (_) =>
             {
-                if (_replayCompletion.Task.IsCompleted && !_disposing)
+                if (!_disposing)
                 {
-                    _replayCompletion = new TaskCompletionSource<bool>(
-                        TaskCreationOptions.RunContinuationsAsynchronously
-                    );
+                    StartNewReplay();
                 }
 
                 var endChannelsTasks = new List<Task>();
@@ -1915,7 +1914,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                     .ConfigureAwait(false);
             }
 
-            replayCompletion.TrySetResult(true);
+            CompleteReplay(replayCompletion, true);
         }
         catch (OperationCanceledException)
         {
@@ -1924,7 +1923,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         catch (Exception)
         {
             // 💡 Let pending requests go through, they will report their own errors
-            replayCompletion.TrySetResult(false);
+            CompleteReplay(replayCompletion, false);
         }
     }
 
@@ -1934,6 +1933,60 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     internal Task ForceReconnectAsync()
     {
         return _wsClient.Reconnect();
+    }
+
+    /// <summary>
+    /// Opens a new replay gate for a new connection. Requests still waiting for an interrupted replay
+    /// are released by this one, never by the interrupted replay.
+    /// </summary>
+    private void StartNewReplay()
+    {
+        lock (_replayLock)
+        {
+            var previous = _replayCompletion;
+            var next = new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously
+            );
+            _replayCompletion = next;
+
+            if (!previous.Task.IsCompleted)
+            {
+                _ = next.Task.ContinueWith(
+                    task =>
+                    {
+                        if (task.IsCanceled)
+                        {
+                            previous.TrySetCanceled();
+                        }
+                        else if (task.IsFaulted)
+                        {
+                            previous.TrySetException(task.Exception!.InnerExceptions);
+                        }
+                        else
+                        {
+                            previous.TrySetResult(task.Result);
+                        }
+                    },
+                    CancellationToken.None,
+                    TaskContinuationOptions.ExecuteSynchronously,
+                    TaskScheduler.Default
+                );
+            }
+        }
+    }
+
+    /// <summary>
+    /// Releases the requests waiting for a replay, unless a newer connection has taken over.
+    /// </summary>
+    private void CompleteReplay(TaskCompletionSource<bool> replayCompletion, bool isReplayed)
+    {
+        lock (_replayLock)
+        {
+            if (ReferenceEquals(_replayCompletion, replayCompletion))
+            {
+                replayCompletion.TrySetResult(isReplayed);
+            }
+        }
     }
 
     private static TaskCompletionSource<bool> CreateCompletedReplay()
