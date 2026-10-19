@@ -11,6 +11,7 @@ using SurrealDb.Net.Exceptions;
 using SurrealDb.Net.Exceptions.LiveQuery;
 using SurrealDb.Net.Exceptions.Methods;
 using SurrealDb.Net.Exceptions.Response;
+using SurrealDb.Net.Exceptions.Rpc;
 using SurrealDb.Net.Extensions;
 using SurrealDb.Net.Extensions.DependencyInjection;
 using SurrealDb.Net.Internals.Auth;
@@ -64,7 +65,18 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     private readonly SemaphoreSlim _semaphoreConnect = new(1, 1);
 
     /// <summary>
-    /// Completed once the connection state (sessions, auth, variables) is replayed after a reconnection.
+    /// Live queries that can be started again after a reconnection, by the id first given by the server.
+    /// </summary>
+    private readonly ConcurrentDictionary<Guid, WsLiveQueryDefinition> _liveQueryDefinitions =
+        new();
+
+    /// <summary>
+    /// The id first given by the server for a live query, by the id of its current subscription.
+    /// </summary>
+    private readonly ConcurrentDictionary<Guid, Guid> _liveQueryIdsByServerId = new();
+
+    /// <summary>
+    /// Completed once the connection state (sessions, auth, variables, live queries) is replayed after a reconnection.
     /// Normal requests wait for it, so they never run on a half-restored connection.
     /// </summary>
     private TaskCompletionSource<bool> _replayCompletion = CreateCompletedReplay();
@@ -212,6 +224,15 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                             if (response is SurrealDbWsLiveResponse surrealDbWsLiveResponse)
                             {
                                 var liveQueryUuid = surrealDbWsLiveResponse.Result.Id;
+                                if (
+                                    _liveQueryIdsByServerId.TryGetValue(
+                                        liveQueryUuid,
+                                        out var originalLiveQueryUuid
+                                    )
+                                )
+                                {
+                                    liveQueryUuid = originalLiveQueryUuid;
+                                }
 
                                 if (
                                     _liveQueryChannelSubscriptionsPerQuery.TryGetValue(
@@ -297,61 +318,23 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             .Switch()
             .Subscribe();
 
-        _wsClient.DisconnectionHappened.Subscribe(
-            async (_) =>
-            {
-                if (!_disposing)
-                {
-                    StartNewReplay();
-                }
-
-                var endChannelsTasks = new List<Task>();
-
-                foreach (var (key, value) in _liveQueryChannelSubscriptionsPerQuery)
-                {
-                    if (
-                        value.WsEngineId == _id
-                        && _liveQueryChannelSubscriptionsPerQuery.TryRemove(
-                            key,
-                            out var liveQueryChannelSubscriptions
-                        )
-                    )
-                    {
-                        foreach (var liveQueryChannel in liveQueryChannelSubscriptions)
-                        {
-                            var closeTask = CloseLiveQueryAsync(
-                                liveQueryChannel,
-                                SurrealDbLiveQueryClosureReason.SocketClosed
-                            );
-                            endChannelsTasks.Add(closeTask);
-                        }
-                    }
-                }
-
-                if (endChannelsTasks.Count > 0)
-                {
-                    try
-                    {
-                        await Task.WhenAll(endChannelsTasks).ConfigureAwait(false);
-                    }
-                    catch { }
-                }
-            }
-        );
+        _wsClient.DisconnectionHappened.Subscribe(OnDisconnection);
     }
 
-    public async Task Attach(Guid sessionId, CancellationToken cancellationToken)
+    public Task Attach(Guid sessionId, CancellationToken cancellationToken)
+    {
+        return Attach(sessionId, SurrealDbWsRequestPriority.Normal, cancellationToken);
+    }
+
+    private async Task Attach(
+        Guid sessionId,
+        SurrealDbWsRequestPriority priority,
+        CancellationToken cancellationToken
+    )
     {
         await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
 
-        await SendRequestAsync(
-                "attach",
-                null,
-                sessionId,
-                null,
-                SurrealDbWsRequestPriority.Normal,
-                cancellationToken
-            )
+        await SendRequestAsync("attach", null, sessionId, null, priority, cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -921,6 +904,20 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
+        // 💡 A live query being resubscribed gets its new server id once the replay ends
+        var replayTask = _replayCompletion.Task;
+        if (!replayTask.IsCompleted)
+        {
+            await WaitForReplayAsync(replayTask, cancellationToken, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        // 💡 A resubscribed live query has a new id on the server
+        var serverQueryUuid = _liveQueryDefinitions.TryRemove(queryUuid, out var definition)
+            ? definition.ServerId
+            : queryUuid;
+        _liveQueryIdsByServerId.TryRemove(serverQueryUuid, out _);
+
         if (
             _liveQueryChannelSubscriptionsPerQuery.TryRemove(
                 queryUuid,
@@ -938,7 +935,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
         await SendRequestAsync(
                 "kill",
-                [queryUuid],
+                [serverQueryUuid],
                 sessionId,
                 transactionId,
                 SurrealDbWsRequestPriority.Normal,
@@ -961,11 +958,45 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
+        var queryUuid = await StartLiveRawQuery(
+                query,
+                parameters,
+                sessionId,
+                transactionId,
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        if (!transactionId.HasValue)
+        {
+            _liveQueryDefinitions[queryUuid] = new()
+            {
+                ServerId = queryUuid,
+                SessionId = sessionId,
+                Query = query,
+                Parameters = parameters,
+            };
+        }
+
+        return ListenLive<T>(queryUuid, sessionId, transactionId);
+    }
+
+    private async Task<Guid> StartLiveRawQuery(
+        string query,
+        IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
+        Guid? transactionId,
+        SurrealDbWsRequestPriority priority,
+        CancellationToken cancellationToken
+    )
+    {
         var dbResponse = await RawQuery(
                 query,
                 parameters,
                 sessionId,
                 transactionId,
+                priority,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -980,9 +1011,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             throw new SurrealDbErrorResultException();
         }
 
-        var queryUuid = dbResponse.FirstOk.GetValue<Guid>()!;
-
-        return ListenLive<T>(queryUuid, sessionId, transactionId);
+        return dbResponse.FirstOk.GetValue<Guid>()!;
     }
 
     public async Task<SurrealDbLiveQuery<T>> LiveTable<T>(
@@ -993,18 +1022,49 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
-        var dbResponse = await SendRequestAsync(
-                "live",
-                [table, diff],
+        var queryUuid = await StartLiveTable(
+                table,
+                diff,
                 sessionId,
                 transactionId,
                 SurrealDbWsRequestPriority.Normal,
                 cancellationToken
             )
             .ConfigureAwait(false);
-        var queryUuid = dbResponse.GetValue<Guid>()!;
+
+        if (!transactionId.HasValue)
+        {
+            _liveQueryDefinitions[queryUuid] = new()
+            {
+                ServerId = queryUuid,
+                SessionId = sessionId,
+                Table = table,
+                Diff = diff,
+            };
+        }
 
         return ListenLive<T>(queryUuid, sessionId, transactionId);
+    }
+
+    private async Task<Guid> StartLiveTable(
+        string table,
+        bool diff,
+        Guid? sessionId,
+        Guid? transactionId,
+        SurrealDbWsRequestPriority priority,
+        CancellationToken cancellationToken
+    )
+    {
+        var dbResponse = await SendRequestAsync(
+                "live",
+                [table, diff],
+                sessionId,
+                transactionId,
+                priority,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        return dbResponse.GetValue<Guid>()!;
     }
 
     public async Task<TOutput> Merge<TMerge, TOutput>(
@@ -1174,11 +1234,30 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<T>();
     }
 
-    public async Task<SurrealDbResponse> RawQuery(
+    public Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
         Guid? sessionId,
         Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        return RawQuery(
+            query,
+            parameters,
+            sessionId,
+            transactionId,
+            SurrealDbWsRequestPriority.Normal,
+            cancellationToken
+        );
+    }
+
+    private async Task<SurrealDbResponse> RawQuery(
+        string query,
+        IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
+        Guid? transactionId,
+        SurrealDbWsRequestPriority priority,
         CancellationToken cancellationToken
     )
     {
@@ -1189,7 +1268,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                 [query, parameters],
                 sessionId,
                 transactionId,
-                SurrealDbWsRequestPriority.Normal,
+                priority,
                 cancellationToken
             )
             .ConfigureAwait(false);
@@ -1902,17 +1981,50 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         return SurrealDbCborOptions.GetCborSerializerOptions(_configureCborOptions);
     }
 
+    /// <summary>
+    /// Restores everything the server forgot when the previous connection closed:
+    /// the root session state, every child session (attached again first), then the live queries.
+    /// </summary>
     private async Task ApplyReconnectConfigurationAsync(CancellationToken cancellationToken)
     {
         var replayCompletion = _replayCompletion;
 
         try
         {
+            string version = await Version(SurrealDbWsRequestPriority.High, cancellationToken)
+                .ConfigureAwait(false);
+            _version = version.ToSemver();
+
+            await ApplyConfigurationAsync(null, null, cancellationToken).ConfigureAwait(false);
+
             foreach (var sessionId in SessionInfos.Enumerate())
             {
-                await ApplyConfigurationAsync(sessionId, null, cancellationToken)
-                    .ConfigureAwait(false);
+                if (!sessionId.HasValue)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    await Attach(
+                            sessionId.Value,
+                            SurrealDbWsRequestPriority.High,
+                            cancellationToken
+                        )
+                        .ConfigureAwait(false);
+                    await ApplyConfigurationAsync(sessionId, null, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _surrealDbLoggerFactory?.Connection?.LogConnectionReplayFailed(
+                        $"session {sessionId.Value}",
+                        ex
+                    );
+                }
             }
+
+            await ResubscribeLiveQueriesAsync(cancellationToken).ConfigureAwait(false);
 
             CompleteReplay(replayCompletion, true);
         }
@@ -1920,19 +2032,182 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         {
             // 💡 Another reconnection took over, it will complete the replay
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _surrealDbLoggerFactory?.Connection?.LogConnectionReplayFailed("root session", ex);
+
             // 💡 Let pending requests go through, they will report their own errors
             CompleteReplay(replayCompletion, false);
         }
     }
 
-    /// <summary>
-    /// Drops the current connection and opens a new one, as a network failure would.
-    /// </summary>
-    internal Task ForceReconnectAsync()
+    private async Task ResubscribeLiveQueriesAsync(CancellationToken cancellationToken)
     {
-        return _wsClient.Reconnect();
+        foreach (var (queryUuid, definition) in _liveQueryDefinitions.ToArray())
+        {
+            try
+            {
+                var newServerId = definition.Table is not null
+                    ? await StartLiveTable(
+                            definition.Table,
+                            definition.Diff,
+                            definition.SessionId,
+                            null,
+                            SurrealDbWsRequestPriority.High,
+                            cancellationToken
+                        )
+                        .ConfigureAwait(false)
+                    : await StartLiveRawQuery(
+                            definition.Query!,
+                            definition.Parameters!,
+                            definition.SessionId,
+                            null,
+                            SurrealDbWsRequestPriority.High,
+                            cancellationToken
+                        )
+                        .ConfigureAwait(false);
+
+                if (
+                    !_liveQueryDefinitions.TryGetValue(queryUuid, out var currentDefinition)
+                    || !ReferenceEquals(currentDefinition, definition)
+                )
+                {
+                    // 💡 Killed while it was being resubscribed, the new subscription is not wanted
+                    await KillResubscribedLiveQueryAsync(
+                            newServerId,
+                            definition.SessionId,
+                            cancellationToken
+                        )
+                        .ConfigureAwait(false);
+                    continue;
+                }
+
+                _liveQueryIdsByServerId.TryRemove(definition.ServerId, out _);
+                definition.ServerId = newServerId;
+                _liveQueryIdsByServerId[newServerId] = queryUuid;
+            }
+            catch (Exception ex)
+                when (ex
+                        is not OperationCanceledException
+                            and not SurrealDbConnectionException
+                            and not MessageNotSentSurrealDbException
+                )
+            {
+                // 💡 A lost connection is not the query's fault: the next reconnection retries it
+                _surrealDbLoggerFactory?.Connection?.LogConnectionReplayFailed(
+                    $"live query {queryUuid}",
+                    ex
+                );
+
+                _liveQueryDefinitions.TryRemove(queryUuid, out _);
+                await CloseLiveQueryChannelsAsync(
+                        queryUuid,
+                        SurrealDbLiveQueryClosureReason.SocketClosed
+                    )
+                    .ConfigureAwait(false);
+            }
+        }
+    }
+
+    private async Task KillResubscribedLiveQueryAsync(
+        Guid serverQueryUuid,
+        Guid? sessionId,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await SendRequestAsync(
+                    "kill",
+                    [serverQueryUuid],
+                    sessionId,
+                    null,
+                    SurrealDbWsRequestPriority.High,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _surrealDbLoggerFactory?.Connection?.LogConnectionReplayFailed(
+                $"live query {serverQueryUuid}",
+                ex
+            );
+        }
+    }
+
+    private void OnDisconnection(DisconnectionInfo info)
+    {
+        if (_disposing)
+        {
+            // 💡 Live queries are closed by DisposeAsync
+            return;
+        }
+
+        StartNewReplay();
+
+        // 💡 Responses to requests sent on the lost connection will never arrive
+        var connectionLostException = new SurrealDbConnectionException(
+            "The connection was lost before a response was received.",
+            "ConnectionLost",
+            info.Exception
+        );
+#if NET9_0_OR_GREATER
+        foreach (var (key, value) in _responseTasks)
+        {
+            if (_responseTasks.TryRemove(key, out _))
+            {
+                value.TrySetException(connectionLostException);
+            }
+        }
+#else
+        foreach (var (key, value) in _responseTaskHandler)
+        {
+            if (_responseTaskHandler.TryRemove(key, out _))
+            {
+                value.TrySetException(connectionLostException);
+            }
+        }
+#endif
+
+        // 💡 Live queries that cannot be started again are closed, the others wait for the reconnection
+        foreach (var (key, value) in _liveQueryChannelSubscriptionsPerQuery)
+        {
+            if (value.WsEngineId == _id && !_liveQueryDefinitions.ContainsKey(key))
+            {
+                _ = CloseLiveQueryChannelsAsync(key, SurrealDbLiveQueryClosureReason.SocketClosed);
+            }
+        }
+    }
+
+    private async Task CloseLiveQueryChannelsAsync(
+        Guid queryUuid,
+        SurrealDbLiveQueryClosureReason reason
+    )
+    {
+        if (
+            !_liveQueryChannelSubscriptionsPerQuery.TryRemove(
+                queryUuid,
+                out var liveQueryChannelSubscriptions
+            )
+        )
+        {
+            return;
+        }
+
+        try
+        {
+            await Task.WhenAll(
+                    liveQueryChannelSubscriptions.Select(liveQueryChannel =>
+                        CloseLiveQueryAsync(liveQueryChannel, reason)
+                    )
+                )
+                .ConfigureAwait(false);
+        }
+        catch
+        {
+            // 💡 Closing a channel must not stop the others from closing
+        }
     }
 
     /// <summary>
@@ -1996,6 +2271,14 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         );
         completion.SetResult(true);
         return completion;
+    }
+
+    /// <summary>
+    /// Drops the current connection and opens a new one, as a network failure would.
+    /// </summary>
+    internal Task ForceReconnectAsync()
+    {
+        return _wsClient.Reconnect();
     }
 
     private Task ApplyRootConfigurationAsync(CancellationToken cancellationToken)
