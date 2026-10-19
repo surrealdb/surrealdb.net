@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Reactive.Concurrency;
@@ -62,6 +62,13 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     > _liveQueryChannelSubscriptionsPerQuery = new();
     private readonly Pinger _pinger;
     private readonly SemaphoreSlim _semaphoreConnect = new(1, 1);
+
+    /// <summary>
+    /// Completed once the connection state (sessions, auth, variables) is replayed after a reconnection.
+    /// Normal requests wait for it, so they never run on a half-restored connection.
+    /// </summary>
+    private TaskCompletionSource<bool> _replayCompletion = CreateCompletedReplay();
+    private volatile bool _disposing;
 
 #if NET9_0_OR_GREATER
     private static readonly ConcurrentHashSet<string> _allResponseTaskIds = [];
@@ -292,6 +299,13 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         _wsClient.DisconnectionHappened.Subscribe(
             async (_) =>
             {
+                if (_replayCompletion.Task.IsCompleted && !_disposing)
+                {
+                    _replayCompletion = new TaskCompletionSource<bool>(
+                        TaskCreationOptions.RunContinuationsAsynchronously
+                    );
+                }
+
                 var endChannelsTasks = new List<Task>();
 
                 foreach (var (key, value) in _liveQueryChannelSubscriptionsPerQuery)
@@ -526,6 +540,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
         _pinger.Start();
         _isInitialized = true;
+        _replayCompletion.TrySetResult(true);
 
         _surrealDbLoggerFactory?.Connection?.LogConnectionSuccess(_parameters.Endpoint!);
     }
@@ -689,6 +704,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             return;
         }
 
+        _disposing = true;
+        _replayCompletion.TrySetCanceled();
         _pinger.Dispose();
 
         int expectedEndChannelsTasksCount =
@@ -1888,10 +1905,44 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
     private async Task ApplyReconnectConfigurationAsync(CancellationToken cancellationToken)
     {
-        foreach (var sessionId in SessionInfos.Enumerate())
+        var replayCompletion = _replayCompletion;
+
+        try
         {
-            await ApplyConfigurationAsync(sessionId, null, cancellationToken);
+            foreach (var sessionId in SessionInfos.Enumerate())
+            {
+                await ApplyConfigurationAsync(sessionId, null, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            replayCompletion.TrySetResult(true);
         }
+        catch (OperationCanceledException)
+        {
+            // 💡 Another reconnection took over, it will complete the replay
+        }
+        catch (Exception)
+        {
+            // 💡 Let pending requests go through, they will report their own errors
+            replayCompletion.TrySetResult(false);
+        }
+    }
+
+    /// <summary>
+    /// Drops the current connection and opens a new one, as a network failure would.
+    /// </summary>
+    internal Task ForceReconnectAsync()
+    {
+        return _wsClient.Reconnect();
+    }
+
+    private static TaskCompletionSource<bool> CreateCompletedReplay()
+    {
+        var completion = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
+        completion.SetResult(true);
+        return completion;
     }
 
     private Task ApplyRootConfigurationAsync(CancellationToken cancellationToken)
@@ -2124,6 +2175,16 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             throw;
         }
 
+        if (priority == SurrealDbWsRequestPriority.Normal)
+        {
+            var replayTask = _replayCompletion.Task;
+            if (!replayTask.IsCompleted)
+            {
+                await WaitForReplayAsync(replayTask, timeoutCts.Token, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+        }
+
         if (
             sessionId.HasValue
             && _sessionizer is not null
@@ -2249,6 +2310,33 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             _responseTaskHandler.TryRemove(id, out _);
 #endif
         }
+    }
+
+    private static async Task WaitForReplayAsync(
+        Task replayTask,
+        CancellationToken timeoutToken,
+        CancellationToken cancellationToken
+    )
+    {
+        using var delayCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutToken);
+        var delayTask = Task.Delay(Timeout.Infinite, delayCts.Token);
+        var completedTask = await Task.WhenAny(replayTask, delayTask).ConfigureAwait(false);
+        delayCts.Cancel();
+
+        if (completedTask == replayTask)
+        {
+            if (replayTask.IsCanceled)
+            {
+                throw new EngineDisposedSurrealDbException();
+            }
+
+            return;
+        }
+
+        if (!cancellationToken.IsCancellationRequested)
+            throw new TimeoutException();
+
+        cancellationToken.ThrowIfCancellationRequested();
     }
 
     private static async Task SendInnerRequestAsync(SurrealDbWsSendRequest request)
