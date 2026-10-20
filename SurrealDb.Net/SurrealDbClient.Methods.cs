@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Text;
 using Semver;
 using SurrealDb.Net.Internals;
@@ -208,6 +208,11 @@ public abstract partial class BaseSurrealDbClient
     public Task Invalidate(CancellationToken cancellationToken = default)
     {
         return Engine.Invalidate(SessionId, TransactionId, cancellationToken);
+    }
+
+    public Task Reset(CancellationToken cancellationToken = default)
+    {
+        return Engine.Reset(SessionId, cancellationToken);
     }
 
     public Task Kill(Guid queryUuid, CancellationToken cancellationToken = default)
@@ -830,9 +835,19 @@ public abstract partial class BaseSurrealDbClient
         );
     }
 
-    public Task Use(string ns, string db, CancellationToken cancellationToken = default)
+    public Task Use(string? ns, string? db, CancellationToken cancellationToken = default)
     {
         return Engine.Use(ns, db, SessionId, TransactionId, cancellationToken);
+    }
+
+    public Task UseNs(string? ns, CancellationToken cancellationToken = default)
+    {
+        return Engine.UseNs(ns, SessionId, TransactionId, cancellationToken);
+    }
+
+    public Task UseDb(string? db, CancellationToken cancellationToken = default)
+    {
+        return Engine.UseDb(db, SessionId, TransactionId, cancellationToken);
     }
 
     public Task<string> Version(CancellationToken cancellationToken = default)

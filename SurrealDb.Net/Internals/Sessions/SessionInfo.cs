@@ -31,10 +31,36 @@ internal abstract class SessionInfo : ISessionInfo
         Db = options.Database;
     }
 
-    public void Use(string ns, string? db)
+    public void Use(string? ns, string? db)
     {
         Ns = ns;
         Db = db;
+    }
+
+    public void UseNs(string? ns)
+    {
+        Ns = ns;
+
+        // 💡 As on the server, a database cannot stay selected without a namespace
+        if (ns is null)
+        {
+            Db = null;
+        }
+    }
+
+    public void UseDb(string? db)
+    {
+        Db = db;
+    }
+
+    /// <summary>
+    /// Clears the selected namespace and database, and the variables.
+    /// </summary>
+    public virtual void Reset()
+    {
+        Ns = null;
+        Db = null;
+        _variables.Clear();
     }
 
     public void Set(string key, object? value)

@@ -1913,8 +1913,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     }
 
     public Task Use(
-        string ns,
-        string db,
+        string? ns,
+        string? db,
         Guid? sessionId,
         Guid? transactionId,
         CancellationToken cancellationToken
@@ -1931,8 +1931,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     }
 
     private async Task Use(
-        string ns,
-        string db,
+        string? ns,
+        string? db,
         Guid? sessionId,
         Guid? transactionId,
         SurrealDbWsRequestPriority priority,
@@ -1949,6 +1949,80 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
         SessionInfos.Get(sessionId)?.Use(ns, db);
+    }
+
+    public async Task UseNs(
+        string? ns,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        // 💡 NONE leaves the database unchanged
+        await SendRequestAsync(
+                "use",
+                [ns, new None()],
+                sessionId,
+                transactionId,
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        SessionInfos.Get(sessionId)?.UseNs(ns);
+    }
+
+    public async Task UseDb(
+        string? db,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        // 💡 NONE leaves the namespace unchanged
+        await SendRequestAsync(
+                "use",
+                [new None(), db],
+                sessionId,
+                transactionId,
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+        SessionInfos.Get(sessionId)?.UseDb(db);
+    }
+
+    public async Task Reset(Guid? sessionId, CancellationToken cancellationToken)
+    {
+        await SendRequestAsync(
+                "reset",
+                null,
+                sessionId,
+                null,
+                SurrealDbWsRequestPriority.Normal,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.Reset();
+
+        // 💡 The server kills the live queries of the session
+        foreach (var (queryUuid, definition) in _liveQueryDefinitions.ToArray())
+        {
+            if (definition.SessionId != sessionId)
+            {
+                continue;
+            }
+
+            if (_liveQueryDefinitions.TryRemove(queryUuid, out _))
+            {
+                _liveQueryIdsByServerId.TryRemove(definition.ServerId, out _);
+                await CloseLiveQueryChannelsAsync(
+                        queryUuid,
+                        SurrealDbLiveQueryClosureReason.QueryKilled
+                    )
+                    .ConfigureAwait(false);
+            }
+        }
     }
 
     public Task<string> Version(CancellationToken cancellationToken)
@@ -2298,7 +2372,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         {
             await Use(
                     session.Ns,
-                    session.Db!,
+                    session.Db,
                     sessionId,
                     transactionId,
                     SurrealDbWsRequestPriority.High,

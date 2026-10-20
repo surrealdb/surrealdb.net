@@ -10,6 +10,12 @@ internal class DurationConverter : CborConverterBase<Duration>
 {
     public override Duration Read(ref CborReader reader)
     {
+        if (reader.GetCurrentDataItemType() == CborDataItemType.String)
+        {
+            // 💡 A duration sent as a string (CBOR tag 13)
+            return new Duration(reader.ReadString()!);
+        }
+
         reader.ReadBeginArray();
 
         int size = reader.ReadSize();
