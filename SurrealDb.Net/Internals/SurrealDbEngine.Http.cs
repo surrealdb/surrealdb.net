@@ -98,7 +98,45 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         await ExecuteRequestAsync(request, sessionId, cancellationToken).ConfigureAwait(false);
 
-        SessionInfos.Get(sessionId)?.SetBearerAuth(tokens.Access);
+        SessionInfos.Get(sessionId)?.SetBearerAuth(tokens.Access, tokens.Refresh);
+    }
+
+    public async Task<Tokens> Refresh(
+        Tokens tokens,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        var request = new SurrealDbHttpRequest { Method = "refresh", Parameters = [tokens] };
+
+        // 💡 The access token may have expired already, it must not be sent as a header
+        var dbResponse = await ExecuteRequestAsync(
+                request,
+                sessionId,
+                cancellationToken,
+                authOverride: new NoAuth()
+            )
+            .ConfigureAwait(false);
+        var newTokens = dbResponse.GetValue<Tokens>()!;
+
+        SessionInfos.Get(sessionId)?.SetBearerAuth(newTokens.Access, newTokens.Refresh);
+
+        return newTokens;
+    }
+
+    public async Task Revoke(
+        Tokens tokens,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        var request = new SurrealDbHttpRequest { Method = "revoke", Parameters = [tokens] };
+
+        await ExecuteRequestAsync(request, sessionId, cancellationToken).ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.ForgetRefreshToken(tokens.Refresh!);
     }
 
     public Task<Guid> Begin(Guid? sessionId, CancellationToken cancellationToken)
@@ -899,7 +937,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
         var tokens = dbResponse.GetValue<Tokens>()!;
 
-        SessionInfos.Get(sessionId)?.SetBearerAuth(tokens.Access);
+        SessionInfos.Get(sessionId)?.SetBearerAuth(tokens.Access, tokens.Refresh);
 
         return tokens;
     }
@@ -918,7 +956,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             .ConfigureAwait(false);
         var tokens = dbResponse.GetValue<Tokens>()!;
 
-        SessionInfos.Get(sessionId)?.SetBearerAuth(tokens.Access);
+        SessionInfos.Get(sessionId)?.SetBearerAuth(tokens.Access, tokens.Refresh);
 
         return tokens;
     }
@@ -1202,7 +1240,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     /// Creates an RPC request carrying the namespace, database and auth of the given session as headers.
     /// Headers are set on each request, never on the <see cref="HttpClient"/>, so that one client serves every session.
     /// </summary>
-    private HttpRequestMessage CreateRpcRequestMessage(Guid? sessionId, HttpContent body)
+    private HttpRequestMessage CreateRpcRequestMessage(
+        Guid? sessionId,
+        HttpContent body,
+        IAuth? authOverride = null
+    )
     {
         var session = SessionInfos.Get(sessionId) ?? throw new InvalidSessionException(sessionId);
 
@@ -1212,9 +1254,91 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         };
 
         SetNsDbHttpClientHeaders(httpRequest.Headers, _version, session.Ns, session.Db);
-        SetAuthHttpClientHeaders(httpRequest.Headers, session.Auth);
+        SetAuthHttpClientHeaders(httpRequest.Headers, authOverride ?? session.Auth);
 
         return httpRequest;
+    }
+
+    /// <summary>
+    /// RPC methods that change the authentication themselves, so they never trigger a renewal.
+    /// </summary>
+    private static readonly HashSet<string> _methodsWithoutAuthRenewal =
+    [
+        "signin",
+        "signup",
+        "authenticate",
+        "refresh",
+        "revoke",
+    ];
+
+    private readonly SemaphoreSlim _authRenewalLock = new(1, 1);
+
+    /// <summary>
+    /// Renews the access token of a session when it is about to expire, using its refresh token,
+    /// or forgets it once expired when <see cref="SurrealDbOptions.InvalidateOnExpiry"/> is set.
+    /// A failed renewal is logged: the request then reports the expired token itself.
+    /// </summary>
+    internal async Task RenewAuthIfExpiringAsync(
+        Guid? sessionId,
+        CancellationToken cancellationToken
+    )
+    {
+        if (!ShouldRenewAuth(sessionId))
+        {
+            return;
+        }
+
+        await _authRenewalLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            // 💡 Another request may have renewed it while waiting
+            if (
+                !ShouldRenewAuth(sessionId)
+                || SessionInfos.Get(sessionId)?.Auth is not BearerAuth bearerAuth
+            )
+            {
+                return;
+            }
+
+            if (_parameters.InvalidateOnExpiry)
+            {
+                SessionInfos.Get(sessionId)?.ResetAuth();
+                return;
+            }
+
+            await Refresh(
+                    new Tokens(bearerAuth.Token, bearerAuth.Refresh),
+                    sessionId,
+                    null,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _surrealDbLoggerFactory?.Connection?.LogAuthRenewalFailed(ex);
+        }
+        finally
+        {
+            _authRenewalLock.Release();
+        }
+    }
+
+    private bool ShouldRenewAuth(Guid? sessionId)
+    {
+        if (SessionInfos.Get(sessionId)?.Auth is not BearerAuth bearerAuth)
+        {
+            return false;
+        }
+
+        if (_parameters.InvalidateOnExpiry)
+        {
+            return JwtHelper.ExpiresWithin(bearerAuth.Token, TimeSpan.Zero);
+        }
+
+        return bearerAuth.Refresh is not null
+            && JwtHelper.ExpiresWithin(bearerAuth.Token, _parameters.ExpiryMargin);
     }
 
     internal static void SetNsDbHttpClientHeaders(
@@ -1339,10 +1463,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     /// HTTP has no server-side session, so the id itself is never sent.
     /// </param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <param name="authOverride">The auth to send instead of the session's own, if any.</param>
     private async Task<SurrealDbHttpOkResponse> ExecuteRequestAsync(
         SurrealDbHttpRequest request,
         Guid? sessionId,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        IAuth? authOverride = null
     )
     {
         long executionStartTime = Stopwatch.GetTimestamp();
@@ -1365,7 +1491,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         using var wrapper = CreateEndpointHttpClientWrapper();
         using var body = CreateBodyContent(_configureCborOptions, request, _surrealDbLoggerFactory);
-        using var httpRequest = CreateRpcRequestMessage(sessionId, body);
+        if (authOverride is null && !_methodsWithoutAuthRenewal.Contains(request.Method))
+        {
+            await RenewAuthIfExpiringAsync(sessionId, cancellationToken).ConfigureAwait(false);
+        }
+
+        using var httpRequest = CreateRpcRequestMessage(sessionId, body, authOverride);
 
         Interlocked.Increment(ref _pendingRequests);
 

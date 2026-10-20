@@ -194,6 +194,18 @@ public interface ISurrealDbEngine
         CancellationToken cancellationToken
     )
         where T : class;
+    Task<Tokens> Refresh(
+        Tokens tokens,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
+    Task Revoke(
+        Tokens tokens,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
     Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
