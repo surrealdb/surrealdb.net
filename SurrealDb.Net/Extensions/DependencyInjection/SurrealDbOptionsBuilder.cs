@@ -13,6 +13,7 @@ public sealed class SurrealDbOptionsBuilder
     private string? _token;
     private string? _authLevel;
     private bool _sensitiveDataLoggingEnabled;
+    private ReconnectOptions _reconnect = new();
 
     /// <summary>
     /// Parses the connection string and set the configuration accordingly.
@@ -360,6 +361,21 @@ public sealed class SurrealDbOptionsBuilder
         return this;
     }
 
+    /// <summary>
+    /// Configures how a WebSocket client reconnects after the connection is lost.
+    /// </summary>
+    /// <param name="configure">Changes the default <see cref="ReconnectOptions"/>.</param>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public SurrealDbOptionsBuilder WithReconnect(Action<ReconnectOptions> configure)
+    {
+        var reconnect = new ReconnectOptions(_reconnect);
+        configure(reconnect);
+        reconnect.Validate();
+
+        _reconnect = reconnect;
+        return this;
+    }
+
     private static void EnsuresCorrectAuthLevel(string authLevel, string argumentName)
     {
         if (string.IsNullOrWhiteSpace(authLevel))
@@ -402,6 +418,7 @@ public sealed class SurrealDbOptionsBuilder
             Token = _token,
             AuthLevel = _authLevel,
             Logging = new() { SensitiveDataLoggingEnabled = _sensitiveDataLoggingEnabled },
+            Reconnect = new ReconnectOptions(_reconnect),
         };
     }
 }

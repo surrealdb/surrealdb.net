@@ -36,6 +36,8 @@ public interface ISurrealDbEngine
         IAsyncDisposable
 {
     Uri Uri { get; }
+    ConnectionStatus Status { get; }
+    event EventHandler<ConnectionStatusChangedEventArgs>? StatusChanged;
 
     Task Attach(Guid sessionId, CancellationToken cancellationToken);
     Task Authenticate(
