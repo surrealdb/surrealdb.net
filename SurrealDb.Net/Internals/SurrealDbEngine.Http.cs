@@ -600,9 +600,10 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             allParameters.Add(key, value);
         }
 
+        // 💡 Query parameters take precedence over session variables of the same name
         foreach (var (key, value) in parameters)
         {
-            allParameters.Add(key, value);
+            allParameters[key] = value;
         }
 
         var request = new SurrealDbHttpRequest
