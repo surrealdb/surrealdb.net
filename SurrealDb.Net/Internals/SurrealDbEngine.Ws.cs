@@ -80,6 +80,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     /// Normal requests wait for it, so they never run on a half-restored connection.
     /// </summary>
     private TaskCompletionSource<bool> _replayCompletion = CreateCompletedReplay();
+    private readonly object _replayLock = new();
     private volatile bool _disposing;
 
     private readonly ConnectionStatusTracker _statusTracker;
@@ -561,12 +562,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         _surrealDbLoggerFactory?.Connection?.LogConnectionAttempt(_parameters.Endpoint!);
 
         Interlocked.Exchange(ref _failedReconnectAttempts, 0);
-        if (_replayCompletion.Task.IsCompleted)
-        {
-            _replayCompletion = new TaskCompletionSource<bool>(
-                TaskCreationOptions.RunContinuationsAsynchronously
-            );
-        }
+        StartNewReplay();
         _statusTracker.Set(ConnectionStatus.Connecting);
 
         try
@@ -974,6 +970,14 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
+        // 💡 A live query being resubscribed gets its new server id once the replay ends
+        var replayTask = _replayCompletion.Task;
+        if (!replayTask.IsCompleted)
+        {
+            await WaitForReplayAsync(replayTask, cancellationToken, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         // 💡 A resubscribed live query has a new id on the server
         var serverQueryUuid = _liveQueryDefinitions.TryRemove(queryUuid, out var definition)
             ? definition.ServerId
@@ -2088,9 +2092,12 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
             await ResubscribeLiveQueriesAsync(cancellationToken).ConfigureAwait(false);
 
-            Interlocked.Exchange(ref _failedReconnectAttempts, 0);
-            _statusTracker.Set(ConnectionStatus.Connected);
-            replayCompletion.TrySetResult(true);
+            // 💡 A replay a newer disconnection interrupted leaves the status to the next one
+            if (CompleteReplay(replayCompletion, true))
+            {
+                Interlocked.Exchange(ref _failedReconnectAttempts, 0);
+                _statusTracker.Set(ConnectionStatus.Connected);
+            }
         }
         catch (OperationCanceledException)
         {
@@ -2101,9 +2108,12 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             _surrealDbLoggerFactory?.Connection?.LogConnectionReplayFailed("root session", ex);
 
             // 💡 Let pending requests go through, they will report their own errors
-            Interlocked.Exchange(ref _failedReconnectAttempts, 0);
-            _statusTracker.Set(ConnectionStatus.Connected);
-            replayCompletion.TrySetResult(false);
+            // 💡 A replay a newer disconnection interrupted leaves the status to the next one
+            if (CompleteReplay(replayCompletion, false))
+            {
+                Interlocked.Exchange(ref _failedReconnectAttempts, 0);
+                _statusTracker.Set(ConnectionStatus.Connected);
+            }
         }
     }
 
@@ -2133,12 +2143,33 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                         )
                         .ConfigureAwait(false);
 
+                if (
+                    !_liveQueryDefinitions.TryGetValue(queryUuid, out var currentDefinition)
+                    || !ReferenceEquals(currentDefinition, definition)
+                )
+                {
+                    // 💡 Killed while it was being resubscribed, the new subscription is not wanted
+                    await KillResubscribedLiveQueryAsync(
+                            newServerId,
+                            definition.SessionId,
+                            cancellationToken
+                        )
+                        .ConfigureAwait(false);
+                    continue;
+                }
+
                 _liveQueryIdsByServerId.TryRemove(definition.ServerId, out _);
                 definition.ServerId = newServerId;
                 _liveQueryIdsByServerId[newServerId] = queryUuid;
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex)
+                when (ex
+                        is not OperationCanceledException
+                            and not SurrealDbConnectionException
+                            and not MessageNotSentSurrealDbException
+                )
             {
+                // 💡 A lost connection is not the query's fault: the next reconnection retries it
                 _surrealDbLoggerFactory?.Connection?.LogConnectionReplayFailed(
                     $"live query {queryUuid}",
                     ex
@@ -2151,6 +2182,33 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                     )
                     .ConfigureAwait(false);
             }
+        }
+    }
+
+    private async Task KillResubscribedLiveQueryAsync(
+        Guid serverQueryUuid,
+        Guid? sessionId,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await SendRequestAsync(
+                    "kill",
+                    [serverQueryUuid],
+                    sessionId,
+                    null,
+                    SurrealDbWsRequestPriority.High,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _surrealDbLoggerFactory?.Connection?.LogConnectionReplayFailed(
+                $"live query {serverQueryUuid}",
+                ex
+            );
         }
     }
 
@@ -2195,12 +2253,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             return;
         }
 
-        if (_replayCompletion.Task.IsCompleted)
-        {
-            _replayCompletion = new TaskCompletionSource<bool>(
-                TaskCreationOptions.RunContinuationsAsynchronously
-            );
-        }
+        StartNewReplay();
 
         // 💡 Responses to requests sent on the lost connection will never arrive
         var connectionLostException = new SurrealDbConnectionException(
@@ -2305,6 +2358,64 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         catch
         {
             // 💡 Closing a channel must not stop the others from closing
+        }
+    }
+
+    /// <summary>
+    /// Opens a new replay gate for a new connection. Requests still waiting for an interrupted replay
+    /// are released by this one, never by the interrupted replay.
+    /// </summary>
+    private void StartNewReplay()
+    {
+        lock (_replayLock)
+        {
+            var previous = _replayCompletion;
+            var next = new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously
+            );
+            _replayCompletion = next;
+
+            if (!previous.Task.IsCompleted)
+            {
+                _ = next.Task.ContinueWith(
+                    task =>
+                    {
+                        if (task.IsCanceled)
+                        {
+                            previous.TrySetCanceled();
+                        }
+                        else if (task.IsFaulted)
+                        {
+                            previous.TrySetException(task.Exception!.InnerExceptions);
+                        }
+                        else
+                        {
+                            previous.TrySetResult(task.Result);
+                        }
+                    },
+                    CancellationToken.None,
+                    TaskContinuationOptions.ExecuteSynchronously,
+                    TaskScheduler.Default
+                );
+            }
+        }
+    }
+
+    /// <summary>
+    /// Releases the requests waiting for a replay, unless a newer connection has taken over.
+    /// </summary>
+    /// <returns>Whether the replay is the current one.</returns>
+    private bool CompleteReplay(TaskCompletionSource<bool> replayCompletion, bool isReplayed)
+    {
+        lock (_replayLock)
+        {
+            if (!ReferenceEquals(_replayCompletion, replayCompletion))
+            {
+                return false;
+            }
+
+            replayCompletion.TrySetResult(isReplayed);
+            return true;
         }
     }
 
