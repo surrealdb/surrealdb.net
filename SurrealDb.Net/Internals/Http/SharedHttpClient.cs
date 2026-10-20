@@ -11,14 +11,20 @@ internal static class SharedHttpClient
 
     public static HttpClient Instance => _instance.Value;
 
-    private static HttpClient Create()
+    internal static HttpClient Create()
     {
+        // 💡 Cookies are never stored: this client is shared by every SDK client of the process,
+        // which must not see each other's cookies
 #if NET5_0_OR_GREATER
         // 💡 Recycle pooled connections so that DNS changes are picked up
-        var handler = new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(5) };
+        var handler = new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+            UseCookies = false,
+        };
         return new HttpClient(handler);
 #else
-        return new HttpClient();
+        return new HttpClient(new HttpClientHandler { UseCookies = false });
 #endif
     }
 }
