@@ -7,12 +7,18 @@ namespace SurrealDb.Net.Tests.Conformance;
 
 /// <summary>
 /// A value test vector from the SurrealDB protocol specification
-/// (github.com/surrealdb/surrealdb-protocol, spec/vectors), vendored under
-/// Conformance/surrealdb-protocol at the tag in its VERSION file.
+/// (github.com/surrealdb/surrealdb-protocol, spec/vectors), fetched into
+/// Conformance/surrealdb-protocol by Conformance/fetch-protocol-vectors.sh.
 /// </summary>
 public sealed class CborVector
 {
     private const string VECTORS_DIRECTORY = "Conformance/surrealdb-protocol/spec/vectors";
+
+    /// <summary>
+    /// The <see cref="Kind"/> of the one vector <see cref="Load"/> returns when the vectors have
+    /// not been fetched.
+    /// </summary>
+    public const string MISSING_KIND = "missing";
 
     public required string File { get; init; }
     public required string Name { get; init; }
@@ -40,6 +46,20 @@ public sealed class CborVector
     public static IReadOnlyList<CborVector> Load(string file)
     {
         var path = Path.Combine(AppContext.BaseDirectory, VECTORS_DIRECTORY, file);
+
+        if (!System.IO.File.Exists(path))
+        {
+            return
+            [
+                new CborVector
+                {
+                    File = file,
+                    Name = "not-fetched",
+                    Kind = MISSING_KIND,
+                    Cbor = string.Empty,
+                },
+            ];
+        }
 
         using var reader = new StreamReader(path);
         var stream = new YamlStream();

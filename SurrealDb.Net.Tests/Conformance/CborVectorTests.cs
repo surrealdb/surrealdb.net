@@ -154,6 +154,20 @@ public class CborVectorTests
 
     private static void Run(CborVector vector, string format, CborOptions options)
     {
+        if (vector.Kind == CborVector.MISSING_KIND)
+        {
+            const string NOT_FETCHED =
+                "The protocol vectors have not been fetched. Run Conformance/fetch-protocol-vectors.sh, then build again.";
+
+            // 💡 CI must run the vectors, so a missing fetch fails there instead of skipping
+            if (Environment.GetEnvironmentVariable("CI") == "true")
+            {
+                throw new InvalidOperationException(NOT_FETCHED);
+            }
+
+            Skip.Test(NOT_FETCHED);
+        }
+
         if (
             KnownGaps.TryGetValue($"{format}:{vector}", out var reason)
             || KnownGaps.TryGetValue(vector.ToString(), out reason)
