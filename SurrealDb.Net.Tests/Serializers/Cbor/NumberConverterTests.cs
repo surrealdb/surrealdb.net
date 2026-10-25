@@ -81,6 +81,8 @@ public class NumberConverterTests : BaseCborConverterTests
     }
 
     [Test]
+    [Arguments("ca63616263")]
+    [Arguments("63616263")]
     [Arguments("d8b41880")]
     [Arguments("d8bb01")]
     [Arguments("d8ba1bffffffffffffffff")]

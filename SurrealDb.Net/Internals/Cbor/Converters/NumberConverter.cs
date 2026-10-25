@@ -63,11 +63,15 @@ internal sealed class NumberConverter<T> : CborConverterBase<T>
 
     private T ReadDecimalString(ref CborReader reader)
     {
-        var value = decimal.Parse(
-            reader.ReadString()!,
-            NumberStyles.Float,
-            CultureInfo.InvariantCulture
-        );
+        string? text = reader.ReadString();
+
+        if (
+            !decimal.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
+        )
+        {
+            throw new CborException($"Cannot read \"{text}\" as {typeof(T).Name}");
+        }
+
         return Convert(value, _fromDecimal);
     }
 
