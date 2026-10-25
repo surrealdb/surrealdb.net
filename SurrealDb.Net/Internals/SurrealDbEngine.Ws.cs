@@ -142,6 +142,9 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         var clientWebSocketFactory = new Func<ClientWebSocket>(() =>
         {
             var client = new ClientWebSocket();
+            // 💡 The server picks the first subprotocol of its own list that the client offers,
+            // so a server before 4.0, which does not know cbor.2, picks cbor
+            client.Options.AddSubProtocol(SerializationConstants.CBOR2);
             client.Options.AddSubProtocol(SerializationConstants.CBOR);
 
             return client;
@@ -1857,9 +1860,14 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         return version.Replace(VERSION_PREFIX, string.Empty);
     }
 
+    /// <summary>
+    /// Whether the server chose the <c>cbor.2</c> subprotocol for the current connection.
+    /// </summary>
+    internal bool IsCbor2 => _wsClient.NativeClient?.SubProtocol == SerializationConstants.CBOR2;
+
     private CborOptions GetCborOptions()
     {
-        return SurrealDbCborOptions.GetCborSerializerOptions(_configureCborOptions);
+        return SurrealDbCborOptions.GetCborSerializerOptions(_configureCborOptions, IsCbor2);
     }
 
     private async Task ApplyReconnectConfigurationAsync(CancellationToken cancellationToken)
