@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Internals;
+﻿using Dahomey.Cbor.Attributes;
+using SurrealDb.Net.Internals;
 using SurrealDb.Net.LiveQuery.Tests.Abstract;
 using SurrealDb.Net.LiveQuery.Tests.Models;
 using SurrealDb.Net.Models.LiveQuery;
@@ -7,9 +8,6 @@ namespace SurrealDb.Net.LiveQuery.Tests;
 
 public class ReconnectTests : BaseLiveQueryTests
 {
-    private const string CountLiveQueries =
-        "RETURN array::len(object::keys((INFO FOR TABLE test).lives));";
-
     [Test]
     [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldResubscribeLiveQueriesAfterReconnection(string connectionString)
@@ -128,8 +126,7 @@ public class ReconnectTests : BaseLiveQueryTests
             liveQueries.Add(await client.LiveTable<TestRecord>("test"));
         }
 
-        var livesBefore = await client.RawQuery(CountLiveQueries);
-        livesBefore.GetValue<int>(0).Should().Be(50);
+        (await CountLiveQueriesAsync(client)).Should().Be(50);
 
         await ((SurrealDbWsEngine)client.Engine).ForceReconnectAsync();
 
@@ -144,7 +141,24 @@ public class ReconnectTests : BaseLiveQueryTests
         await killAll.Should().NotThrowAsync();
 
         // 💡 No subscription is left behind on the server
-        var lives = await client.RawQuery(CountLiveQueries);
-        lives.GetValue<int>(0).Should().Be(0);
+        (await CountLiveQueriesAsync(client))
+            .Should()
+            .Be(0);
+    }
+
+    /// <summary>
+    /// Counts the live queries on the <c>test</c> table. SurrealDB 1.x cannot use <c>INFO</c> as an
+    /// expression, so this reads the whole <c>INFO FOR TABLE</c> result.
+    /// </summary>
+    private static async Task<int> CountLiveQueriesAsync(SurrealDbClient client)
+    {
+        var response = await client.RawQuery("INFO FOR TABLE test;");
+        return response.GetValue<TableInfo>(0)!.Lives.Count;
+    }
+
+    private sealed class TableInfo
+    {
+        [CborProperty("lives")]
+        public Dictionary<string, string> Lives { get; set; } = new();
     }
 }
