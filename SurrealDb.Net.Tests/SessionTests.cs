@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Internals;
+﻿using Microsoft.Extensions.DependencyInjection;
+using SurrealDb.Net.Internals;
 using SurrealDb.Net.Models.Sessions;
 
 namespace SurrealDb.Net.Tests;
@@ -119,6 +120,41 @@ public class SessionTests
         result.SessionId.Should().NotBeNull();
 
         await firstSession.DisposeAsync();
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ForkSessionShouldKeepNamespaceDatabaseAndAuth(string connectionString)
+    {
+        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+        if (new Uri(options.Endpoint!).Scheme is "http" or "https")
+            return;
+
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+        await client.ApplySchemaAsync(SurrealSchemaFile.Post);
+
+        await using var session = await client.CreateSession();
+        await session.Use(dbInfo.Namespace, dbInfo.Database);
+        if (!options.IsEmbedded)
+        {
+            await session.SignIn(
+                new RootAuth { Username = options.Username!, Password = options.Password! }
+            );
+        }
+
+        await using var fork = await session.ForkSession();
+
+        var response = await fork.RawQuery("RETURN [session::ns(), session::db()];");
+        response.GetValue<string[]>(0).Should().Equal(dbInfo.Namespace, dbInfo.Database);
+
+        // 💡 Records are only visible to an authenticated user
+        var posts = await fork.Select<Post>("post");
+        posts.Should().HaveCount(2);
     }
 
     [Test]

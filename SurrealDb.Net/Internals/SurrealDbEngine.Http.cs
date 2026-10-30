@@ -1543,7 +1543,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         )
         {
             _sessionizer.TryRemove(request.SessionId.Value);
-            await CreateSession(request.SessionId.Value, newRpcSessionInfo, cancellationToken)
+            // 💡 The provided state is shared by every scope, each session needs its own copy
+            await CreateSession(
+                    request.SessionId.Value,
+                    new RpcSessionInfo(newRpcSessionInfo),
+                    cancellationToken
+                )
                 .ConfigureAwait(false);
         }
 
