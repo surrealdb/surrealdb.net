@@ -1,22 +1,23 @@
 ﻿using System.Collections.Immutable;
-using System.Text;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Semver;
-using SurrealDb.Net.Internals;
+using SurrealDb.Net.Handlers;
 using SurrealDb.Net.Internals.Cbor;
+using SurrealDb.Net.Internals.Extensions;
+using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Http;
-using SurrealDb.Net.Models;
+using SurrealDb.Net.Internals;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
-#if NET10_0_OR_GREATER
-using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
-#else
+using SurrealDb.Net.Models;
+using System.Text;
 using SystemTextJsonPatch;
+#if NET10_0_OR_GREATER
+#else
 #endif
 #if NET6_0_OR_GREATER
-using SurrealDb.Net.Handlers;
 #else
-using SurrealDb.Net.Internals.Extensions;
 #endif
 
 namespace SurrealDb.Net;
@@ -463,6 +464,32 @@ public abstract partial class BaseSurrealDbClient
             parameters ?? ImmutableDictionary<string, object?>.Empty,
             SessionId,
             TransactionId,
+            cancellationToken
+        );
+    }
+
+    public IAsyncEnumerable<SurrealDbQueryStreamFrame> RawQueryStream(
+        string query,
+        IReadOnlyDictionary<string, object?>? parameters = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var queryParameters = parameters ?? ImmutableDictionary<string, object?>.Empty;
+
+        if (Engine is SurrealDbWsEngine wsEngine)
+        {
+            return wsEngine.RawQueryStream(
+                query,
+                queryParameters,
+                SessionId,
+                TransactionId,
+                cancellationToken
+            );
+        }
+
+        // 💡 Other protocols cannot stream, the whole answer is read before it is split into frames
+        return QueryStreamFallback.ToFramesAsync(
+            ct => Engine.RawQuery(query, queryParameters, SessionId, TransactionId, ct),
             cancellationToken
         );
     }

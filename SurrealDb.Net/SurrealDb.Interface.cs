@@ -682,6 +682,34 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     /// <exception cref="NotSupportedException">The embedded engine does not support GQL yet.</exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<SurrealDbResponse> Gql(
+    /// <summary>
+    /// Executes a raw SurrealQL query and streams its results as they are produced,
+    /// instead of waiting for the whole answer.
+    /// </summary>
+    /// <remarks>
+    /// Results are streamed over WebSocket connections to SurrealDB v3.3 and later.
+    /// Other connections read the whole answer first and then return it as the same frames,
+    /// except that the answer does not say which statements return a single value:
+    /// a statement whose value is an array, e.g. <c>RETURN [1, 2]</c>, is then returned as rows rather than as a value.
+    /// Leaving the enumeration early cancels the query on the server.
+    /// Within a transaction, committing or cancelling it waits until the stream has ended,
+    /// so finish or leave the enumeration first rather than committing from inside it.
+    /// Frames that arrive faster than they are read are buffered in memory,
+    /// so that a slow reader never holds up the other requests of the connection.
+    /// </remarks>
+    /// <param name="query">The SurrealQL query.</param>
+    /// <param name="parameters">A list of parameters to be used inside the SurrealQL query.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>
+    /// The frames of the answer: a <see cref="SurrealDbQueryStreamBeginFrame"/>,
+    /// the rows or the value of each statement followed by a <see cref="SurrealDbQueryStreamFinishedFrame"/>,
+    /// then a <see cref="SurrealDbQueryStreamEndFrame"/>.
+    /// </returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    IAsyncEnumerable<SurrealDbQueryStreamFrame> RawQueryStream(
         string query,
         IReadOnlyDictionary<string, object?>? parameters = null,
         CancellationToken cancellationToken = default
