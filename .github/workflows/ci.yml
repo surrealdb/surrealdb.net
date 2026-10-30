@@ -167,7 +167,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
         with:
-          toolchain: 1.94.0
+          toolchain: 1.95.0
           components: cargo, clippy, rustfmt
 
       - name: Cache Rust dependencies
@@ -198,7 +198,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
         with:
-          toolchain: 1.94.0
+          toolchain: 1.95.0
           components: cargo, clippy, rustfmt
 
       - name: Cache Rust dependencies

@@ -357,6 +357,7 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task Reset(CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Invokes the APIs defined with <c>DEFINE API</c>, in the current session and transaction.
     /// </summary>
