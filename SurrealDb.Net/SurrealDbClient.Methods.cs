@@ -238,6 +238,11 @@ public abstract partial class BaseSurrealDbClient
         return Engine.InsertRelation(table, data, SessionId, TransactionId, cancellationToken);
     }
 
+    public SurrealDbApi Api(string? prefix = null)
+    {
+        return new SurrealDbApi(this, prefix);
+    }
+
     public Task Invalidate(CancellationToken cancellationToken = default)
     {
         return Engine.Invalidate(SessionId, TransactionId, cancellationToken);

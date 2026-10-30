@@ -102,6 +102,7 @@ public sealed class SurrealDbOptions
     }
 
     private TimeSpan _expiryMargin = TimeSpan.FromSeconds(60);
+
     /// <summary>
     /// How a WebSocket client reconnects after the connection is lost.
     /// </summary>
