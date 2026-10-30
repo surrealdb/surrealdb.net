@@ -1,4 +1,4 @@
-using Dahomey.Cbor;
+﻿using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Semver;
@@ -9,6 +9,7 @@ using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Internals.DependencyInjection;
 using SurrealDb.Net.Internals.Http;
+using SurrealDb.Net.Models;
 
 namespace SurrealDb.Net;
 
@@ -18,6 +19,14 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
     internal ISurrealDbEngine Engine { get; set; } = null!;
 
     public Uri Uri { get; protected init; } = null!;
+
+    public ConnectionStatus Status => Engine.Status;
+
+    public event EventHandler<ConnectionStatusChangedEventArgs>? StatusChanged
+    {
+        add => Engine.StatusChanged += value;
+        remove => Engine.StatusChanged -= value;
+    }
 
     protected void InitializeAndSetProviderEngine(
         ISurrealDbProviderEngine engine,

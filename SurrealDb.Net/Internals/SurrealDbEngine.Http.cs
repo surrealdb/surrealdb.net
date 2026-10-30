@@ -57,6 +57,16 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     private readonly ISessionizer? _sessionizer;
 
     public Uri Uri { get; }
+
+    public ConnectionStatus Status => _statusTracker.Status;
+
+    public event EventHandler<ConnectionStatusChangedEventArgs>? StatusChanged
+    {
+        add => _statusTracker.StatusChanged += value;
+        remove => _statusTracker.StatusChanged -= value;
+    }
+
+    private readonly ConnectionStatusTracker _statusTracker;
     public RpcSessionInfos SessionInfos { get; } = new();
 
     public SurrealDbHttpEngine(
@@ -68,6 +78,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
     {
         Uri = new Uri(parameters.Endpoint!);
+        _statusTracker = new(this);
         _parameters = parameters;
         _httpClientFactory = httpClientFactory;
         _configureCborOptions = configureCborOptions;
@@ -178,24 +189,36 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         _surrealDbLoggerFactory?.Connection?.LogConnectionAttempt(_parameters.Endpoint!);
 
-        await Version(cancellationToken).ConfigureAwait(false);
+        _statusTracker.Set(ConnectionStatus.Connecting);
 
-        if (_version!.CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
+        try
         {
-            throw new SurrealDbConnectException(
-                "CBOR is only supported on SurrealDB 1.4.0 or later."
-            );
+            await Version(cancellationToken).ConfigureAwait(false);
+
+            if (_version!.CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
+            {
+                throw new SurrealDbConnectException(
+                    "CBOR is only supported on SurrealDB 1.4.0 or later."
+                );
+            }
+
+            var dbResponse = await RawQuery(
+                    "RETURN TRUE",
+                    ImmutableDictionary<string, object?>.Empty,
+                    null,
+                    null,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+            EnsuresFirstResultOk(dbResponse);
+        }
+        catch (Exception ex)
+        {
+            _statusTracker.Set(ConnectionStatus.Disconnected, ex);
+            throw;
         }
 
-        var dbResponse = await RawQuery(
-                "RETURN TRUE",
-                ImmutableDictionary<string, object?>.Empty,
-                null,
-                null,
-                cancellationToken
-            )
-            .ConfigureAwait(false);
-        EnsuresFirstResultOk(dbResponse);
+        _statusTracker.Set(ConnectionStatus.Connected);
 
         _surrealDbLoggerFactory?.Connection?.LogConnectionSuccess(_parameters.Endpoint!);
     }
@@ -309,6 +332,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             return;
         }
 
+        _statusTracker.Set(ConnectionStatus.Disconnected);
         _disposed = true;
     }
 
@@ -339,10 +363,15 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
                 .Instance.SendAsync(httpRequest, cancellationToken)
                 .ConfigureAwait(false);
 
+            // 💡 Each request is a new connection, its outcome is the connection status
+            _statusTracker.Set(ConnectionStatus.Connected);
+
             return response.IsSuccessStatusCode;
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
+            // 💡 Leaves a connection attempt in progress to report its own outcome
+            _statusTracker.SetIf(ConnectionStatus.Connected, ConnectionStatus.Disconnected, ex);
             return false;
         }
     }
@@ -1532,11 +1561,15 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
                 .Instance.SendAsync(httpRequest, cancellationToken)
                 .ConfigureAwait(false);
 
+            // 💡 The server answered: a connection lost by an earlier request is back
+            _statusTracker.SetIf(ConnectionStatus.Disconnected, ConnectionStatus.Connected);
+
             surrealDbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
                 .ConfigureAwait(false);
         }
-        catch
+        catch (HttpRequestException ex)
         {
+            _statusTracker.Set(ConnectionStatus.Disconnected, ex);
             throw;
         }
         finally
