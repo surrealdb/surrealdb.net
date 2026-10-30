@@ -187,9 +187,10 @@ public class ReactiveOperatorsLiveQueryTests : BaseLiveQueryTests
 
         records.Should().BeEquivalentTo(expected);
 
+        // 💡 From v3.1 to v3.3, upserting a record with unchanged content also notifies
         int expectedCalls = version switch
         {
-            not null when version.Major == 3 && version.Minor >= 1 => 8,
+            not null when version.Major == 3 && version.Minor >= 1 && version.Minor < 4 => 8,
             _ => 7,
         };
         calls.Should().Be(expectedCalls);
