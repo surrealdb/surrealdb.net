@@ -216,6 +216,13 @@ public interface ISurrealDbEngine
         Guid? transactionId,
         CancellationToken cancellationToken
     );
+    Task<SurrealDbResponse> Gql(
+        string query,
+        IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
     Task<IEnumerable<TOutput>> Relate<TOutput, TData>(
         string table,
         IEnumerable<RecordId> ins,

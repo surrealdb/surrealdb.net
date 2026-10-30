@@ -437,6 +437,21 @@ public abstract partial class BaseSurrealDbClient
     }
 #endif
 
+    public Task<SurrealDbResponse> Gql(
+        string query,
+        IReadOnlyDictionary<string, object?>? parameters = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return Engine.Gql(
+            query,
+            parameters ?? ImmutableDictionary<string, object?>.Empty,
+            SessionId,
+            TransactionId,
+            cancellationToken
+        );
+    }
+
     public Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?>? parameters = null,

@@ -646,11 +646,33 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<T>();
     }
 
-    public async Task<SurrealDbResponse> RawQuery(
+    public Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
         Guid? sessionId,
         Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        return ExecuteQueryAsync("query", query, parameters, sessionId, cancellationToken);
+    }
+
+    public Task<SurrealDbResponse> Gql(
+        string query,
+        IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        return ExecuteQueryAsync("gql", query, parameters, sessionId, cancellationToken);
+    }
+
+    private async Task<SurrealDbResponse> ExecuteQueryAsync(
+        string method,
+        string query,
+        IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
         CancellationToken cancellationToken
     )
     {
@@ -676,7 +698,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         var request = new SurrealDbHttpRequest
         {
-            Method = "query",
+            Method = method,
             Parameters = [query, allParameters],
         };
 

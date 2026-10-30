@@ -1393,7 +1393,47 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         );
     }
 
-    private async Task<SurrealDbResponse> RawQuery(
+    public Task<SurrealDbResponse> Gql(
+        string query,
+        IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        return ExecuteQueryAsync(
+            "gql",
+            query,
+            parameters,
+            sessionId,
+            transactionId,
+            SurrealDbWsRequestPriority.Normal,
+            cancellationToken
+        );
+    }
+
+    private Task<SurrealDbResponse> RawQuery(
+        string query,
+        IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
+        Guid? transactionId,
+        SurrealDbWsRequestPriority priority,
+        CancellationToken cancellationToken
+    )
+    {
+        return ExecuteQueryAsync(
+            "query",
+            query,
+            parameters,
+            sessionId,
+            transactionId,
+            priority,
+            cancellationToken
+        );
+    }
+
+    private async Task<SurrealDbResponse> ExecuteQueryAsync(
+        string method,
         string query,
         IReadOnlyDictionary<string, object?> parameters,
         Guid? sessionId,
@@ -1405,7 +1445,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         long executionStartTime = Stopwatch.GetTimestamp();
 
         var dbResponse = await SendRequestAsync(
-                "query",
+                method,
                 [query, parameters],
                 sessionId,
                 transactionId,

@@ -668,6 +668,26 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     );
 
     /// <summary>
+    /// Executes a query written in GQL, the ISO graph query language.
+    /// </summary>
+    /// <remarks>
+    /// This method is only supported by SurrealDB v3.3.0 or higher, over HTTP or WebSocket.
+    /// </remarks>
+    /// <param name="query">The GQL query, e.g. <c>MATCH (p:person) RETURN p</c>.</param>
+    /// <param name="parameters">A list of parameters to be used inside the query.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The list of results from the query.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="NotSupportedException">The embedded engine does not support GQL yet.</exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<SurrealDbResponse> Gql(
+        string query,
+        IReadOnlyDictionary<string, object?>? parameters = null,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
     /// Creates a relation between two records.<br />
     /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/relate">
     /// `Relate` on surrealdb.com/docs
