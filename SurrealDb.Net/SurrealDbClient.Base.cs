@@ -54,7 +54,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
         );
     }
 
-    private async Task<CommonHttpWrapper> CreateCommonHttpWrapperAsync(
+    internal async Task<CommonHttpWrapper> CreateCommonHttpWrapperAsync(
         CancellationToken cancellationToken
     )
     {
@@ -63,6 +63,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
         string? db;
         IAuth? auth;
         Action<CborOptions>? configureCborOptions;
+        HttpClientWrapper httpClientWrapper;
 
         switch (Engine)
         {
@@ -78,6 +79,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
                     db = session.Db;
                     auth = session.Auth;
                     configureCborOptions = httpEngine._configureCborOptions;
+                    httpClientWrapper = httpEngine.CreateEndpointHttpClientWrapper();
                 }
                 break;
             case SurrealDbWsEngine wsEngine:
@@ -92,6 +94,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
                     db = session.Db;
                     auth = session.Auth;
                     configureCborOptions = wsEngine._configureCborOptions;
+                    httpClientWrapper = new HttpClientWrapper(SharedHttpClient.Instance, false);
                 }
                 break;
             default:
@@ -107,11 +110,13 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
             throw new SurrealDbExportException("Database should be provided to export data.");
         }
 
-        var httpClient = new HttpClient();
-
-        SurrealDbHttpEngine.SetNsDbHttpClientHeaders(httpClient, version, ns, db);
-        SurrealDbHttpEngine.SetAuthHttpClientHeaders(httpClient, auth);
-
-        return new CommonHttpWrapper(httpClient, version, configureCborOptions);
+        return new CommonHttpWrapper(
+            httpClientWrapper,
+            version,
+            ns!,
+            db!,
+            auth,
+            configureCborOptions
+        );
     }
 }
