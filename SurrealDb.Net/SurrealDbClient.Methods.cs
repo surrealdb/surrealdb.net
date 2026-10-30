@@ -1,23 +1,23 @@
 ﻿using System.Collections.Immutable;
-using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using System.Text;
 using Semver;
-using SurrealDb.Net.Handlers;
+using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Cbor;
-using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Internals.Helpers;
 using SurrealDb.Net.Internals.Http;
-using SurrealDb.Net.Internals;
+using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 using SurrealDb.Net.Models.Response;
-using SurrealDb.Net.Models;
-using System.Text;
-using SystemTextJsonPatch;
 #if NET10_0_OR_GREATER
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 #else
+using SystemTextJsonPatch;
 #endif
 #if NET6_0_OR_GREATER
+using SurrealDb.Net.Handlers;
 #else
+using SurrealDb.Net.Internals.Extensions;
 #endif
 
 namespace SurrealDb.Net;

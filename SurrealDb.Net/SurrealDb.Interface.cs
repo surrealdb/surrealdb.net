@@ -682,6 +682,11 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     /// <exception cref="NotSupportedException">The embedded engine does not support GQL yet.</exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<SurrealDbResponse> Gql(
+        string query,
+        IReadOnlyDictionary<string, object?>? parameters = null,
+        CancellationToken cancellationToken = default
+    );
+
     /// <summary>
     /// Executes a raw SurrealQL query and streams its results as they are produced,
     /// instead of waiting for the whole answer.
