@@ -140,7 +140,8 @@ public sealed class SurrealDbClientGenerator : IAsyncDisposable
     {
         if (_options is not null && !_options.IsEmbedded && _databaseInfo is not null)
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            // 💡 Generous, so that cleaning up does not fail tests on a busy machine
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
             await using var client = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
             await client.SignIn(new RootAuth { Username = "root", Password = "root" }, cts.Token);

@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Net.Http.Headers;
@@ -36,11 +36,24 @@ namespace SurrealDb.Net.Internals;
 internal class SurrealDbHttpEngine : ISurrealDbEngine
 {
     private const string RPC_ENDPOINT = "/rpc";
+    private const string CBOR_MEDIA_TYPE = "application/cbor";
+    private const string CBOR2_MEDIA_TYPE = "application/cbor; v=2";
+
+    private const string SESSIONS_NOT_SUPPORTED_MESSAGE =
+        "Sessions are not supported over HTTP. Use a WebSocket connection (ws:// or wss://) to create, fork or list sessions.";
+    private const string TRANSACTIONS_NOT_SUPPORTED_MESSAGE =
+        "Transactions are not supported over HTTP. Use a WebSocket connection (ws:// or wss://) to run interactive transactions.";
 
     internal SemVersion? _version { get; private set; }
     internal Action<CborOptions>? _configureCborOptions { get; }
 
     private int _pendingRequests;
+    private volatile bool _cbor2;
+
+    /// <summary>
+    /// Whether the server last answered in <c>application/cbor; v=2</c>.
+    /// </summary>
+    internal bool IsCbor2 => _cbor2;
 
 #if DEBUG
     public string Id { get; } = Guid.NewGuid().ToString();
@@ -50,10 +63,18 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     private readonly IHttpClientFactory? _httpClientFactory;
     private readonly ISurrealDbLoggerFactory? _surrealDbLoggerFactory;
     private readonly ISessionizer? _sessionizer;
-    private readonly Lazy<HttpClient> _singleHttpClient = new(() => new HttpClient(), true);
-    private HttpClientConfiguration? _singleHttpClientConfiguration;
 
     public Uri Uri { get; }
+
+    public ConnectionStatus Status => _statusTracker.Status;
+
+    public event EventHandler<ConnectionStatusChangedEventArgs>? StatusChanged
+    {
+        add => _statusTracker.StatusChanged += value;
+        remove => _statusTracker.StatusChanged -= value;
+    }
+
+    private readonly ConnectionStatusTracker _statusTracker;
     public RpcSessionInfos SessionInfos { get; } = new();
 
     public SurrealDbHttpEngine(
@@ -65,6 +86,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
     {
         Uri = new Uri(parameters.Endpoint!);
+        _statusTracker = new(this);
         _parameters = parameters;
         _httpClientFactory = httpClientFactory;
         _configureCborOptions = configureCborOptions;
@@ -75,12 +97,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         SessionInfos.Set(null, new RpcSessionInfo(parameters));
     }
 
-    public async Task Attach(Guid sessionId, CancellationToken cancellationToken)
+    public Task Attach(Guid sessionId, CancellationToken cancellationToken)
     {
-        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
-
-        var request = new SurrealDbHttpRequest { Method = "attach", SessionId = sessionId };
-        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        throw new NotSupportedException(SESSIONS_NOT_SUPPORTED_MESSAGE);
     }
 
     public async Task Authenticate(
@@ -96,145 +115,118 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             Parameters = [tokens.Access],
         };
 
-        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        await ExecuteRequestAsync(request, sessionId, cancellationToken).ConfigureAwait(false);
 
-        SessionInfos.Get(sessionId)?.SetBearerAuth(tokens.Access);
+        SessionInfos.Get(sessionId)?.SetBearerAuth(tokens.Access, tokens.Refresh);
     }
 
-    public async Task<Guid> Begin(Guid? sessionId, CancellationToken cancellationToken)
-    {
-        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
-
-        var request = new SurrealDbHttpRequest { Method = "begin", SessionId = sessionId };
-        var response = await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
-        return response.GetValue<Guid>();
-    }
-
-    public async Task Cancel(
+    public async Task<Tokens> Refresh(
+        Tokens tokens,
         Guid? sessionId,
-        Guid transactionId,
+        Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
-        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
+        var request = new SurrealDbHttpRequest { Method = "refresh", Parameters = [tokens] };
 
-        var request = new SurrealDbHttpRequest
-        {
-            Method = "cancel",
-            SessionId = sessionId,
-            Parameters = [transactionId],
-        };
-        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        // 💡 The access token may have expired already, it must not be sent as a header
+        var dbResponse = await ExecuteRequestAsync(
+                request,
+                sessionId,
+                cancellationToken,
+                authOverride: new NoAuth()
+            )
+            .ConfigureAwait(false);
+        var newTokens = dbResponse.GetValue<Tokens>()!;
+
+        SessionInfos.Get(sessionId)?.SetBearerAuth(newTokens.Access, newTokens.Refresh);
+
+        return newTokens;
     }
 
-    public async Task CloseSession(Guid sessionId, CancellationToken cancellationToken)
+    public async Task Revoke(
+        Tokens tokens,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
     {
-        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
-        await Detach(sessionId, cancellationToken).ConfigureAwait(false);
+        var request = new SurrealDbHttpRequest { Method = "revoke", Parameters = [tokens] };
 
+        await ExecuteRequestAsync(request, sessionId, cancellationToken).ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.ForgetRefreshToken(tokens.Refresh!);
+    }
+
+    public Task<Guid> Begin(Guid? sessionId, CancellationToken cancellationToken)
+    {
+        throw new NotSupportedException(TRANSACTIONS_NOT_SUPPORTED_MESSAGE);
+    }
+
+    public Task Cancel(Guid? sessionId, Guid transactionId, CancellationToken cancellationToken)
+    {
+        throw new NotSupportedException(TRANSACTIONS_NOT_SUPPORTED_MESSAGE);
+    }
+
+    /// <summary>
+    /// Forgets the state of a session created by dependency injection (scoped or transient client).
+    /// Such sessions only live on the client: each request carries their namespace, database and auth as headers.
+    /// </summary>
+    public Task CloseSession(Guid sessionId, CancellationToken cancellationToken)
+    {
         SessionInfos.Remove(sessionId);
+        return Task.CompletedTask;
     }
 
-    public async Task Commit(
-        Guid? sessionId,
-        Guid transactionId,
-        CancellationToken cancellationToken
-    )
+    public Task Commit(Guid? sessionId, Guid transactionId, CancellationToken cancellationToken)
     {
-        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
-
-        var request = new SurrealDbHttpRequest
-        {
-            Method = "commit",
-            SessionId = sessionId,
-            Parameters = [transactionId],
-        };
-        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        throw new NotSupportedException(TRANSACTIONS_NOT_SUPPORTED_MESSAGE);
     }
 
-    public async Task<Guid> CreateSession(CancellationToken cancellationToken)
+    public Task<Guid> CreateSession(CancellationToken cancellationToken)
     {
-        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
-
-        var newId = Guid.NewGuid();
-
-        try
-        {
-            SessionInfos.Set(newId, new RpcSessionInfo());
-            await Attach(newId, cancellationToken).ConfigureAwait(false);
-        }
-        catch
-        {
-            SessionInfos.Remove(newId);
-            throw;
-        }
-
-        return newId;
+        throw new NotSupportedException(SESSIONS_NOT_SUPPORTED_MESSAGE);
     }
 
-    public async Task<Guid> CreateSession(Guid from, CancellationToken cancellationToken)
+    public Task<Guid> CreateSession(Guid from, CancellationToken cancellationToken)
     {
-        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
-
-        var newId = Guid.NewGuid();
-        var newState = SessionInfos.Clone(from, newId);
-
-        try
-        {
-            SessionInfos.Set(newId, newState);
-            await Attach(newId, cancellationToken).ConfigureAwait(false);
-        }
-        catch
-        {
-            SessionInfos.Remove(newId);
-            throw;
-        }
-
-        return newId;
-    }
-
-    private async Task CreateSession(
-        Guid sessionId,
-        RpcSessionInfo sessionInfo,
-        CancellationToken cancellationToken
-    )
-    {
-        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
-
-        try
-        {
-            SessionInfos.Set(sessionId, sessionInfo);
-            await Attach(sessionId, cancellationToken).ConfigureAwait(false);
-        }
-        catch
-        {
-            SessionInfos.Remove(sessionId);
-            throw;
-        }
+        throw new NotSupportedException(SESSIONS_NOT_SUPPORTED_MESSAGE);
     }
 
     public async Task Connect(CancellationToken cancellationToken)
     {
         _surrealDbLoggerFactory?.Connection?.LogConnectionAttempt(_parameters.Endpoint!);
 
-        await Version(cancellationToken).ConfigureAwait(false);
+        _statusTracker.Set(ConnectionStatus.Connecting);
 
-        if (_version!.CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
+        try
         {
-            throw new SurrealDbConnectException(
-                "CBOR is only supported on SurrealDB 1.4.0 or later."
-            );
+            await Version(cancellationToken).ConfigureAwait(false);
+
+            if (_version!.CompareSortOrderTo(new SemVersion(1, 4, 0)) < 0)
+            {
+                throw new SurrealDbConnectException(
+                    "CBOR is only supported on SurrealDB 1.4.0 or later."
+                );
+            }
+
+            var dbResponse = await RawQuery(
+                    "RETURN TRUE",
+                    ImmutableDictionary<string, object?>.Empty,
+                    null,
+                    null,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+            EnsuresFirstResultOk(dbResponse);
+        }
+        catch (Exception ex)
+        {
+            _statusTracker.Set(ConnectionStatus.Disconnected, ex);
+            throw;
         }
 
-        var dbResponse = await RawQuery(
-                "RETURN TRUE",
-                ImmutableDictionary<string, object?>.Empty,
-                null,
-                null,
-                cancellationToken
-            )
-            .ConfigureAwait(false);
-        EnsuresFirstResultOk(dbResponse);
+        _statusTracker.Set(ConnectionStatus.Connected);
 
         _surrealDbLoggerFactory?.Connection?.LogConnectionSuccess(_parameters.Endpoint!);
     }
@@ -252,7 +244,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         var request = new SurrealDbHttpRequest { Method = "create", Parameters = [data.Id, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
 
         return dbResponse.GetValue<T>()!;
@@ -268,7 +260,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "create", Parameters = [table, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
 
         if (_version?.Major > 1)
@@ -289,7 +281,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "create", Parameters = [recordId, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<TOutput>()!;
     }
@@ -303,7 +295,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "delete", Parameters = [table] };
 
-        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        await ExecuteRequestAsync(request, sessionId, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<bool> Delete(
@@ -315,7 +307,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "delete", Parameters = [recordId] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return !dbResponse.ExpectNone() && !dbResponse.ExpectEmptyArray();
     }
@@ -329,17 +321,14 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "delete", Parameters = [recordId] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return !dbResponse.ExpectNone() && !dbResponse.ExpectEmptyArray();
     }
 
-    public async Task Detach(Guid sessionId, CancellationToken cancellationToken)
+    public Task Detach(Guid sessionId, CancellationToken cancellationToken)
     {
-        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
-
-        var request = new SurrealDbHttpRequest { Method = "detach", SessionId = sessionId };
-        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        throw new NotSupportedException(SESSIONS_NOT_SUPPORTED_MESSAGE);
     }
 
     private bool _disposed;
@@ -351,11 +340,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             return;
         }
 
-        if (_singleHttpClient.IsValueCreated)
-        {
-            _singleHttpClient.Value.Dispose();
-        }
-
+        _statusTracker.Set(ConnectionStatus.Disconnected);
         _disposed = true;
     }
 
@@ -372,23 +357,29 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public async Task<bool> Health(CancellationToken cancellationToken)
     {
-        using var wrapper = CreateHttpClientWrapper(null);
+        using var wrapper = CreateEndpointHttpClientWrapper();
         using var body = CreateBodyContent(
             _configureCborOptions,
             new SurrealDbHttpRequest { Method = "ping" },
             null
         );
+        using var httpRequest = CreateRpcRequestMessage(null, body);
 
         try
         {
             using var response = await wrapper
-                .Instance.PostAsync(RPC_ENDPOINT, body, cancellationToken)
+                .Instance.SendAsync(httpRequest, cancellationToken)
                 .ConfigureAwait(false);
+
+            // 💡 Each request is a new connection, its outcome is the connection status
+            _statusTracker.Set(ConnectionStatus.Connected);
 
             return response.IsSuccessStatusCode;
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
+            // 💡 Leaves a connection attempt in progress to report its own outcome
+            _statusTracker.SetIf(ConnectionStatus.Connected, ConnectionStatus.Disconnected, ex);
             return false;
         }
     }
@@ -401,7 +392,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "info" };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
 
         return dbResponse.GetValue<T>()!;
@@ -418,7 +409,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "insert", Parameters = [table, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
 
         return dbResponse.DeserializeEnumerable<T>();
@@ -446,7 +437,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             Parameters = [null, data],
         };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
 
         return dbResponse.DeserializeEnumerable<T>().Single();
@@ -477,7 +468,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             Parameters = [table, data],
         };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
 
         return dbResponse.DeserializeEnumerable<T>().Single();
@@ -485,6 +476,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
     public Task Invalidate(Guid? sessionId, Guid? transactionId, CancellationToken _)
     {
+        CreateDeferredSessionInfo(sessionId);
         SessionInfos.Get(sessionId)?.ResetAuth();
         return Task.CompletedTask;
     }
@@ -540,7 +532,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         var request = new SurrealDbHttpRequest { Method = "merge", Parameters = [data.Id, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<TOutput>()!;
     }
@@ -555,7 +547,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "merge", Parameters = [recordId, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<T>()!;
     }
@@ -570,7 +562,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "merge", Parameters = [recordId, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<T>()!;
     }
@@ -586,7 +578,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "merge", Parameters = [table, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<TOutput>();
     }
@@ -601,7 +593,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "merge", Parameters = [table, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
     }
@@ -621,7 +613,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             Parameters = [recordId, patches],
         };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<T>()!;
     }
@@ -641,7 +633,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             Parameters = [recordId, patches],
         };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<T>()!;
     }
@@ -657,16 +649,38 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "patch", Parameters = [table, patches] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
     }
 
-    public async Task<SurrealDbResponse> RawQuery(
+    public Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
         Guid? sessionId,
         Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        return ExecuteQueryAsync("query", query, parameters, sessionId, cancellationToken);
+    }
+
+    public Task<SurrealDbResponse> Gql(
+        string query,
+        IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        return ExecuteQueryAsync("gql", query, parameters, sessionId, cancellationToken);
+    }
+
+    private async Task<SurrealDbResponse> ExecuteQueryAsync(
+        string method,
+        string query,
+        IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
         CancellationToken cancellationToken
     )
     {
@@ -684,18 +698,19 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             allParameters.Add(key, value);
         }
 
+        // 💡 Query parameters take precedence over session variables of the same name
         foreach (var (key, value) in parameters)
         {
-            allParameters.Add(key, value);
+            allParameters[key] = value;
         }
 
         var request = new SurrealDbHttpRequest
         {
-            Method = "query",
+            Method = method,
             Parameters = [query, allParameters],
         };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
 
 #if NET7_0_OR_GREATER
@@ -735,7 +750,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             Parameters = [ins, table, outs, data],
         };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<TOutput>();
     }
@@ -757,7 +772,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             Parameters = [@in, recordId, @out, data],
         };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<TOutput>()!;
     }
@@ -777,7 +792,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             Parameters = [name, version, args],
         };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<T>()!;
     }
@@ -791,7 +806,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "select", Parameters = [table] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
     }
@@ -805,7 +820,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "select", Parameters = [recordId] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<T?>();
     }
@@ -819,7 +834,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "select", Parameters = [recordId] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<T?>();
     }
@@ -838,20 +853,14 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         var request = new SurrealDbHttpRequest { Method = "select", Parameters = [recordIdRange] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<TOutput>();
     }
 
-    public async Task<IEnumerable<Guid>> Sessions(CancellationToken cancellationToken)
+    public Task<IEnumerable<Guid>> Sessions(CancellationToken cancellationToken)
     {
-        await RequireMajorVersion(3, cancellationToken).ConfigureAwait(false);
-
-        var request = new SurrealDbHttpRequest { Method = "sessions" };
-
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
-            .ConfigureAwait(false);
-        return dbResponse.DeserializeEnumerable<Guid>()!;
+        throw new NotSupportedException(SESSIONS_NOT_SUPPORTED_MESSAGE);
     }
 
     public async Task Set(
@@ -934,7 +943,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "signin", Parameters = [rootAuth] };
 
-        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        await ExecuteRequestAsync(request, sessionId, cancellationToken).ConfigureAwait(false);
 
         SessionInfos.Get(sessionId)?.SetSystemAuth(rootAuth);
     }
@@ -948,7 +957,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "signin", Parameters = [nsAuth] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         var tokens = dbResponse.GetValue<Tokens>()!;
 
@@ -966,7 +975,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "signin", Parameters = [dbAuth] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         var tokens = dbResponse.GetValue<Tokens>()!;
 
@@ -985,11 +994,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "signin", Parameters = [scopeAuth] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         var tokens = dbResponse.GetValue<Tokens>()!;
 
-        SessionInfos.Get(sessionId)?.SetBearerAuth(tokens.Access);
+        SessionInfos.Get(sessionId)?.SetBearerAuth(tokens.Access, tokens.Refresh);
 
         return tokens;
     }
@@ -1004,11 +1013,11 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "signup", Parameters = [scopeAuth] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         var tokens = dbResponse.GetValue<Tokens>()!;
 
-        SessionInfos.Get(sessionId)?.SetBearerAuth(tokens.Access);
+        SessionInfos.Get(sessionId)?.SetBearerAuth(tokens.Access, tokens.Refresh);
 
         return tokens;
     }
@@ -1018,31 +1027,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         throw new NotSupportedException();
     }
 
-    public Task<bool> TryResetAsync()
+    public Task Reset(Guid? sessionId, CancellationToken _)
     {
-        try
-        {
-            if (_pendingRequests > 0)
-            {
-                throw new SurrealDbResetException(
-                    "Cannot reset client while requests are pending."
-                );
-            }
-
-#if ENABLE_HTTP_RESET
-            var request = new SurrealDbHttpRequest { Method = "reset" };
-            await ExecuteRequestAsync(request, CancellationToken.None).ConfigureAwait(false);
-
-            _config.Reset(_parameters);
-            return true;
-#else
-            return Task.FromResult(false);
-#endif
-        }
-        catch (Exception)
-        {
-            return Task.FromResult(false);
-        }
+        // 💡 Each HTTP request runs in a new server session, built from the client-side state
+        CreateDeferredSessionInfo(sessionId);
+        SessionInfos.Get(sessionId)?.Reset();
+        return Task.CompletedTask;
     }
 
     public Task Unset(string key, Guid? sessionId, Guid? transactionId, CancellationToken _)
@@ -1056,6 +1046,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             throw new ArgumentException("Variable name is not valid.", nameof(key));
         }
 
+        CreateDeferredSessionInfo(sessionId);
         SessionInfos.Get(sessionId)?.Unset(key);
         return Task.CompletedTask;
     }
@@ -1078,7 +1069,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         var request = new SurrealDbHttpRequest { Method = "update", Parameters = [data.Id, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<T>()!;
     }
@@ -1099,7 +1090,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         var request = new SurrealDbHttpRequest { Method = "update", Parameters = [recordId, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<TOutput>()!;
     }
@@ -1115,7 +1106,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "update", Parameters = [table, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
     }
@@ -1131,7 +1122,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         var request = new SurrealDbHttpRequest { Method = "update", Parameters = [table, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<TOutput>();
     }
@@ -1152,7 +1143,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         var request = new SurrealDbHttpRequest { Method = "update", Parameters = [recordId, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<TOutput>()!;
     }
@@ -1173,7 +1164,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string method = _version?.Major > 1 ? "upsert" : "update";
         var request = new SurrealDbHttpRequest { Method = method, Parameters = [data.Id, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<T>()!;
     }
@@ -1192,7 +1183,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string method = _version?.Major > 1 ? "upsert" : "update";
         var request = new SurrealDbHttpRequest { Method = method, Parameters = [recordId, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<TOutput>()!;
     }
@@ -1211,7 +1202,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string method = _version?.Major > 1 ? "upsert" : "update";
         var request = new SurrealDbHttpRequest { Method = method, Parameters = [table, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<T>();
     }
@@ -1230,7 +1221,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string method = _version?.Major > 1 ? "upsert" : "update";
         var request = new SurrealDbHttpRequest { Method = method, Parameters = [table, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.DeserializeEnumerable<TOutput>();
     }
@@ -1249,29 +1240,57 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         string method = _version?.Major > 1 ? "upsert" : "update";
         var request = new SurrealDbHttpRequest { Method = method, Parameters = [recordId, data] };
 
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, sessionId, cancellationToken)
             .ConfigureAwait(false);
         return dbResponse.GetValue<TOutput>()!;
     }
 
     public async Task Use(
-        string ns,
-        string db,
+        string? ns,
+        string? db,
         Guid? sessionId,
         Guid? transactionId,
         CancellationToken cancellationToken
     )
     {
         var request = new SurrealDbHttpRequest { Method = "use", Parameters = [ns, db] };
-        await ExecuteRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        await ExecuteRequestAsync(request, sessionId, cancellationToken).ConfigureAwait(false);
 
         SessionInfos.Get(sessionId)?.Use(ns, db);
+    }
+
+    public async Task UseNs(
+        string? ns,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        // 💡 NONE leaves the database unchanged
+        var request = new SurrealDbHttpRequest { Method = "use", Parameters = [ns, new None()] };
+        await ExecuteRequestAsync(request, sessionId, cancellationToken).ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.UseNs(ns);
+    }
+
+    public async Task UseDb(
+        string? db,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        // 💡 NONE leaves the namespace unchanged
+        var request = new SurrealDbHttpRequest { Method = "use", Parameters = [new None(), db] };
+        await ExecuteRequestAsync(request, sessionId, cancellationToken).ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.UseDb(db);
     }
 
     public async Task<string> Version(CancellationToken cancellationToken)
     {
         var request = new SurrealDbHttpRequest { Method = "version" };
-        var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
+        var dbResponse = await ExecuteRequestAsync(request, null, cancellationToken)
             .ConfigureAwait(false);
         var version = dbResponse.GetValue<string>()!;
 
@@ -1283,134 +1302,190 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return version;
     }
 
-    private static CborOptions GetCborSerializerOptions(Action<CborOptions>? configureCborOptions)
-    {
-        return SurrealDbCborOptions.GetCborSerializerOptions(configureCborOptions);
-    }
-
-    private HttpClientWrapper CreateHttpClientWrapper(
-        Guid? sessionId,
-        IAuth? overridedAuth = null,
-        UseConfiguration? useConfiguration = null
+    private static CborOptions GetCborSerializerOptions(
+        Action<CborOptions>? configureCborOptions,
+        bool cbor2
     )
     {
-        var client = CreateHttpClient(sessionId, overridedAuth, useConfiguration);
-        bool shouldDispose = !IsSingleHttpClient(client);
-
-        return new HttpClientWrapper(client, shouldDispose);
+        return SurrealDbCborOptions.GetCborSerializerOptions(configureCborOptions, cbor2);
     }
 
-    private HttpClient CreateHttpClient(
-        Guid? sessionId,
-        IAuth? overridedAuth,
-        UseConfiguration? useConfiguration
-    )
+    private static bool IsCbor2MediaType(MediaTypeHeaderValue? contentType)
     {
-        var session = SessionInfos.Get(sessionId);
-
-        string? ns = useConfiguration is not null ? useConfiguration.Ns : session!.Ns;
-        string? db = useConfiguration is not null ? useConfiguration.Db : session!.Db;
-
-        var client = GetHttpClient();
-
-        bool isSingleHttpClient = IsSingleHttpClient(client);
-
-        if (isSingleHttpClient)
-        {
-            if (_version is not null && TrySetSingleHttpClientConfiguration(ns, db, session!.Auth))
-            {
-                ApplyHttpClientConfiguration(sessionId, client, overridedAuth, useConfiguration);
-                return client;
-            }
-
-            var desiredClientConfiguration = new HttpClientConfiguration(
-                ns,
-                db,
-                overridedAuth ?? session!.Auth
+        return contentType is not null
+            && string.Equals(
+                contentType.MediaType,
+                CBOR_MEDIA_TYPE,
+                StringComparison.OrdinalIgnoreCase
+            )
+            && contentType.Parameters.Any(parameter =>
+                string.Equals(parameter.Name, "v", StringComparison.OrdinalIgnoreCase)
+                && parameter.Value?.Trim('"') == "2"
             );
-            bool shouldClone =
-                _version is null || _singleHttpClientConfiguration != desiredClientConfiguration;
-
-            if (shouldClone)
-            {
-                var newHttpClient = new HttpClient();
-                ApplyHttpClientConfiguration(
-                    sessionId,
-                    newHttpClient,
-                    overridedAuth,
-                    useConfiguration
-                );
-
-                return newHttpClient;
-            }
-        }
-        else
-        {
-            ApplyHttpClientConfiguration(sessionId, client, overridedAuth, useConfiguration);
-        }
-
-        return client;
     }
 
-    private void ApplyHttpClientConfiguration(
+    /// <summary>
+    /// Creates an RPC request carrying the namespace, database and auth of the given session as headers.
+    /// Headers are set on each request, never on the <see cref="HttpClient"/>, so that one client serves every session.
+    /// </summary>
+    private HttpRequestMessage CreateRpcRequestMessage(
         Guid? sessionId,
-        HttpClient client,
-        IAuth? overridedAuth,
-        UseConfiguration? useConfiguration
+        HttpContent body,
+        IAuth? authOverride = null
     )
     {
-        var session = SessionInfos.Get(sessionId);
+        var session = SessionInfos.Get(sessionId) ?? throw new InvalidSessionException(sessionId);
 
-        client.BaseAddress = Uri;
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, new Uri(Uri, RPC_ENDPOINT))
+        {
+            Content = body,
+        };
 
-        var ns = useConfiguration is not null ? useConfiguration.Ns : session!.Ns;
-        var db = useConfiguration is not null ? useConfiguration.Db : session!.Db;
-        SetNsDbHttpClientHeaders(client, _version, ns, db);
+        // 💡 Servers before 4.0 do not know cbor.2, so only offer it to 4.0 and above
+        SetNsDbHttpClientHeaders(
+            httpRequest.Headers,
+            _version,
+            session.Ns,
+            session.Db,
+            offerCbor2: _version?.Major >= 4
+        );
+        SetAuthHttpClientHeaders(httpRequest.Headers, authOverride ?? session.Auth);
 
-        var auth = overridedAuth ?? session!.Auth;
-        SetAuthHttpClientHeaders(client, auth);
+        return httpRequest;
     }
 
+    /// <summary>
+    /// RPC methods that change the authentication themselves, so they never trigger a renewal.
+    /// </summary>
+    private static readonly HashSet<string> _methodsWithoutAuthRenewal =
+    [
+        "signin",
+        "signup",
+        "authenticate",
+        "refresh",
+        "revoke",
+    ];
+
+    private readonly SemaphoreSlim _authRenewalLock = new(1, 1);
+
+    /// <summary>
+    /// Renews the access token of a session when it is about to expire, using its refresh token,
+    /// or forgets it once expired when <see cref="SurrealDbOptions.InvalidateOnExpiry"/> is set.
+    /// A failed renewal is logged: the request then reports the expired token itself.
+    /// </summary>
+    internal async Task RenewAuthIfExpiringAsync(
+        Guid? sessionId,
+        CancellationToken cancellationToken
+    )
+    {
+        if (!ShouldRenewAuth(sessionId))
+        {
+            return;
+        }
+
+        await _authRenewalLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            // 💡 Another request may have renewed it while waiting
+            if (
+                !ShouldRenewAuth(sessionId)
+                || SessionInfos.Get(sessionId)?.Auth is not BearerAuth bearerAuth
+            )
+            {
+                return;
+            }
+
+            if (_parameters.InvalidateOnExpiry)
+            {
+                SessionInfos.Get(sessionId)?.ResetAuth();
+                return;
+            }
+
+            await Refresh(
+                    new Tokens(bearerAuth.Token, bearerAuth.Refresh),
+                    sessionId,
+                    null,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _surrealDbLoggerFactory?.Connection?.LogAuthRenewalFailed(ex);
+        }
+        finally
+        {
+            _authRenewalLock.Release();
+        }
+    }
+
+    private bool ShouldRenewAuth(Guid? sessionId)
+    {
+        if (SessionInfos.Get(sessionId)?.Auth is not BearerAuth bearerAuth)
+        {
+            return false;
+        }
+
+        if (_parameters.InvalidateOnExpiry)
+        {
+            return JwtHelper.ExpiresWithin(bearerAuth.Token, TimeSpan.Zero);
+        }
+
+        return bearerAuth.Refresh is not null
+            && JwtHelper.ExpiresWithin(bearerAuth.Token, _parameters.ExpiryMargin);
+    }
+
+    // 💡 With offerCbor2, accept application/cbor; v=2 responses. The server answers a plain CBOR
+    // request in either format, and the response's Content-Type says which one it chose.
     internal static void SetNsDbHttpClientHeaders(
-        HttpClient client,
+        HttpRequestHeaders headers,
         SemVersion? version,
         string? ns,
-        string? db
+        string? db,
+        bool offerCbor2 = false
     )
     {
-        client.DefaultRequestHeaders.Remove(HttpConstants.ACCEPT_HEADER_NAME);
+        headers.Remove(HttpConstants.ACCEPT_HEADER_NAME);
 
         if (version?.Major > 1)
         {
-            client.DefaultRequestHeaders.Remove(HttpConstants.NS_HEADER_NAME_V2);
-            client.DefaultRequestHeaders.Remove(HttpConstants.DB_HEADER_NAME_V2);
+            headers.Remove(HttpConstants.NS_HEADER_NAME_V2);
+            headers.Remove(HttpConstants.DB_HEADER_NAME_V2);
         }
         else
         {
-            client.DefaultRequestHeaders.Remove(HttpConstants.NS_HEADER_NAME);
-            client.DefaultRequestHeaders.Remove(HttpConstants.DB_HEADER_NAME);
+            headers.Remove(HttpConstants.NS_HEADER_NAME);
+            headers.Remove(HttpConstants.DB_HEADER_NAME);
         }
 
-        client.DefaultRequestHeaders.Add(HttpConstants.ACCEPT_HEADER_NAME, ["application/cbor"]);
+        headers.Add(
+            HttpConstants.ACCEPT_HEADER_NAME,
+            [offerCbor2 ? CBOR2_MEDIA_TYPE : CBOR_MEDIA_TYPE]
+        );
 
-        if (version?.Major > 1)
+        string nsHeaderName =
+            version?.Major > 1 ? HttpConstants.NS_HEADER_NAME_V2 : HttpConstants.NS_HEADER_NAME;
+        string dbHeaderName =
+            version?.Major > 1 ? HttpConstants.DB_HEADER_NAME_V2 : HttpConstants.DB_HEADER_NAME;
+
+        // 💡 No header at all when cleared, as an empty header would select an empty name
+        if (ns is not null)
         {
-            client.DefaultRequestHeaders.Add(HttpConstants.NS_HEADER_NAME_V2, ns);
-            client.DefaultRequestHeaders.Add(HttpConstants.DB_HEADER_NAME_V2, db);
+            headers.Add(nsHeaderName, ns);
         }
-        else
+        if (db is not null)
         {
-            client.DefaultRequestHeaders.Add(HttpConstants.NS_HEADER_NAME, ns);
-            client.DefaultRequestHeaders.Add(HttpConstants.DB_HEADER_NAME, db);
+            headers.Add(dbHeaderName, db);
         }
     }
 
-    internal static void SetAuthHttpClientHeaders(HttpClient client, IAuth? auth)
+    internal static void SetAuthHttpClientHeaders(HttpRequestHeaders headers, IAuth? auth)
     {
         switch (auth)
         {
             case BearerAuth bearerAuth:
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                headers.Authorization = new AuthenticationHeaderValue(
                     AuthConstants.BEARER,
                     bearerAuth.Token
                 );
@@ -1422,62 +1497,48 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
                         $"{systemAuth.Auth.Username}:{systemAuth.Auth.Password}"
                     )
                 );
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                headers.Authorization = new AuthenticationHeaderValue(
                     AuthConstants.BASIC,
                     credentials
                 );
                 break;
             }
             case NoAuth:
-                client.DefaultRequestHeaders.Authorization = null;
+                headers.Authorization = null;
                 break;
         }
     }
 
-    private HttpClient GetHttpClient()
+    /// <summary>
+    /// Returns the <see cref="HttpClient"/> to use for every HTTP call (RPC, import, export).
+    /// Headers must be set on each request since the client is shared.
+    /// </summary>
+    internal HttpClientWrapper CreateEndpointHttpClientWrapper()
     {
         if (_httpClientFactory is not null)
         {
             string httpClientName = HttpClientHelper.GetHttpClientName(Uri);
-            return _httpClientFactory.CreateClient(httpClientName);
+            return new HttpClientWrapper(_httpClientFactory.CreateClient(httpClientName), true);
         }
 
-        return _singleHttpClient.Value;
+        return new HttpClientWrapper(SharedHttpClient.Instance, false);
     }
 
-#if NET9_0_OR_GREATER
-    private readonly Lock _singleHttpClientConfigurationLock = new();
-#else
-    private readonly object _singleHttpClientConfigurationLock = new();
-#endif
-
-    private bool TrySetSingleHttpClientConfiguration(string? ns, string? db, IAuth auth)
-    {
-        lock (_singleHttpClientConfigurationLock)
-        {
-            if (_singleHttpClientConfiguration is null)
-            {
-                _singleHttpClientConfiguration = new HttpClientConfiguration(ns, db, auth);
-                return true;
-            }
-
-            return false;
-        }
-    }
-
-    private bool IsSingleHttpClient(HttpClient client)
-    {
-        return _singleHttpClient.IsValueCreated && client == _singleHttpClient.Value;
-    }
-
+    // 💡 With cbor2, send the body as application/cbor; v=2, which only a server that has answered
+    // in it accepts.
     internal static HttpContent CreateBodyContent<T>(
         Action<CborOptions>? configureCborOptions,
         T data,
-        ISurrealDbLoggerFactory? surrealDbLoggerFactory
+        ISurrealDbLoggerFactory? surrealDbLoggerFactory,
+        bool cbor2 = false
     )
     {
         var writer = new ArrayBufferWriter<byte>();
-        CborSerializer.Serialize(data, writer, GetCborSerializerOptions(configureCborOptions));
+        CborSerializer.Serialize(
+            data,
+            writer,
+            GetCborSerializerOptions(configureCborOptions, cbor2)
+        );
         var payload = writer.WrittenSpan.ToArray();
 
         if (surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
@@ -1487,7 +1548,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         }
 
         var content = new ByteArrayContent(payload);
-        content.Headers.ContentType = new MediaTypeHeaderValue("application/cbor");
+        content.Headers.ContentType = MediaTypeHeaderValue.Parse(
+            cbor2 ? CBOR2_MEDIA_TYPE : CBOR_MEDIA_TYPE
+        );
 
         return content;
     }
@@ -1508,9 +1571,36 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             throw new NotImplementedException();
     }
 
+    /// <summary>
+    /// Creates the state of a scoped session on first use, from the state it was given.
+    /// </summary>
+    private void CreateDeferredSessionInfo(Guid? sessionId)
+    {
+        if (
+            sessionId.HasValue
+            && _sessionizer is not null
+            && _sessionizer.Get(sessionId.Value, out var newSessionInfo)
+            && newSessionInfo is RpcSessionInfo newRpcSessionInfo
+        )
+        {
+            _sessionizer.TryRemove(sessionId.Value);
+            // 💡 The provided state is shared by every scope, each session needs its own copy
+            SessionInfos.Set(sessionId.Value, new RpcSessionInfo(newRpcSessionInfo));
+        }
+    }
+
+    /// <param name="request">The RPC request.</param>
+    /// <param name="sessionId">
+    /// The client-side session whose namespace, database and auth are sent as headers.
+    /// HTTP has no server-side session, so the id itself is never sent.
+    /// </param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <param name="authOverride">The auth to send instead of the session's own, if any.</param>
     private async Task<SurrealDbHttpOkResponse> ExecuteRequestAsync(
         SurrealDbHttpRequest request,
-        CancellationToken cancellationToken
+        Guid? sessionId,
+        CancellationToken cancellationToken,
+        IAuth? authOverride = null
     )
     {
         long executionStartTime = Stopwatch.GetTimestamp();
@@ -1520,20 +1610,21 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             await Connect(cancellationToken).ConfigureAwait(false);
         }
 
-        if (
-            request.SessionId.HasValue
-            && _sessionizer is not null
-            && _sessionizer.Get(request.SessionId.Value, out var newSessionInfo)
-            && newSessionInfo is RpcSessionInfo newRpcSessionInfo
-        )
+        CreateDeferredSessionInfo(sessionId);
+
+        using var wrapper = CreateEndpointHttpClientWrapper();
+        using var body = CreateBodyContent(
+            _configureCborOptions,
+            request,
+            _surrealDbLoggerFactory,
+            _cbor2
+        );
+        if (authOverride is null && !_methodsWithoutAuthRenewal.Contains(request.Method))
         {
-            _sessionizer.TryRemove(request.SessionId.Value);
-            await CreateSession(request.SessionId.Value, newRpcSessionInfo, cancellationToken)
-                .ConfigureAwait(false);
+            await RenewAuthIfExpiringAsync(sessionId, cancellationToken).ConfigureAwait(false);
         }
 
-        using var wrapper = CreateHttpClientWrapper(request.SessionId);
-        using var body = CreateBodyContent(_configureCborOptions, request, _surrealDbLoggerFactory);
+        using var httpRequest = CreateRpcRequestMessage(sessionId, body, authOverride);
 
         Interlocked.Increment(ref _pendingRequests);
 
@@ -1542,14 +1633,18 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         try
         {
             using var response = await wrapper
-                .Instance.PostAsync(RPC_ENDPOINT, body, cancellationToken)
+                .Instance.SendAsync(httpRequest, cancellationToken)
                 .ConfigureAwait(false);
+
+            // 💡 The server answered: a connection lost by an earlier request is back
+            _statusTracker.SetIf(ConnectionStatus.Disconnected, ConnectionStatus.Connected);
 
             surrealDbResponse = await DeserializeDbResponseAsync(response, cancellationToken)
                 .ConfigureAwait(false);
         }
-        catch
+        catch (HttpRequestException ex)
         {
+            _statusTracker.Set(ConnectionStatus.Disconnected, ex);
             throw;
         }
         finally
@@ -1589,7 +1684,21 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         await using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 #endif
 
-        var cborSerializerOptions = GetCborSerializerOptions(_configureCborOptions);
+        // 💡 Send cbor.2 once the server answers in it, and fall back to plain CBOR if it stops
+        bool cbor2 = IsCbor2MediaType(response.Content.Headers.ContentType);
+        if (
+            cbor2
+            || string.Equals(
+                response.Content.Headers.ContentType?.MediaType,
+                CBOR_MEDIA_TYPE,
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            _cbor2 = cbor2;
+        }
+
+        var cborSerializerOptions = GetCborSerializerOptions(_configureCborOptions, cbor2);
 
         if (_surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
         {

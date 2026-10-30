@@ -1,7 +1,10 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Text;
 using Semver;
 using SurrealDb.Net.Internals;
+using SurrealDb.Net.Internals.Cbor;
+using SurrealDb.Net.Internals.Helpers;
+using SurrealDb.Net.Internals.Http;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -24,6 +27,30 @@ public abstract partial class BaseSurrealDbClient
     public Task Authenticate(Tokens tokens, CancellationToken cancellationToken = default)
     {
         return Engine.Authenticate(tokens, SessionId, TransactionId, cancellationToken);
+    }
+
+    public Task<Tokens> Refresh(Tokens tokens, CancellationToken cancellationToken = default)
+    {
+        EnsureRefreshToken(tokens);
+        return Engine.Refresh(tokens, SessionId, TransactionId, cancellationToken);
+    }
+
+    public Task Revoke(Tokens tokens, CancellationToken cancellationToken = default)
+    {
+        EnsureRefreshToken(tokens);
+        return Engine.Revoke(tokens, SessionId, TransactionId, cancellationToken);
+    }
+
+    private static void EnsureRefreshToken(Tokens tokens)
+    {
+        if (tokens is null)
+        {
+            throw new ArgumentNullException(nameof(tokens));
+        }
+        if (string.IsNullOrEmpty(tokens.Refresh))
+        {
+            throw new ArgumentException("A refresh token is required.", nameof(tokens));
+        }
     }
 
     public Task Connect(CancellationToken cancellationToken = default)
@@ -77,7 +104,7 @@ public abstract partial class BaseSurrealDbClient
         return Engine.Delete(recordId, SessionId, TransactionId, cancellationToken);
     }
 
-    public async ValueTask DisposeAsync()
+    public virtual async ValueTask DisposeAsync()
     {
         if (SessionId.HasValue)
         {
@@ -124,9 +151,12 @@ public abstract partial class BaseSurrealDbClient
             wrapper.Version is not null
             && wrapper.Version.Satisfies(SemVersionRange.AtLeast(new(2, 1), true));
 
-        using var response = shouldUsePostRequest
-            ? await wrapper.HttpClient.PostAsync(exportUri, httpContent, cancellationToken)
-            : await wrapper.HttpClient.GetAsync(exportUri, cancellationToken);
+        using var request = shouldUsePostRequest
+            ? wrapper.CreateRequest(HttpMethod.Post, exportUri, httpContent)
+            : wrapper.CreateRequest(HttpMethod.Get, exportUri, null);
+        using var response = await wrapper
+            .HttpClient.SendAsync(request, cancellationToken)
+            .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
 #if NET6_0_OR_GREATER
@@ -164,10 +194,18 @@ public abstract partial class BaseSurrealDbClient
 
         using var httpContent = new StringContent(input, Encoding.UTF8, "text/plain");
 
+        using var request = wrapper.CreateRequest(HttpMethod.Post, importUri, httpContent);
         using var response = await wrapper
-            .HttpClient.PostAsync(importUri, httpContent, cancellationToken)
+            .HttpClient.SendAsync(request, cancellationToken)
             .ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
+
+        await ImportResponseReader
+            .EnsureSuccessAsync(
+                response,
+                SurrealDbCborOptions.GetCborSerializerOptions(wrapper.ConfigureCborOptions),
+                cancellationToken
+            )
+            .ConfigureAwait(false);
     }
 
     public Task<T> Info<T>(CancellationToken cancellationToken = default)
@@ -201,9 +239,19 @@ public abstract partial class BaseSurrealDbClient
         return Engine.InsertRelation(table, data, SessionId, TransactionId, cancellationToken);
     }
 
+    public SurrealDbApi Api(string? prefix = null)
+    {
+        return new SurrealDbApi(this, prefix);
+    }
+
     public Task Invalidate(CancellationToken cancellationToken = default)
     {
         return Engine.Invalidate(SessionId, TransactionId, cancellationToken);
+    }
+
+    public Task Reset(CancellationToken cancellationToken = default)
+    {
+        return Engine.Reset(SessionId, cancellationToken);
     }
 
     public Task Kill(Guid queryUuid, CancellationToken cancellationToken = default)
@@ -390,6 +438,21 @@ public abstract partial class BaseSurrealDbClient
     }
 #endif
 
+    public Task<SurrealDbResponse> Gql(
+        string query,
+        IReadOnlyDictionary<string, object?>? parameters = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return Engine.Gql(
+            query,
+            parameters ?? ImmutableDictionary<string, object?>.Empty,
+            SessionId,
+            TransactionId,
+            cancellationToken
+        );
+    }
+
     public Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?>? parameters = null,
@@ -401,6 +464,32 @@ public abstract partial class BaseSurrealDbClient
             parameters ?? ImmutableDictionary<string, object?>.Empty,
             SessionId,
             TransactionId,
+            cancellationToken
+        );
+    }
+
+    public IAsyncEnumerable<SurrealDbQueryStreamFrame> RawQueryStream(
+        string query,
+        IReadOnlyDictionary<string, object?>? parameters = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var queryParameters = parameters ?? ImmutableDictionary<string, object?>.Empty;
+
+        if (Engine is SurrealDbWsEngine wsEngine)
+        {
+            return wsEngine.RawQueryStream(
+                query,
+                queryParameters,
+                SessionId,
+                TransactionId,
+                cancellationToken
+            );
+        }
+
+        // 💡 Other protocols cannot stream, the whole answer is read before it is split into frames
+        return QueryStreamFallback.ToFramesAsync(
+            ct => Engine.RawQuery(query, queryParameters, SessionId, TransactionId, ct),
             cancellationToken
         );
     }
@@ -826,9 +915,19 @@ public abstract partial class BaseSurrealDbClient
         );
     }
 
-    public Task Use(string ns, string db, CancellationToken cancellationToken = default)
+    public Task Use(string? ns, string? db, CancellationToken cancellationToken = default)
     {
         return Engine.Use(ns, db, SessionId, TransactionId, cancellationToken);
+    }
+
+    public Task UseNs(string? ns, CancellationToken cancellationToken = default)
+    {
+        return Engine.UseNs(ns, SessionId, TransactionId, cancellationToken);
+    }
+
+    public Task UseDb(string? db, CancellationToken cancellationToken = default)
+    {
+        return Engine.UseDb(db, SessionId, TransactionId, cancellationToken);
     }
 
     public Task<string> Version(CancellationToken cancellationToken = default)

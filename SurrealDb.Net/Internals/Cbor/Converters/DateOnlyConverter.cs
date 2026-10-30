@@ -11,6 +11,12 @@ internal sealed class DateOnlyConverter : CborConverterBase<DateOnly>
 {
     public override DateOnly Read(ref CborReader reader)
     {
+        if (reader.GetCurrentDataItemType() == CborDataItemType.String)
+        {
+            // 💡 A datetime sent as an ISO 8601 string (CBOR tag 0)
+            return DateOnly.FromDateTime(DateTimeParser.Parse(reader.ReadString()!));
+        }
+
         reader.ReadBeginArray();
 
         int size = reader.ReadSize();

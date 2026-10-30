@@ -1,4 +1,5 @@
 ﻿using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Exceptions.Methods;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -236,6 +237,9 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     /// </remarks>
     /// <param name="input">The SurrealQL script used to import data in the database.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="SurrealDbImportException">
+    /// The import failed. <see cref="SurrealDbImportException.Errors"/> lists the statements that failed.
+    /// </exception>
     Task Import(string input, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -303,6 +307,33 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
         where T : IRelationRecord;
 
     /// <summary>
+    /// Issues a new access token and a new refresh token from a refresh token,
+    /// and authenticates the current session with them.<br />
+    /// The refresh token given is revoked: only the returned one can be used next.
+    /// Refresh tokens are issued by record access methods defined <c>WITH REFRESH</c>.
+    /// </summary>
+    /// <param name="tokens">The access and refresh tokens, as returned by a sign in, sign up or a previous refresh.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The new access and refresh tokens.</returns>
+    /// <exception cref="ArgumentException">When no refresh token is provided.</exception>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<Tokens> Refresh(Tokens tokens, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Revokes a refresh token, so it can no longer be used to issue new access tokens.
+    /// The current session stays authenticated.
+    /// </summary>
+    /// <param name="tokens">The tokens holding the refresh token to revoke.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="ArgumentException">When no refresh token is provided.</exception>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task Revoke(Tokens tokens, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Invalidates the authentication for the current connection.<br />
     /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/invalidate">
     /// `Invalidate` on surrealdb.com/docs
@@ -314,6 +345,27 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task Invalidate(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resets the current session to its initial state:
+    /// clears the authentication, the variables and the selected namespace and database.
+    /// Live queries started in this session are killed.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task Reset(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Invokes the APIs defined with <c>DEFINE API</c>, in the current session and transaction.
+    /// </summary>
+    /// <remarks>
+    /// This method is only supported by SurrealDB v3.0.0 or higher.
+    /// </remarks>
+    /// <param name="prefix">A path prefix applied to every request, e.g. <c>/users</c>.</param>
+    SurrealDbApi Api(string? prefix = null);
 
     /// <summary>
     /// Kills an active live query.<br />
@@ -610,6 +662,59 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
     Task<SurrealDbResponse> RawQuery(
+        string query,
+        IReadOnlyDictionary<string, object?>? parameters = null,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Executes a query written in GQL, the ISO graph query language.
+    /// </summary>
+    /// <remarks>
+    /// This method is only supported by SurrealDB v3.3.0 or higher, over HTTP or WebSocket.
+    /// </remarks>
+    /// <param name="query">The GQL query, e.g. <c>MATCH (p:person) RETURN p</c>.</param>
+    /// <param name="parameters">A list of parameters to be used inside the query.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>The list of results from the query.</returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="NotSupportedException">The embedded engine does not support GQL yet.</exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task<SurrealDbResponse> Gql(
+        string query,
+        IReadOnlyDictionary<string, object?>? parameters = null,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Executes a raw SurrealQL query and streams its results as they are produced,
+    /// instead of waiting for the whole answer.
+    /// </summary>
+    /// <remarks>
+    /// Results are streamed over WebSocket connections to SurrealDB v3.3 and later.
+    /// Other connections read the whole answer first and then return it as the same frames,
+    /// except that the answer does not say which statements return a single value:
+    /// a statement whose value is an array, e.g. <c>RETURN [1, 2]</c>, is then returned as rows rather than as a value.
+    /// Leaving the enumeration early cancels the query on the server.
+    /// Within a transaction, committing or cancelling it waits until the stream has ended,
+    /// so finish or leave the enumeration first rather than committing from inside it.
+    /// Frames that arrive faster than they are read are buffered in memory,
+    /// so that a slow reader never holds up the other requests of the connection.
+    /// </remarks>
+    /// <param name="query">The SurrealQL query.</param>
+    /// <param name="parameters">A list of parameters to be used inside the SurrealQL query.</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <returns>
+    /// The frames of the answer: a <see cref="SurrealDbQueryStreamBeginFrame"/>,
+    /// the rows or the value of each statement followed by a <see cref="SurrealDbQueryStreamFinishedFrame"/>,
+    /// then a <see cref="SurrealDbQueryStreamEndFrame"/>.
+    /// </returns>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    IAsyncEnumerable<SurrealDbQueryStreamFrame> RawQueryStream(
         string query,
         IReadOnlyDictionary<string, object?>? parameters = null,
         CancellationToken cancellationToken = default
@@ -1268,14 +1373,39 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     /// `Use` on surrealdb.com/docs
     /// </see>
     /// </summary>
-    /// <param name="ns">Name of the namespace</param>
-    /// <param name="db">Name of the database</param>
+    /// <param name="ns">Name of the namespace, or <c>null</c> to clear the selected namespace</param>
+    /// <param name="db">Name of the database, or <c>null</c> to clear the selected database</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task Use(string ns, string db, CancellationToken cancellationToken = default);
+    Task Use(string? ns, string? db, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Switch to a specific namespace, keeping the selected database.
+    /// </summary>
+    /// <param name="ns">
+    /// Name of the namespace, or <c>null</c> to clear the selected namespace,
+    /// which also clears the selected database since a database belongs to a namespace
+    /// </param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task UseNs(string? ns, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Switch to a specific database, keeping the selected namespace.
+    /// </summary>
+    /// <param name="db">Name of the database, or <c>null</c> to clear the selected database</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task UseDb(string? db, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieve the version of the SurrealDB instance.<br />

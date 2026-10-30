@@ -202,10 +202,10 @@ public class SetTests
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
-            await client.Set("value", new ValueSetObject());
+            await client.Set("obj", new ValueSetObject());
 
             {
-                const string query = "RETURN $value;";
+                const string query = "RETURN $obj;";
                 response = (await client.RawQuery(query)).EnsureAllOks();
             }
         };
@@ -245,10 +245,10 @@ public class SetTests
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
-            await client.Set("value", new ValueSetObject2());
+            await client.Set("obj", new ValueSetObject2());
 
             {
-                const string query = "RETURN $value;";
+                const string query = "RETURN $obj;";
                 response = (await client.RawQuery(query)).EnsureAllOks();
             }
         };
@@ -289,10 +289,10 @@ public class SetTests
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
-            await client.Set("value", new RecursiveStructure());
+            await client.Set("obj", new RecursiveStructure());
 
             {
-                const string query = "RETURN $value;";
+                const string query = "RETURN $obj;";
                 response = (await client.RawQuery(query)).EnsureAllOks();
             }
         };

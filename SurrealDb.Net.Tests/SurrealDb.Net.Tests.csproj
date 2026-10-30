@@ -14,6 +14,7 @@
         <PackageReference Include="Semver" />
         <PackageReference Include="TUnit" />
         <PackageReference Include="Verify.TUnit" />
+        <PackageReference Include="YamlDotNet" />
     </ItemGroup>
 
     <ItemGroup>
@@ -34,6 +35,9 @@
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
       <None Update="Schemas\v3\user.surql">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Conformance\surrealdb-protocol\spec\vectors\*.yaml">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>

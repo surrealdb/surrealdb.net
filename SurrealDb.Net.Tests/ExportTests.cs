@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using Semver;
+using SurrealDb.Net.Internals;
 
 namespace SurrealDb.Net.Tests;
 
@@ -123,5 +124,42 @@ public class ExportTests
         await func.Should().NotThrowAsync();
 
         await Verify(result, _verifySettings);
+    }
+
+    [Test]
+    [RemoteConnectionStringFixtureGenerator]
+    public async Task ShouldReuseTheSameHttpClientForEachCall(string connectionString)
+    {
+        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
+        if (version is null || version.Major < 2)
+        {
+            return;
+        }
+
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        if (client.Engine is SurrealDbWsEngine)
+        {
+            // 💡 Without an IHttpClientFactory, every call shares a single HttpClient
+            using var first = await client.CreateCommonHttpWrapperAsync(CancellationToken.None);
+            using var second = await client.CreateCommonHttpWrapperAsync(CancellationToken.None);
+
+            first.HttpClient.Should().BeSameAs(second.HttpClient);
+        }
+
+        string optionImport = version.Satisfies(SemVersionRange.AtLeast(new(3, 0, 4), true))
+            ? "OPTION IMPORT;\n"
+            : string.Empty;
+
+        await client.Import($"{optionImport}CREATE post:first SET title = 'First';");
+        await client.Import($"{optionImport}CREATE post:second SET title = 'Second';");
+
+        string result = await client.Export();
+
+        result.Should().Contain("post:first").And.Contain("post:second");
     }
 }

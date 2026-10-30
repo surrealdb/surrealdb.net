@@ -51,6 +51,16 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public Uri Uri { get; private set; } = new("unknown://");
     public EmbeddedSessionInfos SessionInfos { get; } = new();
 
+    public ConnectionStatus Status => _statusTracker.Status;
+
+    public event EventHandler<ConnectionStatusChangedEventArgs>? StatusChanged
+    {
+        add => _statusTracker.StatusChanged += value;
+        remove => _statusTracker.StatusChanged -= value;
+    }
+
+    private readonly ConnectionStatusTracker _statusTracker;
+
     static SurrealDbEmbeddedEngine()
     {
         NativeMethods.create_global_runtime();
@@ -58,6 +68,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
     public SurrealDbEmbeddedEngine()
     {
+        _statusTracker = new(this);
         _id = Interlocked.Increment(ref _globalId);
     }
 
@@ -168,15 +179,18 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
     public async Task<Guid> CreateSession(Guid from, CancellationToken cancellationToken)
     {
-        var newId = Guid.NewGuid();
-        var newState = SessionInfos.Clone(from, newId);
+        var fromState = SessionInfos.Get(from)!;
 
-        await Attach(newId, cancellationToken).ConfigureAwait(false);
-        SessionInfos.Set(newId, newState);
+        var newId = Guid.NewGuid();
+        await CreateSession(newId, new EmbeddedSessionInfo(fromState), cancellationToken)
+            .ConfigureAwait(false);
 
         return newId;
     }
 
+    /// <summary>
+    /// Attaches a new session, then replays the given state on it (namespace and database).
+    /// </summary>
     private async Task CreateSession(
         Guid sessionId,
         EmbeddedSessionInfo sessionInfo,
@@ -185,6 +199,25 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     {
         await Attach(sessionId, cancellationToken).ConfigureAwait(false);
         SessionInfos.Set(sessionId, sessionInfo);
+
+        try
+        {
+            await ApplyConfigurationAsync(sessionId, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            SessionInfos.Remove(sessionId);
+            try
+            {
+                await Detach(sessionId, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch
+            {
+                // 💡 The original failure matters more than a failed cleanup
+            }
+
+            throw;
+        }
     }
 
     partial void PreConnect();
@@ -280,14 +313,33 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 }
             }
 
-            await taskCompletionSource.Task.ConfigureAwait(false);
+            _statusTracker.Set(ConnectionStatus.Connecting);
+
+            try
+            {
+                await taskCompletionSource.Task.ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _statusTracker.Set(ConnectionStatus.Disconnected, ex);
+                throw;
+            }
 
             _isConnected = true;
         }
 
-        await ApplyRootConfigurationAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await ApplyRootConfigurationAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _statusTracker.Set(ConnectionStatus.Disconnected, ex);
+            throw;
+        }
 
         _isInitialized = true;
+        _statusTracker.Set(ConnectionStatus.Connected);
     }
 
     public async Task<T> Create<T>(
@@ -418,6 +470,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
         NativeMethods.dispose(_id);
 
+        _statusTracker.Set(ConnectionStatus.Disconnected);
         _disposed = true;
     }
 
@@ -941,6 +994,17 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             .ConfigureAwait(false);
     }
 
+    public Task<SurrealDbResponse> Gql(
+        string query,
+        IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        throw new NotSupportedException("GQL queries are not supported in embedded mode yet.");
+    }
+
     public async Task<SurrealDbResponse> RawQuery(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
@@ -1145,6 +1209,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.Set(key, value);
     }
 
     public Task SignIn(
@@ -1199,15 +1265,37 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
 
+    public Task<Tokens> Refresh(
+        Tokens tokens,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        throw new NotSupportedException("Authentication is not enabled in embedded mode.");
+    }
+
+    public Task Revoke(
+        Tokens tokens,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        throw new NotSupportedException("Authentication is not enabled in embedded mode.");
+    }
+
     public SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id)
     {
         throw new NotSupportedException();
     }
 
-    public Task<bool> TryResetAsync()
+    public async Task Reset(Guid? sessionId, CancellationToken cancellationToken)
     {
-        // 💡 No reuse needed when embedded
-        return Task.FromResult(false);
+        await SendRequestAsync<Unit>(Method.Reset, null, sessionId, null, cancellationToken)
+            .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.Reset();
     }
 
     public async Task Unset(
@@ -1234,6 +1322,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.Unset(key);
     }
 
     public async Task<T> Update<T>(
@@ -1431,8 +1521,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     }
 
     public async Task Use(
-        string ns,
-        string db,
+        string? ns,
+        string? db,
         Guid? sessionId,
         Guid? transactionId,
         CancellationToken cancellationToken
@@ -1446,6 +1536,48 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 cancellationToken
             )
             .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.Use(ns, db);
+    }
+
+    public async Task UseNs(
+        string? ns,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        // 💡 NONE leaves the database unchanged
+        await SendRequestAsync<Unit>(
+                Method.Use,
+                [ns, new None()],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.UseNs(ns);
+    }
+
+    public async Task UseDb(
+        string? db,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        // 💡 NONE leaves the namespace unchanged
+        await SendRequestAsync<Unit>(
+                Method.Use,
+                [new None(), db],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.UseDb(db);
     }
 
     public async Task<string> Version(CancellationToken cancellationToken)
@@ -1463,13 +1595,19 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         return version.Replace(VERSION_PREFIX, string.Empty);
     }
 
-    private async Task ApplyRootConfigurationAsync(CancellationToken cancellationToken)
+    private Task ApplyRootConfigurationAsync(CancellationToken cancellationToken)
     {
-        var session = SessionInfos.Get(null)!;
+        return ApplyConfigurationAsync(null, cancellationToken);
+    }
+
+    private async Task ApplyConfigurationAsync(Guid? sessionId, CancellationToken cancellationToken)
+    {
+        var session = SessionInfos.Get(sessionId)!;
 
         if (session.Ns is not null)
         {
-            await Use(session.Ns, session.Db!, null, null, cancellationToken).ConfigureAwait(false);
+            await Use(session.Ns, session.Db, sessionId, null, cancellationToken)
+                .ConfigureAwait(false);
 
             if (session.Db is not null)
             {
@@ -1482,6 +1620,18 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             {
                 _surrealDbLoggerFactory?.Connection?.LogConnectionNamespaceSet(session.Ns);
             }
+        }
+
+        foreach (var (key, value) in session.Variables.ToArray())
+        {
+            await SendRequestAsync<Unit>(
+                    Method.Set,
+                    [key, value],
+                    sessionId,
+                    null,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
         }
     }
 
@@ -1568,7 +1718,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         )
         {
             _sessionizer.TryRemove(sessionId.Value);
-            await CreateSession(sessionId.Value, newEmbeddedSessionInfo, cancellationToken)
+            // 💡 The provided state is shared by every scope, each session needs its own copy
+            await CreateSession(
+                    sessionId.Value,
+                    new EmbeddedSessionInfo(newEmbeddedSessionInfo),
+                    cancellationToken
+                )
                 .ConfigureAwait(false);
         }
 

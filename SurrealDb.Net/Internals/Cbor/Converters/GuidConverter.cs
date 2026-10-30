@@ -10,6 +10,12 @@ internal sealed class GuidConverter : CborConverterBase<Guid>
 
     public override Guid Read(ref CborReader reader)
     {
+        if (reader.GetCurrentDataItemType() == CborDataItemType.String)
+        {
+            // 💡 A UUID sent as a string (CBOR tag 9)
+            return Guid.Parse(reader.ReadString()!);
+        }
+
 #if NET8_0_OR_GREATER
         var value = reader.ReadByteString();
 

@@ -10,8 +10,4 @@ internal sealed class SurrealDbHttpRequest
     [CborProperty("params")]
     [CborIgnoreIfDefault]
     public object?[]? Parameters { get; set; }
-
-    [CborProperty("session")]
-    [CborIgnoreIfDefault]
-    public Guid? SessionId { get; set; }
 }

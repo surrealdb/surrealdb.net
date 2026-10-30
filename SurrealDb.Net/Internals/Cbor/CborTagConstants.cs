@@ -2,10 +2,14 @@
 
 internal static class CborTagConstants
 {
+    public const ulong TAG_SPEC_DATETIME = 0;
     public const ulong TAG_NONE = 6;
+    public const ulong TAG_TABLE = 7;
     public const ulong TAG_RECORDID = 8;
+    public const ulong TAG_STRING_UUID = 9;
     public const ulong TAG_STRING_DECIMAL = 10;
     public const ulong TAG_CUSTOM_DATETIME = 12;
+    public const ulong TAG_STRING_DURATION = 13;
     public const ulong TAG_CUSTOM_DURATION = 14;
     public const ulong TAG_FUTURE = 15;
     public const ulong TAG_UUID = 37;
@@ -21,4 +25,13 @@ internal static class CborTagConstants
     public const ulong TAG_GEOMETRY_MULTILINE = 92;
     public const ulong TAG_GEOMETRY_MULTIPOLYGON = 93;
     public const ulong TAG_GEOMETRY_COLLECTION = 94;
+    public const ulong TAG_I8 = 180;
+    public const ulong TAG_U8 = 181;
+    public const ulong TAG_I16 = 182;
+    public const ulong TAG_U16 = 183;
+    public const ulong TAG_I32 = 184;
+    public const ulong TAG_U32 = 185;
+    public const ulong TAG_U64 = 186;
+    public const ulong TAG_F16 = 187;
+    public const ulong TAG_F32 = 188;
 }

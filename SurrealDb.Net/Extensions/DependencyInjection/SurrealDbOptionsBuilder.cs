@@ -13,6 +13,9 @@ public sealed class SurrealDbOptionsBuilder
     private string? _token;
     private string? _authLevel;
     private bool _sensitiveDataLoggingEnabled;
+    private bool _invalidateOnExpiry;
+    private TimeSpan _expiryMargin = TimeSpan.FromSeconds(60);
+    private ReconnectOptions _reconnect = new();
 
     /// <summary>
     /// Parses the connection string and set the configuration accordingly.
@@ -360,6 +363,51 @@ public sealed class SurrealDbOptionsBuilder
         return this;
     }
 
+    /// <summary>
+    /// When the access token expires, invalidates the session instead of renewing it with the refresh token.
+    /// </summary>
+    /// <param name="invalidateOnExpiry">If <c>true</c>, an expired session is invalidated.</param>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public SurrealDbOptionsBuilder WithInvalidateOnExpiry(bool invalidateOnExpiry = true)
+    {
+        _invalidateOnExpiry = invalidateOnExpiry;
+        return this;
+    }
+
+    /// <summary>
+    /// How long before the access token expires the client renews it.
+    /// </summary>
+    /// <param name="expiryMargin">The margin before expiry. Defaults to 60 seconds.</param>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public SurrealDbOptionsBuilder WithExpiryMargin(TimeSpan expiryMargin)
+    {
+        if (expiryMargin < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(expiryMargin),
+                "The expiry margin cannot be negative."
+            );
+        }
+
+        _expiryMargin = expiryMargin;
+        return this;
+    }
+
+    /// <summary>
+    /// Configures how a WebSocket client reconnects after the connection is lost.
+    /// </summary>
+    /// <param name="configure">Changes the default <see cref="ReconnectOptions"/>.</param>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public SurrealDbOptionsBuilder WithReconnect(Action<ReconnectOptions> configure)
+    {
+        var reconnect = new ReconnectOptions(_reconnect);
+        configure(reconnect);
+        reconnect.Validate();
+
+        _reconnect = reconnect;
+        return this;
+    }
+
     private static void EnsuresCorrectAuthLevel(string authLevel, string argumentName)
     {
         if (string.IsNullOrWhiteSpace(authLevel))
@@ -402,6 +450,9 @@ public sealed class SurrealDbOptionsBuilder
             Token = _token,
             AuthLevel = _authLevel,
             Logging = new() { SensitiveDataLoggingEnabled = _sensitiveDataLoggingEnabled },
+            InvalidateOnExpiry = _invalidateOnExpiry,
+            ExpiryMargin = _expiryMargin,
+            Reconnect = new ReconnectOptions(_reconnect),
         };
     }
 }

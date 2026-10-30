@@ -8,10 +8,14 @@ namespace SurrealDb.Net.Tests.Serializers.Cbor;
 /// </summary>
 public abstract class BaseCborConverterTests
 {
-    protected async Task<string> SerializeCborBinaryAsHexaAsync<T>(T value)
+    protected async Task<string> SerializeCborBinaryAsHexaAsync<T>(T value, bool cbor2 = false)
     {
         using var stream = new MemoryStream();
-        await CborSerializer.SerializeAsync(value, stream, SurrealDbCborOptions.Default.Value);
+        await CborSerializer.SerializeAsync(
+            value,
+            stream,
+            SurrealDbCborOptions.GetCborSerializerOptions(null, cbor2)
+        );
 
         var bytes = stream.ToArray();
         return ByteArrayToString(bytes);
@@ -29,11 +33,17 @@ public abstract class BaseCborConverterTests
         return stringBuilder.ToString();
     }
 
-    protected ValueTask<T> DeserializeCborBinaryAsHexaAsync<T>(string binaryAsHexa)
+    protected ValueTask<T> DeserializeCborBinaryAsHexaAsync<T>(
+        string binaryAsHexa,
+        bool cbor2 = false
+    )
     {
         var bytes = StringToByteArray(binaryAsHexa);
         using var stream = new MemoryStream(bytes);
-        return CborSerializer.DeserializeAsync<T>(stream, SurrealDbCborOptions.Default.Value);
+        return CborSerializer.DeserializeAsync<T>(
+            stream,
+            SurrealDbCborOptions.GetCborSerializerOptions(null, cbor2)
+        );
     }
 
     public static byte[] StringToByteArray(string binaryAsHexa)

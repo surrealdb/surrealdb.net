@@ -127,6 +127,49 @@ internal static partial class SurrealDbLoggerExtensions
         Exception exception
     );
 
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Failed to renew the access token before it expires."
+    )]
+    public static partial void LogAuthRenewalFailed(this ILogger logger, Exception exception);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "The access token expired while disconnected and could not be renewed. The session is no longer authenticated."
+    )]
+    public static partial void LogAuthExpiredWhileDisconnected(this ILogger logger);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Failed to restore the connection state after a reconnection: {step}."
+    )]
+    public static partial void LogConnectionReplayFailed(
+        this ILogger logger,
+        string step,
+        Exception exception
+    );
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Connection lost, reconnection attempt {attempt} in {delay}."
+    )]
+    public static partial void LogConnectionReconnectScheduled(
+        this ILogger logger,
+        int attempt,
+        TimeSpan delay,
+        Exception? exception
+    );
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Stopped reconnecting after {attempts} failed attempts."
+    )]
+    public static partial void LogConnectionReconnectAbandoned(
+        this ILogger logger,
+        int attempts,
+        Exception? exception
+    );
+
     [LoggerMessage(Level = LogLevel.Debug, Message = "CBOR data serialized: {data}")]
     public static partial void LogSerializationDataSerialized(this ILogger logger, string data);
 
