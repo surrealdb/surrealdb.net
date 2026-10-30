@@ -1223,6 +1223,26 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         throw new NotSupportedException("Authentication is not enabled in embedded mode.");
     }
 
+    public Task<Tokens> Refresh(
+        Tokens tokens,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        throw new NotSupportedException("Authentication is not enabled in embedded mode.");
+    }
+
+    public Task Revoke(
+        Tokens tokens,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        throw new NotSupportedException("Authentication is not enabled in embedded mode.");
+    }
+
     public SurrealDbLiveQueryChannel SubscribeToLiveQuery(Guid id)
     {
         throw new NotSupportedException();

@@ -57,6 +57,10 @@ public interface ISurrealDbSession
     /// Create a new session by cloning the current session.
     /// The new session inherits all properties from the parent session including namespace, database, variables, and authentication state.
     /// </summary>
+    /// <remarks>
+    /// The new session gets the access token of the parent session but not its refresh token,
+    /// which can only be used once: it is not renewed automatically and must sign in again once its token expires.
+    /// </remarks>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <returns>Returns a new session derived from the current one.</returns>
     Task<ISurrealDbSession> ForkSession(CancellationToken cancellationToken = default);
