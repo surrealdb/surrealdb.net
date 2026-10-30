@@ -126,6 +126,9 @@ jobs:
       - name: Install dependencies
         run: dotnet restore
 
+      - name: Fetch protocol test vectors
+        run: bash SurrealDb.Net.Tests/Conformance/fetch-protocol-vectors.sh
+
       - name: Build
         run: dotnet build --no-restore
 

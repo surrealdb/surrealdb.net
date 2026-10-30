@@ -25,4 +25,13 @@ internal static class CborTagConstants
     public const ulong TAG_GEOMETRY_MULTILINE = 92;
     public const ulong TAG_GEOMETRY_MULTIPOLYGON = 93;
     public const ulong TAG_GEOMETRY_COLLECTION = 94;
+    public const ulong TAG_I8 = 180;
+    public const ulong TAG_U8 = 181;
+    public const ulong TAG_I16 = 182;
+    public const ulong TAG_U16 = 183;
+    public const ulong TAG_I32 = 184;
+    public const ulong TAG_U32 = 185;
+    public const ulong TAG_U64 = 186;
+    public const ulong TAG_F16 = 187;
+    public const ulong TAG_F32 = 188;
 }

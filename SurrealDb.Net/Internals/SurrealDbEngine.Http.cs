@@ -36,6 +36,8 @@ namespace SurrealDb.Net.Internals;
 internal class SurrealDbHttpEngine : ISurrealDbEngine
 {
     private const string RPC_ENDPOINT = "/rpc";
+    private const string CBOR_MEDIA_TYPE = "application/cbor";
+    private const string CBOR2_MEDIA_TYPE = "application/cbor; v=2";
 
     private const string SESSIONS_NOT_SUPPORTED_MESSAGE =
         "Sessions are not supported over HTTP. Use a WebSocket connection (ws:// or wss://) to create, fork or list sessions.";
@@ -46,6 +48,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     internal Action<CborOptions>? _configureCborOptions { get; }
 
     private int _pendingRequests;
+    private volatile bool _cbor2;
+
+    /// <summary>
+    /// Whether the server last answered in <c>application/cbor; v=2</c>.
+    /// </summary>
+    internal bool IsCbor2 => _cbor2;
 
 #if DEBUG
     public string Id { get; } = Guid.NewGuid().ToString();
@@ -1294,9 +1302,26 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return version;
     }
 
-    private static CborOptions GetCborSerializerOptions(Action<CborOptions>? configureCborOptions)
+    private static CborOptions GetCborSerializerOptions(
+        Action<CborOptions>? configureCborOptions,
+        bool cbor2
+    )
     {
-        return SurrealDbCborOptions.GetCborSerializerOptions(configureCborOptions);
+        return SurrealDbCborOptions.GetCborSerializerOptions(configureCborOptions, cbor2);
+    }
+
+    private static bool IsCbor2MediaType(MediaTypeHeaderValue? contentType)
+    {
+        return contentType is not null
+            && string.Equals(
+                contentType.MediaType,
+                CBOR_MEDIA_TYPE,
+                StringComparison.OrdinalIgnoreCase
+            )
+            && contentType.Parameters.Any(parameter =>
+                string.Equals(parameter.Name, "v", StringComparison.OrdinalIgnoreCase)
+                && parameter.Value?.Trim('"') == "2"
+            );
     }
 
     /// <summary>
@@ -1316,7 +1341,14 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             Content = body,
         };
 
-        SetNsDbHttpClientHeaders(httpRequest.Headers, _version, session.Ns, session.Db);
+        // 💡 Servers before 4.0 do not know cbor.2, so only offer it to 4.0 and above
+        SetNsDbHttpClientHeaders(
+            httpRequest.Headers,
+            _version,
+            session.Ns,
+            session.Db,
+            offerCbor2: _version?.Major >= 4
+        );
         SetAuthHttpClientHeaders(httpRequest.Headers, authOverride ?? session.Auth);
 
         return httpRequest;
@@ -1404,11 +1436,14 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             && JwtHelper.ExpiresWithin(bearerAuth.Token, _parameters.ExpiryMargin);
     }
 
+    // 💡 With offerCbor2, accept application/cbor; v=2 responses. The server answers a plain CBOR
+    // request in either format, and the response's Content-Type says which one it chose.
     internal static void SetNsDbHttpClientHeaders(
         HttpRequestHeaders headers,
         SemVersion? version,
         string? ns,
-        string? db
+        string? db,
+        bool offerCbor2 = false
     )
     {
         headers.Remove(HttpConstants.ACCEPT_HEADER_NAME);
@@ -1424,7 +1459,10 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             headers.Remove(HttpConstants.DB_HEADER_NAME);
         }
 
-        headers.Add(HttpConstants.ACCEPT_HEADER_NAME, ["application/cbor"]);
+        headers.Add(
+            HttpConstants.ACCEPT_HEADER_NAME,
+            [offerCbor2 ? CBOR2_MEDIA_TYPE : CBOR_MEDIA_TYPE]
+        );
 
         string nsHeaderName =
             version?.Major > 1 ? HttpConstants.NS_HEADER_NAME_V2 : HttpConstants.NS_HEADER_NAME;
@@ -1486,14 +1524,21 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return new HttpClientWrapper(SharedHttpClient.Instance, false);
     }
 
+    // 💡 With cbor2, send the body as application/cbor; v=2, which only a server that has answered
+    // in it accepts.
     internal static HttpContent CreateBodyContent<T>(
         Action<CborOptions>? configureCborOptions,
         T data,
-        ISurrealDbLoggerFactory? surrealDbLoggerFactory
+        ISurrealDbLoggerFactory? surrealDbLoggerFactory,
+        bool cbor2 = false
     )
     {
         var writer = new ArrayBufferWriter<byte>();
-        CborSerializer.Serialize(data, writer, GetCborSerializerOptions(configureCborOptions));
+        CborSerializer.Serialize(
+            data,
+            writer,
+            GetCborSerializerOptions(configureCborOptions, cbor2)
+        );
         var payload = writer.WrittenSpan.ToArray();
 
         if (surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
@@ -1503,7 +1548,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         }
 
         var content = new ByteArrayContent(payload);
-        content.Headers.ContentType = new MediaTypeHeaderValue("application/cbor");
+        content.Headers.ContentType = MediaTypeHeaderValue.Parse(
+            cbor2 ? CBOR2_MEDIA_TYPE : CBOR_MEDIA_TYPE
+        );
 
         return content;
     }
@@ -1566,7 +1613,12 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         CreateDeferredSessionInfo(sessionId);
 
         using var wrapper = CreateEndpointHttpClientWrapper();
-        using var body = CreateBodyContent(_configureCborOptions, request, _surrealDbLoggerFactory);
+        using var body = CreateBodyContent(
+            _configureCborOptions,
+            request,
+            _surrealDbLoggerFactory,
+            _cbor2
+        );
         if (authOverride is null && !_methodsWithoutAuthRenewal.Contains(request.Method))
         {
             await RenewAuthIfExpiringAsync(sessionId, cancellationToken).ConfigureAwait(false);
@@ -1632,7 +1684,21 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         await using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 #endif
 
-        var cborSerializerOptions = GetCborSerializerOptions(_configureCborOptions);
+        // 💡 Send cbor.2 once the server answers in it, and fall back to plain CBOR if it stops
+        bool cbor2 = IsCbor2MediaType(response.Content.Headers.ContentType);
+        if (
+            cbor2
+            || string.Equals(
+                response.Content.Headers.ContentType?.MediaType,
+                CBOR_MEDIA_TYPE,
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            _cbor2 = cbor2;
+        }
+
+        var cborSerializerOptions = GetCborSerializerOptions(_configureCborOptions, cbor2);
 
         if (_surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
         {
