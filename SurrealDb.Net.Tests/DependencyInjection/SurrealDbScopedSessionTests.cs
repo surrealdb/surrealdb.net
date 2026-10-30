@@ -130,4 +130,34 @@ public class SurrealDbScopedSessionTests
         engine.SessionInfos.Get(client1.SessionId)!.Ns.Should().Be(dbInfo1.Namespace);
         engine.SessionInfos.Get(client2.SessionId)!.Ns.Should().Be(dbInfo2.Namespace);
     }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldKeepNamespaceAndDatabasePerScope(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator().Configure(
+            connectionString,
+            lifetime: ServiceLifetime.Scoped
+        );
+        var dbInfo1 = surrealDbClientGenerator.GenerateDatabaseInfo();
+        var dbInfo2 = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var scope1 = surrealDbClientGenerator.CreateAsyncScope()!;
+        await using var scope2 = surrealDbClientGenerator.CreateAsyncScope()!;
+
+        var client1 = scope1.ServiceProvider.GetRequiredService<SurrealDbSession>();
+        var client2 = scope2.ServiceProvider.GetRequiredService<SurrealDbSession>();
+
+        await client1.Use(dbInfo1.Namespace, dbInfo1.Database);
+        await client2.Use(dbInfo2.Namespace, dbInfo2.Database);
+
+        const string query = "RETURN [session::ns(), session::db()];";
+
+        var response1 = await client1.RawQuery(query);
+        response1.GetValue<string[]>(0).Should().Equal(dbInfo1.Namespace, dbInfo1.Database);
+
+        var response2 = await client2.RawQuery(query);
+        response2.GetValue<string[]>(0).Should().Equal(dbInfo2.Namespace, dbInfo2.Database);
+    }
 }
