@@ -1,4 +1,5 @@
 ﻿using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Exceptions.Methods;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -236,6 +237,9 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     /// </remarks>
     /// <param name="input">The SurrealQL script used to import data in the database.</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="SurrealDbImportException">
+    /// The import failed. <see cref="SurrealDbImportException.Errors"/> lists the statements that failed.
+    /// </exception>
     Task Import(string input, CancellationToken cancellationToken = default);
 
     /// <summary>

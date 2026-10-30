@@ -2,6 +2,8 @@
 using System.Text;
 using Semver;
 using SurrealDb.Net.Internals;
+using SurrealDb.Net.Internals.Cbor;
+using SurrealDb.Net.Internals.Http;
 using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
@@ -195,7 +197,14 @@ public abstract partial class BaseSurrealDbClient
         using var response = await wrapper
             .HttpClient.SendAsync(request, cancellationToken)
             .ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
+
+        await ImportResponseReader
+            .EnsureSuccessAsync(
+                response,
+                SurrealDbCborOptions.GetCborSerializerOptions(wrapper.ConfigureCborOptions),
+                cancellationToken
+            )
+            .ConfigureAwait(false);
     }
 
     public Task<T> Info<T>(CancellationToken cancellationToken = default)
