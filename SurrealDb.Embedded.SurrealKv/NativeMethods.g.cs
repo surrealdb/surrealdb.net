@@ -129,6 +129,7 @@ namespace SurrealDb.Embedded.Internals
         Begin = 21,
         Commit = 22,
         Cancel = 23,
+        Reset = 24,
     }
 
 

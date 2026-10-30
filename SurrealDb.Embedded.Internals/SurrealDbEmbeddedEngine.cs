@@ -1248,10 +1248,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         throw new NotSupportedException();
     }
 
-    public Task<bool> TryResetAsync()
+    public async Task Reset(Guid? sessionId, CancellationToken cancellationToken)
     {
-        // 💡 No reuse needed when embedded
-        return Task.FromResult(false);
+        await SendRequestAsync<Unit>(Method.Reset, null, sessionId, null, cancellationToken)
+            .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.Reset();
     }
 
     public async Task Unset(
@@ -1477,8 +1479,8 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     }
 
     public async Task Use(
-        string ns,
-        string db,
+        string? ns,
+        string? db,
         Guid? sessionId,
         Guid? transactionId,
         CancellationToken cancellationToken
@@ -1494,6 +1496,46 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             .ConfigureAwait(false);
 
         SessionInfos.Get(sessionId)?.Use(ns, db);
+    }
+
+    public async Task UseNs(
+        string? ns,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        // 💡 NONE leaves the database unchanged
+        await SendRequestAsync<Unit>(
+                Method.Use,
+                [ns, new None()],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.UseNs(ns);
+    }
+
+    public async Task UseDb(
+        string? db,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    )
+    {
+        // 💡 NONE leaves the namespace unchanged
+        await SendRequestAsync<Unit>(
+                Method.Use,
+                [new None(), db],
+                sessionId,
+                transactionId,
+                cancellationToken
+            )
+            .ConfigureAwait(false);
+
+        SessionInfos.Get(sessionId)?.UseDb(db);
     }
 
     public async Task<string> Version(CancellationToken cancellationToken)
@@ -1522,7 +1564,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
         if (session.Ns is not null)
         {
-            await Use(session.Ns, session.Db!, sessionId, null, cancellationToken)
+            await Use(session.Ns, session.Db, sessionId, null, cancellationToken)
                 .ConfigureAwait(false);
 
             if (session.Db is not null)

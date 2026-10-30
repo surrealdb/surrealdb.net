@@ -343,6 +343,18 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     Task Invalidate(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Resets the current session to its initial state:
+    /// clears the authentication, the variables and the selected namespace and database.
+    /// Live queries started in this session are killed.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task Reset(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Kills an active live query.<br />
     /// <see href="https://surrealdb.com/docs/sdk/dotnet/methods/kill">
     /// `Kill` on surrealdb.com/docs
@@ -1295,14 +1307,39 @@ public interface ISurrealDbSharedMethods : ISurrealDbInterface, ISurrealDbFeatur
     /// `Use` on surrealdb.com/docs
     /// </see>
     /// </summary>
-    /// <param name="ns">Name of the namespace</param>
-    /// <param name="db">Name of the database</param>
+    /// <param name="ns">Name of the namespace, or <c>null</c> to clear the selected namespace</param>
+    /// <param name="db">Name of the database, or <c>null</c> to clear the selected database</param>
     /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
     /// <exception cref="OperationCanceledException"></exception>
     /// <exception cref="HttpRequestException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="SurrealDbException"></exception>
-    Task Use(string ns, string db, CancellationToken cancellationToken = default);
+    Task Use(string? ns, string? db, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Switch to a specific namespace, keeping the selected database.
+    /// </summary>
+    /// <param name="ns">
+    /// Name of the namespace, or <c>null</c> to clear the selected namespace,
+    /// which also clears the selected database since a database belongs to a namespace
+    /// </param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task UseNs(string? ns, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Switch to a specific database, keeping the selected namespace.
+    /// </summary>
+    /// <param name="db">Name of the database, or <c>null</c> to clear the selected database</param>
+    /// <param name="cancellationToken">The cancellationToken enables graceful cancellation of asynchronous operations</param>
+    /// <exception cref="OperationCanceledException"></exception>
+    /// <exception cref="HttpRequestException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="SurrealDbException"></exception>
+    Task UseDb(string? db, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieve the version of the SurrealDB instance.<br />

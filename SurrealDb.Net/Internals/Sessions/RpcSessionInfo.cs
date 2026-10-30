@@ -84,4 +84,10 @@ internal sealed class RpcSessionInfo : SessionInfo
     {
         Auth = new NoAuth();
     }
+
+    public override void Reset()
+    {
+        base.Reset();
+        ResetAuth();
+    }
 }
