@@ -63,6 +63,9 @@ public class CborVectorTests
 
     private const string UNKNOWN_TAG = "Unknown tags are skipped rather than refused.";
 
+    private const string LEGACY_STRING_TAG =
+        "Servers before 4.0 send datetimes, UUIDs and durations as strings (tags 0, 9 and 13), so the SDK decodes them on purpose. The SDK never sends them.";
+
     /// <summary>
     /// Vectors the SDK does not pass yet, and why. Remove an entry once the SDK passes it.
     /// </summary>
@@ -115,6 +118,9 @@ public class CborVectorTests
         ["cbor.yaml:reject-record-id-uuid-string-key"] = LAZY_RECORD_ID_KEY,
         ["cbor2.yaml:reject-f16-record-id-key"] = LAZY_RECORD_ID_KEY,
         ["cbor.yaml:reject-unknown-tag"] = UNKNOWN_TAG,
+        ["cbor.yaml:reject-datetime-string-tag-0"] = LEGACY_STRING_TAG,
+        ["cbor.yaml:reject-uuid-string-tag-9"] = LEGACY_STRING_TAG,
+        ["cbor.yaml:reject-duration-string-tag-13"] = LEGACY_STRING_TAG,
     };
 
     /// <summary>

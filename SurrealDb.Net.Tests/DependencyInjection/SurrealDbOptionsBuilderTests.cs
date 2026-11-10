@@ -347,9 +347,7 @@ public class SurrealDbOptionsBuilderTests
     [Test]
     public void ShouldDefaultToRenewingTokensOneMinuteBeforeExpiry()
     {
-        var options = new SurrealDbOptionsBuilder()
-            .WithEndpoint("ws://127.0.0.1:8000/rpc")
-            .Build();
+        var options = new SurrealDbOptionsBuilder().WithEndpoint("ws://127.0.0.1:8000/rpc").Build();
 
         options.InvalidateOnExpiry.Should().BeFalse();
         options.ExpiryMargin.Should().Be(TimeSpan.FromSeconds(60));
