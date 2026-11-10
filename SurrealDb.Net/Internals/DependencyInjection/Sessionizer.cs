@@ -5,8 +5,9 @@ namespace SurrealDb.Net.Internals.DependencyInjection;
 
 internal sealed class Sessionizer : ISessionizer
 {
+    private readonly object _gate = new();
     private readonly ConcurrentDictionary<Guid, ISessionInfo> _sessionInfos = new();
-    private readonly ConcurrentDictionary<Guid, Task> _pendingAttaches = new();
+    private readonly Dictionary<Guid, Task> _pendingAttaches = new();
     private readonly AsyncLocal<Guid?> _attachingSessionId = new();
 
     public void Add(Guid sessionId, ISessionInfo sessionInfo)
@@ -16,31 +17,44 @@ internal sealed class Sessionizer : ISessionizer
 
     public Task EnsureAttachedAsync(Guid sessionId, Func<ISessionInfo, Task> attach)
     {
+        // Requests sent by the attach itself (e.g. `use`, `signin`) must not wait on it
         if (_attachingSessionId.Value == sessionId)
         {
             return Task.CompletedTask;
         }
 
-        // At most one caller ever gets the sessionInfo for a given sessionId
-        if (_sessionInfos.TryRemove(sessionId, out var sessionInfo))
+        ISessionInfo? sessionInfo;
+        TaskCompletionSource<bool> tcs;
+
+        // Claiming the session info and publishing the in-flight attach must be atomic,
+        // otherwise a concurrent caller can see neither and skip the attach.
+        lock (_gate)
         {
-            var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            if (_pendingAttaches.TryGetValue(sessionId, out var inFlight))
+            {
+                return inFlight;
+            }
+
+            if (!_sessionInfos.TryRemove(sessionId, out sessionInfo))
+            {
+                return Task.CompletedTask;
+            }
+
+            tcs = new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously
+            );
             _pendingAttaches[sessionId] = tcs.Task;
-            _ = RunAttachAsync(sessionId, sessionInfo, attach, tcs);
-            return tcs.Task;
         }
 
-        // Someone else already claimed it: wait for their in-flight attach, if any
-        return _pendingAttaches.TryGetValue(sessionId, out var inFlight)
-            ? inFlight
-            : Task.CompletedTask;
+        _ = RunAttachAsync(sessionId, sessionInfo, attach, tcs);
+        return tcs.Task;
     }
 
     private async Task RunAttachAsync(
         Guid sessionId,
         ISessionInfo sessionInfo,
         Func<ISessionInfo, Task> attach,
-        TaskCompletionSource tcs
+        TaskCompletionSource<bool> tcs
     )
     {
         _attachingSessionId.Value = sessionId;
@@ -48,21 +62,33 @@ internal sealed class Sessionizer : ISessionizer
         try
         {
             await attach(sessionInfo).ConfigureAwait(false);
-            tcs.TrySetResult();
+            RemovePendingAttach(sessionId, tcs.Task);
+            tcs.TrySetResult(true);
         }
         catch (Exception ex)
         {
+            RemovePendingAttach(sessionId, tcs.Task);
             tcs.TrySetException(ex);
         }
-        finally
+    }
+
+    private void RemovePendingAttach(Guid sessionId, Task task)
+    {
+        lock (_gate)
         {
-            _pendingAttaches.TryRemove(sessionId, out _);
+            if (_pendingAttaches.TryGetValue(sessionId, out var current) && current == task)
+            {
+                _pendingAttaches.Remove(sessionId);
+            }
         }
     }
 
     public void TryRemove(Guid sessionId)
     {
-        _sessionInfos.Remove(sessionId, out _);
-        _pendingAttaches.TryRemove(sessionId, out _);
+        _sessionInfos.TryRemove(sessionId, out _);
+        lock (_gate)
+        {
+            _pendingAttaches.Remove(sessionId);
+        }
     }
 }
