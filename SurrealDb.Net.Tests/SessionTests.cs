@@ -135,22 +135,23 @@ public class SessionTests
     }
 
     [Test]
-    [ConnectionStringFixtureGenerator]
+    [WebsocketConnectionStringFixtureGenerator]
     [SinceSurrealVersion("3.0")]
     public async Task ForkSession(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
         await using var client = surrealDbClientGenerator.Create(connectionString);
-        if (client.Engine is SurrealDbHttpEngine)
-        {
-            return;
-        }
-
         var firstSession = await client.CreateSession();
+        await firstSession.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await firstSession.Use("test", "test");
         await using var result = await firstSession.ForkSession();
 
         result.SessionId.Should().NotBeNull();
+        result.SessionId!.Value.Should().NotBe(firstSession.SessionId!.Value);
+
+        // INFO FOR DB requires both the selected database and root authentication.
+        (await result.RawQuery("INFO FOR DB;")).EnsureAllOks();
 
         await firstSession.DisposeAsync();
     }
