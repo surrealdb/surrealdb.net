@@ -463,6 +463,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         await Attach(newId, cancellationToken).ConfigureAwait(false);
         SessionInfos.Set(newId, newState);
 
+        await ApplyConfigurationAsync(newId, null, cancellationToken).ConfigureAwait(false);
+
         return newId;
     }
 
