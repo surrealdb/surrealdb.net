@@ -185,6 +185,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     {
         await Attach(sessionId, cancellationToken).ConfigureAwait(false);
         SessionInfos.Set(sessionId, sessionInfo);
+
+        if (sessionInfo.Ns is not null)
+        {
+            await Use(sessionInfo.Ns, sessionInfo.Db!, sessionId, null, cancellationToken)
+                .ConfigureAwait(false);
+        }
     }
 
     partial void PreConnect();

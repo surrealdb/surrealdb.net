@@ -88,6 +88,13 @@ public class SurrealDbScopedSessionTests
                 lifetime: ServiceLifetime.Scoped
             );
 
+            // Define the table up front so the concurrent writes below do not both try
+            // to create it implicitly (transaction conflict on embedded engines).
+            // Kept alive until the end: the first scope currently owns the embedded engine.
+            await using var setupScope = surrealDbClientGenerator.CreateAsyncScope()!;
+            var setupSession = setupScope.ServiceProvider.GetRequiredService<SurrealDbSession>();
+            await setupSession.RawQuery("DEFINE TABLE inner SCHEMALESS;");
+
             await using var scope = surrealDbClientGenerator.CreateAsyncScope()!;
 
             var tester1 = scope.ServiceProvider.GetRequiredService<SessionTester>();
