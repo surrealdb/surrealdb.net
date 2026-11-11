@@ -1,5 +1,6 @@
 ﻿using SurrealDb.Net.Internals.Cbor;
 using SurrealDb.Net.Internals.Ws;
+using SurrealDb.Net.Models;
 using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Tests.Serializers.Cbor;
@@ -111,5 +112,97 @@ public class SurrealDbWsResponseConverterTests : BaseCborConverterTests
         errorResponse
             .Error.Message.Should()
             .Be("There was a problem with the database: The signup query failed");
+    }
+
+    /// <summary>
+    /// Regression test for the exact KILLED live query notification sent by SurrealDB 3.x,
+    /// where "record", "result" and "session" are all NONE (tag 6 + null).
+    /// A failure to deserialize this notification used to terminate the WS receive pipeline,
+    /// causing every subsequent request on the connection to end up in timeout.
+    /// </summary>
+    [Test]
+    public async Task DeserializeWsLiveKilledNotificationFromSurrealDbV3()
+    {
+        // CBOR (captured from a SurrealDB 3.1.2 server):
+        // {
+        //   "result": {
+        //     "action": "KILLED",
+        //     "id": tag(37) h'4566a27276744e73889fbb936f416a22',
+        //     "record": tag(6) null,
+        //     "result": tag(6) null,
+        //     "session": tag(6) null
+        //   }
+        // }
+        var response = await DeserializeCborBinaryAsHexaAsync<ISurrealDbWsResponse>(
+            "a166726573756c74a566616374696f6e664b494c4c4544626964d825504566a27276744e73889fbb936f416a22667265636f7264c6f666726573756c74c6f66773657373696f6ec6f6"
+        );
+
+        response.Should().BeOfType<SurrealDbWsKilledResponse>();
+    }
+
+    [Test]
+    public async Task DeserializeWsLiveNotificationWithNoneSession()
+    {
+        // CBOR:
+        // {
+        //   "result": {
+        //     "action": "CREATE",
+        //     "id": tag(37) h'4566a27276744e73889fbb936f416a22',
+        //     "record": tag(8) ["post", "first"],
+        //     "result": { "name": "john" },
+        //     "session": tag(6) null
+        //   }
+        // }
+        var response = await DeserializeCborBinaryAsHexaAsync<ISurrealDbWsResponse>(
+            "a166726573756c74a566616374696f6e66435245415445626964d825504566a27276744e73889fbb936f416a22667265636f7264c88264706f737465666972737466726573756c74a1646e616d65646a6f686e6773657373696f6ec6f6"
+        );
+
+        response.Should().BeOfType<SurrealDbWsLiveResponse>();
+
+        var liveResponse = (SurrealDbWsLiveResponse)response;
+
+        liveResponse.Result.Id.Should().Be(Guid.Parse("4566a272-7674-4e73-889f-bb936f416a22"));
+        liveResponse.Result.Action.Should().Be("CREATE");
+        liveResponse.Result.Record.Should().Be(new RecordIdOfString("post", "first"));
+    }
+
+    [Test]
+    public async Task DeserializeWsResponseWithSession()
+    {
+        // CBOR:
+        // {
+        //   "id": "12345678",
+        //   "result": tag(6) null,
+        //   "session": tag(37) h'4566a27276744e73889fbb936f416a22'
+        // }
+        var response = await DeserializeCborBinaryAsHexaAsync<ISurrealDbWsResponse>(
+            "a362696468313233343536373866726573756c74c6f66773657373696f6ed825504566a27276744e73889fbb936f416a22"
+        );
+
+        response.Should().BeOfType<SurrealDbWsOkResponse>();
+
+        var okResponse = (SurrealDbWsOkResponse)response;
+
+        okResponse.Id.Should().Be("12345678");
+    }
+
+    [Test]
+    public async Task DeserializeWsResponseWithNoneSession()
+    {
+        // CBOR:
+        // {
+        //   "id": "12345678",
+        //   "result": tag(6) null,
+        //   "session": tag(6) null
+        // }
+        var response = await DeserializeCborBinaryAsHexaAsync<ISurrealDbWsResponse>(
+            "a362696468313233343536373866726573756c74c6f66773657373696f6ec6f6"
+        );
+
+        response.Should().BeOfType<SurrealDbWsOkResponse>();
+
+        var okResponse = (SurrealDbWsOkResponse)response;
+
+        okResponse.Id.Should().Be("12345678");
     }
 }

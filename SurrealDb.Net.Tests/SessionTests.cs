@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Models.Sessions;
+﻿using SurrealDb.Net.Internals;
+using SurrealDb.Net.Models.Sessions;
 
 namespace SurrealDb.Net.Tests;
 
@@ -11,10 +12,19 @@ public class SessionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
         bool result = await client.SupportsSession();
 
-        result.Should().BeTrue();
+        if (client.Engine is SurrealDbHttpEngine)
+        {
+            result.Should().BeFalse();
+        }
+        else
+        {
+            result.Should().BeTrue();
+        }
     }
 
     [Test]
@@ -24,7 +34,9 @@ public class SessionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
         bool result = await client.SupportsSession();
 
         result.Should().BeFalse();
@@ -37,7 +49,19 @@ public class SessionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
+
+        bool supportsSession = await client.SupportsSession();
+        if (client.Engine is SurrealDbHttpEngine)
+        {
+            supportsSession.Should().BeFalse();
+            return;
+        }
+
+        supportsSession.Should().BeTrue();
+
         var result = await client.Sessions();
 
         result.Should().BeEquivalentTo(Array.Empty<Guid>());
@@ -50,7 +74,18 @@ public class SessionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
+
+        bool supportsSession = await client.SupportsSession();
+        if (client.Engine is SurrealDbHttpEngine)
+        {
+            supportsSession.Should().BeFalse();
+            return;
+        }
+
+        supportsSession.Should().BeTrue();
 
         var session1 = await client.CreateSession();
         var session2 = await client.CreateSession();
@@ -72,24 +107,34 @@ public class SessionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
         await using var result = await client.CreateSession();
 
         result.SessionId.Should().NotBeNull();
     }
 
     [Test]
-    [ConnectionStringFixtureGenerator]
+    [WebsocketConnectionStringFixtureGenerator]
     [SinceSurrealVersion("3.0")]
     public async Task ForkSession(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
         var firstSession = await client.CreateSession();
+        await firstSession.SignIn(new RootAuth { Username = "root", Password = "root" });
+        await firstSession.Use("test", "test");
         await using var result = await firstSession.ForkSession();
 
         result.SessionId.Should().NotBeNull();
+        result.SessionId!.Value.Should().NotBe(firstSession.SessionId!.Value);
+
+        // INFO FOR DB requires both the selected database and root authentication.
+        (await result.RawQuery("INFO FOR DB;")).EnsureAllOks();
 
         await firstSession.DisposeAsync();
     }
@@ -101,7 +146,9 @@ public class SessionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
         var result = await client.CreateSession();
         await result.CloseSession();
 

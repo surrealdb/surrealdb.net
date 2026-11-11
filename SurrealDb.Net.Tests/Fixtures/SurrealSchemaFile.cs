@@ -1,4 +1,4 @@
-﻿namespace SurrealDb.Net.Tests.Fixtures;
+namespace SurrealDb.Net.Tests.Fixtures;
 
 public enum SurrealSchemaFile
 {
@@ -14,4 +14,5 @@ public enum SurrealSchemaFile
     Uuid,
     Vector,
     Bearer,
+    NestedObject,
 }

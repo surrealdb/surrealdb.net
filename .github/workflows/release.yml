@@ -164,7 +164,7 @@ jobs:
 
   create-package:
     needs: [embedded-builds]
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -176,10 +176,10 @@ jobs:
           pattern: embedded-*
           merge-multiple: true
 
-      - name: Setup dotnet 10.0
+      - name: Setup dotnet
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - name: Create Package
         run: dotnet pack /p:GenerateCompatibilitySuppressionFile=true --configuration Release --output ${{ env.NuGetDirectory }}
@@ -193,12 +193,14 @@ jobs:
 
   validate-package:
     needs: [create-package]
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-latest
 
     steps:
       - name: Setup dotnet 10.0
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
+          # No checkout in this job, so no global.json. It only runs tools on the
+          # packed .nupkg, so the exact SDK patch does not matter here.
           dotnet-version: "10.0.x"
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -215,11 +217,15 @@ jobs:
   publish-package:
     needs: [validate-package]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
 
     steps:
       - name: Setup dotnet 10.0
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
+          # No checkout in this job, so no global.json. It only runs tools on the
+          # packed .nupkg, so the exact SDK patch does not matter here.
           dotnet-version: "10.0.x"
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -227,8 +233,14 @@ jobs:
           name: nuget
           path: ${{ env.NuGetDirectory }}
 
+      - name: NuGet login (OIDC -> temp API key)
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Publish NuGet package
         run: |
           foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
-              dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+              dotnet nuget push $file --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
           }

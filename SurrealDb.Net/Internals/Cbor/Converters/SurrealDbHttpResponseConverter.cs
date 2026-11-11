@@ -12,6 +12,7 @@ internal sealed class SurrealDbHttpResponseConverter : CborConverterBase<ISurrea
 {
     private readonly CborOptions _options;
     private readonly ICborConverter<RpcErrorResponseContent> _rpcErrorResponseContentConverter;
+    private readonly ICborConverter<Guid> _guidConverter;
 
     public SurrealDbHttpResponseConverter(CborOptions options)
     {
@@ -19,6 +20,7 @@ internal sealed class SurrealDbHttpResponseConverter : CborConverterBase<ISurrea
 
         _rpcErrorResponseContentConverter =
             options.Registry.ConverterRegistry.Lookup<RpcErrorResponseContent>();
+        _guidConverter = options.Registry.ConverterRegistry.Lookup<Guid>();
     }
 
     public override ISurrealDbHttpResponse Read(ref CborReader reader)
@@ -29,6 +31,7 @@ internal sealed class SurrealDbHttpResponseConverter : CborConverterBase<ISurrea
 
         RpcErrorResponseContent? errorContent = null;
         ReadOnlyMemory<byte>? result = null;
+        Guid? session = null;
 
         while (reader.MoveNextMapItem(ref remainingItemCount))
         {
@@ -43,6 +46,12 @@ internal sealed class SurrealDbHttpResponseConverter : CborConverterBase<ISurrea
             if (key.SequenceEqual("result"u8))
             {
                 result = reader.ReadDataItemAsMemory();
+                continue;
+            }
+
+            if (key.SequenceEqual("session"u8))
+            {
+                session = _guidConverter.Read(ref reader);
                 continue;
             }
 

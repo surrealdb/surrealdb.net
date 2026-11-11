@@ -118,6 +118,15 @@ internal static partial class SurrealDbLoggerExtensions
         string executionTime
     );
 
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Failed to process a message received from the server. The message was skipped."
+    )]
+    public static partial void LogReceivedMessageProcessingFailed(
+        this ILogger logger,
+        Exception exception
+    );
+
     [LoggerMessage(Level = LogLevel.Debug, Message = "CBOR data serialized: {data}")]
     public static partial void LogSerializationDataSerialized(this ILogger logger, string data);
 
