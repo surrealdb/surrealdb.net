@@ -18,10 +18,10 @@ public class SurrealDbScopedSessionTests
 
         Func<Task> func = async () =>
         {
-            await using var surrealDbClientGenerator = new SurrealDbClientGenerator().Configure(
-                connectionString,
-                lifetime: ServiceLifetime.Scoped
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator(
+                ServiceLifetime.Scoped
             );
+            surrealDbClientGenerator.Configure(connectionString);
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
             await using var scope1 = surrealDbClientGenerator.CreateAsyncScope()!;
@@ -71,22 +71,20 @@ public class SurrealDbScopedSessionTests
 
         Func<Task> func = async () =>
         {
-            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator(
+                ServiceLifetime.Scoped
+            );
             surrealDbClientGenerator.RegisterService<SessionTester>();
 
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
             {
-                await using var client = surrealDbClientGenerator.Create(connectionString);
+                await using var setupGenerator = new SurrealDbClientGenerator();
+                await using var client = setupGenerator.Create(connectionString);
                 await client.Use(dbInfo.Namespace, dbInfo.Database);
             }
 
-            surrealDbClientGenerator.Configure(
-                connectionString,
-                dbInfo.Namespace,
-                dbInfo.Database,
-                lifetime: ServiceLifetime.Scoped
-            );
+            surrealDbClientGenerator.Configure(connectionString, dbInfo.Namespace, dbInfo.Database);
 
             // Define the table up front so the concurrent writes below do not both try
             // to create it implicitly (transaction conflict on embedded engines).
