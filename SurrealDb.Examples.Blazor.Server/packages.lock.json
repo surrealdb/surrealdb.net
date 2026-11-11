@@ -22,9 +22,9 @@
       },
       "Microsoft.AspNetCore.App.Internal.Assets": {
         "type": "Direct",
-        "requested": "[10.0.10, )",
-        "resolved": "10.0.10",
-        "contentHash": "8k0KoYKvNrSqP8E3oDJMBVKavlTEE6BacdLGtEDcxv9Hz0XxWFkD6JdLJsxXUlGeAfZ6YfvWmxKenl73qeCTSA=="
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "cineG7aU2cpo+CC5rDORY4bFRya0mlaULDpzQ+ncfG0tMyZlWATyVAo2P29i0hH40EElK5O204pjT4XEYALb6g=="
       },
       "MudBlazor": {
         "type": "Direct",
