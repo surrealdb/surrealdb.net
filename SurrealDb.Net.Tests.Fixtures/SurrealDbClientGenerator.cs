@@ -1,4 +1,3 @@
-﻿using Bogus;
 using Microsoft.Extensions.DependencyInjection;
 using Semver;
 using SurrealDb.Net.Extensions;
@@ -6,40 +5,13 @@ using SurrealDb.Net.Models.Auth;
 
 namespace SurrealDb.Net.Tests.Fixtures;
 
-public sealed class DatabaseInfo
-{
-    public string Namespace { get; init; } = string.Empty;
-    public string Database { get; init; } = string.Empty;
-}
-
-internal sealed class DatabaseInfoFaker : Faker<DatabaseInfo>
-{
-    public DatabaseInfoFaker()
-    {
-        RuleFor(o => o.Namespace, f => f.Random.AlphaNumeric(40));
-        RuleFor(o => o.Database, f => f.Random.AlphaNumeric(40));
-    }
-}
-
-internal sealed class FilePathInfo
-{
-    public string Path { get; init; } = string.Empty;
-}
-
-internal sealed class FilePathFaker : Faker<FilePathInfo>
-{
-    public FilePathFaker()
-    {
-        RuleFor(o => o.Path, f => $"temp/{f.Random.AlphaNumeric(40)}");
-    }
-}
-
-public sealed class SurrealDbClientGenerator : IAsyncDisposable
+public sealed class SurrealDbClientGenerator(ServiceLifetime lifetime = ServiceLifetime.Singleton)
+    : IAsyncDisposable
 {
     private static readonly DatabaseInfoFaker _databaseInfoFaker = new();
     private static readonly FilePathFaker _filePathFaker = new();
 
-    private List<Type> _servicesToRegister = new();
+    private readonly List<Type> _servicesToRegister = new();
     private ServiceProvider? _serviceProvider;
     private DatabaseInfo? _databaseInfo;
     private SurrealDbOptions? _options;
@@ -64,29 +36,13 @@ public sealed class SurrealDbClientGenerator : IAsyncDisposable
         }
     }
 
-    private void GenerateRandomFilePath()
-    {
-        _folderPath = _filePathFaker.Generate().Path;
-    }
-
-    public void RegisterService<T>()
-    {
-        _servicesToRegister.Add(typeof(T));
-    }
-
-    // TODO : Remove to simplify with Configure()/ctor + GetSingleton()
-    public SurrealDbClient Create(string connectionString, string? ns = null, string? db = null)
+    public ISurrealDbClient Create(string connectionString, string? ns = null, string? db = null)
     {
         Configure(connectionString, ns, db);
-        return _serviceProvider!.GetRequiredService<SurrealDbClient>();
+        return GetClient();
     }
 
-    public SurrealDbClientGenerator Configure(
-        string connectionString,
-        string? ns = null,
-        string? db = null,
-        ServiceLifetime lifetime = ServiceLifetime.Singleton
-    )
+    public void Configure(string connectionString, string? ns = null, string? db = null)
     {
         var optionsBuilder = SurrealDbOptions.Create().FromConnectionString(connectionString);
 
@@ -126,8 +82,21 @@ public sealed class SurrealDbClientGenerator : IAsyncDisposable
         }
 
         _serviceProvider = serviceCollection.BuildServiceProvider(validateScopes: true);
+    }
 
-        return this;
+    private void GenerateRandomFilePath()
+    {
+        _folderPath = _filePathFaker.Generate().Path;
+    }
+
+    public void RegisterService<T>()
+    {
+        _servicesToRegister.Add(typeof(T));
+    }
+
+    private SurrealDbClient GetClient()
+    {
+        return _serviceProvider!.GetRequiredService<SurrealDbClient>();
     }
 
     public AsyncServiceScope CreateAsyncScope()
@@ -144,7 +113,8 @@ public sealed class SurrealDbClientGenerator : IAsyncDisposable
     public static async Task<SemVersion> GetSurrealTestVersion(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        surrealDbClientGenerator.Create(connectionString);
+        await using var client = surrealDbClientGenerator.GetClient();
 
         return (await client.Version()).ToSemver();
     }
@@ -153,21 +123,25 @@ public sealed class SurrealDbClientGenerator : IAsyncDisposable
     {
         if (_options is not null && !_options.IsEmbedded && _databaseInfo is not null)
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
-
-            await using var client = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
-            await client.SignIn(new RootAuth { Username = "root", Password = "root" }, cts.Token);
-            await client.Use(_databaseInfo.Namespace, _databaseInfo.Database, cts.Token);
-
-            await client.RawQuery(
-                $"REMOVE DATABASE `{_databaseInfo.Database}`;",
-                cancellationToken: cts.Token
-            );
+            await CleanDatabaseAsync(_databaseInfo);
         }
-
         if (_serviceProvider is not null)
         {
             await _serviceProvider.DisposeAsync();
         }
+    }
+
+    private static async ValueTask CleanDatabaseAsync(DatabaseInfo databaseInfo)
+    {
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+
+        await using var client = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
+        await client.SignIn(new RootAuth { Username = "root", Password = "root" }, cts.Token);
+        await client.Use(databaseInfo.Namespace, databaseInfo.Database, cts.Token);
+
+        await client.RawQuery(
+            $"REMOVE DATABASE `{databaseInfo.Database}`;",
+            cancellationToken: cts.Token
+        );
     }
 }
