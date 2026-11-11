@@ -40,6 +40,15 @@ The official SurrealDB SDK for .NET.
 
 View the SDK documentation [here](https://surrealdb.com/docs/integration/libraries/dotnet).
 
+## Features
+
+- HTTP and WebSocket connections
+- Embedded in-memory and persistent modes (Memory, RocksDB, SurrealKV)
+- Dependency injection
+- Authentication
+- Live queries
+- Client-side transactions
+
 ## How to install
 
 ```sh
@@ -57,10 +66,10 @@ This library supports connecting to SurrealDB over the remote HTTP and WebSocket
 You can easily create a new SurrealDB client. All you have to do is define the `endpoint` to the SurrealDB instance.
 
 ```csharp
-using var clientHttp = new SurrealDbClient("http://127.0.0.1:8000");
-using var clientHttps = new SurrealDbClient("https://127.0.0.1:8000");
-using var clientWs = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
-using var clientWss = new SurrealDbClient("wss://127.0.0.1:8000/rpc");
+await using var clientHttp = new SurrealDbClient("http://127.0.0.1:8000");
+await using var clientHttps = new SurrealDbClient("https://127.0.0.1:8000");
+await using var clientWs = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
+await using var clientWss = new SurrealDbClient("wss://127.0.0.1:8000/rpc");
 
 // Now you can call other methods including Signin & Use
 ```
@@ -81,19 +90,26 @@ var options = SurrealDbOptions
   .WithPassword("root")
   .Build();
 
-services.AddSurreal(options);
+services.AddSurreal(options); // Access `SurrealDbSession` scoped to the request
 ```
 
-Then you will be able to use the `ISurrealDbClient` interface or `SurrealDbClient` class anywhere.
+Then you will be able to use the `ISurrealDbSession` interface or `SurrealDbSession` class anywhere. Note that you will need to use `SurrealDbSession` instead of `SurrealDbClient` because `SurrealDbClient` can only be used in a Singleton context, see below.
+
+#### Lifetime compatibility
+
+| Class              | Singleton | Scoped | Transient |
+| ------------------ | --------- | ------ | --------- |
+| `SurrealDbClient`  | ✅        | ❌     | ❌        |
+| `SurrealDbSession` | ❌        | ✅     | ✅        |
 
 ```csharp
 public class MyClass
 {
-  private readonly ISurrealDbClient _client;
+  private readonly ISurrealDbSession _db;
 
-  public MyClass(ISurrealDbClient client)
+  public MyClass(ISurrealDbSession db)
   {
-    _client = client;
+    _db = db;
   }
 
   // ...
@@ -145,7 +161,7 @@ services.AddKeyedSurreal("monitoring", configuration.GetConnectionString("Surrea
 
 Here you will have 3 instances:
 
-- the default one, you can keep using `ISurrealDbClient` interface or `SurrealDbClient` class anywhere
+- the default one, you can keep using `ISurrealDbSession` interface or `SurrealDbSession` class anywhere
 - a client for backup purpose, using the `[FromKeyedServices("backup")]` attribute
 - a client for monitoring purpose, using the `[FromKeyedServices("monitoring")]` attribute
 
@@ -158,23 +174,23 @@ public class WeatherForecastController : ControllerBase
 {
   private const string Table = "weatherForecast";
 
-  private readonly ISurrealDbClient _surrealDbClient;
+  private readonly ISurrealDbSession _db;
 
-  public WeatherForecastController(ISurrealDbClient surrealDbClient)
+  public WeatherForecastController(ISurrealDbSession db)
   {
-    _surrealDbClient = surrealDbClient;
+    _db = db;
   }
 
   [HttpGet]
   public Task<IEnumerable<WeatherForecast>> GetAll(CancellationToken cancellationToken)
   {
-    return _surrealDbClient.Select<WeatherForecast>(Table, cancellationToken);
+    return _db.Select<WeatherForecast>(Table, cancellationToken);
   }
 
   [HttpGet("{id}")]
   public async Task<IActionResult> Get(string id, CancellationToken cancellationToken)
   {
-    var weatherForecast = await _surrealDbClient.Select<WeatherForecast>((Table, id), cancellationToken);
+    var weatherForecast = await _db.Select<WeatherForecast>((Table, id), cancellationToken);
 
     if (weatherForecast is null)
       return NotFound();
@@ -193,13 +209,13 @@ public class WeatherForecastController : ControllerBase
       Summary = data.Summary
     };
 
-    return _surrealDbClient.Create(Table, weatherForecast, cancellationToken);
+    return _db.Create(Table, weatherForecast, cancellationToken);
   }
 
   [HttpPut]
   public Task<WeatherForecast> Update(WeatherForecast data, CancellationToken cancellationToken)
   {
-    return _surrealDbClient.Upsert(data, cancellationToken);
+    return _db.Upsert(data, cancellationToken);
   }
 
   [HttpPatch]
@@ -208,7 +224,7 @@ public class WeatherForecastController : ControllerBase
     CancellationToken cancellationToken
   )
   {
-    return _surrealDbClient.Patch(Table, patches, cancellationToken);
+    return _db.Patch(Table, patches, cancellationToken);
   }
 
   [HttpPatch("{id}")]
@@ -218,19 +234,19 @@ public class WeatherForecastController : ControllerBase
     CancellationToken cancellationToken
   )
   {
-    return _surrealDbClient.Patch((Table, id), patches, cancellationToken);
+    return _db.Patch((Table, id), patches, cancellationToken);
   }
 
   [HttpDelete]
   public Task DeleteAll(CancellationToken cancellationToken)
   {
-    return _surrealDbClient.Delete(Table, cancellationToken);
+    return _db.Delete(Table, cancellationToken);
   }
 
   [HttpDelete("{id}")]
   public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
   {
-    bool success = await _surrealDbClient.Delete((Table, id), cancellationToken);
+    bool success = await _db.Delete((Table, id), cancellationToken);
 
     if (!success)
       return NotFound();
@@ -240,35 +256,38 @@ public class WeatherForecastController : ControllerBase
 }
 ```
 
-## Contributing
+## Embedded mode
 
-### Prerequisites
+SurrealDB can run embedded directly inside your .NET process — no external server needed. Three engines are available:
 
-Before contributing to this repository, please take note of the [Contributing](./CONTRIBUTING.md) guidelines. To contribute to this project, you will also need to install the following tools:
+| Package                                                                                                                                                                               | Storage                | Use case             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | -------------------- |
+| [![NuGet](https://img.shields.io/nuget/v/SurrealDb.Embedded.InMemory?style=flat-square)](https://www.nuget.org/packages/SurrealDb.Embedded.InMemory) `SurrealDb.Embedded.InMemory`    | In-memory (volatile)   | Testing, prototyping |
+| [![NuGet](https://img.shields.io/nuget/v/SurrealDb.Embedded.RocksDb?style=flat-square)](https://www.nuget.org/packages/SurrealDb.Embedded.RocksDb) `SurrealDb.Embedded.RocksDb`       | RocksDB (persistent)   | Local storage        |
+| [![NuGet](https://img.shields.io/nuget/v/SurrealDb.Embedded.SurrealKv?style=flat-square)](https://www.nuget.org/packages/SurrealDb.Embedded.SurrealKv) `SurrealDb.Embedded.SurrealKv` | SurrealKV (persistent) | Local storage        |
 
-* The .NET SDK, preferably the latest stable version which is available for [download here](https://dotnet.microsoft.com/download)
-* The [Rust programming language](https://www.rust-lang.org/learn/get-started), in order to build the embedded providers
-
-#### Embedded mode
-
-The test and benchmark projects are dependent on the local Rust crate used by embedded providers. This crate is located in the [./rust-embedded](./rust-embedded) folder of this repository. To build the crate, make sure you installed the Rust toolchain on your machine and then follow these steps:
+### Install
 
 ```sh
-cd ./rust-embedded
-cargo build
+dotnet add package SurrealDb.Embedded.InMemory
 ```
 
-If the command line was successful, the compiled libraries are generated in the target folder and automatically copied when the .NET projects are built.
+### Basic example
 
-Note: you can manually disable the embedded mode by changing the value of the constant `EMBEDDED_MODE` located in the `Directory.Build.props` file like this:
+```csharp
+using SurrealDb.Embedded.InMemory;
 
-```xml
-<PropertyGroup Label="Constants" Condition="false">
-  <DefineConstants>EMBEDDED_MODE</DefineConstants>
-</PropertyGroup>
+await using var db = new SurrealDbMemoryClient();
+
+await db.Use("test", "test");
+
+var created = await db.Create("person", new { Name = "John", Age = 30 });
+var results = await db.Select<Person>("person");
 ```
 
-### .NET release versions
+> Learn more about embedding SurrealDB in the [official docs](https://surrealdb.com/docs/languages/dotnet/embedding).
+
+## .NET release versions
 
 The .NET release versions must follow these rules:
 
@@ -286,92 +305,7 @@ Note that the support for .NET standard 2.1 will be maintained until further not
 | .NET 9            | STS         | November 12, 2024 | November 10, 2026 |
 | .NET 10           | Current LTS | November 11, 2025 | November 14, 2028 |
 
-### Formatting
+## Contributing
 
-This project is using [CSharpier](https://csharpier.com/), an opinionated code formatter.
-
-#### Command line
-
-You can install it on your machine via `dotnet tool`.
-
-```sh
-# Run this command at the root of the project
-dotnet tool install csharpier
-```
-
-You can then use it as a cli:
-
-```sh
-dotnet csharpier .
-```
-
-The list of command-line options is available here: https://csharpier.com/docs/CLI
-
-#### IDE integration
-
-CSharpier supports [multiple code editors](https://csharpier.com/docs/Editors), including Visual Studio, Jetbrains Rider, VSCode and Neovim. You will be able to run format on file save after configuring the settings in your IDE.
-
-### Testing
-
-This project was written following testing best practices:
-
-- TDD, leveraging:
-  - clean code/architecture
-  - regression testing
-  - adding new features and tests easily
-- a vast majority of tests are integration tests, ensuring compatibility with a concrete SurrealDB version
-- each integration test is using a separate SurrealDB namespace/database
-
-Unit/Integration tests are written using [TUnit](https://thomhurst.github.io/TUnit/) and [FluentAssertions](https://fluentassertions.com/).
-
-You will need a local SurrealDB instance alongside the tests. Start one using the following command:
-
-```sh
-surreal start --log debug --user root --pass root memory --allow-guests
-```
-
-Once ready, go to the root directory of the project and run the following command:
-
-```sh
-dotnet watch test --project SurrealDb.Net.Tests
-```
-
-Due to the asynchronous nature of Live Queries, they are tested against a separate project named `SurrealDb.Net.LiveQuery.Tests`. Where the default test project allow full parallelization, this project completely disable test parallelization. To execute tests on Live Queries, run the following command:
-
-```sh
-dotnet watch test --project SurrealDb.Net.LiveQuery.Tests
-```
-
-Note 1: Because Live Query tests are not run in parallel, it can take quite some time to run all tests.
-
-Note 2: You can run the two test projects in parallel.
-
-### Benchmarking
-
-This project also contains [benchmarks](https://benchmarkdotnet.org/) in order to detect possible performance regressions.
-
-You will need a local SurrealDB instance alongside the tests. Start one using the following command:
-
-```sh
-surreal start --user root --pass root memory --allow-guests
-```
-
-Once ready, go to the root directory of the project and run the following command:
-
-```sh
-dotnet run -c Release --project SurrealDb.Net.Benchmarks.Remote --filter '*'
-```
-
-```sh
-./prepare_embedded_benchmarks.sh -s
-dotnet run -c Release --project SurrealDb.Net.Benchmarks.Embedded --filter '*'
-./prepare_embedded_benchmarks.sh -e
-```
-
-For Windows:
-
-```sh
-./prepare_embedded_benchmarks.ps1 -s
-dotnet run -c Release --project SurrealDb.Net.Benchmarks.Embedded --filter '*'
-./prepare_embedded_benchmarks.ps1 -e
-```
+- [Contributing guidelines](./CONTRIBUTING.md)
+- [Setup the project for contributions](./GET_STARTED.md)

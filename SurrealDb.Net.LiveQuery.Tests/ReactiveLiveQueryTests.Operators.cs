@@ -102,6 +102,8 @@ public class ReactiveOperatorsLiveQueryTests : BaseLiveQueryTests
     [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
     public async Task ShouldScanRecords(string connectionString)
     {
+        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
+
         List<TestRecord>? records = null;
         int calls = 0;
 
@@ -185,6 +187,11 @@ public class ReactiveOperatorsLiveQueryTests : BaseLiveQueryTests
 
         records.Should().BeEquivalentTo(expected);
 
-        calls.Should().Be(7);
+        int expectedCalls = version switch
+        {
+            not null when version.Major == 3 && version.Minor >= 1 => 8,
+            _ => 7,
+        };
+        calls.Should().Be(expectedCalls);
     }
 }

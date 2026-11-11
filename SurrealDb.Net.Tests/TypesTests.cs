@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Numerics;
 using System.Text;
 using FluentAssertions.Extensions;
 
@@ -874,5 +875,45 @@ public class TypesTests
             customRecord!.Value!.Table.Should().Be("person");
             customRecord!.Value!.DeserializeId<string>().Should().Be("tobie");
         }
+    }
+
+    [Table("nested_object")]
+    public class NestedObject : SurrealDbRecord
+    {
+        [Column("name")]
+        public string Name { get; set; } = string.Empty;
+
+        [Column("sub_items")]
+        public IList<NestedObject>? SubItems { get; set; } = [];
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    public async Task ShouldDeserializeNestedArray(string connectionString)
+    {
+        IEnumerable<NestedObject>? result = null;
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            await using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.NestedObject);
+
+            result = await client.Select<NestedObject>("nested_object");
+        };
+
+        await func.Should().NotThrowAsync();
+
+        result.Should().NotBeNull().And.HaveCount(1);
+
+        var record = result!.First();
+        record.Name.Should().Be("parent");
+        record.SubItems.Should().NotBeNull().And.HaveCount(2);
+        record.SubItems![0].Name.Should().Be("child1");
+        record.SubItems![1].Name.Should().Be("child2");
     }
 }

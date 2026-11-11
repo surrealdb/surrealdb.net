@@ -40,9 +40,6 @@ internal sealed class SurrealDbWsLiveResponseContentConverter
         {
             ReadOnlySpan<byte> key = reader.ReadRawString();
 
-            if (key.IsEmpty)
-                continue;
-
             if (key.SequenceEqual("id"u8))
             {
                 id = _guidConverter.Read(ref reader);
@@ -69,7 +66,15 @@ internal sealed class SurrealDbWsLiveResponseContentConverter
 
             if (key.SequenceEqual("session"u8))
             {
-                session = _guidConverter.Read(ref reader);
+                if (reader.GetCurrentDataItemType() == CborDataItemType.Null)
+                {
+                    reader.ReadNull();
+                    session = null;
+                }
+                else
+                {
+                    session = _guidConverter.Read(ref reader);
+                }
                 continue;
             }
 

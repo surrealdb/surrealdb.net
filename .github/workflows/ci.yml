@@ -13,15 +13,15 @@ on:
       - "**.md"
 jobs:
   build-remote:
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
-      - name: Setup dotnet 10.0
+      - name: Setup dotnet
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - name: Install .NET tools
         run: dotnet tool restore
@@ -38,9 +38,23 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
 
+      - name: Restore embedded mode
+        run: git restore Directory.Build.props
+
+      - name: Check unexpected changes
+        run: |
+          status=$(git status --porcelain)
+          if [ -n "$status" ]; then
+            while IFS= read -r line; do
+              file="${line:3}"
+              echo "::error file=${file}::Unexpected change after build: ${line}"
+            done <<< "$status"
+            exit 1
+          fi
+
   build:
     needs: [embedded-build]
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -51,10 +65,10 @@ jobs:
           name: embedded
           path: ./rust-embedded/target/debug
 
-      - name: Setup dotnet 10.0
+      - name: Setup dotnet
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - name: Install .NET tools
         run: dotnet tool restore
@@ -72,7 +86,7 @@ jobs:
 
   test:
     needs: [embedded-build]
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         surrealdb_version:
@@ -85,6 +99,7 @@ jobs:
             "v2.4.0",
             "v2.6.1",
             "v3.0.5",
+            "v3.1.2",
           ]
     steps:
       - name: Checkout
@@ -107,10 +122,10 @@ jobs:
             surreal start --user root --pass root memory --allow-guests &
           fi
 
-      - name: Setup dotnet 10.0
+      - name: Setup dotnet
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - name: Install dependencies
         run: dotnet restore
@@ -137,7 +152,7 @@ jobs:
           --coverage-output-format cobertura
 
       - name: Upload Coverage
-        if: matrix.surrealdb_version == 'v2.4.0'
+        if: matrix.surrealdb_version == 'v3.1.2'
         uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5
         with:
           fail_ci_if_error: false
@@ -145,7 +160,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   embedded-build:
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -210,4 +225,3 @@ jobs:
       - name: Run lint
         working-directory: ./rust-embedded
         run: cargo clippy -- -Dwarnings
-

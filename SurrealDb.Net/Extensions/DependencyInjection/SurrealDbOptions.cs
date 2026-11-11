@@ -66,6 +66,12 @@ public sealed class SurrealDbOptions
     /// </summary>
     public SurrealDbLoggingOptions Logging { get; set; } = new();
 
+    /// <summary>
+    /// Timeout for websocket requests sent to SurrealDB.
+    /// Defaults to 30 seconds when null.
+    /// </summary>
+    public TimeSpan? RequestTimeout { get; set; }
+
     public SurrealDbOptions() { }
 
     public SurrealDbOptions(string endpoint)
@@ -83,6 +89,7 @@ public sealed class SurrealDbOptions
         Token = clone.Token;
         AuthLevel = clone.AuthLevel;
         Logging = clone.Logging;
+        RequestTimeout = clone.RequestTimeout;
     }
 
     public static SurrealDbOptionsBuilder Create()

@@ -18,9 +18,16 @@ internal sealed class RecordIdConverter : CborConverterBase<RecordId>
 
     public override RecordId Read(ref CborReader reader)
     {
-        return reader.GetCurrentDataItemType() switch
+        var dataType = reader.GetCurrentDataItemType();
+
+        if (dataType == CborDataItemType.Null)
         {
-            CborDataItemType.Null => default!,
+            reader.ReadNull();
+            return default!;
+        }
+
+        return dataType switch
+        {
             CborDataItemType.Array => ReadRecordIdFromArray(ref reader),
             CborDataItemType.String => throw new CborException(
                 $"The type '{nameof(StringRecordId)}' was not expected here"

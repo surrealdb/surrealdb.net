@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Text;
 using Semver;
 using SurrealDb.Net.Extensions;
@@ -47,6 +47,7 @@ public static class SurrealDbClientExtensions
             SurrealSchemaFile.Uuid => "uuid",
             SurrealSchemaFile.Vector => "vector",
             SurrealSchemaFile.Bearer => "bearer",
+            SurrealSchemaFile.NestedObject => "nestedObject",
             _ => throw new NotImplementedException(),
         };
 
