@@ -39,6 +39,7 @@ public sealed class SurrealDbClientGenerator : IAsyncDisposable
     private static readonly DatabaseInfoFaker _databaseInfoFaker = new();
     private static readonly FilePathFaker _filePathFaker = new();
 
+    private List<Type> _servicesToRegister = new();
     private ServiceProvider? _serviceProvider;
     private DatabaseInfo? _databaseInfo;
     private SurrealDbOptions? _options;
@@ -66,6 +67,11 @@ public sealed class SurrealDbClientGenerator : IAsyncDisposable
     private void GenerateRandomFilePath()
     {
         _folderPath = _filePathFaker.Generate().Path;
+    }
+
+    public void RegisterService<T>()
+    {
+        _servicesToRegister.Add(typeof(T));
     }
 
     // TODO : Remove to simplify with Configure()/ctor + GetSingleton()
@@ -107,12 +113,19 @@ public sealed class SurrealDbClientGenerator : IAsyncDisposable
 
         _options = optionsBuilder.Build();
 
-        _serviceProvider = new ServiceCollection()
+        var serviceCollection = new ServiceCollection()
             .AddSurreal(_options, lifetime: lifetime)
             .AddInMemoryProvider()
             .AddRocksDbProvider()
             .AddSurrealKvProvider()
-            .And.BuildServiceProvider(validateScopes: true);
+            .Services;
+
+        foreach (var type in _servicesToRegister)
+        {
+            serviceCollection.AddScoped(type);
+        }
+
+        _serviceProvider = serviceCollection.BuildServiceProvider(validateScopes: true);
 
         return this;
     }
