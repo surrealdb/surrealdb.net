@@ -18,10 +18,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
-      - name: Setup dotnet 10.0
+      - name: Setup dotnet
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - name: Install .NET tools
         run: dotnet tool restore
@@ -65,10 +65,10 @@ jobs:
           name: embedded
           path: ./rust-embedded/target/debug
 
-      - name: Setup dotnet 10.0
+      - name: Setup dotnet
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - name: Install .NET tools
         run: dotnet tool restore
@@ -122,10 +122,10 @@ jobs:
             surreal start --user root --pass root memory --allow-guests &
           fi
 
-      - name: Setup dotnet 10.0
+      - name: Setup dotnet
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - name: Install dependencies
         run: dotnet restore
