@@ -65,7 +65,9 @@ public static class SurrealDbClientExtensions
 
                         try
                         {
-                            response = await client.RawQuery(query, parameters, cancellationToken);
+                            response = await client
+                                .RawQuery(query, parameters, cancellationToken)
+                                .ConfigureAwait(false);
                         }
                         catch (Exception e)
                         {
@@ -143,7 +145,9 @@ public static class SurrealDbClientExtensions
 
                         try
                         {
-                            liveQuery = await client.LiveTable<T>(table, diff, cancellationToken);
+                            liveQuery = await client
+                                .LiveTable<T>(table, diff, cancellationToken)
+                                .ConfigureAwait(false);
                         }
                         catch (Exception e)
                         {

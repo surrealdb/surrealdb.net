@@ -83,7 +83,10 @@ public class SurrealDbClient : BaseSurrealDbClient
             throw new ArgumentNullException(nameof(configuration), "The endpoint is required.");
 
         var endpointUri = new Uri(configuration.Endpoint);
-        if (endpointUri.Scheme is "ws" or "wss" && !endpointUri.AbsolutePath.EndsWith("/rpc"))
+        if (
+            endpointUri.Scheme is "ws" or "wss"
+            && !endpointUri.AbsolutePath.EndsWith("/rpc", StringComparison.Ordinal)
+        )
         {
             string absoluteNakedPath = endpointUri.AbsolutePath.EndsWith('/')
                 ? endpointUri.AbsolutePath[..^1]

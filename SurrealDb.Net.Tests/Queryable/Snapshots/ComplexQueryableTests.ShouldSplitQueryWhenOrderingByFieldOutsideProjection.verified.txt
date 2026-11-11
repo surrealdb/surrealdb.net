@@ -1,0 +1,26 @@
+﻿[
+  {
+    id: {
+      Id: 7,
+      Table: orders
+    },
+    customer: Frank Founder,
+    total: 1489.97
+  },
+  {
+    id: {
+      Id: 4,
+      Table: orders
+    },
+    customer: Diana Designer,
+    total: 399.99
+  },
+  {
+    id: {
+      Id: 2,
+      Table: orders
+    },
+    customer: Bob Buyer,
+    total: 1019.98
+  }
+]

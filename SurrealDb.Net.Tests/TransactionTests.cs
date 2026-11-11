@@ -100,11 +100,11 @@ public class TransactionTests
 
             _ = await transaction.Create("post", post);
 
-            beforeCommitList = await client.Select<Post>("post");
+            beforeCommitList = await client.Select<Post>("post").ToListAsync();
 
             await transaction.Commit();
 
-            afterCommitList = await client.Select<Post>("post");
+            afterCommitList = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -156,7 +156,7 @@ public class TransactionTests
 
             await transaction.Cancel();
 
-            afterCommitList = await client.Select<Post>("post");
+            afterCommitList = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();
@@ -207,7 +207,7 @@ public class TransactionTests
                 _ = await transaction.Create("post", post);
             }
 
-            afterCommitList = await client.Select<Post>("post");
+            afterCommitList = await client.Select<Post>("post").ToListAsync();
         };
 
         await func.Should().NotThrowAsync();

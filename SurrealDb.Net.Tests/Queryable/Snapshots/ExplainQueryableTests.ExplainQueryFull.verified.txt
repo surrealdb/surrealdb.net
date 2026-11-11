@@ -1,0 +1,30 @@
+﻿[
+  {
+    Operator: SelectProject,
+    Context: Db,
+    Attributes: {
+      projections: avatar, email, id, password, registered_at, username
+    },
+    Children: [
+      {
+        Operator: TableScan,
+        Context: Db,
+        Attributes: {
+          direction: Forward,
+          table: user
+        },
+        Metrics: {
+          OutputRows: 1,
+          OutputBatches: 1,
+          ElapsedNs: {Scrubbed}
+        }
+      }
+    ],
+    Metrics: {
+      OutputRows: 1,
+      OutputBatches: 1,
+      ElapsedNs: {Scrubbed}
+    },
+    TotalRows: 1
+  }
+]

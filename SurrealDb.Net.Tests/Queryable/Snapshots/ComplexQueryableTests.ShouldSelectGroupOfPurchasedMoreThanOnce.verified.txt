@@ -1,0 +1,18 @@
+﻿[
+  {
+    Name: Mouse,
+    PurchasedSales: 59.98
+  },
+  {
+    Name: Mouse,
+    PurchasedSales: 119.96
+  },
+  {
+    Name: Keyboard,
+    PurchasedSales: 179.98
+  },
+  {
+    Name: Headphones,
+    PurchasedSales: 449.97
+  }
+]

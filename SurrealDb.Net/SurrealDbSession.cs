@@ -24,7 +24,7 @@ public class SurrealDbSession : BaseSurrealDbClient, ISurrealDbSession
         {
             throw new InvalidSessionException(SessionId);
         }
-        if (!(await SupportsTransactions(cancellationToken)))
+        if (!(await SupportsTransactions(cancellationToken).ConfigureAwait(false)))
         {
             throw new NotSupportedException("Transactions are not supported.");
         }

@@ -1,0 +1,19 @@
+﻿[
+  {
+    Operator: SelectProject,
+    Context: Db,
+    Attributes: {
+      projections: avatar, email, id, password, registered_at, username
+    },
+    Children: [
+      {
+        Operator: TableScan,
+        Context: Db,
+        Attributes: {
+          direction: Forward,
+          table: user
+        }
+      }
+    ]
+  }
+]

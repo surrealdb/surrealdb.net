@@ -81,7 +81,9 @@ async Task GenerateWeatherForecastsAsync(ISurrealDbClient surrealDbClient)
 
 async Task GenerateKanbanAsync(ISurrealDbClient surrealDbClient)
 {
-    var existingColumns = await surrealDbClient.Select<ColumnRecord>(ColumnRecord.Table);
+    var existingColumns = await surrealDbClient
+        .Select<ColumnRecord>(ColumnRecord.Table)
+        .ToListAsync();
     if (existingColumns.Any())
     {
         return;

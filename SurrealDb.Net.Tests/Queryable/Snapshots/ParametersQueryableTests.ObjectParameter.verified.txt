@@ -1,0 +1,6 @@
+﻿{
+  search: {
+    Country: USA,
+    City: New York
+  }
+}
