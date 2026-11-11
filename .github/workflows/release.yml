@@ -176,10 +176,10 @@ jobs:
           pattern: embedded-*
           merge-multiple: true
 
-      - name: Setup dotnet 10.0
+      - name: Setup dotnet
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - name: Create Package
         run: dotnet pack /p:GenerateCompatibilitySuppressionFile=true --configuration Release --output ${{ env.NuGetDirectory }}
@@ -199,6 +199,8 @@ jobs:
       - name: Setup dotnet 10.0
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
+          # No checkout in this job, so no global.json. It only runs tools on the
+          # packed .nupkg, so the exact SDK patch does not matter here.
           dotnet-version: "10.0.x"
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -222,6 +224,8 @@ jobs:
       - name: Setup dotnet 10.0
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
+          # No checkout in this job, so no global.json. It only runs tools on the
+          # packed .nupkg, so the exact SDK patch does not matter here.
           dotnet-version: "10.0.x"
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
