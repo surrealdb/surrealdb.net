@@ -185,6 +185,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     {
         await Attach(sessionId, cancellationToken).ConfigureAwait(false);
         SessionInfos.Set(sessionId, sessionInfo);
+
+        if (sessionInfo.Ns is not null)
+        {
+            await Use(sessionInfo.Ns, sessionInfo.Db!, sessionId, null, cancellationToken)
+                .ConfigureAwait(false);
+        }
     }
 
     partial void PreConnect();
@@ -1560,15 +1566,16 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             throw;
         }
 
-        if (
-            sessionId.HasValue
-            && _sessionizer is not null
-            && _sessionizer.Get(sessionId.Value, out var newSessionInfo)
-            && newSessionInfo is EmbeddedSessionInfo newEmbeddedSessionInfo
-        )
+        if (sessionId.HasValue && _sessionizer is not null)
         {
-            _sessionizer.TryRemove(sessionId.Value);
-            await CreateSession(sessionId.Value, newEmbeddedSessionInfo, cancellationToken)
+            await _sessionizer
+                .EnsureAttachedAsync(
+                    sessionId.Value,
+                    info =>
+                        info is EmbeddedSessionInfo embeddedSessionInfo
+                            ? CreateSession(sessionId.Value, embeddedSessionInfo, cancellationToken)
+                            : Task.CompletedTask
+                )
                 .ConfigureAwait(false);
         }
 
