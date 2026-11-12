@@ -1,15 +1,14 @@
 # Agent Memory Playground
 
-Interactive example for `SurrealDb.AgentMemory`-Client
+An interactive console example for the `SurrealDb.AgentMemory` client.
 
 ## Configuration
 
-Required environment variables:
+Set these environment variables. All three are required.
 
-- `SURREAL_AGENT_API_KEY`: Context API Key;
-- `SURREAL_AGENT_ENDPOINT`: optional; - without `/api/v1/...`.
-- `SURREAL_AGENT_CONTEXT_ID`: optional;
-
+- `SURREAL_AGENT_ENDPOINT`: the Agent Memory endpoint origin, without `/api/v1/...`.
+- `SURREAL_AGENT_CONTEXT_ID`: the context to use.
+- `SURREAL_AGENT_API_KEY`: an API key for that context.
 
 ## Try it out
 
@@ -20,3 +19,5 @@ Required environment variables:
 /session
 /quit
 ```
+
+`/chat` streams the reply as it is written, and keeps the conversation in one session.

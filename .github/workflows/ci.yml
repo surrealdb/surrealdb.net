@@ -38,6 +38,13 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
 
+      - name: Test Agent Memory client
+        working-directory: SurrealDb.AgentMemory.Tests
+        run: >
+          dotnet run
+          --project SurrealDb.AgentMemory.Tests.csproj
+          --no-build
+
   build:
     needs: [embedded-build]
     runs-on: ubuntu-latest

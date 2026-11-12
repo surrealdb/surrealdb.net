@@ -1,52 +1,47 @@
 #!/usr/bin/env sh
-# Regenerates Generated/ from spec/openapi.json using openapi-generator-cli (see /openapitools.json).
-# The generator's own DI extensions (Extensions/), test project and csproj are intentionally
-# not copied: dependency injection is provided by ServiceCollectionExtensions.cs.
+# Regenerates the models in Generated/ from spec/openapi.json.
+#
+# Requires openapi-generator-cli on the PATH (the npm package @openapitools/openapi-generator-cli,
+# which needs Node.js and Java). The generator version is pinned in openapitools.json, next to this
+# script; the CLI reads that file from the working directory, so the script changes into its own
+# directory first.
+#
+# Only the models and the client utilities they depend on are kept. The generated operations
+# client is not: AgentMemoryClient is hand-written, like the JavaScript and Python clients,
+# and uses these models as its request and response types.
 set -eu
 
-OUT="$(mktemp -d)"
-TAGGED="$(mktemp)"
-CONFIG="$(mktemp)"
-trap 'rm -rf "$OUT" "$TAGGED" "$CONFIG"' EXIT
+cd "$(dirname "$0")"
 
-# The spec's operations carry no tags, so the generator hardcodes the api class name
-# (DefaultApi, see DefaultCodegen.toApiName). Tag every operation with the tag the spec
-# itself already declares at root level ("Agent Memory", "Agent Memory knowledge layer")
-# via a temporary spec file — spec/openapi.json stays untouched — so the class comes out
-# as AgentMemoryApi / IAgentMemoryApi. Drop this when the upstream spec tags its operations.
-node -e '
-const fs = require("fs");
-const spec = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-for (const item of Object.values(spec.paths || {}))
-    for (const m of ["get", "put", "post", "delete", "options", "head", "patch", "trace"])
-        if (item[m]) item[m].tags = ["Agent Memory"];
-fs.writeFileSync(process.argv[2], JSON.stringify(spec, null, 2));
-' spec/openapi.json "$TAGGED"
+# Byte-wise sorting, so the emitted serializer context is the same on every machine.
+export LC_ALL=C
+
+OUT="$(mktemp -d)"
+trap 'rm -rf "$OUT"' EXIT
 
 openapi-generator-cli generate \
     -g csharp \
-    -i "$TAGGED" \
+    -i spec/openapi.json \
     -o "$OUT" \
     --additional-properties 'library=generichost,packageName=SurrealDb.AgentMemory,packageVersion=0.2.1,nullableReferenceTypes=true,netCoreProjectFile=true,optionalProjectFile=false,optionalAssemblyInfo=false'
 
 rm -rf Generated
-mkdir -p Generated
+mkdir -p Generated/Client
 
-for dir in Api Client Logging Model; do
-    cp -r "$OUT/src/SurrealDb.AgentMemory/$dir" Generated/
+cp -r "$OUT/src/SurrealDb.AgentMemory/Model" Generated/
+for file in ClientUtils Option DateOnlyJsonConverter DateOnlyNullableJsonConverter DateTimeJsonConverter DateTimeNullableJsonConverter; do
+    cp "$OUT/src/SurrealDb.AgentMemory/Client/$file.cs" Generated/Client/
 done
-
-# Only used by the generator's own (uncopied) DI extensions; not nullable-clean.
-rm Generated/Client/HostConfiguration.cs
 
 # Nested per-model enums are all named KindEnum; a single source-generation context
 # collides on the shared simple name (SYSLIB1031). Rename each to a unique <Model>KindEnum
 # (wire format is unaffected: JSON names come from the enum value mapping, not the type name).
+# perl rather than sed: `sed -i` and `\b` differ between GNU and BSD sed.
 for f in $(grep -rl 'enum KindEnum' Generated/Model); do
     name="$(basename "$f" .cs)"
-    sed -i "s/\bKindEnum\b/${name}KindEnum/g" "$f"
+    perl -pi -e "s/\\bKindEnum\\b/${name}KindEnum/g" "$f"
 done
-sed -i -E 's/\b([A-Za-z0-9]+)\.KindEnum\b/\1.\1KindEnum/g' Generated/Client/ClientUtils.cs
+perl -pi -e 's/\b([A-Za-z0-9]+)\.KindEnum\b/$1.$1KindEnum/g' Generated/Client/ClientUtils.cs
 
 # --- Emit AOT-safe JSON defaults from the fresh output -------------------------------------
 # Explicit converter registrations + a source-generation context for every model.
@@ -100,8 +95,8 @@ namespace SurrealDb.AgentMemory.Client;
 
 /// <summary>
 /// Source-generated serializer context covering every Agent Memory model, with every
-/// generated converter pre-registered. <see cref="AgentMemoryJsonContext.Default"/>.Options
-/// is the shared default used by the DI extensions.
+/// generated converter pre-registered. <see cref="AgentMemoryJsonContext.Default"/> is what
+/// <see cref="SurrealDb.AgentMemory.AgentMemoryClient"/> reads and writes the models with.
 /// </summary>
 [JsonSourceGenerationOptions(Converters = new[]
 {
@@ -130,18 +125,17 @@ FOOTER
 } > Generated/Client/AgentMemoryJson.g.cs
 # ---------------------------------------------------------------------------------------------
 
-# The generator skips the marker on some hand-written support files; add it so analyzers/IDE treat every file under Generated/ as generated.
+# The generator skips the marker on some support files; add it so analyzers/IDE treat every file under Generated/ as generated.
 for f in $(find Generated -name '*.cs'); do
-    head -1 "$f" | grep -q '<auto-generated>' || sed -i '1i\
-// <auto-generated>' "$f"
+    head -1 "$f" | grep -q '<auto-generated>' || perl -pi -e 'print "// <auto-generated>\n" if $. == 1' "$f"
 done
 
 # net9/net10 ILLink analyzers no longer honor the <auto-generated> marker for the options-based
-# JsonSerializer calls the generator emits. Suppressing is safe here: every options instance the
-# library passes carries AgentMemoryJsonContext as its resolver (see AgentMemoryJsonExtensions),
-# so these call sites never reach the reflection serializer the annotations guard against.
+# JsonSerializer calls the generator emits. Suppressing is safe here: AgentMemoryClient passes
+# AgentMemoryJsonContext metadata for every model it reads or writes, so these call sites never
+# reach the reflection serializer the annotations guard against.
 for f in $(grep -rl 'JsonSerializer\.' Generated); do
-    sed -i '1a #pragma warning disable IL2026, IL3050' "$f"
+    perl -pi -e '$_ .= "#pragma warning disable IL2026, IL3050\n" if $. == 1' "$f"
 done
 
 echo "Done. Review the diff, then bump <Version> in SurrealDb.AgentMemory.csproj if the spec version changed."

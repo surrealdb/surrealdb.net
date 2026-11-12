@@ -11,8 +11,8 @@ namespace SurrealDb.AgentMemory.Client;
 
 /// <summary>
 /// Source-generated serializer context covering every Agent Memory model, with every
-/// generated converter pre-registered. <see cref="AgentMemoryJsonContext.Default"/>.Options
-/// is the shared default used by the DI extensions.
+/// generated converter pre-registered. <see cref="AgentMemoryJsonContext.Default"/> is what
+/// <see cref="SurrealDb.AgentMemory.AgentMemoryClient"/> reads and writes the models with.
 /// </summary>
 [JsonSourceGenerationOptions(Converters = new[]
 {
@@ -117,10 +117,10 @@ namespace SurrealDb.AgentMemory.Client;
     typeof(MemoryHitJsonJsonConverter),
     typeof(MemoryQueryModeJsonConverter),
     typeof(MemoryQueryModeNullableJsonConverter),
-    typeof(MintedKeyJsonJsonConverter),
     typeof(MintKeyBodyJsonConverter),
-    typeof(NeighbourhoodResponseJsonJsonConverter),
+    typeof(MintedKeyJsonJsonConverter),
     typeof(NeighbourJsonJsonConverter),
+    typeof(NeighbourhoodResponseJsonJsonConverter),
     typeof(PageMetaJsonConverter),
     typeof(PrincipalJsonJsonConverter),
     typeof(PrincipalListResponseJsonJsonConverter),
@@ -303,10 +303,10 @@ namespace SurrealDb.AgentMemory.Client;
 [JsonSerializable(typeof(MemoryCategory))]
 [JsonSerializable(typeof(MemoryHitJson))]
 [JsonSerializable(typeof(MemoryQueryMode))]
-[JsonSerializable(typeof(MintedKeyJson))]
 [JsonSerializable(typeof(MintKeyBody))]
-[JsonSerializable(typeof(NeighbourhoodResponseJson))]
+[JsonSerializable(typeof(MintedKeyJson))]
 [JsonSerializable(typeof(NeighbourJson))]
+[JsonSerializable(typeof(NeighbourhoodResponseJson))]
 [JsonSerializable(typeof(PageMeta))]
 [JsonSerializable(typeof(PrincipalJson))]
 [JsonSerializable(typeof(PrincipalListResponseJson))]
@@ -424,7 +424,6 @@ namespace SurrealDb.AgentMemory.Client;
 [JsonSerializable(typeof(List<CorrectionSummaryJson>))]
 [JsonSerializable(typeof(List<DocumentJson>))]
 [JsonSerializable(typeof(List<DocumentKeywordJson>))]
-[JsonSerializable(typeof(List<double>))]
 [JsonSerializable(typeof(List<DuplicateFindingJson>))]
 [JsonSerializable(typeof(List<ElaborateOutcomeJson>))]
 [JsonSerializable(typeof(List<ElaborateProposedRelationJson>))]
@@ -432,7 +431,6 @@ namespace SurrealDb.AgentMemory.Client;
 [JsonSerializable(typeof(List<EntityMatchJson>))]
 [JsonSerializable(typeof(List<EntitySummaryJson>))]
 [JsonSerializable(typeof(List<ExtractionResultJson>))]
-[JsonSerializable(typeof(List<float>))]
 [JsonSerializable(typeof(List<GraphEdgeKind>))]
 [JsonSerializable(typeof(List<GraphEvidenceJson>))]
 [JsonSerializable(typeof(List<InjectionFindingJson>))]
@@ -459,13 +457,15 @@ namespace SurrealDb.AgentMemory.Client;
 [JsonSerializable(typeof(List<SectionJsonRelationDetailJsonItemsInner>))]
 [JsonSerializable(typeof(List<SectionJsonUncertaintyJsonItemsInner>))]
 [JsonSerializable(typeof(List<SourceKindCountJson>))]
-[JsonSerializable(typeof(List<string>))]
 [JsonSerializable(typeof(List<TraceRecordJson>))]
 [JsonSerializable(typeof(List<Triple>))]
 [JsonSerializable(typeof(List<TurnResponseJson>))]
 [JsonSerializable(typeof(List<UncertaintyJson>))]
 [JsonSerializable(typeof(List<UncertaintySummaryJson>))]
 [JsonSerializable(typeof(List<UnscopedContentFindingJson>))]
+[JsonSerializable(typeof(List<double>))]
+[JsonSerializable(typeof(List<float>))]
+[JsonSerializable(typeof(List<string>))]
 [JsonSerializable(typeof(object))]
 public partial class AgentMemoryJsonContext : JsonSerializerContext
 {
