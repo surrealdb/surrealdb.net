@@ -233,11 +233,24 @@ public class AgentMemoryException : Exception
             return null;
         }
 
+        // RFC 9110 delay-seconds are non-negative; an HTTP date or a malformed value is not a delay.
         var raw = values.FirstOrDefault();
-        return
-            double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds)
-            && double.IsFinite(seconds)
-            ? TimeSpan.FromSeconds(seconds)
-            : null;
+        if (
+            !double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds)
+            || !double.IsFinite(seconds)
+            || seconds < 0
+        )
+        {
+            return null;
+        }
+
+        try
+        {
+            return TimeSpan.FromSeconds(seconds);
+        }
+        catch (OverflowException)
+        {
+            return TimeSpan.MaxValue;
+        }
     }
 }

@@ -101,4 +101,67 @@ public class DependencyInjectionTests
 
         httpClient.Timeout.Should().Be(Timeout.InfiniteTimeSpan);
     }
+
+    [Test]
+    public async Task DoesNotRetainClientsResolvedFromTheRootProvider()
+    {
+        // The client holds nothing to dispose, so the container has no reason to keep the instances it hands out.
+        var services = new ServiceCollection();
+        services.AddAgentMemory(options =>
+        {
+            options.Context = "acme";
+            options.ApiKey = "k";
+            options.Endpoint = "https://api.test";
+        });
+        await using var provider = services.BuildServiceProvider();
+
+        var clients = ResolveMany(provider, 1_000);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
+        typeof(AgentMemoryClient).Should().NotImplement<IDisposable>();
+        clients.Count(client => client.TryGetTarget(out _)).Should().Be(0);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(
+        System.Runtime.CompilerServices.MethodImplOptions.NoInlining
+    )]
+    private static List<WeakReference<AgentMemoryClient>> ResolveMany(
+        IServiceProvider provider,
+        int count
+    )
+    {
+        var clients = new List<WeakReference<AgentMemoryClient>>(count);
+        for (var i = 0; i < count; i++)
+        {
+            clients.Add(new(provider.GetRequiredService<AgentMemoryClient>()));
+        }
+        return clients;
+    }
+
+    [Test]
+    public void ValidatesTheRetryCountAndApiKeyAtRegistration()
+    {
+        var services = new ServiceCollection();
+
+        var negativeRetries = () =>
+            services.AddAgentMemory(options =>
+            {
+                options.Context = "acme";
+                options.ApiKey = "k";
+                options.Endpoint = "https://api.test";
+                options.MaxRetries = -1;
+            });
+        var keyWithNewline = () =>
+            services.AddAgentMemory(options =>
+            {
+                options.Context = "acme";
+                options.ApiKey = "sp-key:1-secret\n";
+                options.Endpoint = "https://api.test";
+            });
+
+        negativeRetries.Should().Throw<ArgumentOutOfRangeException>();
+        keyWithNewline.Should().Throw<ArgumentException>().WithMessage("*trailing newline*");
+    }
 }

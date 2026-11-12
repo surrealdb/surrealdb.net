@@ -21,7 +21,8 @@ public sealed class AgentMemoryOptions
     public string Endpoint { get; set; } = string.Empty;
 
     /// <summary>
-    /// Request deadline. Defaults to 30 seconds.
+    /// Request deadline. Defaults to 30 seconds. <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>, or any value
+    /// longer than a timer supports (about 49.7 days), means no deadline.
     /// </summary>
     /// <remarks>
     /// Document uploads have no deadline by default, because a large body can legitimately take longer than any
@@ -43,23 +44,10 @@ public sealed class AgentMemoryOptions
         {
             throw new ArgumentException("Agent Memory context is required.", nameof(Context));
         }
-        if (string.IsNullOrWhiteSpace(ApiKey))
-        {
-            throw new ArgumentException("Agent Memory API key is required.", nameof(ApiKey));
-        }
-        if (string.IsNullOrWhiteSpace(Endpoint))
-        {
-            throw new ArgumentException("Agent Memory endpoint is required.", nameof(Endpoint));
-        }
-        if (
-            !Uri.TryCreate(Endpoint.TrimEnd('/'), UriKind.Absolute, out var uri)
-            || uri.Scheme is not ("http" or "https")
-        )
-        {
-            throw new ArgumentException(
-                $"Agent Memory endpoint '{Endpoint}' must be an absolute http(s) URL.",
-                nameof(Endpoint)
-            );
-        }
+
+        AgentMemoryTransport.ValidateApiKey(ApiKey, nameof(ApiKey));
+        AgentMemoryTransport.ValidateEndpoint(Endpoint, nameof(Endpoint));
+        AgentMemoryTransport.ValidateTimeout(Timeout, nameof(Timeout));
+        AgentMemoryTransport.ValidateMaxRetries(MaxRetries, nameof(MaxRetries));
     }
 }

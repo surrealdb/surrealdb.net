@@ -497,7 +497,54 @@ public class MemoryTests
             .Invoking(() => Create(options => options.Endpoint = "not a url"))
             .Should()
             .Throw<ArgumentException>();
-        using var valid = Create(_ => { });
+        var valid = Create(_ => { });
         valid.ContextId.Should().Be("c");
+    }
+
+    [Test]
+    public async Task ATimeoutBeyondTheTimerLimitMeansNoDeadline()
+    {
+        // TimeSpan.MaxValue used to make every request throw ArgumentOutOfRangeException.
+        var handler = FakeHandler.Json(Fixtures.Whoami);
+        var client = TestClient.Create(handler, options => options.Timeout = TimeSpan.MaxValue);
+
+        var me = await client.WhoamiAsync();
+
+        me.PrincipalId.Should().Be("principal:tobie");
+    }
+
+    [Test]
+    public void RejectsOptionsThatWouldFailEveryRequest()
+    {
+        AgentMemoryClient Create(Action<AgentMemoryOptions> configure)
+        {
+            var options = new AgentMemoryOptions
+            {
+                Context = "c",
+                ApiKey = "k",
+                Endpoint = "https://api.test",
+            };
+            configure(options);
+            return new AgentMemoryClient(options);
+        }
+
+        FluentActions
+            .Invoking(() => Create(options => options.Timeout = TimeSpan.Zero))
+            .Should()
+            .Throw<ArgumentOutOfRangeException>();
+        FluentActions
+            .Invoking(() => Create(options => options.MaxRetries = -1))
+            .Should()
+            .Throw<ArgumentOutOfRangeException>();
+        FluentActions
+            .Invoking(() => Create(options => options.ApiKey = "sp-key:1-secret\r\n"))
+            .Should()
+            .Throw<ArgumentException>()
+            .WithMessage("*trailing newline*");
+        FluentActions
+            .Invoking(() => Create(options => options.ApiKey = "two words"))
+            .Should()
+            .Throw<ArgumentException>();
+        Create(options => options.Timeout = Timeout.InfiniteTimeSpan).ContextId.Should().Be("c");
     }
 }

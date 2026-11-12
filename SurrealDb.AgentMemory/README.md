@@ -15,8 +15,8 @@ dotnet add package SurrealDb.AgentMemory
 ```csharp
 using SurrealDb.AgentMemory;
 
-// Create a client, pinned to one context
-using var memory = new AgentMemoryClient(new AgentMemoryOptions
+// Create a client, pinned to one context. It is thread-safe and needs no disposing.
+var memory = new AgentMemoryClient(new AgentMemoryOptions
 {
     Endpoint = Environment.GetEnvironmentVariable("AGENT_MEMORY_ENDPOINT")!,
     Context = "acme-prod",
@@ -297,10 +297,13 @@ are never retried.
 
 ## Timeouts and cancellation
 
-Requests have a 30-second deadline by default (`AgentMemoryOptions.Timeout`). Uploads have no deadline unless you set
-`DocumentUploadOptions.Timeout`, because a large body can legitimately take longer than any fixed one; set
-`UploadProgress` to observe one. `Documents.RawAsync` takes its own timeout. A streaming chat is bounded only by your
-`CancellationToken`.
+Requests have a 30-second deadline by default (`AgentMemoryOptions.Timeout`); `Timeout.InfiniteTimeSpan` means none.
+Uploads have no deadline unless you set `DocumentUploadOptions.Timeout`, because a large body can legitimately take
+longer than any fixed one; set `UploadProgress` to observe one. `Documents.RawAsync` takes its own timeout. A
+streaming chat is bounded only by your `CancellationToken`.
+
+An `AgentMemoryFile` from `FromPath` streams the file from disk. One from a `Stream` reads it once, on first use, and
+keeps the bytes, so the same file can be uploaded again.
 
 ## Scope
 

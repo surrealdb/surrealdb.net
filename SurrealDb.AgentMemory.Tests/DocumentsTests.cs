@@ -543,4 +543,63 @@ public class DocumentsTests
             return base.ReadAsync(buffer, offset, count, cancellationToken);
         }
     }
+
+    [Test]
+    public async Task AStreamBackedFileCanBeUploadedMoreThanOnce()
+    {
+        var handler = FakeHandler.Json(Fixtures.Upload("d10"));
+        var source = new TrackingStream([1, 2, 3]);
+        var file = AgentMemoryFile.FromStream(source);
+
+        await Client(handler).Documents.UploadAsync(new DocumentUploadOptions { File = file });
+        var readsAfterFirstUpload = source.Reads;
+        await Client(handler)
+            .Documents.ReprocessAsync("d10", new DocumentUploadOptions { File = file });
+
+        handler
+            .Requests.Select(request => request.Parts!.Single(part => part.Name == "file").Bytes)
+            .Should()
+            .AllSatisfy(bytes => bytes.Should().Equal(1, 2, 3));
+        source.Reads.Should().Be(readsAfterFirstUpload);
+    }
+
+    [Test]
+    public async Task AnUploadTimeoutBeyondTheTimerLimitMeansNoDeadline()
+    {
+        var handler = FakeHandler.Json(Fixtures.Upload("d11"));
+
+        var response = await Client(handler)
+            .Documents.UploadAsync(
+                new DocumentUploadOptions { File = new byte[] { 1 }, Timeout = TimeSpan.MaxValue }
+            );
+
+        response.Id.Should().Be("d11");
+    }
+
+    [Test]
+    public async Task RefusesPathSegmentsThatWouldAddressAnotherRoute()
+    {
+        // ".." would be resolved away, so DELETE /documents/.. would reach /api/v1/c/.
+        var handler = FakeHandler.Json("{}");
+        var client = Client(handler);
+
+        var parent = () => client.Documents.DeleteAsync("..");
+        var current = () => client.Entities.GetAsync("person", ".");
+        var empty = () => client.Keys.DeleteAsync("");
+
+        await parent.Should().ThrowAsync<ArgumentException>();
+        await current.Should().ThrowAsync<ArgumentException>();
+        await empty.Should().ThrowAsync<ArgumentException>();
+        handler.Requests.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task StillEncodesSegmentsThatOnlyContainDots()
+    {
+        var handler = FakeHandler.Json(Fixtures.Document("..."));
+
+        await Client(handler).Documents.GetAsync("...");
+
+        handler.Last.UrlText.Should().EndWith("/api/v1/c/documents/...");
+    }
 }

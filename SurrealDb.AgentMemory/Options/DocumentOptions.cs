@@ -211,18 +211,36 @@ public sealed class AgentMemoryFile
     }
 
     /// <summary>
-    /// Content read from a stream. The stream is read to its end and buffered, and it is not disposed.
+    /// Content read from a stream. The stream is read to its end once, on first use, and buffered, so the same
+    /// file can be uploaded more than once. The stream is not disposed.
     /// </summary>
     /// <param name="stream">The content.</param>
     public static AgentMemoryFile FromStream(Stream stream)
     {
         ArgumentNullException.ThrowIfNull(stream);
+
+        var gate = new SemaphoreSlim(1, 1);
+        MemoryStream? buffered = null;
         return new AgentMemoryFile(
             async cancellationToken =>
             {
-                using var buffer = new MemoryStream();
-                await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
-                return new ByteArrayContent(buffer.ToArray());
+                await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    if (buffered is null)
+                    {
+                        var buffer = new MemoryStream();
+                        await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
+                        buffered = buffer;
+                    }
+                }
+                finally
+                {
+                    gate.Release();
+                }
+
+                // The buffer itself, without a copy; the content only reads it.
+                return new ByteArrayContent(buffered.GetBuffer(), 0, (int)buffered.Length);
             },
             null
         );
@@ -272,7 +290,7 @@ public sealed class AgentMemoryFile
     }
 
     /// <summary>
-    /// Converts a stream to file content. The stream is buffered and not disposed.
+    /// Converts a stream to file content. The stream is read once and buffered, and it is not disposed.
     /// </summary>
     /// <param name="stream">The content.</param>
     public static implicit operator AgentMemoryFile(Stream stream)

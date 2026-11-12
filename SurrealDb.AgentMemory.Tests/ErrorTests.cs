@@ -155,4 +155,16 @@ public class ErrorTests
         var error = await act.Should().ThrowAsync<AgentMemoryAuthException>();
         error.Which.Detail.Should().Be("bad token");
     }
+
+    [Test]
+    public void ClampsAHugeRetryAfterAndIgnoresANegativeOne()
+    {
+        var huge = (AgentMemoryRateLimitException)
+            AgentMemoryException.FromResponse(429, "{}", Headers(retryAfter: "99999999999999"));
+        var negative = (AgentMemoryRateLimitException)
+            AgentMemoryException.FromResponse(429, "{}", Headers(retryAfter: "-5"));
+
+        huge.RetryAfter.Should().Be(TimeSpan.MaxValue);
+        negative.RetryAfter.Should().BeNull();
+    }
 }

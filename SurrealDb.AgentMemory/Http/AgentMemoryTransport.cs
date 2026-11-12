@@ -81,40 +81,13 @@ public sealed class AgentMemoryTransport
     )
     {
         ArgumentNullException.ThrowIfNull(httpClient);
-        if (string.IsNullOrWhiteSpace(endpoint))
-        {
-            throw new ArgumentException("Agent Memory endpoint is required.", nameof(endpoint));
-        }
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            throw new ArgumentException("Agent Memory API key is required.", nameof(apiKey));
-        }
-
-        var trimmed = endpoint.TrimEnd('/');
-        if (
-            !Uri.TryCreate(trimmed, UriKind.Absolute, out var uri)
-            || uri.Scheme is not ("http" or "https")
-        )
-        {
-            throw new ArgumentException(
-                $"Agent Memory endpoint '{endpoint}' must be an absolute http(s) URL.",
-                nameof(endpoint)
-            );
-        }
-        if (timeout is { } value && value <= TimeSpan.Zero && value != Timeout.InfiniteTimeSpan)
-        {
-            throw new ArgumentOutOfRangeException(nameof(timeout), "The timeout must be positive.");
-        }
-        if (maxRetries is < 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(maxRetries),
-                "The retry count cannot be negative."
-            );
-        }
+        ValidateEndpoint(endpoint, nameof(endpoint));
+        ValidateApiKey(apiKey, nameof(apiKey));
+        ValidateTimeout(timeout, nameof(timeout));
+        ValidateMaxRetries(maxRetries, nameof(maxRetries));
 
         _httpClient = httpClient;
-        _endpoint = trimmed;
+        _endpoint = endpoint.TrimEnd('/');
         _apiKey = apiKey;
         _timeout = timeout ?? DefaultTimeout;
         _maxRetries = maxRetries ?? DefaultMaxRetries;
@@ -632,16 +605,82 @@ public sealed class AgentMemoryTransport
 
     private CancellationTokenSource? CreateTimeoutSource(TimeSpan? deadline)
     {
+        // Longer than a timer can wait (about 49.7 days) is no deadline at all, so TimeSpan.MaxValue works too.
         if (
             deadline is not { } value
             || value <= TimeSpan.Zero
             || value == Timeout.InfiniteTimeSpan
+            || value > MaxDeadline
         )
         {
             return null;
         }
 
         return new CancellationTokenSource(value, _timeProvider);
+    }
+
+    /// <summary>
+    /// The longest delay a timer supports.
+    /// </summary>
+    private static readonly TimeSpan MaxDeadline = TimeSpan.FromMilliseconds(uint.MaxValue - 1);
+
+    internal static void ValidateApiKey(string? apiKey, string parameterName)
+    {
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            throw new ArgumentException("Agent Memory API key is required.", parameterName);
+        }
+
+        // A key read from a file or an environment variable often keeps its trailing newline,
+        // which would otherwise fail every request with a FormatException.
+        if (apiKey.Any(c => c is < '!' or > '~'))
+        {
+            throw new ArgumentException(
+                "The Agent Memory API key contains whitespace, control or non-ASCII characters. Check for a trailing newline.",
+                parameterName
+            );
+        }
+    }
+
+    internal static void ValidateEndpoint(string? endpoint, string parameterName)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint))
+        {
+            throw new ArgumentException("Agent Memory endpoint is required.", parameterName);
+        }
+
+        if (
+            !Uri.TryCreate(endpoint.TrimEnd('/'), UriKind.Absolute, out var uri)
+            || uri.Scheme is not ("http" or "https")
+        )
+        {
+            throw new ArgumentException(
+                $"Agent Memory endpoint '{endpoint}' must be an absolute http(s) URL.",
+                parameterName
+            );
+        }
+    }
+
+    internal static void ValidateTimeout(TimeSpan? timeout, string parameterName)
+    {
+        if (timeout is { } value && value <= TimeSpan.Zero && value != Timeout.InfiniteTimeSpan)
+        {
+            throw new ArgumentOutOfRangeException(
+                parameterName,
+                "The timeout must be positive, or Timeout.InfiniteTimeSpan for no deadline."
+            );
+        }
+    }
+
+    internal static void ValidateMaxRetries(int? maxRetries, string parameterName)
+    {
+        if (maxRetries is < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                parameterName,
+                "The retry count cannot be negative."
+            );
+        }
     }
 
     private static CancellationTokenSource Link(

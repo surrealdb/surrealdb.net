@@ -13,9 +13,11 @@ public static class AgentMemoryServiceCollectionExtensions
     /// Registers an <see cref="AgentMemoryClient"/> configured by <paramref name="configure"/>.
     /// </summary>
     /// <remarks>
-    /// The options are read and validated once, here. The client's <see cref="HttpClient"/> comes from
-    /// <see cref="IHttpClientFactory"/>, and the returned builder adds handlers to it. The client retries reads and
-    /// idempotent writes itself, so a resilience handler that retries too multiplies the attempts.
+    /// The options are read and validated once, here. The client is transient and holds nothing to dispose, so the
+    /// container does not keep the instances it hands out, even ones resolved from the root provider. Its
+    /// <see cref="HttpClient"/> comes from <see cref="IHttpClientFactory"/>, and the returned builder adds handlers to
+    /// it. The client retries reads and idempotent writes itself, so a resilience handler that retries too multiplies
+    /// the attempts.
     /// </remarks>
     /// <param name="services">The service collection.</param>
     /// <param name="configure">Sets the context, API key and endpoint.</param>

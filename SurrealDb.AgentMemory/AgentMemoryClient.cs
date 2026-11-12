@@ -11,20 +11,34 @@ namespace SurrealDb.AgentMemory;
 /// </summary>
 /// <remarks>
 /// The client is pinned to a single context; every call targets <c>/api/v1/{context}/…</c>.
-/// It is safe to share across threads.
+/// It is safe to share across threads, and it holds nothing that needs disposing.
 /// </remarks>
-public sealed class AgentMemoryClient : IDisposable
+public sealed class AgentMemoryClient
 {
+    /// <summary>
+    /// The connection pool for clients created without an <see cref="HttpClient"/>, shared the way .NET recommends
+    /// for long-lived clients: connections are recycled every two minutes, so DNS changes are picked up.
+    /// Deadlines are applied per request, so uploads are not cut off by a client-wide timeout.
+    /// </summary>
+    private static readonly Lazy<HttpClient> SharedHttpClient = new(
+        () =>
+            new HttpClient(
+                new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(2) }
+            )
+            {
+                Timeout = System.Threading.Timeout.InfiniteTimeSpan,
+            }
+    );
+
     private readonly AgentMemoryTransport _transport;
-    private readonly HttpClient? _ownedHttpClient;
     private readonly string _base;
 
     /// <summary>
-    /// Creates a client with its own <see cref="HttpClient"/>, disposed with the client.
+    /// Creates a client that sends its requests through a connection pool shared by every client created this way.
     /// </summary>
     /// <param name="options">Context, credentials and endpoint.</param>
     public AgentMemoryClient(AgentMemoryOptions options)
-        : this(options, CreateHttpClient(), ownsHttpClient: true) { }
+        : this(options, SharedHttpClient.Value) { }
 
     /// <summary>
     /// Creates a client that sends its requests through <paramref name="httpClient"/>, for example one from
@@ -36,32 +50,13 @@ public sealed class AgentMemoryClient : IDisposable
     /// off by it.
     /// </remarks>
     /// <param name="options">Context, credentials and endpoint.</param>
-    /// <param name="httpClient">The HTTP client. It is not disposed with this client.</param>
+    /// <param name="httpClient">The HTTP client. The caller owns it.</param>
     public AgentMemoryClient(AgentMemoryOptions options, HttpClient httpClient)
-        : this(options, httpClient, ownsHttpClient: false) { }
-
-    private AgentMemoryClient(
-        AgentMemoryOptions options,
-        HttpClient httpClient,
-        bool ownsHttpClient
-    )
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(httpClient);
-        try
-        {
-            options.Validate();
-        }
-        catch
-        {
-            if (ownsHttpClient)
-            {
-                httpClient.Dispose();
-            }
-            throw;
-        }
+        options.Validate();
 
-        _ownedHttpClient = ownsHttpClient ? httpClient : null;
         ContextId = options.Context;
         _transport = new AgentMemoryTransport(
             httpClient,
@@ -170,7 +165,7 @@ public sealed class AgentMemoryClient : IDisposable
     /// This client is left unchanged.
     /// </summary>
     /// <remarks>
-    /// The returned client shares this client's connection, and disposing it has no effect.
+    /// The returned client shares this client's connections.
     /// </remarks>
     /// <param name="principalId">The principal to act for.</param>
     public AgentMemoryClient OnBehalfOf(string principalId)
@@ -677,14 +672,6 @@ public sealed class AgentMemoryClient : IDisposable
         );
     }
 
-    /// <summary>
-    /// Disposes the <see cref="HttpClient"/> this client created, if any.
-    /// </summary>
-    public void Dispose()
-    {
-        _ownedHttpClient?.Dispose();
-    }
-
     private static JsonBody ChatBody(string message, ChatOptions? options)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -719,16 +706,5 @@ public sealed class AgentMemoryClient : IDisposable
             Query(query),
             cancellationToken
         );
-    }
-
-    private static HttpClient CreateHttpClient()
-    {
-        return new HttpClient(
-            new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(2) }
-        )
-        {
-            // Deadlines are applied per request, so uploads are not cut off by a client-wide timeout.
-            Timeout = System.Threading.Timeout.InfiniteTimeSpan,
-        };
     }
 }

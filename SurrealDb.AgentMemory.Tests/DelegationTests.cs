@@ -73,17 +73,16 @@ public class DelegationTests
     }
 
     [Test]
-    public async Task ADelegatedClientSharesTheConnectionAndDisposingItKeepsItOpen()
+    public async Task ADelegatedClientSharesTheConnection()
     {
         var handler = FakeHandler.Json(Fixtures.Whoami);
         var client = TestClient.Create(handler);
 
-        using (var delegated = client.OnBehalfOf("principal:alex"))
-        {
-            delegated.ContextId.Should().Be(client.ContextId);
-        }
+        var delegated = client.OnBehalfOf("principal:alex");
+        await delegated.WhoamiAsync();
         await client.WhoamiAsync();
 
-        handler.Requests.Should().HaveCount(1);
+        delegated.ContextId.Should().Be(client.ContextId);
+        handler.Requests.Should().HaveCount(2);
     }
 }

@@ -22,7 +22,7 @@ public class LiveTests
             "AGENT_MEMORY_ENDPOINT and AGENT_MEMORY_API_KEY must be set for live tests."
         );
 
-        using var client = new AgentMemoryClient(
+        var client = new AgentMemoryClient(
             new AgentMemoryOptions
             {
                 Context = "default",
