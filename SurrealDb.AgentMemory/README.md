@@ -109,19 +109,23 @@ await memory.Keys.DeleteAsync("ci");
 ### Streaming chat
 
 ```csharp
+string? sessionId = null;
 await foreach (var chunk in memory.StreamChatAsync("Tell me a story"))
 {
     Console.Write(chunk.Delta);
+    sessionId = chunk.SessionId ?? sessionId; // sent on the opening `meta` frame
 
     if (chunk.Done)
     {
-        Console.WriteLine($"\nsession: {chunk.SessionId}, citations: {chunk.Citations?.Count ?? 0}");
+        Console.WriteLine($"\nsession: {sessionId}, citations: {chunk.Citations?.Count ?? 0}");
     }
 }
 ```
 
-The terminal frame carries the full reply, what the turn wrote to memory, and its citations. A failure after the
-stream opened is raised as `AgentMemoryStreamException`, so it is not mistaken for a reply that simply ended.
+The opening `meta` frame carries the session and trace ids, and the terminal `done` frame carries the full reply, what
+the turn wrote to memory, and its citations. A failure after the stream opened is never mistaken for a reply that
+simply ended: an `error` frame, or a stream that closes before its terminal frame, raises
+`AgentMemoryStreamException`, and a dropped connection raises `AgentMemoryConnectionException`.
 
 ## Known-about lookups
 
@@ -276,8 +280,8 @@ from the problem details), or one of its subclasses:
 | `AgentMemoryValidationException` | 400 / 422 |
 | `AgentMemoryRateLimitException` | 429 (`RetryAfter` when provided) |
 | `AgentMemoryServerException` | 5xx |
-| `AgentMemoryConnectionException` | Network failure or timeout |
-| `AgentMemoryStreamException` | A streaming chat failed after it opened |
+| `AgentMemoryConnectionException` | Network failure (also mid-stream) or timeout |
+| `AgentMemoryStreamException` | A streaming chat reported an error, or ended before its terminal frame |
 
 Your own cancellation is not an error: it surfaces as `OperationCanceledException`, apart from a timeout.
 `AgentMemoryException.FromResponse` builds the typed error from a status and a body.

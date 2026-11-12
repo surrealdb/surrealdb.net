@@ -18,11 +18,17 @@ public static class ChatStreamParser
     /// Parses an SSE body into <see cref="ChatChunk"/> frames.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Handles multi-line <c>data:</c> payloads, comment lines, event labels, and the terminal
     /// <c>[DONE]</c> sentinel. Frames are separated by a blank line; an incomplete frame at the end of the
-    /// stream is not dispatched. A frame the server labels <c>error</c>, or one that carries a string
-    /// <c>error</c>, is raised as an <see cref="AgentMemoryStreamException"/> rather than yielded, so a
-    /// failure part-way through a stream surfaces where a request failure would.
+    /// stream is not dispatched.
+    /// </para>
+    /// <para>
+    /// A failure part-way through a stream surfaces where a request failure would, never as a stream that
+    /// simply ended: a frame the server labels <c>error</c>, or one that carries a string <c>error</c>, and a
+    /// stream that closes before its terminal frame, raise <see cref="AgentMemoryStreamException"/>; a
+    /// connection that drops raises <see cref="AgentMemoryConnectionException"/>.
+    /// </para>
     /// </remarks>
     /// <param name="stream">The response body.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
@@ -39,11 +45,29 @@ public static class ChatStreamParser
 
         while (true)
         {
-            var line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+            string? line;
+            try
+            {
+                line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (exception is IOException or HttpRequestException)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                throw new AgentMemoryConnectionException(
+                    "Chat stream interrupted",
+                    exception.Message,
+                    exception
+                );
+            }
+
             if (line is null)
             {
-                // The stream ended. A frame without its closing blank line is incomplete.
-                yield break;
+                // The stream closed before its terminal frame, so the reply is incomplete.
+                // A frame without its closing blank line is not dispatched.
+                throw new AgentMemoryStreamException(
+                    "Chat stream ended early",
+                    "The stream closed before its terminal frame."
+                );
             }
 
             if (line.Length > 0)
@@ -222,13 +246,7 @@ public static class ChatStreamParser
         {
             return element.Deserialize(typeInfo);
         }
-        catch (Exception exception)
-            when (exception
-                    is JsonException
-                        or ArgumentException
-                        or InvalidOperationException
-                        or NotImplementedException
-            )
+        catch (Exception exception) when (AgentMemoryTransport.IsDecodeFailure(exception))
         {
             // The generated models validate required fields; a frame that does not match keeps its raw form.
             return null;

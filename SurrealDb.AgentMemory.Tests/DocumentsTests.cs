@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text;
 using FluentAssertions;
 using SurrealDb.AgentMemory.Model;
 using SurrealDb.AgentMemory.Tests.Infrastructure;
@@ -405,5 +406,141 @@ public class DocumentsTests
         links.LinksEmitted.Should().Be(2);
         handler.Requests[1].UrlText.Should().EndWith("/api/v1/c/documents/recompute-links");
         handler.Requests[1].BodyText.Should().Be("{}");
+    }
+
+    [Test]
+    public async Task UploadSendsANonAsciiFileNameAsRawUtf8()
+    {
+        // Browsers send the name as UTF-8; the service's multipart parser does not decode RFC 2047 ("=?utf-8?B?...?=").
+        var handler = FakeHandler.Json(Fixtures.Upload("d6"));
+
+        await Client(handler)
+            .Documents.UploadAsync(
+                new DocumentUploadOptions { File = new byte[] { 1 }, FileName = "résumé.pdf" }
+            );
+
+        var file = handler.Last.Parts!.Single(part => part.Name == "file");
+        file.Disposition.Should().Be("form-data; name=\"file\"; filename=\"résumé.pdf\"");
+        file.FileName.Should().Be("résumé.pdf");
+        var wire = Encoding.Latin1.GetString(handler.Last.Body!);
+        wire.Should().Contain(Encoding.Latin1.GetString(Encoding.UTF8.GetBytes("résumé.pdf")));
+        wire.Should().NotContain("=?utf-8?");
+    }
+
+    [Test]
+    public async Task UploadEscapesQuotesAndLineBreaksInTheFileNameLikeBrowsersDo()
+    {
+        var handler = FakeHandler.Json(Fixtures.Upload("d7"));
+
+        await Client(handler)
+            .Documents.UploadAsync(
+                new DocumentUploadOptions { File = new byte[] { 1 }, FileName = "a\"b\r\nc\\d.txt" }
+            );
+
+        handler
+            .Last.Parts!.Single(part => part.Name == "file")
+            .FileName.Should()
+            .Be("a%22b%0D%0Ac\\d.txt");
+    }
+
+    [Test]
+    public async Task UploadWithProgressSendsTheSameEncodingAndAnAccurateLength()
+    {
+        var handler = FakeHandler.Json(Fixtures.Upload("d8"));
+        var progress = new RecordingProgress<UploadProgress>();
+
+        await Client(handler)
+            .Documents.UploadAsync(
+                new DocumentUploadOptions
+                {
+                    File = new byte[100_000],
+                    FileName = "Präsentation.pdf",
+                    Title = "Übersicht",
+                    UploadProgress = progress,
+                }
+            );
+
+        var parts = handler.Last.Parts!;
+        parts.Single(part => part.Name == "file").FileName.Should().Be("Präsentation.pdf");
+        progress.Reports[^1].Total.Should().Be(handler.Last.Body!.Length);
+        progress.Reports[^1].Loaded.Should().Be(handler.Last.Body!.Length);
+    }
+
+    [Test]
+    public async Task UploadRejectsAnInvalidContentTypeBeforeReadingTheFile()
+    {
+        var handler = FakeHandler.Json(Fixtures.Upload("d9"));
+        var source = new TrackingStream([1, 2, 3]);
+
+        var act = () =>
+            Client(handler)
+                .Documents.UploadAsync(
+                    new DocumentUploadOptions
+                    {
+                        File = AgentMemoryFile.FromStream(source),
+                        ContentType = "not a media type",
+                    }
+                );
+
+        await act.Should().ThrowAsync<FormatException>();
+        source.Reads.Should().Be(0);
+        handler.Requests.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task ReadsTheNanosecondTimestampsTheServiceWrites()
+    {
+        var handler = FakeHandler.Json(Fixtures.Document("document:1"));
+
+        var document = await Client(handler).Documents.GetAsync("document:1");
+
+        document
+            .CreatedAt.Should()
+            .Be(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddTicks(1_234_567));
+        document.CreatedAt.Kind.Should().Be(DateTimeKind.Utc);
+    }
+
+    [Test]
+    public async Task AMalformedTimestampIsReportedAsAnUnexpectedResponse()
+    {
+        var handler = FakeHandler.Json(
+            Fixtures.Document("document:1").Replace(Fixtures.Timestamp, "yesterday")
+        );
+
+        var act = () => Client(handler).Documents.GetAsync("document:1");
+
+        var error = await act.Should().ThrowExactlyAsync<AgentMemoryException>();
+        error.Which.Title.Should().Be("Unexpected response body");
+    }
+
+    private sealed class TrackingStream(byte[] content) : MemoryStream(content)
+    {
+        public int Reads { get; private set; }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            Reads++;
+            return base.Read(buffer, offset, count);
+        }
+
+        public override ValueTask<int> ReadAsync(
+            Memory<byte> buffer,
+            CancellationToken cancellationToken = default
+        )
+        {
+            Reads++;
+            return base.ReadAsync(buffer, cancellationToken);
+        }
+
+        public override Task<int> ReadAsync(
+            byte[] buffer,
+            int offset,
+            int count,
+            CancellationToken cancellationToken
+        )
+        {
+            Reads++;
+            return base.ReadAsync(buffer, offset, count, cancellationToken);
+        }
     }
 }

@@ -524,4 +524,21 @@ public class TransportTests
         noKey.Should().Throw<ArgumentException>();
         relative.Should().Throw<ArgumentException>();
     }
+
+    [Test]
+    public async Task RejectsAnAbsoluteUrlSoTheKeyOnlyGoesToTheEndpoint()
+    {
+        var handler = FakeHandler.Json("{}");
+        var transport = TestClient.Transport(handler);
+
+        var json = () =>
+            transport.RequestJsonAsync(HttpMethod.Get, "https://attacker.example/steal");
+        var bytes = () => transport.RequestBytesAsync("http://attacker.example/steal");
+        var stream = () => transport.StreamAsync(HttpMethod.Post, "https://attacker.example/steal");
+
+        await json.Should().ThrowAsync<ArgumentException>();
+        await bytes.Should().ThrowAsync<ArgumentException>();
+        await stream.Should().ThrowAsync<ArgumentException>();
+        handler.Requests.Should().BeEmpty();
+    }
 }

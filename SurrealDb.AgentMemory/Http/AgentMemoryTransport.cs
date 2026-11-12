@@ -392,14 +392,7 @@ public sealed class AgentMemoryTransport
             return JsonSerializer.Deserialize(text, typeInfo)
                 ?? throw new JsonException("The response body was null.");
         }
-        catch (Exception exception)
-            when (exception
-                    is JsonException
-                        or ArgumentException
-                        or InvalidOperationException
-                        or NotImplementedException
-                        or FormatException
-            )
+        catch (Exception exception) when (IsDecodeFailure(exception))
         {
             // The generated models validate required fields and enum values while reading.
             throw new AgentMemoryException(
@@ -409,6 +402,23 @@ public sealed class AgentMemoryTransport
                 innerException: exception
             );
         }
+    }
+
+    /// <summary>
+    /// Whether an exception is how a body that does not match a model surfaces while it is read.
+    /// The generated converters throw a range of types for a missing field, an unknown enum value,
+    /// or a value they cannot parse.
+    /// </summary>
+    internal static bool IsDecodeFailure(Exception exception)
+    {
+        return exception
+            is JsonException
+                or ArgumentException
+                or InvalidOperationException
+                or NotImplementedException
+                or NotSupportedException
+                or FormatException
+                or OverflowException;
     }
 
     /// <summary>
@@ -585,18 +595,18 @@ public sealed class AgentMemoryTransport
 
     private Uri BuildUrl(string path, IEnumerable<KeyValuePair<string, string?>>? query)
     {
+        // Every request carries the API key, so it only ever goes to the configured endpoint:
+        // an absolute URL would hand the key to whichever host it names.
+        if (path.Contains("://", StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                $"The path must be relative to the Agent Memory endpoint, but '{path}' is an absolute URL.",
+                nameof(path)
+            );
+        }
+
         var builder = new StringBuilder();
-        if (
-            path.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-        )
-        {
-            builder.Append(path);
-        }
-        else
-        {
-            builder.Append(_endpoint).Append('/').Append(path.TrimStart('/'));
-        }
+        builder.Append(_endpoint).Append('/').Append(path.TrimStart('/'));
 
         if (query is not null)
         {

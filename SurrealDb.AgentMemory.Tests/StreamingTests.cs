@@ -75,9 +75,9 @@ public class StreamingTests
     [Test]
     public async Task ANonJsonPayloadIsADelta()
     {
-        var chunks = await ParseAsync("data: just text\n\n");
+        var chunks = await ParseAsync("data: just text\n\ndata: [DONE]\n\n");
 
-        chunks.Should().ContainSingle().Which.Delta.Should().Be("just text");
+        chunks.Select(chunk => chunk.Delta).Should().Equal("just text", "");
         chunks[0].Raw.GetProperty("delta").GetString().Should().Be("just text");
     }
 
@@ -85,27 +85,26 @@ public class StreamingTests
     public async Task IgnoresCommentLinesAndFramesWithoutData()
     {
         var chunks = await ParseAsync(
-            ": keep-alive\n\nevent: ping\n\n: comment\ndata: {\"delta\": \"hi\"}\n\n"
+            ": keep-alive\n\nevent: ping\n\n: comment\ndata: {\"delta\": \"hi\"}\n\ndata: [DONE]\n\n"
         );
 
-        chunks.Should().ContainSingle();
-        chunks[0].Delta.Should().Be("hi");
+        chunks.Select(chunk => chunk.Delta).Should().Equal("hi", "");
         chunks[0].Event.Should().BeNull();
     }
 
     [Test]
     public async Task JoinsMultiLineData()
     {
-        var chunks = await ParseAsync("data: {\"delta\":\ndata:  \"split\"}\n\n");
+        var chunks = await ParseAsync("data: {\"delta\":\ndata:  \"split\"}\n\ndata: [DONE]\n\n");
 
-        chunks.Should().ContainSingle().Which.Delta.Should().Be("split");
+        chunks[0].Delta.Should().Be("split");
     }
 
     [Test]
     public async Task ReadsTheTokenAndSnakeCaseFallbacks()
     {
         var chunks = await ParseAsync(
-            "data: {\"token\":\"a\",\"trace_id\":\"tr:2\",\"session_id\":\"s:2\"}\n\n"
+            "data: {\"token\":\"a\",\"trace_id\":\"tr:2\",\"session_id\":\"s:2\"}\n\ndata: [DONE]\n\n"
         );
 
         chunks[0].Delta.Should().Be("a");
@@ -116,18 +115,47 @@ public class StreamingTests
     [Test]
     public async Task HandlesCrLfLineEndings()
     {
-        var chunks = await ParseAsync("event: chunk\r\ndata: {\"text\":\"a\"}\r\n\r\n");
+        var chunks = await ParseAsync(
+            "event: chunk\r\ndata: {\"text\":\"a\"}\r\n\r\ndata: [DONE]\r\n\r\n"
+        );
 
-        chunks.Should().ContainSingle().Which.Delta.Should().Be("a");
+        chunks.Select(chunk => chunk.Delta).Should().Equal("a", "");
         chunks[0].Event.Should().Be("chunk");
     }
 
     [Test]
-    public async Task DoesNotDispatchAnIncompleteFinalFrame()
+    public async Task DoesNotDispatchAnIncompleteFinalFrameAndReportsTheStreamEndingEarly()
     {
-        var chunks = await ParseAsync("data: {\"delta\":\"a\"}\n\ndata: {\"delta\":\"b\"}\n");
+        var chunks = new List<ChatChunk>();
+        var act = async () =>
+        {
+            await foreach (
+                var chunk in ChatStreamParser.ParseAsync(
+                    new MemoryStream(
+                        Encoding.UTF8.GetBytes(
+                            "data: {\"delta\":\"a\"}\n\ndata: {\"delta\":\"b\"}\n"
+                        )
+                    )
+                )
+            )
+            {
+                chunks.Add(chunk);
+            }
+        };
 
+        var error = await act.Should().ThrowAsync<AgentMemoryStreamException>();
+        error.Which.Title.Should().Be("Chat stream ended early");
         chunks.Select(chunk => chunk.Delta).Should().Equal("a");
+    }
+
+    [Test]
+    public async Task AStreamThatClosesBeforeItsTerminalFrameIsAnError()
+    {
+        // A truncated reply must not read as a complete one.
+        var act = () => ParseAsync("event: chunk\ndata: {\"text\":\"Hel\"}\n\n");
+
+        var error = await act.Should().ThrowAsync<AgentMemoryStreamException>();
+        error.Which.Detail.Should().Be("The stream closed before its terminal frame.");
     }
 
     [Test]
@@ -253,5 +281,147 @@ public class StreamingTests
 
         await act.Should().ThrowAsync<AgentMemoryStreamException>();
         deltas.Should().Equal("a");
+    }
+
+    [Test]
+    public async Task StreamChatReportsADroppedConnectionAsAConnectionError()
+    {
+        var firstFrame = Encoding.UTF8.GetBytes("event: chunk\ndata: {\"text\":\"Hel\"}\n\n");
+        var client = TestClient.Create(
+            new FakeHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StreamContent(new DroppingStream(firstFrame)),
+            })
+        );
+        var deltas = new List<string>();
+
+        var act = async () =>
+        {
+            await foreach (var chunk in client.StreamChatAsync("hi"))
+            {
+                deltas.Add(chunk.Delta);
+            }
+        };
+
+        var error = await act.Should().ThrowAsync<AgentMemoryConnectionException>();
+        error.Which.Title.Should().Be("Chat stream interrupted");
+        error.Which.InnerException.Should().BeAssignableTo<IOException>();
+        deltas.Should().Equal("Hel");
+    }
+
+    [Test]
+    public async Task StreamChatReportsAStreamThatEndsBeforeItsTerminalFrame()
+    {
+        var client = TestClient.Create(
+            new FakeHandler(_ =>
+                Responses.Sse(
+                    "event: meta\ndata: {\"sessionId\":\"s1\"}\n\nevent: chunk\ndata: {\"text\":\"Hel\"}\n\n"
+                )
+            )
+        );
+
+        var act = async () =>
+        {
+            await foreach (var _ in client.StreamChatAsync("hi")) { }
+        };
+
+        await act.Should().ThrowAsync<AgentMemoryStreamException>();
+    }
+
+    [Test]
+    public async Task StreamChatHonoursCancellationMidStream()
+    {
+        var firstFrame = Encoding.UTF8.GetBytes("event: chunk\ndata: {\"text\":\"Hel\"}\n\n");
+        var client = TestClient.Create(
+            new FakeHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StreamContent(new DroppingStream(firstFrame, stallInstead: true)),
+            })
+        );
+        using var cancellation = new CancellationTokenSource();
+
+        var act = async () =>
+        {
+            await foreach (
+                var _ in client.StreamChatAsync("hi", cancellationToken: cancellation.Token)
+            )
+            {
+                await cancellation.CancelAsync();
+            }
+        };
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    /// <summary>
+    /// Serves one block of bytes, then fails like a dropped connection (or stalls until cancelled).
+    /// </summary>
+    private sealed class DroppingStream(byte[] first, bool stallInstead = false) : Stream
+    {
+        private bool _sent;
+
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override async ValueTask<int> ReadAsync(
+            Memory<byte> buffer,
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (!_sent)
+            {
+                _sent = true;
+                first.CopyTo(buffer);
+                return first.Length;
+            }
+
+            if (stallInstead)
+            {
+                await Task.Delay(Timeout.Infinite, cancellationToken);
+            }
+
+            throw new IOException("The response ended prematurely.");
+        }
+
+        public override Task<int> ReadAsync(
+            byte[] buffer,
+            int offset,
+            int count,
+            CancellationToken cancellationToken
+        )
+        {
+            return ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            return ReadAsync(buffer, offset, count, CancellationToken.None)
+                .GetAwaiter()
+                .GetResult();
+        }
+
+        public override void Flush() { }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void SetLength(long value)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            throw new NotSupportedException();
+        }
     }
 }

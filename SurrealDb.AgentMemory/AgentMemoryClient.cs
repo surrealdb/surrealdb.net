@@ -346,7 +346,9 @@ public sealed class AgentMemoryClient : IDisposable
     /// </summary>
     /// <remarks>
     /// The stream is not retried and has no deadline; <paramref name="cancellationToken"/> bounds it.
-    /// A failure after the stream opened is raised as <see cref="AgentMemoryStreamException"/>.
+    /// A failure after the stream opened is never mistaken for a reply that ended: an <c>error</c> frame, or a stream
+    /// that closes before its terminal frame, raises <see cref="AgentMemoryStreamException"/>, and a dropped
+    /// connection raises <see cref="AgentMemoryConnectionException"/>.
     /// </remarks>
     /// <param name="message">The user message.</param>
     /// <param name="options">Session, scopes, model and labels.</param>

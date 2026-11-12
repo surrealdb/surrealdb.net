@@ -5,7 +5,10 @@ namespace SurrealDb.AgentMemory.Tests.Infrastructure;
 /// </summary>
 public static class Fixtures
 {
-    public const string Timestamp = "2026-01-01T00:00:00Z";
+    /// <summary>
+    /// A timestamp as the service writes it: nanosecond precision, so nine fractional digits.
+    /// </summary>
+    public const string Timestamp = "2026-01-01T00:00:00.123456789Z";
 
     public static string Page(
         bool hasMore = false,

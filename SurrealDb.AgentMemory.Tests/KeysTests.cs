@@ -115,4 +115,19 @@ public class KeysTests
         handler.Last.UrlText.Should().Contain("/api/v1/ctx-1/keys/key%3A1/rotate");
         handler.Last.UrlText.Should().Contain("ttlSeconds=60");
     }
+
+    [Test]
+    public async Task CreateKeepsANanosecondExpiry()
+    {
+        // The generated converters used to drop a validUntil with nine fractional digits, which reads as "never expires".
+        var handler = FakeHandler.Json(
+            $$"""{"id":"key:3","key":"sp-key:3-secret","validUntil":"{{Fixtures.Timestamp}}"}"""
+        );
+
+        var minted = await TestClient.Create(handler).Keys.CreateAsync();
+
+        minted
+            .ValidUntil.Should()
+            .Be(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddTicks(1_234_567));
+    }
 }

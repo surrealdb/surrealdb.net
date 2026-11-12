@@ -72,25 +72,18 @@ public sealed class RecordedRequest
                 headers[key] = string.Join(", ", values);
             }
 
-            if (content is MultipartFormDataContent multipart)
+            // Reading the content is what sends it, so a progress wrapper reports here.
+            body = await content.ReadAsByteArrayAsync(cancellationToken);
+
+            if (
+                content.Headers.ContentType is { MediaType: { } mediaType } contentType
+                && mediaType.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase)
+            )
             {
-                parts = [];
-                foreach (var part in multipart)
-                {
-                    parts.Add(
-                        new RecordedPart(
-                            part.Headers.ContentDisposition?.Name?.Trim('"'),
-                            part.Headers.ContentDisposition?.FileName?.Trim('"'),
-                            part.Headers.ContentType?.ToString(),
-                            await part.ReadAsByteArrayAsync(cancellationToken)
-                        )
-                    );
-                }
-            }
-            else
-            {
-                // Reading the content is what sends it, so a progress wrapper reports here.
-                body = await content.ReadAsByteArrayAsync(cancellationToken);
+                var boundary = contentType
+                    .Parameters.Single(parameter => parameter.Name == "boundary")
+                    .Value!.Trim('"');
+                parts = MultipartWire.Parse(body, boundary);
             }
         }
 
@@ -98,9 +91,80 @@ public sealed class RecordedRequest
     }
 }
 
-public sealed record RecordedPart(string? Name, string? FileName, string? ContentType, byte[] Bytes)
+/// <summary>
+/// One multipart part, parsed from the bytes that were sent rather than from .NET's object model,
+/// so the encoding on the wire is what the tests see.
+/// </summary>
+public sealed record RecordedPart(
+    string Disposition,
+    string? Name,
+    string? FileName,
+    string? ContentType,
+    byte[] Bytes
+)
 {
     public string Text => Encoding.UTF8.GetString(Bytes);
+}
+
+internal static class MultipartWire
+{
+    public static List<RecordedPart> Parse(byte[] body, string boundary)
+    {
+        // Latin-1 maps every byte to one char, so offsets in the text are offsets in the bytes.
+        var text = Encoding.Latin1.GetString(body);
+        var delimiter = "--" + boundary;
+        var parts = new List<RecordedPart>();
+
+        var position = text.IndexOf(delimiter, StringComparison.Ordinal);
+        while (position >= 0)
+        {
+            var start = position + delimiter.Length;
+            if (text.AsSpan(start).StartsWith("--"))
+            {
+                break;
+            }
+
+            start += 2; // CRLF after the delimiter
+            var next = text.IndexOf("\r\n" + delimiter, start, StringComparison.Ordinal);
+            var headerEnd = text.IndexOf("\r\n\r\n", start, StringComparison.Ordinal);
+
+            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (
+                var line in Encoding
+                    .UTF8.GetString(body, start, headerEnd - start)
+                    .Split("\r\n", StringSplitOptions.RemoveEmptyEntries)
+            )
+            {
+                var colon = line.IndexOf(':', StringComparison.Ordinal);
+                headers[line[..colon].Trim()] = line[(colon + 1)..].Trim();
+            }
+
+            var contentStart = headerEnd + 4;
+            var disposition = headers.GetValueOrDefault("Content-Disposition", "");
+            parts.Add(
+                new RecordedPart(
+                    disposition,
+                    Parameter(disposition, "name"),
+                    Parameter(disposition, "filename"),
+                    headers.GetValueOrDefault("Content-Type"),
+                    body[contentStart..next]
+                )
+            );
+
+            position = next + 2;
+        }
+
+        return parts;
+    }
+
+    private static string? Parameter(string disposition, string name)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(
+            disposition,
+            $"(?:^|;)\\s*{name}=\"([^\"]*)\""
+        );
+        return match.Success ? match.Groups[1].Value : null;
+    }
 }
 
 /// <summary>

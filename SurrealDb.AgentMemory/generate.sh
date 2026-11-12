@@ -29,7 +29,10 @@ rm -rf Generated
 mkdir -p Generated/Client
 
 cp -r "$OUT/src/SurrealDb.AgentMemory/Model" Generated/
-for file in ClientUtils Option DateOnlyJsonConverter DateOnlyNullableJsonConverter DateTimeJsonConverter DateTimeNullableJsonConverter; do
+# The generated DateTime converters are left out on purpose: they accept at most seven fractional
+# digits, and the service writes nanosecond timestamps (nine digits). System.Text.Json's own
+# DateTime converter reads those, so models fall back to it.
+for file in ClientUtils Option DateOnlyJsonConverter DateOnlyNullableJsonConverter; do
     cp "$OUT/src/SurrealDb.AgentMemory/Client/$file.cs" Generated/Client/
 done
 

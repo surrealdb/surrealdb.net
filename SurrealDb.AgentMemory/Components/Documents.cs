@@ -375,7 +375,18 @@ public sealed class Documents
     {
         ArgumentNullException.ThrowIfNull(options.File);
 
-        var form = new MultipartFormDataContent();
+        // Parsed before anything is opened, so an invalid type fails without leaking the file.
+        var contentType = MediaTypeHeaderValue.Parse(
+            options.ContentType ?? "application/octet-stream"
+        );
+        var fileName = options.FileName ?? options.File.FileName ?? "upload";
+
+        // Part headers are written as UTF-8, the way browsers send multipart/form-data: the service's
+        // multipart parser reads a raw UTF-8 file name, not the RFC 2047 encoding .NET uses by default.
+        var form = new MultipartContent("form-data")
+        {
+            HeaderEncodingSelector = (_, _) => Encoding.UTF8,
+        };
         try
         {
             // The server reads multipart fields in declaration order, so the metadata part must precede the file part.
@@ -391,25 +402,23 @@ public sealed class Documents
                         metadata.Build().ToJsonString(JsonBody.SerializerOptions)
                     )
                 );
-                part.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
-                {
-                    Name = "\"metadata\"",
-                };
+                part.Headers.TryAddWithoutValidation(
+                    "Content-Disposition",
+                    FormDataDisposition("metadata", null)
+                );
                 form.Add(part);
             }
 
             var file = await options
                 .File.CreateContentAsync(cancellationToken)
                 .ConfigureAwait(false);
-            file.Headers.ContentType = MediaTypeHeaderValue.Parse(
-                options.ContentType ?? "application/octet-stream"
-            );
-            file.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
-            {
-                Name = "\"file\"",
-                FileName = Quote(options.FileName ?? options.File.FileName ?? "upload"),
-            };
+            // Owned by the form from here on, so it is disposed with it.
             form.Add(file);
+            file.Headers.ContentType = contentType;
+            file.Headers.TryAddWithoutValidation(
+                "Content-Disposition",
+                FormDataDisposition("file", fileName)
+            );
         }
         catch
         {
@@ -425,9 +434,24 @@ public sealed class Documents
         };
     }
 
-    private static string Quote(string value)
+    /// <summary>
+    /// A <c>form-data</c> disposition, escaped the way the HTML standard's multipart/form-data encoding
+    /// does: <c>"</c>, CR and LF become <c>%22</c>, <c>%0D</c> and <c>%0A</c>, and everything else is sent as is.
+    /// </summary>
+    private static string FormDataDisposition(string name, string? fileName)
     {
-        return $"\"{value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
+        var disposition = $"form-data; name=\"{EscapeFormDataValue(name)}\"";
+        return fileName is null
+            ? disposition
+            : $"{disposition}; filename=\"{EscapeFormDataValue(fileName)}\"";
+    }
+
+    private static string EscapeFormDataValue(string value)
+    {
+        return value
+            .Replace("\"", "%22", StringComparison.Ordinal)
+            .Replace("\r", "%0D", StringComparison.Ordinal)
+            .Replace("\n", "%0A", StringComparison.Ordinal);
     }
 }
 
