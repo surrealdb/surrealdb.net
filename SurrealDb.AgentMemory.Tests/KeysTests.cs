@@ -21,7 +21,7 @@ public class KeysTests
                     Name = "ci",
                     Grants = new Dictionary<string, IEnumerable<string>>
                     {
-                        ["team/eng"] = [Verbs.Read],
+                        [Verbs.MemoryRead] = ["team/eng/*"],
                     },
                     TtlSeconds = 3600,
                 }
@@ -33,7 +33,10 @@ public class KeysTests
         request.Method.Should().Be("POST");
         request.UrlText.Should().Contain("/api/v1/ctx-1/keys");
         request.UrlText.Should().Contain("ttlSeconds=3600");
-        JsonAssert.Equivalent(request.Json, """{"name":"ci","grants":{"team/eng":["read"]}}""");
+        JsonAssert.Equivalent(
+            request.Json,
+            """{"name":"ci","grants":{"memory:read":["team/eng/*"]}}"""
+        );
     }
 
     [Test]

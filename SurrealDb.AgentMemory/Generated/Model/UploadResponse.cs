@@ -264,7 +264,7 @@ namespace SurrealDb.AgentMemory.Model
 
             if (uploadResponse.ObservedAtOption.IsSet)
                 if (uploadResponse.ObservedAtOption.Value != null)
-                    writer.WriteString("observedAt", uploadResponse.ObservedAtOption.Value!.Value.ToString(ObservedAtFormat));
+                    writer.WriteString("observedAt", uploadResponse.ObservedAtOption.Value!.Value.ToString(ObservedAtFormat, System.Globalization.CultureInfo.InvariantCulture));
                 else
                     writer.WriteNull("observedAt");
         }

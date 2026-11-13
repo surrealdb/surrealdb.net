@@ -409,7 +409,7 @@ namespace SurrealDb.AgentMemory.Model
                             filter = new Option<QueryFilter?>(global::SurrealDb.AgentMemory.Client.AgentMemoryJsonSerializer.Deserialize<QueryFilter>(ref utf8JsonReader, jsonSerializerOptions));
                             break;
                         case "graphAlpha":
-                            graphAlpha = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)null : (float)utf8JsonReader.GetDouble());
+                            graphAlpha = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)float.NaN : (float)utf8JsonReader.GetDouble());
                             break;
                         case "graphDepth":
                             graphDepth = new Option<int?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (int?)null : utf8JsonReader.GetInt32());
@@ -430,10 +430,10 @@ namespace SurrealDb.AgentMemory.Model
                             mode = new Option<QueryMode?>(global::SurrealDb.AgentMemory.Client.AgentMemoryJsonSerializer.Deserialize<QueryMode?>(ref utf8JsonReader, jsonSerializerOptions));
                             break;
                         case "rrfK":
-                            rrfK = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)null : (float)utf8JsonReader.GetDouble());
+                            rrfK = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)float.NaN : (float)utf8JsonReader.GetDouble());
                             break;
                         case "threshold":
-                            threshold = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)null : (float)utf8JsonReader.GetDouble());
+                            threshold = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)float.NaN : (float)utf8JsonReader.GetDouble());
                             break;
                         case "useHyde":
                             useHyde = new Option<bool?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (bool?)null : utf8JsonReader.GetBoolean());
@@ -442,7 +442,7 @@ namespace SurrealDb.AgentMemory.Model
                             useReranker = new Option<bool?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (bool?)null : utf8JsonReader.GetBoolean());
                             break;
                         case "vectorWeight":
-                            vectorWeight = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)null : (float)utf8JsonReader.GetDouble());
+                            vectorWeight = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)float.NaN : (float)utf8JsonReader.GetDouble());
                             break;
                         default:
                             break;

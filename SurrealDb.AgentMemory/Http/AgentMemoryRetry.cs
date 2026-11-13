@@ -6,7 +6,8 @@ namespace SurrealDb.AgentMemory;
 /// <remarks>
 /// Retries apply to reads (<c>GET</c> and <c>HEAD</c>) and to writes explicitly marked idempotent,
 /// on a <c>5xx</c> response or a connection failure.
-/// A timeout and a caller's cancellation are never retried.
+/// A timeout and a caller's cancellation are never retried, and neither are <c>501</c> and <c>505</c>,
+/// which describe the request rather than the moment.
 /// </remarks>
 public static class AgentMemoryRetry
 {
@@ -21,6 +22,12 @@ public static class AgentMemoryRetry
     /// The delay used for an attempt beyond the end of the back-off schedule.
     /// </summary>
     public static TimeSpan FallbackDelay { get; } = TimeSpan.FromMilliseconds(1000);
+
+    /// <summary>
+    /// The longest wait a <c>Retry-After</c> header can ask of a retry. A longer value is cut to this, so a
+    /// response cannot stall the caller for an unbounded time.
+    /// </summary>
+    public static TimeSpan MaxRetryAfter { get; } = TimeSpan.FromSeconds(10);
 
     /// <summary>
     /// The back-off delays used between retry attempts: 250ms, 500ms and 1000ms, capped at <paramref name="maxRetries"/>.
@@ -59,11 +66,40 @@ public static class AgentMemoryRetry
             return false;
         }
 
-        return status is null || status >= 500;
+        // 501 (not implemented) and 505 (HTTP version not supported) will not change on a second try.
+        return status is null || (status >= 500 && status is not (501 or 505));
     }
 
-    internal static TimeSpan DelayFor(IReadOnlyList<TimeSpan> schedule, int attempt)
+    /// <summary>
+    /// Whether a response says that an earlier request with the same idempotency key is still running.
+    /// The service answers that with a <c>409</c> and expects the caller to come back, by which time the
+    /// first request has finished and its stored response is returned.
+    /// </summary>
+    internal static bool IsStillInProgress(int status, string? body)
     {
-        return attempt < schedule.Count ? schedule[attempt] : FallbackDelay;
+        return status == 409
+            && body is not null
+            && body.Contains("already in progress", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// The wait before the next attempt: the scheduled back-off, raised to what a <c>Retry-After</c> header
+    /// asked for (up to <see cref="MaxRetryAfter"/>). A shorter wait would land while the service is still
+    /// shedding load.
+    /// </summary>
+    internal static TimeSpan DelayFor(
+        IReadOnlyList<TimeSpan> schedule,
+        int attempt,
+        TimeSpan? retryAfter = null
+    )
+    {
+        var backoff = attempt < schedule.Count ? schedule[attempt] : FallbackDelay;
+        if (retryAfter is not { } asked)
+        {
+            return backoff;
+        }
+
+        var bounded = asked < MaxRetryAfter ? asked : MaxRetryAfter;
+        return bounded > backoff ? bounded : backoff;
     }
 }

@@ -155,7 +155,7 @@ namespace SurrealDb.AgentMemory.Model
                     switch (localVarJsonPropertyName)
                     {
                         case "contradictionRate":
-                            contradictionRate = new Option<double?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (double?)null : utf8JsonReader.GetDouble());
+                            contradictionRate = new Option<double?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (double?)double.NaN : utf8JsonReader.GetDouble());
                             break;
                         case "contradictions":
                             contradictions = new Option<long?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (long?)null : utf8JsonReader.GetInt64());

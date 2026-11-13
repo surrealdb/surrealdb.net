@@ -139,4 +139,25 @@ public class FactsTests
         rows.Should().HaveCount(2);
         handler.Requests.Should().HaveCount(2);
     }
+
+    [Test]
+    public async Task AllEdgesOfListsAnEdgeFromTheEntityToItselfOnce()
+    {
+        // Such an edge has the entity as its source and as its destination, so both walks return it.
+        var handler = new FakeHandler(request =>
+        {
+            var outbound = request.UrlText.Contains("src=", StringComparison.Ordinal);
+            var own = Fixtures.Relation(outbound ? "relation:out" : "relation:in");
+            return Responses.Json(
+                $$"""{"relations":[{{Fixtures.Relation("relation:self")}},{{own}}],"page":{{Fixtures.Page()}}}"""
+            );
+        });
+
+        var edges = await TestClient.Create(handler).Facts.AllEdgesOfAsync("person/tobie");
+
+        edges
+            .Select(edge => edge.Id)
+            .Should()
+            .Equal("relation:self", "relation:out", "relation:in");
+    }
 }

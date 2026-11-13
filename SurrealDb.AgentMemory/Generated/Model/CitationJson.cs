@@ -247,7 +247,7 @@ namespace SurrealDb.AgentMemory.Model
                             marker = new Option<string?>(utf8JsonReader.GetString()!);
                             break;
                         case "score":
-                            score = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)null : (float)utf8JsonReader.GetDouble());
+                            score = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)float.NaN : (float)utf8JsonReader.GetDouble());
                             break;
                         case "snippet":
                             snippet = new Option<string?>(utf8JsonReader.GetString()!);

@@ -31,9 +31,30 @@ mkdir -p Generated/Client
 cp -r "$OUT/src/SurrealDb.AgentMemory/Model" Generated/
 # The generated DateTime converters are left out on purpose: they accept at most seven fractional
 # digits, and the service writes nanosecond timestamps (nine digits). System.Text.Json's own
-# DateTime converter reads those, so models fall back to it.
+# DateTime parsing reads those; UtcDateTimeJsonConverter (Data/) wraps it, so a timestamp is UTC
+# whichever offset it was written with, as it was with the generated converters.
 for file in ClientUtils Option DateOnlyJsonConverter DateOnlyNullableJsonConverter; do
     cp "$OUT/src/SurrealDb.AgentMemory/Client/$file.cs" Generated/Client/
+done
+
+# The generator writes timestamps with ToString(format), which uses the current culture's calendar:
+# under th-TH the year 2026 goes out as 2569, and the service stores it. Pin the invariant culture.
+for f in $(grep -rlE '\.ToString\([A-Za-z]+Format\)' Generated/Model); do
+    perl -pi -e 's/\.ToString\(([A-Za-z]+Format)\)/.ToString($1, System.Globalization.CultureInfo.InvariantCulture)/g' "$f"
+done
+perl -pi -e 's/\b(dateTime|dateTimeOffset|dateOnly)\.ToString\(format\)/$1.ToString(format, System.Globalization.CultureInfo.InvariantCulture)/g' Generated/Client/ClientUtils.cs
+
+# The service's JSON encoder writes a non-finite float as null: the mean of no rows is NaN, and
+# NaN has no JSON form. A required float would refuse that null and fail the whole response, so
+# it is read back as NaN. Only properties the model marks as not nullable are touched; an
+# optional one keeps its null.
+for f in $(grep -rlE '\((double|float)\?\)null : ' Generated/Model); do
+    perl -0pi -e '
+        my %required = map { $_ => 1 }
+            /if \((\w+)\.IsSet && \1\.Value == null\)\s*throw new ArgumentNullException\(nameof\(\1\), "Property is not nullable/g;
+        s{^([ \t]*)(\w+) = new Option<(double|float)\?>\(utf8JsonReader\.TokenType == JsonTokenType\.Null \? \(\3\?\)null :}
+         {$required{$2} ? "$1$2 = new Option<$3?>(utf8JsonReader.TokenType == JsonTokenType.Null ? ($3?)$3.NaN :" : $&}gme;
+    ' "$f"
 done
 
 # Nested per-model enums are all named KindEnum; a single source-generation context
@@ -66,11 +87,14 @@ ENUMS="$(
         | sort -u
 )"
 CONVERTERS="$(
-    grep -rhoE '^    public (partial )?class [A-Za-z0-9_]+' Generated/Model Generated/Client \
-        | awk '{ print $NF }' \
-        | grep 'JsonConverter$' \
-        | sed 's/^ResourceRefJsonConverter$/ResourceRefDiscriminatedJsonConverter/' \
-        | sort -u
+    {
+        grep -rhoE '^    public (partial )?class [A-Za-z0-9_]+' Generated/Model Generated/Client \
+            | awk '{ print $NF }' \
+            | grep 'JsonConverter$' \
+            | sed 's/^ResourceRefJsonConverter$/ResourceRefDiscriminatedJsonConverter/'
+        # Hand-written, in Data/: reads every timestamp as UTC.
+        echo UtcDateTimeJsonConverter
+    } | sort -u
 )"
 # Closed generics (de)serialized inside converters (List<X>, Dictionary<...>) are never
 # reached from model property graphs — root them explicitly so runtime lookups never miss.
@@ -120,6 +144,8 @@ HEADER
         printf '[JsonSerializable(typeof(%s))]\n' "$g"
     done
     printf '[JsonSerializable(typeof(object))]\n'
+    # What a free-form `object` property holds once it has been read, so it can be written back.
+    printf '[JsonSerializable(typeof(System.Text.Json.JsonElement))]\n'
     cat <<'FOOTER'
 public partial class AgentMemoryJsonContext : JsonSerializerContext
 {

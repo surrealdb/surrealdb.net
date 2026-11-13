@@ -192,7 +192,7 @@ namespace SurrealDb.AgentMemory.Model
                             lens = new Option<List<List<string>>?>(global::SurrealDb.AgentMemory.Client.AgentMemoryJsonSerializer.Deserialize<List<List<string>>>(ref utf8JsonReader, jsonSerializerOptions)!);
                             break;
                         case "threshold":
-                            threshold = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)null : (float)utf8JsonReader.GetDouble());
+                            threshold = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)float.NaN : (float)utf8JsonReader.GetDouble());
                             break;
                         default:
                             break;

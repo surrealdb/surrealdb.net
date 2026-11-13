@@ -223,7 +223,7 @@ namespace SurrealDb.AgentMemory.Model
 
             if (mintedKeyJson.ValidUntilOption.IsSet)
                 if (mintedKeyJson.ValidUntilOption.Value != null)
-                    writer.WriteString("validUntil", mintedKeyJson.ValidUntilOption.Value!.Value.ToString(ValidUntilFormat));
+                    writer.WriteString("validUntil", mintedKeyJson.ValidUntilOption.Value!.Value.ToString(ValidUntilFormat, System.Globalization.CultureInfo.InvariantCulture));
                 else
                     writer.WriteNull("validUntil");
         }

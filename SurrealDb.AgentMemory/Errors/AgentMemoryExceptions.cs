@@ -84,8 +84,16 @@ public sealed class AgentMemoryServerException(
     string? type = null,
     string? instance = null,
     IReadOnlyDictionary<string, JsonElement>? extensions = null,
+    TimeSpan? retryAfter = null,
     Exception? innerException = null
-) : AgentMemoryException(status, title, detail, type, instance, extensions, innerException);
+) : AgentMemoryException(status, title, detail, type, instance, extensions, innerException)
+{
+    /// <summary>
+    /// The delay from a numeric <c>Retry-After</c> header, when the server sent one. The service sends it
+    /// with a <c>503</c> while it sheds load.
+    /// </summary>
+    public TimeSpan? RetryAfter { get; } = retryAfter;
+}
 
 /// <summary>
 /// A network failure, a timeout, or a response that could not be read (status <c>0</c>).

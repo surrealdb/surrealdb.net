@@ -149,7 +149,7 @@ namespace SurrealDb.AgentMemory.Model
                             entityB = new Option<string?>(utf8JsonReader.GetString()!);
                             break;
                         case "similarity":
-                            similarity = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)null : (float)utf8JsonReader.GetDouble());
+                            similarity = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)float.NaN : (float)utf8JsonReader.GetDouble());
                             break;
                         default:
                             break;

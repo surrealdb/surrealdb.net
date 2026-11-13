@@ -68,6 +68,9 @@ public static class TurnRoles
 /// Retrieval modes for <see cref="Documents.QueryAsync"/>:
 /// vector only, BM25 only, hybrid RRF, or hybrid plus a graph-density re-rank.
 /// </summary>
+/// <remarks>
+/// A memory recall has its own modes: see <see cref="RecallModes"/>.
+/// </remarks>
 public static class QueryModes
 {
     /// <summary><c>hybrid</c>: vector and BM25, fused with RRF.</summary>
@@ -84,30 +87,52 @@ public static class QueryModes
 }
 
 /// <summary>
-/// Grant verbs in the scope permission model.
+/// Retrieval modes for <see cref="AgentMemoryClient.RecallAsync"/>.
+/// </summary>
+/// <remarks>
+/// These are not the modes of a document query (<see cref="QueryModes"/>): a recall has <c>graph</c>,
+/// and refuses <c>hybrid_graph</c>.
+/// </remarks>
+public static class RecallModes
+{
+    /// <summary><c>hybrid</c>, the default.</summary>
+    public const string Hybrid = "hybrid";
+
+    /// <summary><c>vector</c>.</summary>
+    public const string Vector = "vector";
+
+    /// <summary><c>bm25</c>.</summary>
+    public const string Bm25 = "bm25";
+
+    /// <summary><c>graph</c>.</summary>
+    public const string Graph = "graph";
+}
+
+/// <summary>
+/// Grant verbs in the scope permission model, in the <c>noun:verb</c> form the service reads and returns.
 /// </summary>
 public static class Verbs
 {
-    /// <summary><c>read</c>.</summary>
-    public const string Read = "read";
+    /// <summary><c>memory:read</c>: read what is stored in a scope.</summary>
+    public const string MemoryRead = "memory:read";
 
-    /// <summary><c>write</c>.</summary>
-    public const string Write = "write";
+    /// <summary><c>memory:write</c>: write into a scope.</summary>
+    public const string MemoryWrite = "memory:write";
 
-    /// <summary><c>create_scope</c>.</summary>
-    public const string CreateScope = "create_scope";
+    /// <summary><c>memory:forget</c>: erase what is stored in a scope.</summary>
+    public const string MemoryForget = "memory:forget";
 
-    /// <summary><c>delete_scope</c>.</summary>
-    public const string DeleteScope = "delete_scope";
+    /// <summary><c>scope:read</c>: see the scope tree.</summary>
+    public const string ScopeRead = "scope:read";
 
-    /// <summary><c>grant</c>.</summary>
-    public const string Grant = "grant";
+    /// <summary><c>scope:create</c>: register scopes.</summary>
+    public const string ScopeCreate = "scope:create";
 
-    /// <summary><c>manage</c>: required by delegation, keys, and principal administration.</summary>
-    public const string Manage = "manage";
+    /// <summary><c>scope:delete</c>: delete scopes.</summary>
+    public const string ScopeDelete = "scope:delete";
 
-    /// <summary><c>forget</c>.</summary>
-    public const string Forget = "forget";
+    /// <summary><c>grant:manage</c>: administer principals and their grants.</summary>
+    public const string GrantManage = "grant:manage";
 }
 
 /// <summary>

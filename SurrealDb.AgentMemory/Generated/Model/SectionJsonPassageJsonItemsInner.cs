@@ -184,7 +184,7 @@ namespace SurrealDb.AgentMemory.Model
                     switch (localVarJsonPropertyName)
                     {
                         case "score":
-                            score = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)null : (float)utf8JsonReader.GetDouble());
+                            score = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)float.NaN : (float)utf8JsonReader.GetDouble());
                             break;
                         case "text":
                             text = new Option<string?>(utf8JsonReader.GetString()!);

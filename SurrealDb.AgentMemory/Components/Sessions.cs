@@ -38,6 +38,17 @@ public sealed class Sessions
                 cancellationToken
             )
             .ConfigureAwait(false);
+
+        // The id becomes a path segment of every call on the session.
+        if (response.Id is "" or "." or "..")
+        {
+            throw new AgentMemoryException(
+                0,
+                "Unexpected response body",
+                $"The service returned '{response.Id}' as the session id, which cannot address a session."
+            );
+        }
+
         return new Session(_transport, _contextId, response);
     }
 }

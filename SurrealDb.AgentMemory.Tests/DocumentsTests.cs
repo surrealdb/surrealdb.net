@@ -64,7 +64,8 @@ public class DocumentsTests
         parts.Should().ContainSingle();
         parts[0].Name.Should().Be("file");
         parts[0].FileName.Should().Be("upload");
-        parts[0].ContentType.Should().Be("application/octet-stream");
+        // Not application/octet-stream: the service takes a part's type as declared, and refuses that one.
+        parts[0].ContentType.Should().BeNull();
     }
 
     [Test]
@@ -601,5 +602,243 @@ public class DocumentsTests
         await Client(handler).Documents.GetAsync("...");
 
         handler.Last.UrlText.Should().EndWith("/api/v1/c/documents/...");
+    }
+
+    [Test]
+    [Arguments("handbook.pdf", "application/pdf")]
+    [Arguments("notes.MD", "text/markdown")]
+    [Arguments("table.csv", "text/csv")]
+    [Arguments("page.htm", "text/html")]
+    [Arguments("photo.jpeg", "image/jpeg")]
+    [Arguments("clip.mov", "video/quicktime")]
+    [Arguments("export.2026.json", "application/json")]
+    public async Task UploadTakesTheTypeFromTheFileNameWhenNoneIsGiven(
+        string fileName,
+        string expected
+    )
+    {
+        var handler = FakeHandler.Json(Fixtures.Upload("d20"));
+
+        await Client(handler)
+            .Documents.UploadAsync(
+                new DocumentUploadOptions { File = new byte[] { 1 }, FileName = fileName }
+            );
+
+        handler.Last.Parts!.Single().ContentType.Should().Be(expected);
+    }
+
+    [Test]
+    [Arguments("archive.zip")]
+    [Arguments("README")]
+    [Arguments("trailing.")]
+    [Arguments("report.pdfx")]
+    public async Task UploadSendsNoTypeForANameItCannotPlace(string fileName)
+    {
+        // The service then works the type out from the bytes. Declaring application/octet-stream
+        // instead would be refused with a 415, whatever the file holds.
+        var handler = FakeHandler.Json(Fixtures.Upload("d21"));
+
+        await Client(handler)
+            .Documents.UploadAsync(
+                new DocumentUploadOptions { File = new byte[] { 1 }, FileName = fileName }
+            );
+
+        handler.Last.Parts!.Single().ContentType.Should().BeNull();
+    }
+
+    [Test]
+    public async Task AnExplicitContentTypeWinsOverTheFileName()
+    {
+        var handler = FakeHandler.Json(Fixtures.Upload("d22"));
+
+        await Client(handler)
+            .Documents.UploadAsync(
+                new DocumentUploadOptions
+                {
+                    File = new byte[] { 1 },
+                    FileName = "notes.pdf",
+                    ContentType = "text/markdown",
+                }
+            );
+
+        handler.Last.Parts!.Single().ContentType.Should().Be("text/markdown");
+    }
+
+    [Test]
+    public async Task UploadFromAPathUsesThePathsNameAndType()
+    {
+        // The README quick start: a file from disk and nothing else said about it.
+        var path = Path.Combine(Path.GetTempPath(), $"agent-memory-{Guid.NewGuid():N}.pdf");
+        await File.WriteAllBytesAsync(path, [1, 2, 3]);
+        try
+        {
+            var handler = FakeHandler.Json(Fixtures.Upload("d23"));
+
+            await Client(handler)
+                .Documents.UploadAsync(
+                    new DocumentUploadOptions { File = AgentMemoryFile.FromPath(path) }
+                );
+
+            var part = handler.Last.Parts!.Single();
+            part.FileName.Should().Be(Path.GetFileName(path));
+            part.ContentType.Should().Be("application/pdf");
+            part.Bytes.Should().Equal(1, 2, 3);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Test]
+    public async Task AnExplicitFileNameReplacesTheNameFromThePath()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"agent-memory-{Guid.NewGuid():N}.txt");
+        await File.WriteAllBytesAsync(path, [1, 2, 3]);
+        try
+        {
+            var handler = FakeHandler.Json(Fixtures.Upload("d24"));
+
+            await Client(handler)
+                .Documents.UploadAsync(
+                    new DocumentUploadOptions
+                    {
+                        File = AgentMemoryFile.FromPath(path),
+                        FileName = "report.pdf",
+                    }
+                );
+
+            var part = handler.Last.Parts!.Single();
+            part.FileName.Should().Be("report.pdf");
+            part.ContentType.Should().Be("application/pdf");
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Test]
+    public async Task UploadSendsTheObservedTimeInTheMetadata()
+    {
+        var handler = FakeHandler.Json(Fixtures.Upload("d25"));
+
+        await Client(handler)
+            .Documents.UploadAsync(
+                new DocumentUploadOptions
+                {
+                    File = new byte[] { 1 },
+                    ObservedAt = new DateTimeOffset(2026, 1, 2, 3, 4, 5, TimeSpan.FromHours(2)),
+                    ObservedAtHeader = "date",
+                }
+            );
+
+        JsonAssert.Equivalent(
+            System.Text.Json.Nodes.JsonNode.Parse(
+                handler.Last.Parts!.Single(part => part.Name == "metadata").Text
+            ),
+            """{"observedAt":"2026-01-02T03:04:05.0000000+02:00","observedAtHeader":"date"}"""
+        );
+    }
+
+    [Test]
+    public async Task ReprocessChecksTheDocumentIdBeforeItOpensTheFile()
+    {
+        // Had the file been opened first, this would be a FileNotFoundException, and for a file that
+        // exists, a handle left open.
+        var handler = FakeHandler.Json(Fixtures.Upload("d26"));
+        var missing = AgentMemoryFile.FromPath(
+            Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.pdf")
+        );
+
+        var act = () =>
+            Client(handler)
+                .Documents.ReprocessAsync("..", new DocumentUploadOptions { File = missing });
+
+        await act.Should().ThrowAsync<ArgumentException>();
+        handler.Requests.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task AStreamThatFailsPartWayIsNeverUploadedAsItsRemainder()
+    {
+        // The first read consumed the beginning. Carrying on from there would store the tail of the
+        // file as if it were the whole document.
+        var content = Enumerable.Range(0, 5000).Select(i => (byte)i).ToArray();
+        var file = AgentMemoryFile.FromStream(new FlakyStream(content, failAfter: 2048));
+        var handler = FakeHandler.Json(Fixtures.Upload("d27"));
+        var client = Client(handler);
+
+        var first = () => client.Documents.UploadAsync(new DocumentUploadOptions { File = file });
+        var second = () => client.Documents.UploadAsync(new DocumentUploadOptions { File = file });
+
+        await first.Should().ThrowAsync<IOException>();
+        await second.Should().ThrowAsync<IOException>().WithMessage("*cannot be read again*");
+        handler.Requests.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task ASeekableStreamIsReadAgainFromWhereItStartedAfterAFailedRead()
+    {
+        var content = Enumerable.Range(0, 5000).Select(i => (byte)i).ToArray();
+        var source = new FailOnceStream(content, failAfter: 2048) { Position = 100 };
+        var file = AgentMemoryFile.FromStream(source);
+        var handler = FakeHandler.Json(Fixtures.Upload("d28"));
+        var client = Client(handler);
+
+        var first = () => client.Documents.UploadAsync(new DocumentUploadOptions { File = file });
+
+        await first.Should().ThrowAsync<IOException>();
+        await client.Documents.UploadAsync(new DocumentUploadOptions { File = file });
+
+        handler.Requests.Should().ContainSingle();
+        handler.Last.Parts!.Single().Bytes.Should().Equal(content[100..]);
+    }
+
+    [Test]
+    public async Task ConcurrentUploadsOfOneStreamBackedFileEachSendAllOfIt()
+    {
+        var content = Enumerable.Range(0, 64 * 1024).Select(i => (byte)i).ToArray();
+        var file = AgentMemoryFile.FromStream(new FlakyStream(content));
+        var handler = FakeHandler.Json(Fixtures.Upload("d29"));
+        var client = Client(handler);
+
+        await Task.WhenAll(
+            Enumerable
+                .Range(0, 4)
+                .Select(_ =>
+                    client.Documents.UploadAsync(new DocumentUploadOptions { File = file })
+                )
+        );
+
+        handler.Requests.Should().HaveCount(4);
+        handler
+            .Requests.Should()
+            .OnlyContain(request => request.Parts!.Single().Bytes.SequenceEqual(content));
+    }
+
+    /// <summary>
+    /// A seekable stream whose first pass fails once it has served <paramref name="failAfter"/> bytes.
+    /// </summary>
+    private sealed class FailOnceStream(byte[] content, int failAfter) : MemoryStream(content)
+    {
+        private bool _failed;
+
+        // Every read of a stream derived from MemoryStream, synchronous or not, ends up here.
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            if (!_failed)
+            {
+                if (Position >= failAfter)
+                {
+                    _failed = true;
+                    throw new IOException("The source stream failed part-way.");
+                }
+
+                count = (int)Math.Min(count, failAfter - Position);
+            }
+
+            return base.Read(buffer, offset, count);
+        }
     }
 }

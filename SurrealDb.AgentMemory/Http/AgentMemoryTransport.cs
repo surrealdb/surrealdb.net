@@ -34,6 +34,8 @@ public sealed class AgentMemoryTransport
     public const int DefaultMaxRetries = 3;
 
     private const string JsonMediaType = "application/json";
+    private const string PrincipalPrefix = "principal:";
+    private const int CopyBufferSize = 81920;
 
     private static readonly string UserAgent = $"surrealdb-memory-dotnet/{GetVersion()}";
 
@@ -85,6 +87,10 @@ public sealed class AgentMemoryTransport
         ValidateApiKey(apiKey, nameof(apiKey));
         ValidateTimeout(timeout, nameof(timeout));
         ValidateMaxRetries(maxRetries, nameof(maxRetries));
+        if (onBehalfOf is not null)
+        {
+            ValidateOnBehalfOf(onBehalfOf, nameof(onBehalfOf));
+        }
 
         _httpClient = httpClient;
         _endpoint = endpoint.TrimEnd('/');
@@ -105,17 +111,19 @@ public sealed class AgentMemoryTransport
     /// </summary>
     public string? OnBehalfOf => _onBehalfOf;
 
+    internal HttpClient HttpClient => _httpClient;
+
     /// <summary>
     /// Returns a copy of this transport that issues every request on behalf of <paramref name="principalId"/>
     /// (adds the <c>X-Spectron-On-Behalf-Of</c> header). This transport is left unchanged.
     /// </summary>
     /// <param name="principalId">The principal to act for.</param>
+    /// <exception cref="ArgumentException">
+    /// The id is blank, is only the <c>principal:</c> prefix, or contains characters a header cannot carry.
+    /// </exception>
     public AgentMemoryTransport WithOnBehalfOf(string principalId)
     {
-        if (string.IsNullOrEmpty(principalId))
-        {
-            throw new ArgumentException("OnBehalfOf requires a principal id.", nameof(principalId));
-        }
+        ValidateOnBehalfOf(principalId, nameof(principalId));
 
         return new AgentMemoryTransport(
             _httpClient,
@@ -204,8 +212,14 @@ public sealed class AgentMemoryTransport
     /// </summary>
     /// <param name="path">Path below the endpoint.</param>
     /// <param name="query">Query-string parameters.</param>
-    /// <param name="timeout">The deadline, replacing the transport's default.</param>
+    /// <param name="timeout">
+    /// The deadline, replacing the transport's default: positive, or
+    /// <see cref="System.Threading.Timeout.InfiniteTimeSpan"/> for none.
+    /// </param>
     /// <param name="cancellationToken">Cancels the request.</param>
+    /// <exception cref="AgentMemoryException">
+    /// The request failed, or the body is larger than a byte array can hold.
+    /// </exception>
     public async Task<byte[]> RequestBytesAsync(
         string path,
         IEnumerable<KeyValuePair<string, string?>>? query = null,
@@ -213,6 +227,9 @@ public sealed class AgentMemoryTransport
         CancellationToken cancellationToken = default
     )
     {
+        ArgumentNullException.ThrowIfNull(path);
+        ValidateTimeout(timeout, nameof(timeout));
+
         var url = BuildUrl(path, query);
         var deadline = timeout ?? _timeout;
         var schedule = AgentMemoryRetry.BackoffSchedule(_maxRetries);
@@ -228,8 +245,9 @@ public sealed class AgentMemoryTransport
             HttpResponseMessage response;
             try
             {
+                // Headers first, so the size is known before any of the body is read.
                 response = await _httpClient
-                    .SendAsync(message, HttpCompletionOption.ResponseContentRead, linked.Token)
+                    .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linked.Token)
                     .ConfigureAwait(false);
             }
             catch (OperationCanceledException exception)
@@ -241,28 +259,16 @@ public sealed class AgentMemoryTransport
             {
                 if (AgentMemoryRetry.ShouldRetry("GET", null, attempt, _maxRetries))
                 {
-                    await DelayAsync(schedule, attempt, cancellationToken).ConfigureAwait(false);
+                    await DelayAsync(schedule, attempt, null, cancellationToken)
+                        .ConfigureAwait(false);
                     continue;
                 }
-                throw new AgentMemoryConnectionException(
-                    "Connection failed",
-                    exception.Message,
-                    exception
-                );
+                throw ConnectionFailed(exception);
             }
 
             using (response)
             {
                 var status = (int)response.StatusCode;
-                if (
-                    status >= 400
-                    && AgentMemoryRetry.ShouldRetry("GET", status, attempt, _maxRetries)
-                )
-                {
-                    await DelayAsync(schedule, attempt, cancellationToken).ConfigureAwait(false);
-                    continue;
-                }
-
                 try
                 {
                     if (!response.IsSuccessStatusCode)
@@ -270,17 +276,42 @@ public sealed class AgentMemoryTransport
                         var text = await response
                             .Content.ReadAsStringAsync(linked.Token)
                             .ConfigureAwait(false);
+                        if (AgentMemoryRetry.ShouldRetry("GET", status, attempt, _maxRetries))
+                        {
+                            var retryAfter = AgentMemoryException.ParseRetryAfter(response.Headers);
+                            await DelayAsync(schedule, attempt, retryAfter, cancellationToken)
+                                .ConfigureAwait(false);
+                            continue;
+                        }
                         throw AgentMemoryException.FromResponse(status, text, response.Headers);
                     }
 
-                    return await response
-                        .Content.ReadAsByteArrayAsync(linked.Token)
+                    return await ReadBytesAsync(response.Content, linked.Token)
                         .ConfigureAwait(false);
                 }
                 catch (OperationCanceledException exception)
                     when (!cancellationToken.IsCancellationRequested)
                 {
                     throw TimedOut(deadline, exception);
+                }
+                catch (Exception exception) when (exception is HttpRequestException or IOException)
+                {
+                    // Aborting a request makes the read under it fail: that is the caller's
+                    // cancellation or the deadline, not a dropped connection.
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (linked.IsCancellationRequested)
+                    {
+                        throw TimedOut(deadline, exception);
+                    }
+
+                    // The connection dropped while the body was being read.
+                    if (AgentMemoryRetry.ShouldRetry("GET", null, attempt, _maxRetries))
+                    {
+                        await DelayAsync(schedule, attempt, null, cancellationToken)
+                            .ConfigureAwait(false);
+                        continue;
+                    }
+                    throw ConnectionFailed(exception);
                 }
             }
         }
@@ -305,6 +336,9 @@ public sealed class AgentMemoryTransport
         CancellationToken cancellationToken = default
     )
     {
+        ArgumentNullException.ThrowIfNull(method);
+        ArgumentNullException.ThrowIfNull(path);
+
         var url = BuildUrl(path, null);
         using var message = CreateMessage(method, url, "text/event-stream");
         if (body is not null)
@@ -333,11 +367,7 @@ public sealed class AgentMemoryTransport
         }
         catch (HttpRequestException exception)
         {
-            throw new AgentMemoryConnectionException(
-                "Connection failed",
-                exception.Message,
-                exception
-            );
+            throw ConnectionFailed(exception);
         }
 
         if (!response.IsSuccessStatusCode)
@@ -404,37 +434,40 @@ public sealed class AgentMemoryTransport
         CancellationToken cancellationToken
     )
     {
-        ArgumentNullException.ThrowIfNull(method);
-        ArgumentNullException.ThrowIfNull(path);
-
-        var methodName = method.Method.ToUpperInvariant();
-        var url = BuildUrl(path, request?.Query);
-        var schedule = AgentMemoryRetry.BackoffSchedule(_maxRetries);
+        // Content is sent once: it cannot be replayed. It is disposed on every way out of here,
+        // including a request that is refused before anything is sent.
         var content = request?.Content;
-        var serializedBody = content is null
-            ? request?.Body?.ToJsonString(JsonBody.SerializerOptions)
-            : null;
-
-        // A multipart body can legitimately take longer than the default deadline,
-        // so only an explicit per-request timeout bounds it.
-        var deadline = content is not null ? request?.Timeout : request?.Timeout ?? _timeout;
-
-        // Content is sent once: it cannot be replayed.
-        var idempotent = request?.Idempotent == true && content is null;
-
-        // Idempotent writes carry a key so retries within a 30-second window collapse
-        // to a single server-side effect.
-        var idempotencyKey = idempotent
-            ? AgentMemoryIdempotency.ComputeKey(
-                methodName,
-                path,
-                serializedBody ?? string.Empty,
-                _timeProvider.GetUtcNow()
-            )
-            : null;
-
         try
         {
+            ArgumentNullException.ThrowIfNull(method);
+            ArgumentNullException.ThrowIfNull(path);
+            ValidateTimeout(request?.Timeout, nameof(AgentMemoryRequestOptions.Timeout));
+
+            var methodName = method.Method.ToUpperInvariant();
+            var url = BuildUrl(path, request?.Query);
+            var schedule = AgentMemoryRetry.BackoffSchedule(_maxRetries);
+            var serializedBody = content is null
+                ? request?.Body?.ToJsonString(JsonBody.SerializerOptions)
+                : null;
+
+            // A multipart body can legitimately take longer than the default deadline,
+            // so only an explicit per-request timeout bounds it.
+            var deadline = content is not null ? request?.Timeout : request?.Timeout ?? _timeout;
+
+            var idempotent = request?.Idempotent == true && content is null;
+
+            // Idempotent writes carry a key so retries within a 30-second window collapse
+            // to a single server-side effect.
+            var idempotencyKey = idempotent
+                ? AgentMemoryIdempotency.ComputeKey(
+                    methodName,
+                    path,
+                    serializedBody ?? string.Empty,
+                    _timeProvider.GetUtcNow(),
+                    _onBehalfOf
+                )
+                : null;
+
             // Already cancelled before it began, so there is nothing worth sending.
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -449,6 +482,13 @@ public sealed class AgentMemoryTransport
                     message.Content = request?.UploadProgress is { } progress
                         ? new ProgressContent(content, progress)
                         : content;
+
+                    // The service can refuse an upload from its headers alone (a wrong key, an unknown
+                    // delegation target) and then closes the connection. With this header the client
+                    // waits for the go-ahead before it sends the body, so such a refusal arrives as its
+                    // status; without it, a large body dies on a failed write and the caller sees a
+                    // connection error instead of the reason.
+                    message.Headers.ExpectContinue = true;
                 }
                 else if (serializedBody is not null)
                 {
@@ -486,36 +526,16 @@ public sealed class AgentMemoryTransport
                         )
                     )
                     {
-                        await DelayAsync(schedule, attempt, cancellationToken)
+                        await DelayAsync(schedule, attempt, null, cancellationToken)
                             .ConfigureAwait(false);
                         continue;
                     }
-                    throw new AgentMemoryConnectionException(
-                        "Connection failed",
-                        exception.Message,
-                        exception
-                    );
+                    throw content is null ? ConnectionFailed(exception) : UploadFailed(exception);
                 }
 
                 using (response)
                 {
                     var status = (int)response.StatusCode;
-                    if (
-                        status >= 400
-                        && content is null
-                        && AgentMemoryRetry.ShouldRetry(
-                            methodName,
-                            status,
-                            attempt,
-                            _maxRetries,
-                            idempotent
-                        )
-                    )
-                    {
-                        await DelayAsync(schedule, attempt, cancellationToken)
-                            .ConfigureAwait(false);
-                        continue;
-                    }
 
                     string text;
                     try
@@ -530,6 +550,17 @@ public sealed class AgentMemoryTransport
                         throw TimedOut(deadline, exception);
                     }
 
+                    if (
+                        content is null
+                        && ShouldRetryResponse(methodName, status, text, attempt, idempotent)
+                    )
+                    {
+                        var retryAfter = AgentMemoryException.ParseRetryAfter(response.Headers);
+                        await DelayAsync(schedule, attempt, retryAfter, cancellationToken)
+                            .ConfigureAwait(false);
+                        continue;
+                    }
+
                     if (!response.IsSuccessStatusCode)
                     {
                         throw AgentMemoryException.FromResponse(status, text, response.Headers);
@@ -541,8 +572,78 @@ public sealed class AgentMemoryTransport
         }
         finally
         {
-            // The request message disposes the content it sent; this covers a request that never got that far.
             content?.Dispose();
+        }
+    }
+
+    private bool ShouldRetryResponse(
+        string methodName,
+        int status,
+        string text,
+        int attempt,
+        bool idempotent
+    )
+    {
+        if (AgentMemoryRetry.ShouldRetry(methodName, status, attempt, _maxRetries, idempotent))
+        {
+            return true;
+        }
+
+        // An earlier attempt with the same key is still running on the service. Coming back later
+        // returns its stored response; giving up here would report a write that may well succeed.
+        return idempotent
+            && attempt < _maxRetries
+            && AgentMemoryRetry.IsStillInProgress(status, text);
+    }
+
+    /// <summary>
+    /// Reads a response body into one array, without the second copy a buffered response costs.
+    /// </summary>
+    private static async Task<byte[]> ReadBytesAsync(
+        HttpContent content,
+        CancellationToken cancellationToken
+    )
+    {
+        var declared = content.Headers.ContentLength;
+        if (declared > Array.MaxLength)
+        {
+            throw TooLarge(declared.Value);
+        }
+
+        var stream = await content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        await using (stream.ConfigureAwait(false))
+        {
+            if (declared is { } length)
+            {
+                var bytes = new byte[length];
+                await stream.ReadExactlyAsync(bytes, cancellationToken).ConfigureAwait(false);
+                return bytes;
+            }
+
+            // No declared length (a chunked or decompressed body): grow as it arrives.
+            using var buffer = new MemoryStream();
+            var chunk = ArrayPool<byte>.Shared.Rent(CopyBufferSize);
+            try
+            {
+                int read;
+                while (
+                    (read = await stream.ReadAsync(chunk, cancellationToken).ConfigureAwait(false))
+                    > 0
+                )
+                {
+                    if (buffer.Length + read > Array.MaxLength)
+                    {
+                        throw TooLarge(buffer.Length + read);
+                    }
+                    buffer.Write(chunk, 0, read);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(chunk);
+            }
+
+            return buffer.ToArray();
         }
     }
 
@@ -554,6 +655,7 @@ public sealed class AgentMemoryTransport
         message.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
         if (_onBehalfOf is not null)
         {
+            // Not validated by the header collection, so the id is checked when the transport is built.
             message.Headers.TryAddWithoutValidation(OnBehalfOfHeader, _onBehalfOf);
         }
         return message;
@@ -568,9 +670,10 @@ public sealed class AgentMemoryTransport
 
     private Uri BuildUrl(string path, IEnumerable<KeyValuePair<string, string?>>? query)
     {
-        // Every request carries the API key, so it only ever goes to the configured endpoint:
-        // an absolute URL would hand the key to whichever host it names.
-        if (path.Contains("://", StringComparison.Ordinal))
+        // The path is appended to the configured endpoint, which is the only place the API key is
+        // ever sent. An absolute URL here is therefore a mistake, and saying so beats a 404 from a
+        // mangled path.
+        if (StartsWithScheme(path))
         {
             throw new ArgumentException(
                 $"The path must be relative to the Agent Memory endpoint, but '{path}' is an absolute URL.",
@@ -601,6 +704,30 @@ public sealed class AgentMemoryTransport
         }
 
         return new Uri(builder.ToString(), UriKind.Absolute);
+    }
+
+    /// <summary>
+    /// Whether a path begins with a URI scheme, such as <c>https://</c>. A <c>://</c> further in, for
+    /// example in a query value, does not count.
+    /// </summary>
+    private static bool StartsWithScheme(string path)
+    {
+        var separator = path.IndexOf("://", StringComparison.Ordinal);
+        if (separator <= 0 || !char.IsAsciiLetter(path[0]))
+        {
+            return false;
+        }
+
+        for (var i = 1; i < separator; i++)
+        {
+            var c = path[i];
+            if (!char.IsAsciiLetterOrDigit(c) && c is not ('+' or '-' or '.'))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private CancellationTokenSource? CreateTimeoutSource(TimeSpan? deadline)
@@ -649,8 +776,18 @@ public sealed class AgentMemoryTransport
             throw new ArgumentException("Agent Memory endpoint is required.", parameterName);
         }
 
+        // Uri.TryCreate trims its input, so a value that kept its trailing newline would pass the
+        // check below and then fail every request.
+        if (endpoint.Any(c => char.IsWhiteSpace(c) || char.IsControl(c)))
+        {
+            throw new ArgumentException(
+                "The Agent Memory endpoint contains whitespace or control characters. Check for a trailing newline.",
+                parameterName
+            );
+        }
+
         if (
-            !Uri.TryCreate(endpoint.TrimEnd('/'), UriKind.Absolute, out var uri)
+            !Uri.TryCreate(endpoint, UriKind.Absolute, out var uri)
             || uri.Scheme is not ("http" or "https")
         )
         {
@@ -659,8 +796,23 @@ public sealed class AgentMemoryTransport
                 parameterName
             );
         }
+
+        // Request paths are appended to the endpoint, so a query or a fragment would swallow them
+        // and every call would reach the endpoint's root instead.
+        if (uri.Query.Length > 0 || uri.Fragment.Length > 0)
+        {
+            throw new ArgumentException(
+                $"Agent Memory endpoint '{endpoint}' must not have a query string or a fragment.",
+                parameterName
+            );
+        }
     }
 
+    /// <summary>
+    /// Checks a deadline: unset, positive, or <see cref="Timeout.InfiniteTimeSpan"/>. Zero and negative
+    /// values are refused rather than read as "no deadline", which is what a spent time budget would
+    /// otherwise turn into.
+    /// </summary>
     internal static void ValidateTimeout(TimeSpan? timeout, string parameterName)
     {
         if (timeout is { } value && value <= TimeSpan.Zero && value != Timeout.InfiniteTimeSpan)
@@ -683,6 +835,45 @@ public sealed class AgentMemoryTransport
         }
     }
 
+    /// <summary>
+    /// Checks a principal id before it becomes a request header.
+    /// </summary>
+    internal static void ValidateOnBehalfOf(string? principalId, string parameterName)
+    {
+        if (string.IsNullOrWhiteSpace(principalId))
+        {
+            throw new ArgumentException("OnBehalfOf requires a principal id.", parameterName);
+        }
+
+        // A line break would start a new header, or a new request, and a character outside ASCII
+        // cannot be sent in a header at all.
+        if (principalId.Any(c => c is < ' ' or > '~'))
+        {
+            throw new ArgumentException(
+                "The principal id contains control or non-ASCII characters. Check for a trailing newline.",
+                parameterName
+            );
+        }
+
+        // The service trims the value, strips a `principal:` prefix, and treats an empty result as no
+        // delegation at all: the request would then run with the API key's own grants.
+        if (principalId[0] == ' ' || principalId[^1] == ' ')
+        {
+            throw new ArgumentException(
+                "The principal id has leading or trailing spaces.",
+                parameterName
+            );
+        }
+
+        if (string.Equals(principalId, PrincipalPrefix, StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                $"'{PrincipalPrefix}' is only a prefix: the id after it is missing, and the service would run the request without delegation.",
+                parameterName
+            );
+        }
+    }
+
     private static CancellationTokenSource Link(
         CancellationToken cancellationToken,
         CancellationTokenSource? timeoutSource
@@ -699,11 +890,12 @@ public sealed class AgentMemoryTransport
     private Task DelayAsync(
         IReadOnlyList<TimeSpan> schedule,
         int attempt,
+        TimeSpan? retryAfter,
         CancellationToken cancellationToken
     )
     {
         return Task.Delay(
-            AgentMemoryRetry.DelayFor(schedule, attempt),
+            AgentMemoryRetry.DelayFor(schedule, attempt, retryAfter),
             _timeProvider,
             cancellationToken
         );
@@ -716,6 +908,49 @@ public sealed class AgentMemoryTransport
                 ? $"Exceeded {value.TotalMilliseconds:0}ms"
                 : exception.Message;
         return new AgentMemoryConnectionException("Request timed out", detail, exception);
+    }
+
+    private static AgentMemoryConnectionException ConnectionFailed(Exception exception)
+    {
+        return new AgentMemoryConnectionException(
+            "Connection failed",
+            exception.Message,
+            exception
+        );
+    }
+
+    /// <summary>
+    /// A connection failure while an upload was on its way. Once the body is flowing, the service
+    /// refuses an upload by answering and closing the connection, and the write that then fails hides
+    /// the answer: the detail says so, because "connection failed" alone points the wrong way.
+    /// </summary>
+    private static AgentMemoryConnectionException UploadFailed(HttpRequestException exception)
+    {
+        var neverConnected =
+            exception.HttpRequestError
+                is HttpRequestError.NameResolutionError
+                    or HttpRequestError.ConnectionError
+                    or HttpRequestError.SecureConnectionError
+                    or HttpRequestError.ProxyTunnelError;
+        if (neverConnected)
+        {
+            return ConnectionFailed(exception);
+        }
+
+        return new AgentMemoryConnectionException(
+            "Connection failed",
+            $"{exception.Message} If the connection closed while the body was being sent, the service may have refused the upload part-way (for its media type, scope or labels, for example), and its answer is lost.",
+            exception
+        );
+    }
+
+    private static AgentMemoryException TooLarge(long length)
+    {
+        return new AgentMemoryException(
+            0,
+            "Response too large",
+            $"The body is {length} bytes, more than a byte array can hold ({Array.MaxLength})."
+        );
     }
 
     private static string GetVersion()

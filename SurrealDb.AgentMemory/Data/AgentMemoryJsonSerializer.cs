@@ -33,6 +33,14 @@ internal static class AgentMemoryJsonSerializer
 
     private static JsonTypeInfo<T> GetTypeInfo<T>(JsonSerializerOptions options)
     {
+        // Options that were never used have no resolver yet. The serializer would give them its
+        // reflection-based default on first use; they get the source-generated context instead, which
+        // knows every model and needs no reflection. Converters the caller added still come first.
+        if (options.TypeInfoResolver is null && !options.IsReadOnly)
+        {
+            options.TypeInfoResolver = AgentMemoryJsonContext.Default;
+        }
+
         return (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T));
     }
 }

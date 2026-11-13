@@ -271,10 +271,10 @@ namespace SurrealDb.AgentMemory.Model
                     switch (localVarJsonPropertyName)
                     {
                         case "avgLatencyMs":
-                            avgLatencyMs = new Option<double?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (double?)null : utf8JsonReader.GetDouble());
+                            avgLatencyMs = new Option<double?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (double?)double.NaN : utf8JsonReader.GetDouble());
                             break;
                         case "cacheHitRate":
-                            cacheHitRate = new Option<double?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (double?)null : utf8JsonReader.GetDouble());
+                            cacheHitRate = new Option<double?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (double?)double.NaN : utf8JsonReader.GetDouble());
                             break;
                         case "cacheHits":
                             cacheHits = new Option<long?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (long?)null : utf8JsonReader.GetInt64());

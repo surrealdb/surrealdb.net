@@ -205,7 +205,7 @@ namespace SurrealDb.AgentMemory.Model
                             factCount = new Option<long?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (long?)null : utf8JsonReader.GetInt64());
                             break;
                         case "score":
-                            score = new Option<double?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (double?)null : utf8JsonReader.GetDouble());
+                            score = new Option<double?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (double?)double.NaN : utf8JsonReader.GetDouble());
                             break;
                         case "distinguisher":
                             distinguisher = new Option<string?>(utf8JsonReader.GetString());

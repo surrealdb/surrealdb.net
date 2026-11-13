@@ -219,13 +219,13 @@ namespace SurrealDb.AgentMemory.Model
             if (scopeNodeJson.Path == null)
                 throw new ArgumentNullException(nameof(scopeNodeJson.Path), "Property is required for class ScopeNodeJson.");
 
-            writer.WriteString("createdAt", scopeNodeJson.CreatedAt.ToString(CreatedAtFormat));
+            writer.WriteString("createdAt", scopeNodeJson.CreatedAt.ToString(CreatedAtFormat, System.Globalization.CultureInfo.InvariantCulture));
 
             writer.WriteString("path", scopeNodeJson.Path);
 
             if (scopeNodeJson.TombstonedAtOption.IsSet)
                 if (scopeNodeJson.TombstonedAtOption.Value != null)
-                    writer.WriteString("tombstonedAt", scopeNodeJson.TombstonedAtOption.Value!.Value.ToString(TombstonedAtFormat));
+                    writer.WriteString("tombstonedAt", scopeNodeJson.TombstonedAtOption.Value!.Value.ToString(TombstonedAtFormat, System.Globalization.CultureInfo.InvariantCulture));
                 else
                     writer.WriteNull("tombstonedAt");
         }

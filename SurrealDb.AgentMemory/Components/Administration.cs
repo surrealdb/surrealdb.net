@@ -36,6 +36,9 @@ public sealed class Lifecycle
     /// <summary>
     /// Runs the importance decay sweep. Returns the number of affected rows.
     /// </summary>
+    /// <remarks>
+    /// The sweep covers the whole context, so it requires <c>grant:manage</c> over the whole context.
+    /// </remarks>
     /// <param name="cancellationToken">Cancels the request.</param>
     public Task<LifecycleResponseJson> DecayAsync(CancellationToken cancellationToken = default)
     {
@@ -148,7 +151,8 @@ public sealed class Traces
 }
 
 /// <summary>
-/// Principals and their scope grants. Requires the <c>manage</c> grant.
+/// Principals and their scope grants. Reading requires a <c>grant:manage</c> grant; granting and
+/// revoking require it over the pattern concerned.
 /// </summary>
 public sealed class Principals
 {
@@ -416,15 +420,19 @@ public sealed class Scopes
     }
 
     /// <summary>
-    /// Forgets (erases) a scope subtree. Returns the number of rows forgotten.
+    /// Forgets (erases) everything stored under a scope subtree. Returns the number of rows forgotten.
     /// </summary>
+    /// <remarks>
+    /// Requires <c>memory:forget</c> over the subtree.
+    /// </remarks>
     /// <param name="path">The subtree to forget.</param>
     /// <param name="cancellationToken">Cancels the request.</param>
     public Task<ForgetScopeResponseJson> ForgetAsync(
-        string? path = null,
+        string path,
         CancellationToken cancellationToken = default
     )
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
         return _transport.RequestRequiredAsync(
             HttpMethod.Post,
             $"{_base}/forget",
@@ -450,7 +458,9 @@ public sealed class Scopes
 }
 
 /// <summary>
-/// Self-service API keys for this context. Requires the <c>manage</c> grant.
+/// Self-service API keys for this context: the calling principal's own keys, or every key for a
+/// caller that holds <c>grant:manage</c> over the whole context. The context has to allow self-service
+/// keys, and a delegated client (<see cref="AgentMemoryClient.OnBehalfOf"/>) is refused.
 /// </summary>
 public sealed class Keys
 {

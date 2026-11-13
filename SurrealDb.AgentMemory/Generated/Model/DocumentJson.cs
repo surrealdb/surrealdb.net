@@ -458,7 +458,7 @@ namespace SurrealDb.AgentMemory.Model
 
             writer.WriteString("contentHash", documentJson.ContentHash);
 
-            writer.WriteString("createdAt", documentJson.CreatedAt.ToString(CreatedAtFormat));
+            writer.WriteString("createdAt", documentJson.CreatedAt.ToString(CreatedAtFormat, System.Globalization.CultureInfo.InvariantCulture));
 
             writer.WriteString("id", documentJson.Id);
 
@@ -473,7 +473,7 @@ namespace SurrealDb.AgentMemory.Model
 
             writer.WriteString("title", documentJson.Title);
 
-            writer.WriteString("updatedAt", documentJson.UpdatedAt.ToString(UpdatedAtFormat));
+            writer.WriteString("updatedAt", documentJson.UpdatedAt.ToString(UpdatedAtFormat, System.Globalization.CultureInfo.InvariantCulture));
 
             writer.WriteNumber("version", documentJson.VarVersion);
 
@@ -485,19 +485,19 @@ namespace SurrealDb.AgentMemory.Model
 
             if (documentJson.ObservedAtOption.IsSet)
                 if (documentJson.ObservedAtOption.Value != null)
-                    writer.WriteString("observedAt", documentJson.ObservedAtOption.Value!.Value.ToString(ObservedAtFormat));
+                    writer.WriteString("observedAt", documentJson.ObservedAtOption.Value!.Value.ToString(ObservedAtFormat, System.Globalization.CultureInfo.InvariantCulture));
                 else
                     writer.WriteNull("observedAt");
 
             if (documentJson.ProcessingCompletedAtOption.IsSet)
                 if (documentJson.ProcessingCompletedAtOption.Value != null)
-                    writer.WriteString("processingCompletedAt", documentJson.ProcessingCompletedAtOption.Value!.Value.ToString(ProcessingCompletedAtFormat));
+                    writer.WriteString("processingCompletedAt", documentJson.ProcessingCompletedAtOption.Value!.Value.ToString(ProcessingCompletedAtFormat, System.Globalization.CultureInfo.InvariantCulture));
                 else
                     writer.WriteNull("processingCompletedAt");
 
             if (documentJson.ProcessingStartedAtOption.IsSet)
                 if (documentJson.ProcessingStartedAtOption.Value != null)
-                    writer.WriteString("processingStartedAt", documentJson.ProcessingStartedAtOption.Value!.Value.ToString(ProcessingStartedAtFormat));
+                    writer.WriteString("processingStartedAt", documentJson.ProcessingStartedAtOption.Value!.Value.ToString(ProcessingStartedAtFormat, System.Globalization.CultureInfo.InvariantCulture));
                 else
                     writer.WriteNull("processingStartedAt");
         }

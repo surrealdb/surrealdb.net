@@ -164,7 +164,72 @@ public class ErrorTests
         var negative = (AgentMemoryRateLimitException)
             AgentMemoryException.FromResponse(429, "{}", Headers(retryAfter: "-5"));
 
-        huge.RetryAfter.Should().Be(TimeSpan.MaxValue);
+        huge.RetryAfter.Should().Be(TimeSpan.FromMilliseconds(uint.MaxValue - 1));
         negative.RetryAfter.Should().BeNull();
+    }
+
+    [Test]
+    public void AServerErrorCarriesTheRetryAfterTheServiceSent()
+    {
+        // The service sends Retry-After: 1 with a 503 while it sheds load.
+        var busy = (AgentMemoryServerException)
+            AgentMemoryException.FromResponse(
+                503,
+                """{"message":"server at capacity; retry shortly"}""",
+                Headers(retryAfter: "1")
+            );
+        var plain = (AgentMemoryServerException)AgentMemoryException.FromResponse(500, "{}");
+
+        busy.RetryAfter.Should().Be(TimeSpan.FromSeconds(1));
+        busy.Title.Should().Be("server at capacity; retry shortly");
+        plain.RetryAfter.Should().BeNull();
+    }
+
+    [Test]
+    public async Task AHugeRetryAfterCanStillBeWaitedOn()
+    {
+        var error = (AgentMemoryRateLimitException)
+            AgentMemoryException.FromResponse(429, "{}", Headers(retryAfter: "99999999999999"));
+        using var cancellation = new CancellationTokenSource();
+
+        // A timer refuses TimeSpan.MaxValue; the clamp is the longest delay it accepts.
+        var delay = Task.Delay(error.RetryAfter!.Value, cancellation.Token);
+        await cancellation.CancelAsync();
+
+        await FluentActions.Awaiting(() => delay).Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Test]
+    public void ARedirectNamesItsTargetWhenTheBodySaysNothing()
+    {
+        var response = new HttpResponseMessage();
+        response.Headers.Location = new Uri("https://memory.example.com/api/v1/c/me");
+
+        var error = AgentMemoryException.FromResponse(301, "", response.Headers);
+
+        error.Should().BeOfType<AgentMemoryException>();
+        error.Detail.Should().Contain("https://memory.example.com/api/v1/c/me");
+        error.Detail.Should().Contain("not followed");
+    }
+
+    [Test]
+    [Arguments(typeof(System.Text.Json.JsonException), true)]
+    [Arguments(typeof(ArgumentException), true)]
+    [Arguments(typeof(ArgumentNullException), true)]
+    [Arguments(typeof(InvalidOperationException), true)]
+    [Arguments(typeof(NotImplementedException), true)]
+    [Arguments(typeof(NotSupportedException), true)]
+    [Arguments(typeof(FormatException), true)]
+    [Arguments(typeof(OverflowException), true)]
+    [Arguments(typeof(IOException), false)]
+    [Arguments(typeof(OperationCanceledException), false)]
+    [Arguments(typeof(HttpRequestException), false)]
+    public void KnowsWhichExceptionsMeanABodyDidNotMatchItsModel(Type type, bool expected)
+    {
+        // The generated converters throw all of these for a missing field, an unknown value or a number
+        // that does not fit; anything else is not a decoding problem and must not be reported as one.
+        var exception = (Exception)Activator.CreateInstance(type)!;
+
+        AgentMemoryTransport.IsDecodeFailure(exception).Should().Be(expected);
     }
 }

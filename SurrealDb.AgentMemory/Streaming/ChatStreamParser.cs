@@ -132,6 +132,7 @@ public static class ChatStreamParser
         }
 
         JsonElement payload;
+        var isJson = true;
         try
         {
             using var document = JsonDocument.Parse(data);
@@ -140,12 +141,15 @@ public static class ChatStreamParser
         catch (JsonException)
         {
             // Not JSON: the whole payload is a token delta.
+            isJson = false;
             payload = DeltaObject(data);
         }
 
         var error = ReadString(payload, "error");
         if (eventName == "error" || error is not null)
         {
+            // An error frame that is not JSON carries its message as plain text.
+            error ??= !isJson && data.Length > 0 ? data : null;
             throw new AgentMemoryStreamException(
                 "Chat stream failed",
                 error ?? "The server ended the stream with an error."

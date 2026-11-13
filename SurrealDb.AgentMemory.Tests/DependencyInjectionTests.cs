@@ -164,4 +164,30 @@ public class DependencyInjectionTests
         negativeRetries.Should().Throw<ArgumentOutOfRangeException>();
         keyWithNewline.Should().Throw<ArgumentException>().WithMessage("*trailing newline*");
     }
+
+    [Test]
+    public void ValidatesTheTimeoutContextAndEndpointAtRegistration()
+    {
+        static Action Register(Action<AgentMemoryOptions> change)
+        {
+            return () =>
+                new ServiceCollection().AddAgentMemory(options =>
+                {
+                    options.Context = "acme";
+                    options.ApiKey = "k";
+                    options.Endpoint = "https://api.test";
+                    change(options);
+                });
+        }
+
+        Register(options => options.Timeout = TimeSpan.Zero)
+            .Should()
+            .Throw<ArgumentOutOfRangeException>();
+        Register(options => options.Context = "..").Should().Throw<ArgumentException>();
+        Register(options => options.Endpoint = "https://api.test\n")
+            .Should()
+            .Throw<ArgumentException>();
+        Register(options => options.ApiKey = "sp-k\u00e9y-1").Should().Throw<ArgumentException>();
+        Register(_ => { }).Should().NotThrow();
+    }
 }

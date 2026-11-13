@@ -76,10 +76,12 @@ public sealed class RecallOptions
     /// <summary>Maximum number of hits to return.</summary>
     public int? K { get; set; }
 
-    /// <summary>Retrieval mode. Defaults to <c>hybrid</c>.</summary>
+    /// <summary>Retrieval mode (see <see cref="RecallModes"/>). Defaults to <c>hybrid</c>.</summary>
     public string? Mode { get; set; }
 
-    /// <summary>Session to scope the recall to.</summary>
+    /// <summary>
+    /// Session to record the recall under on its trace. It does not limit the results to that session.
+    /// </summary>
     public string? SessionId { get; set; }
 
     /// <summary>Result families to include (<c>facts</c>, <c>passages</c>). Defaults to both.</summary>
@@ -255,13 +257,13 @@ public sealed class ConsolidateOptions
 /// </summary>
 public sealed class ElaborateOptions
 {
-    /// <summary>The entity to elaborate, by reference.</summary>
+    /// <summary>The entity to elaborate, by reference. Ignored when <see cref="Sweep"/> is set.</summary>
     public string? EntityRef { get; set; }
 
-    /// <summary>Budget for the pass.</summary>
+    /// <summary>Budget for a sweep. It has no effect on a single-entity pass.</summary>
     public int? Budget { get; set; }
 
-    /// <summary>Runs a sweep.</summary>
+    /// <summary>Runs a sweep over the context, which is also what happens without an <see cref="EntityRef"/>.</summary>
     public bool? Sweep { get; set; }
 
     /// <summary>Computes the result without writing.</summary>
@@ -291,16 +293,26 @@ public class AuditFilters
     /// <summary>Only rows attributed to this principal.</summary>
     public string? Principal { get; set; }
 
-    /// <summary>Only rows attributed to this API key.</summary>
+    /// <summary>
+    /// Only rows attributed to this API key. The service applies one of the two: it ignores this when
+    /// <see cref="Principal"/> is set.
+    /// </summary>
     public string? Key { get; set; }
 
     /// <summary>Only rows of this trace kind.</summary>
     public string? Kind { get; set; }
 
-    /// <summary>Lower bound on <c>createdAt</c>, as an RFC 3339 timestamp.</summary>
+    /// <summary>
+    /// Lower bound on <c>createdAt</c>, as an RFC 3339 timestamp with its offset, for example
+    /// <c>2026-01-01T00:00:00Z</c>. The service ignores a value in any other form, and the rows come
+    /// back unfiltered.
+    /// </summary>
     public string? Since { get; set; }
 
-    /// <summary>Upper bound on <c>createdAt</c>, as an RFC 3339 timestamp.</summary>
+    /// <summary>
+    /// Upper bound on <c>createdAt</c>, as an RFC 3339 timestamp with its offset. The service ignores a
+    /// value in any other form.
+    /// </summary>
     public string? Until { get; set; }
 }
 

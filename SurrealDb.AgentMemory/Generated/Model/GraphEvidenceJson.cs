@@ -149,7 +149,7 @@ namespace SurrealDb.AgentMemory.Model
                             neighbourLabel = new Option<string?>(utf8JsonReader.GetString()!);
                             break;
                         case "weight":
-                            weight = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)null : (float)utf8JsonReader.GetDouble());
+                            weight = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)float.NaN : (float)utf8JsonReader.GetDouble());
                             break;
                         default:
                             break;

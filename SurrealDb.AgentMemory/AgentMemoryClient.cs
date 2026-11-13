@@ -15,30 +15,20 @@ namespace SurrealDb.AgentMemory;
 /// </remarks>
 public sealed class AgentMemoryClient
 {
-    /// <summary>
-    /// The connection pool for clients created without an <see cref="HttpClient"/>, shared the way .NET recommends
-    /// for long-lived clients: connections are recycled every two minutes, so DNS changes are picked up.
-    /// Deadlines are applied per request, so uploads are not cut off by a client-wide timeout.
-    /// </summary>
-    private static readonly Lazy<HttpClient> SharedHttpClient = new(
-        () =>
-            new HttpClient(
-                new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(2) }
-            )
-            {
-                Timeout = System.Threading.Timeout.InfiniteTimeSpan,
-            }
-    );
-
     private readonly AgentMemoryTransport _transport;
     private readonly string _base;
 
     /// <summary>
     /// Creates a client that sends its requests through a connection pool shared by every client created this way.
     /// </summary>
+    /// <remarks>
+    /// The pool recycles its connections every two minutes, so DNS changes are picked up. It keeps no cookies,
+    /// because the clients sharing it may hold different API keys, and it does not follow redirects, because a
+    /// redirect drops the API key: a redirecting endpoint is reported as an error that names the target.
+    /// </remarks>
     /// <param name="options">Context, credentials and endpoint.</param>
     public AgentMemoryClient(AgentMemoryOptions options)
-        : this(options, SharedHttpClient.Value) { }
+        : this(options, AgentMemoryHttp.Shared) { }
 
     /// <summary>
     /// Creates a client that sends its requests through <paramref name="httpClient"/>, for example one from
@@ -109,6 +99,8 @@ public sealed class AgentMemoryClient
     /// </summary>
     public string? OnBehalfOfPrincipal => _transport.OnBehalfOf;
 
+    internal AgentMemoryTransport Transport => _transport;
+
     /// <summary>
     /// Document ingestion, retrieval, corpus search, and the keyword graph.
     /// </summary>
@@ -161,20 +153,26 @@ public sealed class AgentMemoryClient
 
     /// <summary>
     /// Returns a client that issues every request on behalf of <paramref name="principalId"/>, sending the
-    /// <c>X-Spectron-On-Behalf-Of</c> delegation header. Requires the <c>manage</c> grant.
-    /// This client is left unchanged.
+    /// <c>X-Spectron-On-Behalf-Of</c> delegation header. This client is left unchanged.
     /// </summary>
     /// <remarks>
-    /// The returned client shares this client's connections.
+    /// <para>
+    /// The principal must allow delegation. A delegated request runs with the grants that the API key and
+    /// the principal both hold. The returned client shares this client's connections.
+    /// </para>
+    /// <para>
+    /// The id is checked before it is used, because the service reads an empty delegation header as no
+    /// delegation at all and would run the request with the API key's own grants: a blank id, or
+    /// <c>principal:</c> with nothing after it, is refused here.
+    /// </para>
     /// </remarks>
-    /// <param name="principalId">The principal to act for.</param>
+    /// <param name="principalId">The principal to act for, with or without the <c>principal:</c> prefix.</param>
+    /// <exception cref="ArgumentException">
+    /// The id is blank, is only the <c>principal:</c> prefix, has leading or trailing spaces, or contains
+    /// control or non-ASCII characters (a line break, for example).
+    /// </exception>
     public AgentMemoryClient OnBehalfOf(string principalId)
     {
-        if (string.IsNullOrEmpty(principalId))
-        {
-            throw new ArgumentException("OnBehalfOf requires a principal id.", nameof(principalId));
-        }
-
         return new AgentMemoryClient(ContextId, _transport.WithOnBehalfOf(principalId));
     }
 
@@ -223,8 +221,12 @@ public sealed class AgentMemoryClient
     /// Persists facts from a batch of conversation messages (<c>POST /facts/batch</c>).
     /// Idempotent within a 30-second window, so it is retried safely.
     /// </summary>
-    /// <param name="messages">The messages.</param>
+    /// <param name="messages">
+    /// The messages. A timestamp must carry its offset: use UTC or local time, not
+    /// <see cref="DateTimeKind.Unspecified"/>.
+    /// </param>
     /// <param name="options">Session, scopes, extraction strategy and labels.</param>
+    /// <exception cref="ArgumentException">A message is null, or its timestamp has no kind.</exception>
     /// <param name="cancellationToken">Cancels the request.</param>
     public Task<FactsBatchResponseJson> RememberManyAsync(
         IEnumerable<BatchMessage> messages,
@@ -234,8 +236,26 @@ public sealed class AgentMemoryClient
     {
         ArgumentNullException.ThrowIfNull(messages);
 
+        // Enumerated once, so the messages that are checked are the ones that are sent.
+        var batch = messages as IReadOnlyCollection<BatchMessage> ?? messages.ToList();
+        foreach (var message in batch)
+        {
+            if (message is null)
+            {
+                throw new ArgumentException("The batch contains a null message.", nameof(messages));
+            }
+
+            if (message.Ts is { Kind: DateTimeKind.Unspecified })
+            {
+                throw new ArgumentException(
+                    "A message timestamp must be UTC or local time. One with DateTimeKind.Unspecified is sent without an offset, and the service refuses the whole batch for it.",
+                    nameof(messages)
+                );
+            }
+        }
+
         var body = new JsonBody()
-            .AddEach("messages", messages, AgentMemoryJsonContext.Default.BatchMessage)
+            .AddEach("messages", batch, AgentMemoryJsonContext.Default.BatchMessage)
             .Add("session_id", options?.SessionId)
             .Add("scopes", options?.Scopes)
             .Add("extract", options?.Extract)

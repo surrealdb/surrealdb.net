@@ -289,7 +289,7 @@ namespace SurrealDb.AgentMemory.Model
             if (keyDetailJson.Name == null)
                 throw new ArgumentNullException(nameof(keyDetailJson.Name), "Property is required for class KeyDetailJson.");
 
-            writer.WriteString("createdAt", keyDetailJson.CreatedAt.ToString(CreatedAtFormat));
+            writer.WriteString("createdAt", keyDetailJson.CreatedAt.ToString(CreatedAtFormat, System.Globalization.CultureInfo.InvariantCulture));
 
             writer.WriteString("id", keyDetailJson.Id);
 
@@ -305,13 +305,13 @@ namespace SurrealDb.AgentMemory.Model
                     writer.WriteNull("grants");
             if (keyDetailJson.LastUsedAtOption.IsSet)
                 if (keyDetailJson.LastUsedAtOption.Value != null)
-                    writer.WriteString("lastUsedAt", keyDetailJson.LastUsedAtOption.Value!.Value.ToString(LastUsedAtFormat));
+                    writer.WriteString("lastUsedAt", keyDetailJson.LastUsedAtOption.Value!.Value.ToString(LastUsedAtFormat, System.Globalization.CultureInfo.InvariantCulture));
                 else
                     writer.WriteNull("lastUsedAt");
 
             if (keyDetailJson.ValidUntilOption.IsSet)
                 if (keyDetailJson.ValidUntilOption.Value != null)
-                    writer.WriteString("validUntil", keyDetailJson.ValidUntilOption.Value!.Value.ToString(ValidUntilFormat));
+                    writer.WriteString("validUntil", keyDetailJson.ValidUntilOption.Value!.Value.ToString(ValidUntilFormat, System.Globalization.CultureInfo.InvariantCulture));
                 else
                     writer.WriteNull("validUntil");
         }

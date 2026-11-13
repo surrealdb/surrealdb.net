@@ -292,7 +292,7 @@ namespace SurrealDb.AgentMemory.Model
                             actor = new Option<string?>(utf8JsonReader.GetString()!);
                             break;
                         case "confidence":
-                            confidence = new Option<double?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (double?)null : utf8JsonReader.GetDouble());
+                            confidence = new Option<double?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (double?)double.NaN : utf8JsonReader.GetDouble());
                             break;
                         case "createdAt":
                             createdAt = new Option<string?>(utf8JsonReader.GetString()!);

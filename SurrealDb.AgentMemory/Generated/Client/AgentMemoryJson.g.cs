@@ -210,6 +210,7 @@ namespace SurrealDb.AgentMemory.Client;
     typeof(UnscopedContentFindingJsonJsonConverter),
     typeof(UploadMetadataJsonJsonConverter),
     typeof(UploadResponseJsonConverter),
+    typeof(UtcDateTimeJsonConverter),
     typeof(WhoamiJsonJsonConverter),
 })]
 [JsonSerializable(typeof(ActionDetailJson))]
@@ -465,6 +466,7 @@ namespace SurrealDb.AgentMemory.Client;
 [JsonSerializable(typeof(List<float>))]
 [JsonSerializable(typeof(List<string>))]
 [JsonSerializable(typeof(object))]
+[JsonSerializable(typeof(System.Text.Json.JsonElement))]
 public partial class AgentMemoryJsonContext : JsonSerializerContext
 {
 }

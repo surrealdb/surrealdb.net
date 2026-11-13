@@ -45,6 +45,15 @@ public sealed class AgentMemoryOptions
             throw new ArgumentException("Agent Memory context is required.", nameof(Context));
         }
 
+        // The context is a path segment of every request.
+        if (Context is "." or "..")
+        {
+            throw new ArgumentException(
+                $"'{Context}' cannot be used as a context id: it would address a different route.",
+                nameof(Context)
+            );
+        }
+
         AgentMemoryTransport.ValidateApiKey(ApiKey, nameof(ApiKey));
         AgentMemoryTransport.ValidateEndpoint(Endpoint, nameof(Endpoint));
         AgentMemoryTransport.ValidateTimeout(Timeout, nameof(Timeout));

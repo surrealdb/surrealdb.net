@@ -192,7 +192,7 @@ namespace SurrealDb.AgentMemory.Model
                             id = new Option<string?>(utf8JsonReader.GetString()!);
                             break;
                         case "importance":
-                            importance = new Option<double?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (double?)null : utf8JsonReader.GetDouble());
+                            importance = new Option<double?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (double?)double.NaN : utf8JsonReader.GetDouble());
                             break;
                         case "memoryCategory":
                             memoryCategory = new Option<MemoryCategory?>(global::SurrealDb.AgentMemory.Client.AgentMemoryJsonSerializer.Deserialize<MemoryCategory?>(ref utf8JsonReader, jsonSerializerOptions));

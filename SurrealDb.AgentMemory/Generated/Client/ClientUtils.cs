@@ -100,15 +100,15 @@ namespace SurrealDb.AgentMemory.Client
                 // Defaults to an ISO 8601, using the known as a Round-trip date/time pattern ("o")
                 // https://msdn.microsoft.com/en-us/library/az4se3k1(v=vs.110).aspx#Anchor_8
                 // For example: 2009-06-15T13:45:30.0000000
-                return dateTime.ToString(format);
+                return dateTime.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
             if (obj is DateTimeOffset dateTimeOffset)
                 // Return a formatted date string - Can be customized with Configuration.DateTimeFormat
                 // Defaults to an ISO 8601, using the known as a Round-trip date/time pattern ("o")
                 // https://msdn.microsoft.com/en-us/library/az4se3k1(v=vs.110).aspx#Anchor_8
                 // For example: 2009-06-15T13:45:30.0000000
-                return dateTimeOffset.ToString(format);
+                return dateTimeOffset.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
             if (obj is DateOnly dateOnly)
-                return dateOnly.ToString(format);
+                return dateOnly.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
             if (obj is bool boolean)
                 return boolean
                     ? "true"

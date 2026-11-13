@@ -130,7 +130,8 @@ public sealed class Facts
     }
 
     /// <summary>
-    /// Every edge touching an entity, in both directions: outbound first, then inbound.
+    /// Every edge touching an entity, in both directions: outbound first, then inbound. An edge from the
+    /// entity to itself is listed once.
     /// </summary>
     /// <remarks>
     /// This is what a truncated relation section points at. <c>src</c> and <c>dst</c> are separate filters,
@@ -164,7 +165,20 @@ public sealed class Facts
 
         var edges = new List<RelationDetailJson>(outbound.Result.Count + inbound.Result.Count);
         edges.AddRange(outbound.Result);
-        edges.AddRange(inbound.Result);
+
+        // An edge from the entity to itself is in both walks.
+        var seen = new HashSet<string>(
+            outbound.Result.Select(edge => edge.Id),
+            StringComparer.Ordinal
+        );
+        foreach (var edge in inbound.Result)
+        {
+            if (seen.Add(edge.Id))
+            {
+                edges.Add(edge);
+            }
+        }
+
         return edges;
     }
 

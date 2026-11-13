@@ -183,7 +183,7 @@ namespace SurrealDb.AgentMemory.Model
                             document = new Option<QueryHitDocumentJson?>(global::SurrealDb.AgentMemory.Client.AgentMemoryJsonSerializer.Deserialize<QueryHitDocumentJson>(ref utf8JsonReader, jsonSerializerOptions)!);
                             break;
                         case "score":
-                            score = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)null : (float)utf8JsonReader.GetDouble());
+                            score = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)float.NaN : (float)utf8JsonReader.GetDouble());
                             break;
                         case "graphEvidence":
                             graphEvidence = new Option<List<GraphEvidenceJson>?>(global::SurrealDb.AgentMemory.Client.AgentMemoryJsonSerializer.Deserialize<List<GraphEvidenceJson>>(ref utf8JsonReader, jsonSerializerOptions));

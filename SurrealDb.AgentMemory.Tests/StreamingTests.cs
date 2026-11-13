@@ -184,7 +184,7 @@ public class StreamingTests
     [Test]
     public async Task RaisesAnErrorLabelWithoutADetail()
     {
-        var act = () => ParseAsync("event: error\ndata: oops\n\n");
+        var act = () => ParseAsync("event: error\ndata: {\"code\":7}\n\n");
 
         var error = await act.Should().ThrowAsync<AgentMemoryStreamException>();
         error.Which.Detail.Should().Be("The server ended the stream with an error.");
@@ -356,7 +356,19 @@ public class StreamingTests
     /// <summary>
     /// Serves one block of bytes, then fails like a dropped connection (or stalls until cancelled).
     /// </summary>
-    private sealed class DroppingStream(byte[] first, bool stallInstead = false) : Stream
+    /// <param name="first">The bytes served before the failure.</param>
+    /// <param name="stallInstead">Wait for the caller's cancellation rather than fail at once.</param>
+    /// <param name="failure">The failure, in place of an <see cref="IOException"/>.</param>
+    /// <param name="failWhenCancelled">
+    /// On cancellation, fail the read the way a socket does when the request is aborted under it,
+    /// rather than report the cancellation.
+    /// </param>
+    private sealed class DroppingStream(
+        byte[] first,
+        bool stallInstead = false,
+        Exception? failure = null,
+        bool failWhenCancelled = false
+    ) : Stream
     {
         private bool _sent;
 
@@ -384,10 +396,17 @@ public class StreamingTests
 
             if (stallInstead)
             {
-                await Task.Delay(Timeout.Infinite, cancellationToken);
+                try
+                {
+                    await Task.Delay(Timeout.Infinite, cancellationToken);
+                }
+                catch (OperationCanceledException) when (failWhenCancelled)
+                {
+                    throw new IOException("The request was aborted.");
+                }
             }
 
-            throw new IOException("The response ended prematurely.");
+            throw failure ?? new IOException("The response ended prematurely.");
         }
 
         public override Task<int> ReadAsync(
@@ -423,5 +442,96 @@ public class StreamingTests
         {
             throw new NotSupportedException();
         }
+    }
+
+    [Test]
+    public async Task StreamChatReportsCancellationEvenWhenTheReadFailsBecauseOfIt()
+    {
+        // Aborting a request makes the read under it fail. That failure is the caller's own
+        // cancellation, not a dropped connection.
+        var firstFrame = Encoding.UTF8.GetBytes("event: chunk\ndata: {\"text\":\"Hel\"}\n\n");
+        var client = TestClient.Create(
+            new FakeHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StreamContent(
+                    new DroppingStream(firstFrame, stallInstead: true, failWhenCancelled: true)
+                ),
+            })
+        );
+        using var cancellation = new CancellationTokenSource();
+
+        var act = async () =>
+        {
+            await foreach (
+                var _ in client.StreamChatAsync("hi", cancellationToken: cancellation.Token)
+            )
+            {
+                await cancellation.CancelAsync();
+            }
+        };
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Test]
+    public async Task StreamChatReportsAnHttpFailureWhileReadingAsAConnectionError()
+    {
+        var firstFrame = Encoding.UTF8.GetBytes("event: chunk\ndata: {\"text\":\"Hel\"}\n\n");
+        var client = TestClient.Create(
+            new FakeHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StreamContent(
+                    new DroppingStream(
+                        firstFrame,
+                        failure: new HttpRequestException("The response ended prematurely.")
+                    )
+                ),
+            })
+        );
+
+        var act = async () =>
+        {
+            await foreach (var _ in client.StreamChatAsync("hi")) { }
+        };
+
+        var error = await act.Should().ThrowAsync<AgentMemoryConnectionException>();
+        error.Which.Title.Should().Be("Chat stream interrupted");
+        error.Which.InnerException.Should().BeOfType<HttpRequestException>();
+    }
+
+    [Test]
+    public async Task JoinsTheDataLinesOfOneFrameWithNewlines()
+    {
+        var chunks = await ParseAsync("data: first line\ndata: second line\n\ndata: [DONE]\n\n");
+
+        chunks[0].Delta.Should().Be("first line\nsecond line");
+    }
+
+    [Test]
+    public async Task KeepsTheReplyWhenTheExtrasOfAFrameDoNotFitTheirModel()
+    {
+        // A number that does not fit is a FormatException from the generated reader. The frame still
+        // carries a reply, so it is handed over with the extras left out rather than failing the stream.
+        const string citation =
+            """{"id":"c1","kind":"fact","marker":"[1]","score":0.5,"snippet":"s","positionPercent":99999999999}""";
+        var chunks = await ParseAsync(
+            $"event: done\ndata: {{\"reply\":\"Hello\",\"citations\":[{citation}]}}\n\n"
+        );
+
+        var done = chunks.Should().ContainSingle().Subject;
+        done.Done.Should().BeTrue();
+        done.Reply.Should().Be("Hello");
+        done.Citations.Should().BeNull();
+        done.Raw.GetProperty("citations").GetArrayLength().Should().Be(1);
+    }
+
+    [Test]
+    public async Task APlainTextErrorFrameKeepsItsText()
+    {
+        // What the service sends when an event cannot be serialized.
+        var act = () => ParseAsync("event: error\ndata: serialize: key must be a string\n\n");
+
+        var error = await act.Should().ThrowAsync<AgentMemoryStreamException>();
+        error.Which.Detail.Should().Be("serialize: key must be a string");
     }
 }

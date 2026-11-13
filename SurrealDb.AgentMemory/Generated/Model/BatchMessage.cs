@@ -250,7 +250,7 @@ namespace SurrealDb.AgentMemory.Model
             }
             if (batchMessage.TsOption.IsSet)
                 if (batchMessage.TsOption.Value != null)
-                    writer.WriteString("ts", batchMessage.TsOption.Value!.Value.ToString(TsFormat));
+                    writer.WriteString("ts", batchMessage.TsOption.Value!.Value.ToString(TsFormat, System.Globalization.CultureInfo.InvariantCulture));
                 else
                     writer.WriteNull("ts");
         }

@@ -306,7 +306,6 @@ public class MemoryTests
                     "/api/v1/ctx-1/consolidate" => Fixtures.ConsolidateResponse,
                     "/api/v1/ctx-1/elaborate" => Fixtures.ElaborateResponse,
                     "/api/v1/ctx-1/fsck" => Fixtures.FsckResponse,
-                    "/api/v1/ctx-1/scopes/forget" => """{"forgotten":0}""",
                     "/api/v1/ctx-1/sessions" => Fixtures.SessionResponse,
                     _ => """{"affected":0}""",
                 }
@@ -317,12 +316,11 @@ public class MemoryTests
         await client.ConsolidateAsync();
         await client.ElaborateAsync();
         await client.FsckAsync();
-        await client.Scopes.ForgetAsync();
         await client.Sessions.CreateAsync();
         await client.Lifecycle.ExpireAsync();
         await client.Lifecycle.DecayAsync();
 
-        handler.Requests.Should().HaveCount(7);
+        handler.Requests.Should().HaveCount(6);
         foreach (var request in handler.Requests)
         {
             request.Method.Should().Be("POST");
@@ -546,5 +544,22 @@ public class MemoryTests
             .Should()
             .Throw<ArgumentException>();
         Create(options => options.Timeout = Timeout.InfiniteTimeSpan).ContextId.Should().Be("c");
+    }
+
+    [Test]
+    [Arguments("")]
+    [Arguments("..")]
+    public async Task ASessionIdThatCannotAddressASessionIsAnUnexpectedResponse(string id)
+    {
+        // The id becomes a path segment of every call on the session. One that cannot be a segment is
+        // the service's mistake, so it is reported as a bad response, not as a bad argument.
+        var handler = FakeHandler.Json(
+            $$"""{"id":"{{id}}","scopes":[],"createdAt":"2026-01-01"}"""
+        );
+
+        var act = () => TestClient.Create(handler).Sessions.CreateAsync();
+
+        var error = await act.Should().ThrowExactlyAsync<AgentMemoryException>();
+        error.Which.Title.Should().Be("Unexpected response body");
     }
 }

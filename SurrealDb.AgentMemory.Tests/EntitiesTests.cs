@@ -216,4 +216,24 @@ public class EntitiesTests
         handler.Requests[2].Method.Should().Be("DELETE");
         handler.Requests[2].UrlText.Should().EndWith("/api/v1/ctx-1/entities/person/tobie");
     }
+
+    [Test]
+    [Arguments(2, false)]
+    [Arguments(0, true)]
+    public async Task NeighboursAllowsThePairingsTheServerAccepts(int minFacts, bool count)
+    {
+        // The server only refuses a total together with a filter that is in force.
+        var handler = FakeHandler.Json($$"""{"neighbours":[],"page":{{Fixtures.Page()}}}""");
+
+        await TestClient
+            .Create(handler)
+            .Entities.NeighboursAsync(
+                "person",
+                "tobie",
+                new NeighbourhoodOptions { MinFacts = minFacts, Count = count }
+            );
+
+        handler.Last.UrlText.Should().Contain($"minFacts={minFacts}");
+        handler.Last.UrlText.Should().Contain($"count={(count ? "true" : "false")}");
+    }
 }

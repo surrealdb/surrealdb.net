@@ -223,7 +223,7 @@ namespace SurrealDb.AgentMemory.Model
             global::SurrealDb.AgentMemory.Client.AgentMemoryJsonSerializer.Serialize(writer, effectiveGrantsJson.Verbs, jsonSerializerOptions);
             if (effectiveGrantsJson.AsOfOption.IsSet)
                 if (effectiveGrantsJson.AsOfOption.Value != null)
-                    writer.WriteString("asOf", effectiveGrantsJson.AsOfOption.Value!.Value.ToString(AsOfFormat));
+                    writer.WriteString("asOf", effectiveGrantsJson.AsOfOption.Value!.Value.ToString(AsOfFormat, System.Globalization.CultureInfo.InvariantCulture));
                 else
                     writer.WriteNull("asOf");
         }

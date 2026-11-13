@@ -41,6 +41,9 @@ Console.WriteLine(chat.Reply);
 
 The responses are the models generated from the API specification, in the `SurrealDb.AgentMemory.Model` namespace.
 
+An upload takes its media type from the file name (`handbook.pdf` is sent as `application/pdf`). See
+[Documents](#documents) for the details.
+
 ## Dependency injection
 
 ```csharp
@@ -57,6 +60,10 @@ public class MemoryService(AgentMemoryClient memory) { /* ... */ }
 The options are validated when you register them. The client's `HttpClient` comes from `IHttpClientFactory`, and
 `AddAgentMemory` returns its `IHttpClientBuilder`, so you can add handlers to it. The client already retries reads and
 idempotent writes, so a handler that retries as well multiplies the attempts.
+
+Whether it comes from the factory or from `new AgentMemoryClient(options)`, the handler keeps no cookies and does not
+follow redirects. A redirect drops the API key, so an endpoint that redirects is reported as an error that names the
+target; set `Endpoint` to that URL.
 
 To talk to several contexts or deployments, register keyed clients and resolve them with `[FromKeyedServices]`:
 
@@ -99,8 +106,13 @@ await memory.FsckAsync();
 await memory.InspectAsync("person:tobie");
 await memory.AuditAsync(new AuditOptions { Limit = 50 });
 
-// Self-service API keys.
-var minted = await memory.Keys.CreateAsync(new KeyCreateOptions { Name = "ci", TtlSeconds = 3600 });
+// Self-service API keys. Grants narrow a key: scope patterns per verb.
+var minted = await memory.Keys.CreateAsync(new KeyCreateOptions
+{
+    Name = "ci",
+    TtlSeconds = 3600,
+    Grants = new Dictionary<string, IEnumerable<string>> { [Verbs.MemoryRead] = ["team/eng/*"] },
+});
 await memory.Keys.ListAsync(); // one page; `Keys.ListAllAsync()` walks them all
 await memory.Keys.RotateAsync("ci");
 await memory.Keys.DeleteAsync("ci");
@@ -126,6 +138,35 @@ The opening `meta` frame carries the session and trace ids, and the terminal `do
 the turn wrote to memory, and its citations. A failure after the stream opened is never mistaken for a reply that
 simply ended: an `error` frame, or a stream that closes before its terminal frame, raises
 `AgentMemoryStreamException`, and a dropped connection raises `AgentMemoryConnectionException`.
+
+## Documents
+
+```csharp
+// From disk: the file is streamed, and named and typed after its path.
+await memory.Documents.UploadAsync(new DocumentUploadOptions
+{
+    File = AgentMemoryFile.FromPath("notes/2026-01-plan.md"),
+    Scopes = "team/eng",
+    Labels = ["kind=plan"],
+    ObservedAt = new DateTimeOffset(2026, 1, 5, 0, 0, 0, TimeSpan.Zero),
+});
+
+// From memory or a stream: give a name, or say what it is.
+await memory.Documents.UploadAsync(new DocumentUploadOptions { File = bytes, FileName = "summary.txt" });
+await memory.Documents.UploadAsync(new DocumentUploadOptions { File = stream, ContentType = "application/pdf" });
+```
+
+The media type is `ContentType` when you set it, and otherwise comes from the file name's extension, for the types the
+service ingests: text, Markdown, CSV, JSON, HTML, PDF, and common image, audio and video formats. A file with any other
+name is sent without a type, and the service works it out from the bytes. A type the service has no parser for is
+refused with a `415`.
+
+`ObservedAt` dates the facts taken from a document to when its content was known, not to the upload.
+`ObservedAtHeader` names a front-matter field for the service to read that time from.
+
+`ReprocessAsync` replaces the bytes of an existing document. The document keeps its scope and labels, and currently
+its title and source, so those options only take effect on an upload. A reprocess re-dates the content: pass
+`ObservedAt` again to keep an observed time.
 
 ## Known-about lookups
 
@@ -248,15 +289,16 @@ that reads `TotalSize` from a single one-row request. `ListAllAsync` is an unbou
 `AllChunksAsync`, `AllNeighboursAsync`, `AllChangesAsync` and the `Facts` walks take a `max` for the bounded case.
 
 `Count` costs a full count of the filtered set, so it is opt-in. `Scopes.ListAsync` and `AuditAsync` take `Limit` and
-`Cursor` only. `NeighbourhoodOptions` refuses `Count` together with `MinFacts`, and the document listings refuse
-`Cursor` together with the deprecated `Page`, because the server rejects both pairings with a `400`.
+`Cursor` only. `NeighbourhoodOptions` refuses a count together with a `MinFacts` above zero, and the document listings
+refuse `Cursor` together with the deprecated `Page`, because the server rejects both pairings with a `400`.
 
 `AgentMemoryPagination.WalkPagesAsync` and `CollectPagesAsync` are public, for walking any other paginated surface.
 
 ## Delegation
 
-`memory.OnBehalfOf(principalId)` returns a client whose every request carries the delegation header, so calls run
-with that principal's authorisation. This requires the `manage` grant. The original client is left unchanged.
+`memory.OnBehalfOf(principalId)` returns a client whose every request carries the delegation header. The principal
+has to allow delegation, and a delegated call runs with the grants that the API key and the principal both hold.
+The original client is left unchanged.
 
 The header is spelled `X-Spectron-On-Behalf-Of`. That is a wire constant rather than branding: the service matches the
 name exactly, so it stays until the service renames it.
@@ -266,6 +308,11 @@ var asAlex = memory.OnBehalfOf("principal:alex");
 await asAlex.RememberAsync("Reviewed the Q3 plan");
 await asAlex.RecallAsync("What did Alex review?");
 ```
+
+The id is checked before it is used. The service reads an empty delegation header as no delegation at all, and would
+then run the call with the API key's own grants, so `OnBehalfOf` throws `ArgumentException` for a blank id and for
+`principal:` with nothing after it: `OnBehalfOf($"principal:{userId}")` with an empty `userId` fails instead of
+acting as the key. It also refuses an id with a line break or a character outside ASCII, which a header cannot carry.
 
 ## Errors
 
@@ -279,7 +326,7 @@ from the problem details), or one of its subclasses:
 | `AgentMemoryNotFoundException` | 404 |
 | `AgentMemoryValidationException` | 400 / 422 |
 | `AgentMemoryRateLimitException` | 429 (`RetryAfter` when provided) |
-| `AgentMemoryServerException` | 5xx |
+| `AgentMemoryServerException` | 5xx (`RetryAfter` when provided) |
 | `AgentMemoryConnectionException` | Network failure (also mid-stream) or timeout |
 | `AgentMemoryStreamException` | A streaming chat reported an error, or ended before its terminal frame |
 
@@ -293,17 +340,30 @@ default `3`). `RememberAsync` and `RememberManyAsync` carry an `Idempotency-Key`
 30-second window, derived the same way as in the JavaScript and Python clients, so they are retried safely too; so are the
 reads that travel as a `POST` (`RecallAsync`, `LookupAsync`, `ContextAsync`, `Documents.QueryAsync`,
 `Documents.Keywords.SearchAsync`, `Session.ContextAsync`). Other writes are not retried. Timeouts and cancellations
-are never retried.
+are never retried, and neither are `501` and `505`, which a second try cannot change.
+
+- **`Retry-After`.** The service sends it with a `503` while it sheds load. A retry waits at least that long, up to
+  10 seconds, and `AgentMemoryServerException.RetryAfter` carries it when the retries run out.
+- **Still in progress.** While an earlier request with the same key is still running, the service answers `409`.
+  An idempotent write comes back for it, and then receives the stored response of that first request.
+- **Delegation.** A delegated write also mixes its principal into the key, so two users who write the same text
+  through one API key do not share one.
+
+An identical `RememberAsync` repeated within the same 30-second window is one write: the second call gets the first
+call's response.
 
 ## Timeouts and cancellation
 
 Requests have a 30-second deadline by default (`AgentMemoryOptions.Timeout`); `Timeout.InfiniteTimeSpan` means none.
+A timeout has to be positive or infinite: zero or less is refused, so a spent time budget fails instead of waiting
+forever.
 Uploads have no deadline unless you set `DocumentUploadOptions.Timeout`, because a large body can legitimately take
 longer than any fixed one; set `UploadProgress` to observe one. `Documents.RawAsync` takes its own timeout. A
 streaming chat is bounded only by your `CancellationToken`.
 
 An `AgentMemoryFile` from `FromPath` streams the file from disk. One from a `Stream` reads it once, on first use, and
-keeps the bytes, so the same file can be uploaded again.
+keeps the bytes, so the same file can be uploaded again. If that read fails part-way, a seekable stream is read again
+from where it started; any other stream has lost its beginning, and later uploads of that file throw `IOException`.
 
 ## Scope
 

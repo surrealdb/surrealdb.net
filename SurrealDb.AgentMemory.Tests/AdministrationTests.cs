@@ -89,7 +89,7 @@ public class AdministrationTests
         var handler = new FakeHandler(request =>
             Responses.Json(
                 request.Path.EndsWith("/effective", StringComparison.Ordinal)
-                    ? """{"path":"team/eng","verbs":["read"]}"""
+                    ? """{"path":"team/eng","verbs":["memory:read"]}"""
                 : request.Path.EndsWith("/principals", StringComparison.Ordinal)
                     ? $$"""{"principals":[{{Fixtures.Principal("principal:alex")}}],"page":{{Fixtures.Page()}}}"""
                 : Fixtures.Principal("principal:alex")
@@ -107,13 +107,13 @@ public class AdministrationTests
         await client.Principals.GrantAsync(
             "principal:alex",
             "team/eng/*",
-            [Verbs.Read, Verbs.Write]
+            [Verbs.MemoryRead, Verbs.MemoryWrite]
         );
-        await client.Principals.RevokeAsync("principal:alex", "team/eng/*", [Verbs.Write]);
+        await client.Principals.RevokeAsync("principal:alex", "team/eng/*", [Verbs.MemoryWrite]);
 
         all.Should().ContainSingle();
-        principal.Grants["team/eng"].Should().Equal("read");
-        effective.Verbs.Should().Equal("read");
+        principal.Grants[Verbs.MemoryRead].Should().Equal("team/eng/*");
+        effective.Verbs.Should().Equal(Verbs.MemoryRead);
         handler.Requests[2].UrlText.Should().Contain("/principals/principal%3Aalex/effective");
         handler.Requests[2].UrlText.Should().Contain("path=team%2Feng");
         handler.Requests[2].UrlText.Should().Contain("asOf=2026-01-01T00%3A00%3A00Z");
@@ -121,12 +121,12 @@ public class AdministrationTests
         handler.Requests[3].UrlText.Should().EndWith("/principals/principal%3Aalex/grants");
         JsonAssert.Equivalent(
             handler.Requests[3].Json,
-            """{"path":"team/eng/*","verbs":["read","write"]}"""
+            """{"path":"team/eng/*","verbs":["memory:read","memory:write"]}"""
         );
         handler.Requests[4].Method.Should().Be("DELETE");
         JsonAssert.Equivalent(
             handler.Requests[4].Json,
-            """{"path":"team/eng/*","verbs":["write"]}"""
+            """{"path":"team/eng/*","verbs":["memory:write"]}"""
         );
     }
 
@@ -175,5 +175,55 @@ public class AdministrationTests
             .Scopes.ListAsync(new PageOptions { Limit = 5, Count = true });
 
         handler.Last.UrlText.Should().Contain("limit=5").And.NotContain("count");
+    }
+
+    [Test]
+    public void TheVerbConstantsAreSpelledTheWayTheServiceSpellsThem()
+    {
+        // The service reads and returns grant verbs as noun:verb, and answers 422 to anything else.
+        new[]
+        {
+            Verbs.MemoryRead,
+            Verbs.MemoryWrite,
+            Verbs.MemoryForget,
+            Verbs.ScopeRead,
+            Verbs.ScopeCreate,
+            Verbs.ScopeDelete,
+            Verbs.GrantManage,
+        }
+            .Should()
+            .Equal(
+                "memory:read",
+                "memory:write",
+                "memory:forget",
+                "scope:read",
+                "scope:create",
+                "scope:delete",
+                "grant:manage"
+            );
+    }
+
+    [Test]
+    public void TheRecallModesAreTheOnesAMemoryQueryAccepts()
+    {
+        // A document query has hybrid_graph; a recall has graph, and refuses hybrid_graph.
+        new[] { RecallModes.Hybrid, RecallModes.Vector, RecallModes.Bm25, RecallModes.Graph }
+            .Should()
+            .Equal("hybrid", "vector", "bm25", "graph");
+        QueryModes.HybridGraph.Should().Be("hybrid_graph");
+    }
+
+    [Test]
+    [Arguments("")]
+    [Arguments("  ")]
+    public async Task ScopesForgetRefusesABlankPath(string path)
+    {
+        // The service requires the path; without one the call was always a 400.
+        var handler = FakeHandler.Json("""{"forgotten":0}""");
+
+        var act = () => TestClient.Create(handler).Scopes.ForgetAsync(path);
+
+        await act.Should().ThrowAsync<ArgumentException>();
+        handler.Requests.Should().BeEmpty();
     }
 }

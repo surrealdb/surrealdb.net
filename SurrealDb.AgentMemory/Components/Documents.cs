@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
 using SurrealDb.AgentMemory.Client;
@@ -53,8 +54,13 @@ public sealed class Documents
     /// <summary>
     /// Reprocesses an existing document with replacement bytes (multipart).
     /// </summary>
+    /// <remarks>
+    /// The document keeps its scope and labels, and currently its title and source: the service ignores
+    /// those options here. It re-dates the content, so an observed time has to be passed again
+    /// (<see cref="DocumentUploadOptions.ObservedAt"/>) or it is cleared.
+    /// </remarks>
     /// <param name="documentId">The document id.</param>
-    /// <param name="options">The replacement file and its metadata.</param>
+    /// <param name="options">The replacement file.</param>
     /// <param name="cancellationToken">Cancels the upload.</param>
     public async Task<UploadResponse> ReprocessAsync(
         string documentId,
@@ -65,11 +71,13 @@ public sealed class Documents
         ArgumentNullException.ThrowIfNull(documentId);
         ArgumentNullException.ThrowIfNull(options);
 
+        // Before the upload is built: building it opens the file, and a refused id must not leave it open.
+        var path = $"{_base}/{AgentMemoryPaths.EncodePathSegment(documentId)}";
         var request = await BuildUploadAsync(options, cancellationToken).ConfigureAwait(false);
         var response = await _transport
             .RequestJsonAsync(
                 HttpMethod.Put,
-                $"{_base}/{AgentMemoryPaths.EncodePathSegment(documentId)}",
+                path,
                 AgentMemoryJsonContext.Default.UploadResponse,
                 request,
                 cancellationToken
@@ -375,11 +383,16 @@ public sealed class Documents
     {
         ArgumentNullException.ThrowIfNull(options.File);
 
+        var ownName = options.FileName ?? options.File.FileName;
+        var fileName = ownName ?? "upload";
+
+        // The service takes the part's content type as a declaration and refuses one it has no parser
+        // for, so a file without a type must not be declared as application/octet-stream: that is a 415
+        // for every upload. The type comes from the caller, else from the file name; without either the
+        // part carries none and the service works it out from the bytes.
         // Parsed before anything is opened, so an invalid type fails without leaking the file.
-        var contentType = MediaTypeHeaderValue.Parse(
-            options.ContentType ?? "application/octet-stream"
-        );
-        var fileName = options.FileName ?? options.File.FileName ?? "upload";
+        var declaredType = options.ContentType ?? DocumentMediaTypes.ForFileName(ownName);
+        var contentType = declaredType is null ? null : MediaTypeHeaderValue.Parse(declaredType);
 
         // Part headers are written as UTF-8, the way browsers send multipart/form-data: the service's
         // multipart parser reads a raw UTF-8 file name, not the RFC 2047 encoding .NET uses by default.
@@ -394,7 +407,9 @@ public sealed class Documents
                 .Add("title", options.Title)
                 .Add("source", options.Source)
                 .Add("scopes", options.Scopes)
-                .Add("labels", options.Labels);
+                .Add("labels", options.Labels)
+                .Add("observedAt", options.ObservedAt?.ToString("O", CultureInfo.InvariantCulture))
+                .Add("observedAtHeader", options.ObservedAtHeader);
             if (!metadata.IsEmpty)
             {
                 var part = new ByteArrayContent(
@@ -414,7 +429,10 @@ public sealed class Documents
                 .ConfigureAwait(false);
             // Owned by the form from here on, so it is disposed with it.
             form.Add(file);
-            file.Headers.ContentType = contentType;
+            if (contentType is not null)
+            {
+                file.Headers.ContentType = contentType;
+            }
             file.Headers.TryAddWithoutValidation(
                 "Content-Disposition",
                 FormDataDisposition("file", fileName)

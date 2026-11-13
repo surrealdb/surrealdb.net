@@ -79,7 +79,7 @@ public static class Fixtures
         """{"id":"s1","scopes":[["u/1"]],"createdAt":"2026-01-01"}""";
 
     public const string Whoami =
-        """{"principalId":"principal:tobie","kind":"user","displayName":"Tobie","grants":{},"effectiveGrants":{}}""";
+        """{"principalId":"principal:tobie","kind":"human","displayName":"Tobie","grants":{},"effectiveGrants":{}}""";
 
     public static string MintedKey(string id, string key)
     {
@@ -147,7 +147,7 @@ public static class Fixtures
 
     public static string Principal(string id)
     {
-        return $$$"""{"id":"{{{id}}}","kind":"user","displayName":"Alex","grants":{"team/eng":["read"]}}""";
+        return $$$"""{"id":"{{{id}}}","kind":"human","displayName":"Alex","grants":{"memory:read":["team/eng/*"]}}""";
     }
 
     public static string Turn(string id)

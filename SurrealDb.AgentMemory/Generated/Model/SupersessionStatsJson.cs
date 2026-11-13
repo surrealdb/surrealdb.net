@@ -155,7 +155,7 @@ namespace SurrealDb.AgentMemory.Model
                     switch (localVarJsonPropertyName)
                     {
                         case "churnPerEntity":
-                            churnPerEntity = new Option<double?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (double?)null : utf8JsonReader.GetDouble());
+                            churnPerEntity = new Option<double?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (double?)double.NaN : utf8JsonReader.GetDouble());
                             break;
                         case "entitiesChurned":
                             entitiesChurned = new Option<long?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (long?)null : utf8JsonReader.GetInt64());

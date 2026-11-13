@@ -91,7 +91,9 @@ public class AgentMemoryException : Exception
     /// </summary>
     /// <param name="status">HTTP status code.</param>
     /// <param name="body">The raw response body, or <see langword="null"/>.</param>
-    /// <param name="headers">Response headers, read for <c>Retry-After</c> on a 429.</param>
+    /// <param name="headers">
+    /// Response headers, read for <c>Retry-After</c> on a 429 or a 5xx, and for <c>Location</c> on a redirect.
+    /// </param>
     /// <returns>
     /// <see cref="AgentMemoryValidationException"/> for 400 and 422,
     /// <see cref="AgentMemoryAuthException"/> for 401,
@@ -160,8 +162,17 @@ public class AgentMemoryException : Exception
                 detail,
                 type,
                 instance,
-                extensions
+                extensions,
+                ParseRetryAfter(headers)
             );
+        }
+
+        // The client's own handler does not follow redirects, because a redirect drops the
+        // Authorization header: every call would then fail with a 401 that blames the key.
+        if (status is >= 300 and < 400 && detail is null && headers?.Location is { } location)
+        {
+            detail =
+                $"The endpoint redirects to {location}. Redirects are not followed; use the final URL as the endpoint.";
         }
 
         return status switch
@@ -226,7 +237,15 @@ public class AgentMemoryException : Exception
             : null;
     }
 
-    private static TimeSpan? ParseRetryAfter(HttpResponseHeaders? headers)
+    /// <summary>
+    /// The longest delay a timer accepts, so a <c>Retry-After</c> can be handed to
+    /// <see cref="Task.Delay(TimeSpan)"/> whatever the service sent.
+    /// </summary>
+    private static readonly TimeSpan LongestTimerDelay = TimeSpan.FromMilliseconds(
+        uint.MaxValue - 1
+    );
+
+    internal static TimeSpan? ParseRetryAfter(HttpResponseHeaders? headers)
     {
         if (headers is null || !headers.TryGetValues("Retry-After", out var values))
         {
@@ -244,13 +263,8 @@ public class AgentMemoryException : Exception
             return null;
         }
 
-        try
-        {
-            return TimeSpan.FromSeconds(seconds);
-        }
-        catch (OverflowException)
-        {
-            return TimeSpan.MaxValue;
-        }
+        return seconds >= LongestTimerDelay.TotalSeconds
+            ? LongestTimerDelay
+            : TimeSpan.FromSeconds(seconds);
     }
 }

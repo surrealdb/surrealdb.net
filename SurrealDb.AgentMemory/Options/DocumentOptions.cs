@@ -142,12 +142,26 @@ public sealed class KeywordSearchOptions
 /// <summary>
 /// Options for <see cref="Documents.UploadAsync"/> and <see cref="Documents.ReprocessAsync"/>.
 /// </summary>
+/// <remarks>
+/// A reprocess replaces the bytes of an existing document. The service keeps that document's scope and
+/// labels, and currently its title and source too, so <see cref="Scopes"/>, <see cref="Labels"/>,
+/// <see cref="Title"/> and <see cref="Source"/> only take effect on an upload. It does re-date the
+/// content: pass <see cref="ObservedAt"/> again to keep an observed time, because leaving it out clears it.
+/// </remarks>
 public sealed class DocumentUploadOptions
 {
     /// <summary>The file content.</summary>
     public required AgentMemoryFile File { get; set; }
 
-    /// <summary>MIME type of the file part. Defaults to <c>application/octet-stream</c>.</summary>
+    /// <summary>
+    /// Media type of the file, for example <c>application/pdf</c>.
+    /// </summary>
+    /// <remarks>
+    /// When unset, the type is taken from the file name's extension, for the types the service ingests
+    /// (text, Markdown, CSV, JSON, HTML, PDF, and common image, audio and video formats). For any other
+    /// name the file is sent without a type and the service works it out from the bytes. A type the
+    /// service has no parser for is refused with a <c>415</c>.
+    /// </remarks>
     public string? ContentType { get; set; }
 
     /// <summary>File name of the multipart <c>file</c> part. Defaults to the file's own name, or <c>upload</c>.</summary>
@@ -164,6 +178,18 @@ public sealed class DocumentUploadOptions
 
     /// <summary>Descriptive <c>key=value</c> labels stamped onto the document and its chunks.</summary>
     public IEnumerable<string>? Labels { get; set; }
+
+    /// <summary>
+    /// When the content was known or observed. Facts taken from the document are dated to it instead of
+    /// to the time of the upload.
+    /// </summary>
+    public DateTimeOffset? ObservedAt { get; set; }
+
+    /// <summary>
+    /// The name of a field in the document's leading front-matter block that holds the observed time, for
+    /// the service to read it from the document itself. Ignored when <see cref="ObservedAt"/> is set.
+    /// </summary>
+    public string? ObservedAtHeader { get; set; }
 
     /// <summary>
     /// Observes the request body being sent, so a large upload can show real progress.
@@ -214,6 +240,11 @@ public sealed class AgentMemoryFile
     /// Content read from a stream. The stream is read to its end once, on first use, and buffered, so the same
     /// file can be uploaded more than once. The stream is not disposed.
     /// </summary>
+    /// <remarks>
+    /// If that read fails or is cancelled part-way, a seekable stream is returned to where it started, so
+    /// the upload can be tried again. Any other stream has lost its beginning: later uploads of this file
+    /// fail with an <see cref="IOException"/> rather than send the remainder as if it were the whole file.
+    /// </remarks>
     /// <param name="stream">The content.</param>
     public static AgentMemoryFile FromStream(Stream stream)
     {
@@ -221,16 +252,38 @@ public sealed class AgentMemoryFile
 
         var gate = new SemaphoreSlim(1, 1);
         MemoryStream? buffered = null;
+        var incomplete = false;
         return new AgentMemoryFile(
             async cancellationToken =>
             {
                 await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
                 try
                 {
+                    if (incomplete)
+                    {
+                        throw new IOException(
+                            "The stream failed part-way through an earlier read and cannot be read again, so its content is incomplete."
+                        );
+                    }
+
                     if (buffered is null)
                     {
+                        long? origin = stream.CanSeek ? stream.Position : null;
                         var buffer = new MemoryStream();
-                        await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
+                        try
+                        {
+                            await stream
+                                .CopyToAsync(buffer, cancellationToken)
+                                .ConfigureAwait(false);
+                        }
+                        catch
+                        {
+                            // Part of the stream is consumed. Carrying on from here on a second attempt
+                            // would upload the tail of the file as if it were all of it.
+                            incomplete = !TryRewind(stream, origin);
+                            throw;
+                        }
+
                         buffered = buffer;
                     }
                 }
@@ -244,6 +297,25 @@ public sealed class AgentMemoryFile
             },
             null
         );
+    }
+
+    private static bool TryRewind(Stream stream, long? origin)
+    {
+        if (origin is not { } position)
+        {
+            return false;
+        }
+
+        try
+        {
+            stream.Position = position;
+            return true;
+        }
+        catch (Exception exception)
+            when (exception is IOException or NotSupportedException or ObjectDisposedException)
+        {
+            return false;
+        }
     }
 
     /// <summary>

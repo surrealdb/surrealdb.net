@@ -356,6 +356,118 @@ public sealed class RecordingProgress<T> : IProgress<T>
 }
 
 /// <summary>
+/// A clock whose timers fire at once and are recorded, so a test reads the waits a retry asked for
+/// without sitting through them. Use it with an infinite request timeout: a deadline is a timer too.
+/// </summary>
+public sealed class InstantTimeProvider : TimeProvider
+{
+    private readonly List<TimeSpan> _delays = [];
+
+    public IReadOnlyList<TimeSpan> Delays
+    {
+        get
+        {
+            lock (_delays)
+            {
+                return _delays.ToList();
+            }
+        }
+    }
+
+    public override ITimer CreateTimer(
+        TimerCallback callback,
+        object? state,
+        TimeSpan dueTime,
+        TimeSpan period
+    )
+    {
+        lock (_delays)
+        {
+            _delays.Add(dueTime);
+        }
+
+        return base.CreateTimer(callback, state, TimeSpan.Zero, period);
+    }
+}
+
+/// <summary>
+/// A stream that cannot seek and serves its content a few bytes at a time, optionally failing part-way:
+/// what a network stream looks like to the code that reads it.
+/// </summary>
+public sealed class FlakyStream(byte[] content, int? failAfter = null, bool failEveryTime = false)
+    : Stream
+{
+    private int _position;
+    private bool _failed;
+
+    public int Position32 => _position;
+
+    public override bool CanRead => true;
+    public override bool CanSeek => false;
+    public override bool CanWrite => false;
+    public override long Length => throw new NotSupportedException();
+    public override long Position
+    {
+        get => throw new NotSupportedException();
+        set => throw new NotSupportedException();
+    }
+
+    public override async ValueTask<int> ReadAsync(
+        Memory<byte> buffer,
+        CancellationToken cancellationToken = default
+    )
+    {
+        // Yield, so two readers of one stream really do interleave.
+        await Task.Yield();
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (failAfter is { } limit && _position >= limit && (failEveryTime || !_failed))
+        {
+            _failed = true;
+            throw new IOException("The source stream failed part-way.");
+        }
+
+        var bound = failAfter is { } stop && !_failed ? stop : content.Length;
+        var count = Math.Min(Math.Min(buffer.Length, 1024), bound - _position);
+        content.AsMemory(_position, count).CopyTo(buffer);
+        _position += count;
+        return count;
+    }
+
+    public override Task<int> ReadAsync(
+        byte[] buffer,
+        int offset,
+        int count,
+        CancellationToken cancellationToken
+    )
+    {
+        return ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
+    }
+
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        return ReadAsync(buffer, offset, count, CancellationToken.None).GetAwaiter().GetResult();
+    }
+
+    public override void Flush() { }
+
+    public override long Seek(long offset, SeekOrigin origin)
+    {
+        throw new NotSupportedException();
+    }
+
+    public override void SetLength(long value)
+    {
+        throw new NotSupportedException();
+    }
+
+    public override void Write(byte[] buffer, int offset, int count)
+    {
+        throw new NotSupportedException();
+    }
+}
+
+/// <summary>
 /// A clock fixed at one instant; timers still run on real time.
 /// </summary>
 public sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider

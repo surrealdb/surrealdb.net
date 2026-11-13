@@ -210,7 +210,7 @@ namespace SurrealDb.AgentMemory.Model
                             id = new Option<string?>(utf8JsonReader.GetString()!);
                             break;
                         case "score":
-                            score = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)null : (float)utf8JsonReader.GetDouble());
+                            score = new Option<float?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (float?)float.NaN : (float)utf8JsonReader.GetDouble());
                             break;
                         case "source":
                             source = new Option<ResultKind?>(global::SurrealDb.AgentMemory.Client.AgentMemoryJsonSerializer.Deserialize<ResultKind?>(ref utf8JsonReader, jsonSerializerOptions));

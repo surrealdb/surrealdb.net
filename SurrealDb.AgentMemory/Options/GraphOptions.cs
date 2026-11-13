@@ -55,9 +55,10 @@ public sealed class TopEntitiesOptions
 /// Options for <see cref="Entities.NeighboursAsync"/>.
 /// </summary>
 /// <remarks>
-/// <see cref="PageOptions.Count"/> and <see cref="MinFacts"/> cannot be combined: the server rejects the pairing
-/// with a <c>400</c>, because honouring the filter in a total would cost the per-neighbour counts the walk
-/// exists to avoid. The client refuses it before sending.
+/// A total (<see cref="PageOptions.Count"/> set to <see langword="true"/>) cannot be asked for together
+/// with a <see cref="MinFacts"/> above zero: the server rejects the pairing with a <c>400</c>, because
+/// honouring the filter in a total would cost the per-neighbour counts the walk exists to avoid. The
+/// client refuses it before sending.
 /// </remarks>
 public sealed class NeighbourhoodOptions : PageOptions
 {
@@ -66,10 +67,10 @@ public sealed class NeighbourhoodOptions : PageOptions
 
     internal void Validate()
     {
-        if (MinFacts is not null && Count is not null)
+        if (MinFacts > 0 && Count == true)
         {
             throw new ArgumentException(
-                "MinFacts and Count cannot be combined: the server rejects that pairing."
+                "A count cannot be combined with MinFacts above zero: the server rejects that pairing."
             );
         }
     }
@@ -213,7 +214,11 @@ public sealed class KeyCreateOptions
     /// <summary>A name for the key.</summary>
     public string? Name { get; set; }
 
-    /// <summary>Grants for the key: verbs per scope path, for example <c>{ "team/eng": ["read"] }</c>.</summary>
+    /// <summary>
+    /// Grants that narrow the key: scope patterns per verb, for example
+    /// <c>{ "memory:read": ["team/eng/*"] }</c> (see <see cref="Verbs"/>). Each pattern must lie within
+    /// what the caller holds for that verb. Unset means the key inherits the principal's grants.
+    /// </summary>
     public IReadOnlyDictionary<string, IEnumerable<string>>? Grants { get; set; }
 
     /// <summary>Lifetime of the key, in seconds.</summary>

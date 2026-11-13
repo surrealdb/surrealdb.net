@@ -15,9 +15,10 @@ public static class AgentMemoryServiceCollectionExtensions
     /// <remarks>
     /// The options are read and validated once, here. The client is transient and holds nothing to dispose, so the
     /// container does not keep the instances it hands out, even ones resolved from the root provider. Its
-    /// <see cref="HttpClient"/> comes from <see cref="IHttpClientFactory"/>, and the returned builder adds handlers to
-    /// it. The client retries reads and idempotent writes itself, so a resilience handler that retries too multiplies
-    /// the attempts.
+    /// <see cref="HttpClient"/> comes from <see cref="IHttpClientFactory"/>, with a primary handler that keeps no
+    /// cookies and does not follow redirects (a redirect drops the API key); the returned builder adds handlers
+    /// to it, or replaces that one. The client retries reads and idempotent writes itself, so a resilience
+    /// handler that retries too multiplies the attempts.
     /// </remarks>
     /// <param name="services">The service collection.</param>
     /// <param name="configure">Sets the context, API key and endpoint.</param>
@@ -29,7 +30,9 @@ public static class AgentMemoryServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         var options = BuildOptions(configure);
-        var builder = services.AddHttpClient(HttpClientNamePrefix, ConfigureClient);
+        var builder = services
+            .AddHttpClient(HttpClientNamePrefix, ConfigureClient)
+            .ConfigurePrimaryHttpMessageHandler(AgentMemoryHttp.CreateHandler);
         services.AddTransient(provider => new AgentMemoryClient(
             options,
             provider.GetRequiredService<IHttpClientFactory>().CreateClient(HttpClientNamePrefix)
@@ -56,7 +59,9 @@ public static class AgentMemoryServiceCollectionExtensions
 
         var options = BuildOptions(configure);
         var httpClientName = $"{HttpClientNamePrefix}:{name}";
-        var builder = services.AddHttpClient(httpClientName, ConfigureClient);
+        var builder = services
+            .AddHttpClient(httpClientName, ConfigureClient)
+            .ConfigurePrimaryHttpMessageHandler(AgentMemoryHttp.CreateHandler);
         services.AddKeyedTransient(
             name,
             (provider, _) =>
