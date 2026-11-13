@@ -164,7 +164,10 @@ jobs:
 
   create-package:
     needs: [embedded-builds]
-    runs-on: ubuntu-latest
+    runs-on: windows-latest # Windows-only: Sign CLI (Authenticode signing)
+    permissions:
+      id-token: write # OIDC login for Azure Artifact Signing
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -183,6 +186,35 @@ jobs:
 
       - name: Create Package
         run: dotnet pack /p:GenerateCompatibilitySuppressionFile=true --configuration Release --output ${{ env.NuGetDirectory }}
+
+      # 💡 Authenticode-signing of shipped binaries (Windows Smart App Control blocks unsigned, zero-reputation DLLs: 0x800711C7).
+      # Signs every DLL inside each .nupkg (managed + Windows natives), then the package itself (inside-out).
+      # Dormant until these repository variables are set (Azure Artifact Signing, formerly Trusted Signing):
+      #   ARTIFACT_SIGNING_ENDPOINT   e.g. https://eus.codesigning.azure.net
+      #   ARTIFACT_SIGNING_ACCOUNT    account name
+      #   ARTIFACT_SIGNING_PROFILE    certificate profile name
+      #   ARTIFACT_SIGNING_CLIENT_ID  Entra app registration (federated credential on this repo)
+      #   ARTIFACT_SIGNING_TENANT_ID  Entra tenant id
+      - name: Azure login (OIDC)
+        if: vars.ARTIFACT_SIGNING_ENDPOINT != ''
+        uses: azure/login@7184910d9eb2b1c5e48f7073824a90609bb9b6d6 # v2
+        with:
+          client-id: ${{ vars.ARTIFACT_SIGNING_CLIENT_ID }}
+          tenant-id: ${{ vars.ARTIFACT_SIGNING_TENANT_ID }}
+          allow-no-subscriptions: true
+
+      - name: Install Sign CLI
+        if: vars.ARTIFACT_SIGNING_ENDPOINT != ''
+        run: dotnet tool update --tool-path . sign --prerelease
+
+      - name: Sign packages
+        if: vars.ARTIFACT_SIGNING_ENDPOINT != ''
+        run: >-
+          ./sign code artifact-signing
+          -ase ${{ vars.ARTIFACT_SIGNING_ENDPOINT }}
+          -asa ${{ vars.ARTIFACT_SIGNING_ACCOUNT }}
+          -ascp ${{ vars.ARTIFACT_SIGNING_PROFILE }}
+          "${{ env.NuGetDirectory }}/*.nupkg"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
