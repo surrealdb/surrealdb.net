@@ -5,6 +5,7 @@ using SurrealDb.Net.Models;
 
 namespace SurrealDb.Examples.MinimalApis.Models;
 
+[Table(Table)]
 public class Todo : IRecord
 {
     internal const string Table = "todo";

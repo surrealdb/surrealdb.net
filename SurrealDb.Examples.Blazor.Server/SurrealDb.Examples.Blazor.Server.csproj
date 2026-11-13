@@ -19,6 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="counter.surql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="schema.surql">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
