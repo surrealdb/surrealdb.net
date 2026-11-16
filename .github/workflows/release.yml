@@ -42,8 +42,18 @@ jobs:
               **/release/surreal_surrealkv.dll
               **/release/surreal_surrealkv.pdb
             continue-on-error: true
-          # 💡 no 32-bit Windows (i686) build: RocksDB only supports 64-bit
-          # Windows, so no win-x86 native library is packed
+          # 💡 32-bit Windows, cross-compiled on the x64 runner; RocksDB does not
+          # officially support 32-bit Windows, so a failure does not block the release
+          - os: windows-latest
+            target: i686-pc-windows-msvc
+            libpath: |
+              **/release/surreal_memory.dll
+              **/release/surreal_memory.pdb
+              **/release/surreal_rocksdb.dll
+              **/release/surreal_rocksdb.pdb
+              **/release/surreal_surrealkv.dll
+              **/release/surreal_surrealkv.pdb
+            continue-on-error: true
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             libpath: |
