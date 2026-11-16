@@ -30,6 +30,20 @@ jobs:
               **/release/surreal_surrealkv.dll
               **/release/surreal_surrealkv.pdb
             continue-on-error: false
+          # 💡 cross-compiled on the x64 runner with the MSVC ARM64 build tools;
+          # aws-lc-sys needs clang-cl for this target (LLVM on the runner image)
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            libpath: |
+              **/release/surreal_memory.dll
+              **/release/surreal_memory.pdb
+              **/release/surreal_rocksdb.dll
+              **/release/surreal_rocksdb.pdb
+              **/release/surreal_surrealkv.dll
+              **/release/surreal_surrealkv.pdb
+            continue-on-error: true
+          # 💡 no 32-bit Windows (i686) build: RocksDB only supports 64-bit
+          # Windows, so no win-x86 native library is packed
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             libpath: |
