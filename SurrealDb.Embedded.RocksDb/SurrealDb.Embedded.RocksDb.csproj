@@ -81,8 +81,11 @@
     <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_rocksdb.dll" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_rocksdb.dll')" Pack="true" PackagePath="runtimes/win-x64/native/" />
     <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_rocksdb.pdb" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_rocksdb.pdb')" Pack="true" PackagePath="runtimes/win-x64/native/" />
 
-    <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_rocksdb.dll" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_rocksdb.dll')" Pack="true" PackagePath="runtimes/win-x86/native/" />
-    <Content Include="../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_rocksdb.pdb" Condition="Exists('../rust-embedded/target/x86_64-pc-windows-msvc/release/surreal_rocksdb.pdb')" Pack="true" PackagePath="runtimes/win-x86/native/" />
+    <Content Include="../rust-embedded/target/i686-pc-windows-msvc/release/surreal_rocksdb.dll" Condition="Exists('../rust-embedded/target/i686-pc-windows-msvc/release/surreal_rocksdb.dll')" Pack="true" PackagePath="runtimes/win-x86/native/" />
+    <Content Include="../rust-embedded/target/i686-pc-windows-msvc/release/surreal_rocksdb.pdb" Condition="Exists('../rust-embedded/target/i686-pc-windows-msvc/release/surreal_rocksdb.pdb')" Pack="true" PackagePath="runtimes/win-x86/native/" />
+
+    <Content Include="../rust-embedded/target/aarch64-pc-windows-msvc/release/surreal_rocksdb.dll" Condition="Exists('../rust-embedded/target/aarch64-pc-windows-msvc/release/surreal_rocksdb.dll')" Pack="true" PackagePath="runtimes/win-arm64/native/" />
+    <Content Include="../rust-embedded/target/aarch64-pc-windows-msvc/release/surreal_rocksdb.pdb" Condition="Exists('../rust-embedded/target/aarch64-pc-windows-msvc/release/surreal_rocksdb.pdb')" Pack="true" PackagePath="runtimes/win-arm64/native/" />
 
     <Content Include="../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal_rocksdb.so" Condition="Exists('../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal_rocksdb.so')" Pack="true" PackagePath="runtimes/linux-x64/native/" />
     <Content Include="../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal_rocksdb.so" Condition="Exists('../rust-embedded/target/x86_64-unknown-linux-gnu/release/libsurreal_rocksdb.so')" Pack="true" PackagePath="runtimes/linux-x86/native/" />
