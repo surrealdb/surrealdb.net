@@ -14,11 +14,14 @@ public class SurrealDbRocksDbClient : BaseSurrealDbClient
     /// <summary>
     /// Creates a new <see cref="SurrealDbRocksDbClient"/>.
     /// </summary>
-    /// <param name="filePath">The path to the database file.</param>
+    /// <param name="filePath">
+    /// The path to the database file, e.g. <c>data.db</c>.
+    /// A full endpoint such as <c>rocksdb://data.db</c> is also accepted.
+    /// </param>
     /// <param name="options">The configuration of the embedded engine.</param>
     /// <exception cref="ArgumentException"></exception>
     public SurrealDbRocksDbClient(string filePath, SurrealDbEmbeddedOptions? options = null)
-        : this(new SurrealDbOptions($"{BASE_ENDPOINT}{filePath}"), options) { }
+        : this(new SurrealDbOptions(ToEndpoint(filePath)), options) { }
 
     /// <summary>
     /// Creates a new <see cref="SurrealDbRocksDbClient"/> using a specific configuration.
@@ -56,4 +59,13 @@ public class SurrealDbRocksDbClient : BaseSurrealDbClient
             null
         );
     }
+
+    /// <summary>
+    /// Do not prefix the scheme twice: "rocksdb://rocksdb://data.db" is an invalid path on Windows
+    /// (os error 123) and the wrong folder ("rocksdb:/data.db") on Linux and macOS.
+    /// </summary>
+    private static string ToEndpoint(string filePath) =>
+        filePath?.StartsWith(BASE_ENDPOINT, StringComparison.OrdinalIgnoreCase) == true
+            ? BASE_ENDPOINT + filePath[BASE_ENDPOINT.Length..]
+            : BASE_ENDPOINT + filePath;
 }
