@@ -44,6 +44,31 @@ public class RecordIdConverterTests : BaseCborConverterTests
     }
 
     [Test]
+    [Arguments("1a7fffffff", 2147483647L)]
+    [Arguments("3a7fffffff", -2147483648L)]
+    public async Task DeserializeIntegerIdThatFitsInInt32(string idAsHexa, long expectedId)
+    {
+        var result = await DeserializeCborBinaryAsHexaAsync<RecordId>($"c88264706f7374{idAsHexa}");
+
+        result.Should().BeOfType<RecordIdOf<int>>().Which.Id.Should().Be((int)expectedId);
+    }
+
+    [Test]
+    [Arguments("1a80000000", 2147483648L)]
+    [Arguments("3a80000000", -2147483649L)]
+    [Arguments("1b00000002540be3ff", 9999999999L)]
+    [Arguments("3b00000002540be3fe", -9999999999L)]
+    [Arguments("1b7fffffffffffffff", long.MaxValue)]
+    [Arguments("3b7fffffffffffffff", long.MinValue)]
+    public async Task DeserializeIntegerIdOutsideInt32Range(string idAsHexa, long expectedId)
+    {
+        var result = await DeserializeCborBinaryAsHexaAsync<RecordId>($"c88264706f7374{idAsHexa}");
+
+        result.Should().BeOfType<RecordIdOf<long>>().Which.Id.Should().Be(expectedId);
+        result.Should().Be(new RecordIdOf<long>("post", expectedId));
+    }
+
+    [Test]
     public async Task DeserializeFromNull()
     {
         // CBOR: f6 = null
