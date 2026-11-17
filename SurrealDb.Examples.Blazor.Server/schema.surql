@@ -2,7 +2,7 @@
 DEFINE TABLE column SCHEMALESS;
 
 DEFINE FIELD name ON column TYPE string;
-DEFINE FIELD tasks ON column TYPE set<record<task>>
+DEFINE FIELD tasks ON column TYPE array<record<task>>
     DEFAULT [];
 DEFINE FIELD order ON column TYPE int;
 DEFINE FIELD created_at ON column TYPE datetime

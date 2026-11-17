@@ -3,6 +3,7 @@ using SurrealDb.Net.Models;
 
 namespace SurrealDb.Examples.Blazor.Server.Models;
 
+[Table(Table)]
 public class DisplayableColumn : Record
 {
     internal const string Table = "displayable_column";

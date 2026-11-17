@@ -3,6 +3,7 @@ using MudBlazor.Services;
 using SurrealDb.Examples.Blazor.Server.Background;
 using SurrealDb.Examples.Blazor.Server.Models;
 using SurrealDb.Net;
+using SurrealDb.Net.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,7 +49,7 @@ async Task InitializeDbAsync()
             .Build()
     );
 
-    await DefineSchemaAsync(surrealDbClient);
+    await DefineSchemasAsync(surrealDbClient);
 
     var tasks = new[]
     {
@@ -59,12 +60,17 @@ async Task InitializeDbAsync()
     await Task.WhenAll(tasks);
 }
 
-async Task DefineSchemaAsync(ISurrealDbClient surrealDbClient)
+async Task DefineSchemasAsync(ISurrealDbClient surrealDbClient)
 {
-    string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "schema.surql");
-    string schema = File.ReadAllText(filePath, Encoding.UTF8);
+    string[] files = ["counter.surql", "schema.surql"];
 
-    await surrealDbClient.RawQuery(schema);
+    foreach (var filename in files)
+    {
+        string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, filename);
+        string schema = File.ReadAllText(filePath, Encoding.UTF8);
+
+        await surrealDbClient.RawQuery(schema);
+    }
 }
 
 async Task GenerateWeatherForecastsAsync(ISurrealDbClient surrealDbClient)
@@ -111,19 +117,19 @@ async Task GenerateKanbanAsync(ISurrealDbClient surrealDbClient)
     {
         Name = "To Do",
         Order = 1,
-        Tasks = new[] { taskRecords[0].Id!, taskRecords[1].Id! },
+        Tasks = [taskRecords[0].Id!, taskRecords[1].Id!],
     };
     var inProgressColumn = new ColumnRecord
     {
         Name = "In Progress",
         Order = 2,
-        Tasks = new[] { taskRecords[2].Id!, taskRecords[3].Id! },
+        Tasks = [taskRecords[2].Id!, taskRecords[3].Id!],
     };
     var doneColumn = new ColumnRecord
     {
         Name = "Done",
         Order = 3,
-        Tasks = new[] { taskRecords[4].Id! },
+        Tasks = [taskRecords[4].Id!],
     };
 
     var columnTasks = new[] { todoColumn, inProgressColumn, doneColumn }.Select(column =>

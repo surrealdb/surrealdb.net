@@ -1,7 +1,7 @@
 ﻿@page "/counter"
 @using SurrealDb.Examples.Blazor.Server.Models
 @using SurrealDb.Net
-@inject SurrealDbClient Client
+@inject SurrealDbSession Session
 
 <PageTitle>Counter</PageTitle>
 
@@ -27,13 +27,13 @@
     
     protected override async Task OnInitializedAsync()
     {
-        var record = await Client.Select<CounterRecord>(("counter", "default"));
+        var record = await Session.Select<CounterRecord>(("counter", "default"));
         _currentCount = record?.Value ?? 0;
     }
 
     private async Task DecrementCountAsync()
     {
-        var response = await Client.Query($"UPSERT counter:default SET value -= 1;");
+        var response = await Session.Query($"UPSERT counter:default SET value -= 1;");
 
         var record = response.FirstOk!.GetValues<CounterRecord>().Single();
         _currentCount = record.Value;
@@ -41,7 +41,7 @@
 
     private async Task IncrementCountAsync()
     {
-        var response = await Client.Query($"UPSERT counter:default SET value += 1;");
+        var response = await Session.Query($"UPSERT counter:default SET value += 1;");
         
         var record = response.FirstOk!.GetValues<CounterRecord>().Single();
         _currentCount = record.Value;
