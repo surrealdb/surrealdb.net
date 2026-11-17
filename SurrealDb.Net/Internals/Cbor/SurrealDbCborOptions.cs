@@ -13,7 +13,7 @@ namespace SurrealDb.Net.Internals.Cbor;
 
 public static class SurrealDbCborOptions
 {
-    internal static Lazy<CborOptions> Default => new(CreateCborSerializerOptions());
+    internal static readonly Lazy<CborOptions> Default = new(CreateCborSerializerOptions);
 
     private static CborOptions CreateCborSerializerOptions()
     {

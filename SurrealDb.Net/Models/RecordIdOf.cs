@@ -1,4 +1,7 @@
-﻿namespace SurrealDb.Net.Models;
+﻿using System.Buffers;
+using Dahomey.Cbor;
+
+namespace SurrealDb.Net.Models;
 
 /// <summary>
 /// Reflects a record ID (that contains both the record's table name and id).
@@ -8,8 +11,6 @@
 /// <typeparam name="TId">The type of <see cref="RecordIdOf{TId}.Id"/> property.</typeparam>
 public class RecordIdOf<TId> : RecordId
 {
-    private readonly Lazy<ReadOnlyMemory<byte>> _serializedId;
-
     /// <summary>
     /// Id part of the record id.
     /// </summary>
@@ -24,25 +25,19 @@ public class RecordIdOf<TId> : RecordId
         : base(table)
     {
         Id = id;
-        _serializedId = new Lazy<ReadOnlyMemory<byte>>(
-            () => SerializeId(Internals.Cbor.SurrealDbCborOptions.Default.Value)
-        );
     }
 
-    internal RecordIdOf(string table, TId id, Dahomey.Cbor.CborOptions options)
-        : base(table)
+    internal RecordIdOf(string table, TId id, CborOptions options)
+        : base(table, options)
     {
         Id = id;
-        _serializedId = new Lazy<ReadOnlyMemory<byte>>(() => SerializeId(options));
     }
 
-    internal override ReadOnlyMemory<byte> GetSerializedId() => _serializedId.Value;
+    private protected override byte[] SerializeId(CborOptions options) => EncodeId(Id, options);
 
-    private ReadOnlyMemory<byte> SerializeId(Dahomey.Cbor.CborOptions options)
+    internal override void WriteId(IBufferWriter<byte> buffer, CborOptions options)
     {
-        var bufferWriter = new System.Buffers.ArrayBufferWriter<byte>();
-        Dahomey.Cbor.Cbor.Serialize(Id, bufferWriter, options);
-        return bufferWriter.WrittenMemory.ToArray();
+        CborSerializer.Serialize(Id, buffer, options);
     }
 
     public override T DeserializeId<T>()
