@@ -213,6 +213,36 @@ public class SelectTests
 
     [Test]
     [ConnectionStringFixtureGenerator]
+    public async Task ShouldSelectSingleFromNumberIdOutsideInt32Range(string connectionString)
+    {
+        RecordIdRecord? result = null;
+        var recordId = RecordId.From("recordId", 9999999999L);
+
+        Func<Task> func = async () =>
+        {
+            await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+            var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+            await using var client = surrealDbClientGenerator.Create(connectionString);
+            await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+            await client.ApplySchemaAsync(SurrealSchemaFile.RecordId);
+            (
+                await client.RawQuery("CREATE recordId:9999999999 SET name = 'large number';")
+            ).EnsureAllOks();
+
+            result = await client.Select<RecordIdRecord>(recordId);
+        };
+
+        await func.Should().NotThrowAsync();
+
+        result.Should().NotBeNull();
+        result!.Name.Should().Be("large number");
+        result.Id.Should().Be(recordId);
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
     public async Task ShouldSelectSingleFromStringId(string connectionString)
     {
         RecordIdRecord? result = null;
