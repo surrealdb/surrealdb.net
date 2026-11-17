@@ -64,12 +64,22 @@ internal sealed class RecordIdConverter : CborConverterBase<RecordId>
         return idItemType switch
         {
             CborDataItemType.String => new RecordIdOfString(table, idReader.ReadString()!),
-            CborDataItemType.Signed or CborDataItemType.Unsigned => new RecordIdOf<int>(
+            CborDataItemType.Signed or CborDataItemType.Unsigned => FromIntegerId(
                 table,
-                idReader.ReadInt32()
+                idReader.ReadInt64()
             ),
             _ => new RecordId(table, idDataItem.ToMemory(), _options),
         };
+    }
+
+    /// <summary>
+    /// SurrealDB integers are 64-bit. Ids that fit in 32 bits stay <see cref="RecordIdOf{TId}"/> of <see cref="int"/>.
+    /// </summary>
+    private static RecordId FromIntegerId(string table, long id)
+    {
+        return id is >= int.MinValue and <= int.MaxValue
+            ? new RecordIdOf<int>(table, (int)id)
+            : new RecordIdOf<long>(table, id);
     }
 
     public override void Write(ref CborWriter writer, RecordId value)
