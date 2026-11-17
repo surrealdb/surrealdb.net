@@ -83,6 +83,41 @@ public class EqualityRecordIdTests : BaseCborConverterTests
         (expected != differentId).Should().BeTrue();
     }
 
+    [Test]
+    public async Task ShouldBeEqualToIdDeserializedWithClientOptions()
+    {
+        var deserialized = await DeserializeCborBinaryAsHexaAsync<RecordIdOf<int>>(
+            "c88264706f7374193039"
+        );
+        var created = new RecordIdOf<int>("post", 12345);
+
+        AssertEqualityContract(deserialized, created);
+    }
+
+    [Test]
+    public void ShouldUseValueEqualityForLargeIds()
+    {
+        string id = new('a', 4096);
+        var first = new RecordIdOfString("post", id);
+        var second = new RecordIdOfString("post", new string('a', 4096));
+
+        AssertEqualityContract(first, second);
+        first.Equals(new RecordIdOfString("post", id + "b")).Should().BeFalse();
+    }
+
+    [Test]
+    public async Task ShouldHashConsistentlyWhenFirstHashedConcurrently()
+    {
+        var recordId = new RecordIdOf<int>("post", 42);
+        int expected = new RecordIdOf<long>("post", 42L).GetHashCode();
+
+        var hashes = await Task.WhenAll(
+            Enumerable.Range(0, 32).Select(_ => Task.Run(recordId.GetHashCode))
+        );
+
+        hashes.Should().AllBeEquivalentTo(expected);
+    }
+
     private static void AssertEqualityContract(RecordId first, RecordId second)
     {
         first.Equals(first).Should().BeTrue();
