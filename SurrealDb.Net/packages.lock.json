@@ -16,9 +16,9 @@
       },
       "Dahomey.Cbor": {
         "type": "Direct",
-        "requested": "[1.26.3, )",
-        "resolved": "1.26.3",
-        "contentHash": "E7QwyTY9Z6uAkshpyzJ+d63ZE4r4Hx8s+qdbN1Weo5nuFa5PPJzH3q3TvF9hpIZSQ9Aj7gTyxRD4yxbVAlAIuQ==",
+        "requested": "[1.28.0, )",
+        "resolved": "1.28.0",
+        "contentHash": "ytpKLQWan43MqYHV3sGmtEYoWTl1VU+52r/5SrcJfE8VQoYuQvhxjyfgv7B2fPjVvaDo67PK1lwxY1lhxzLzaQ==",
         "dependencies": {
           "System.Collections.Immutable": "10.0.1",
           "System.IO.Pipelines": "10.0.1"
@@ -244,9 +244,9 @@
       },
       "Dahomey.Cbor": {
         "type": "Direct",
-        "requested": "[1.26.3, )",
-        "resolved": "1.26.3",
-        "contentHash": "E7QwyTY9Z6uAkshpyzJ+d63ZE4r4Hx8s+qdbN1Weo5nuFa5PPJzH3q3TvF9hpIZSQ9Aj7gTyxRD4yxbVAlAIuQ=="
+        "requested": "[1.28.0, )",
+        "resolved": "1.28.0",
+        "contentHash": "ytpKLQWan43MqYHV3sGmtEYoWTl1VU+52r/5SrcJfE8VQoYuQvhxjyfgv7B2fPjVvaDo67PK1lwxY1lhxzLzaQ=="
       },
       "DotNet.ReproducibleBuilds": {
         "type": "Direct",
@@ -441,9 +441,9 @@
       },
       "Dahomey.Cbor": {
         "type": "Direct",
-        "requested": "[1.26.3, )",
-        "resolved": "1.26.3",
-        "contentHash": "E7QwyTY9Z6uAkshpyzJ+d63ZE4r4Hx8s+qdbN1Weo5nuFa5PPJzH3q3TvF9hpIZSQ9Aj7gTyxRD4yxbVAlAIuQ==",
+        "requested": "[1.28.0, )",
+        "resolved": "1.28.0",
+        "contentHash": "ytpKLQWan43MqYHV3sGmtEYoWTl1VU+52r/5SrcJfE8VQoYuQvhxjyfgv7B2fPjVvaDo67PK1lwxY1lhxzLzaQ==",
         "dependencies": {
           "System.IO.Pipelines": "10.0.1"
         }
@@ -653,9 +653,9 @@
       },
       "Dahomey.Cbor": {
         "type": "Direct",
-        "requested": "[1.26.3, )",
-        "resolved": "1.26.3",
-        "contentHash": "E7QwyTY9Z6uAkshpyzJ+d63ZE4r4Hx8s+qdbN1Weo5nuFa5PPJzH3q3TvF9hpIZSQ9Aj7gTyxRD4yxbVAlAIuQ==",
+        "requested": "[1.28.0, )",
+        "resolved": "1.28.0",
+        "contentHash": "ytpKLQWan43MqYHV3sGmtEYoWTl1VU+52r/5SrcJfE8VQoYuQvhxjyfgv7B2fPjVvaDo67PK1lwxY1lhxzLzaQ==",
         "dependencies": {
           "System.IO.Pipelines": "10.0.1"
         }

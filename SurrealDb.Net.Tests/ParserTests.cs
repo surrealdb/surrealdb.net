@@ -328,7 +328,9 @@ public class ParserTests
             var floatRecord = records.First(r => r.Name == "float");
             floatRecord.Should().NotBeNull();
 
-            decimal expected = 13.5719384719385m;
+            // Dahomey.Cbor reads a CBOR float into a decimal exactly,
+            // so every significant digit of the double is kept.
+            decimal expected = 13.571938471938472m;
             floatRecord!.Value.Should().Be(expected);
         }
     }
@@ -962,7 +964,7 @@ public class ParserTests
 
             await act.Should()
                 .ThrowAsync<CborException>()
-                .WithMessage("Expected a CBOR array with at least 2 elements");
+                .WithMessage("Expected a CBOR array with at least 2 elements*");
         }
 
         {
@@ -1007,7 +1009,7 @@ public class ParserTests
 
             await act.Should()
                 .ThrowAsync<CborException>()
-                .WithMessage("Expected a CBOR array with at least 3 elements");
+                .WithMessage("Expected a CBOR array with at least 3 elements*");
         }
 
         {
@@ -1015,7 +1017,7 @@ public class ParserTests
 
             await act.Should()
                 .ThrowAsync<CborException>()
-                .WithMessage("Expected a CBOR array with at least 3 elements");
+                .WithMessage("Expected a CBOR array with at least 3 elements*");
         }
 
         {
@@ -1054,7 +1056,7 @@ public class ParserTests
 
             await act.Should()
                 .ThrowAsync<CborException>()
-                .WithMessage("Expected a CBOR array with at least 4 elements");
+                .WithMessage("Expected a CBOR array with at least 4 elements*");
         }
 
         {
@@ -1062,7 +1064,7 @@ public class ParserTests
 
             await act.Should()
                 .ThrowAsync<CborException>()
-                .WithMessage("Expected a CBOR array with at least 4 elements");
+                .WithMessage("Expected a CBOR array with at least 4 elements*");
         }
 
         {
@@ -1070,7 +1072,7 @@ public class ParserTests
 
             await act.Should()
                 .ThrowAsync<CborException>()
-                .WithMessage("Expected a CBOR array with at least 4 elements");
+                .WithMessage("Expected a CBOR array with at least 4 elements*");
         }
 
         {
@@ -1102,7 +1104,7 @@ public class ParserTests
             var act = async () => await client.Select<NoneRecord>(("string", "unicode"));
             await act.Should()
                 .ThrowAsync<CborException>()
-                .WithMessage("Expected a CBOR type of NONE");
+                .WithMessage("Expected a CBOR type of NONE*");
         }
     }
 

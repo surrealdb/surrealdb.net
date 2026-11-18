@@ -11,7 +11,7 @@ internal sealed class PrimitiveConverterProvider : CborConverterProviderBase
     {
         if (type == typeof(decimal))
         {
-            return new DecimalConverter();
+            return new DecimalConverter(options);
         }
         if (type == typeof(DateTime))
         {
