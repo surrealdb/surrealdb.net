@@ -2,6 +2,7 @@
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.LiveQuery.Tests.Abstract;
 using SurrealDb.Net.LiveQuery.Tests.Models;
+using SurrealDb.Net.Models.Auth;
 using SurrealDb.Net.Models.LiveQuery;
 
 namespace SurrealDb.Net.LiveQuery.Tests;
@@ -144,6 +145,177 @@ public class ReconnectTests : BaseLiveQueryTests
         (await CountLiveQueriesAsync(client))
             .Should()
             .Be(0);
+    }
+
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task ShouldResubscribeLiveQueriesInTheDatabaseTheyStartedIn(
+        string connectionString
+    )
+    {
+        var allResults = new List<SurrealDbLiveQueryResponse>();
+
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+        string otherDatabase = $"{dbInfo.Database}_other";
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, otherDatabase);
+        await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+        await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
+
+        var liveTable = await client.LiveTable<TestRecord>("test");
+
+        using var cts = new CancellationTokenSource();
+        _ = Task.Run(async () =>
+        {
+            await foreach (var result in liveTable.WithCancellation(cts.Token))
+            {
+                allResults.Add(result);
+            }
+        });
+
+        await WaitLiveQueryCreationAsync();
+
+        // 💡 The session moves on, then the connection drops
+        await client.Use(dbInfo.Namespace, otherDatabase);
+        await ((SurrealDbWsEngine)client.Engine).ForceReconnectAsync();
+
+        // 💡 A request waits for the live queries to be resubscribed
+        await client.RawQuery("RETURN 1;");
+
+        await using var writer = surrealDbClientGenerator.Create(connectionString);
+        await writer.Use(dbInfo.Namespace, dbInfo.Database);
+        await writer.Create("test", new TestRecord { Value = 1 });
+        await writer.Use(dbInfo.Namespace, otherDatabase);
+        await writer.Create("test", new TestRecord { Value = 2 });
+        await WaitLiveQueryNotificationAsync();
+
+        await cts.CancelAsync();
+
+        allResults.Should().HaveCount(2);
+        allResults[0].Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
+        allResults[1]
+            .Should()
+            .BeOfType<SurrealDbLiveQueryCreateResponse<TestRecord>>()
+            .Which.Result.Value.Should()
+            .Be(1);
+
+        // 💡 The session itself stays where it moved to
+        var names = (await client.RawQuery("RETURN [session::ns(), session::db()];")).GetValue<
+            List<string>
+        >(0)!;
+        names.Should().Equal(dbInfo.Namespace, otherDatabase);
+    }
+
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task ShouldEndLiveQueriesStartedAsAnotherUser(string connectionString)
+    {
+        var allResults = new List<SurrealDbLiveQueryResponse>();
+
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+        await client.RawQuery(
+            "DEFINE TABLE test SCHEMALESS; DEFINE USER viewer ON DATABASE PASSWORD 'secret' ROLES VIEWER;"
+        );
+
+        var liveTable = await client.LiveTable<TestRecord>("test");
+
+        using var cts = new CancellationTokenSource();
+        _ = Task.Run(async () =>
+        {
+            await foreach (var result in liveTable.WithCancellation(cts.Token))
+            {
+                allResults.Add(result);
+            }
+        });
+
+        await WaitLiveQueryCreationAsync();
+
+        // 💡 Started as root, the session is a viewer by the time the connection drops
+        await client.SignIn(
+            new DatabaseAuth
+            {
+                Namespace = dbInfo.Namespace,
+                Database = dbInfo.Database,
+                Username = "viewer",
+                Password = "secret",
+            }
+        );
+        await ((SurrealDbWsEngine)client.Engine).ForceReconnectAsync();
+
+        // 💡 A request waits for the live queries to be resubscribed
+        await client.RawQuery("RETURN 1;");
+
+        await using var writer = surrealDbClientGenerator.Create(connectionString);
+        await writer.Use(dbInfo.Namespace, dbInfo.Database);
+        await writer.Create("test", new TestRecord { Value = 1 });
+        await WaitLiveQueryNotificationAsync();
+
+        await cts.CancelAsync();
+
+        allResults.Should().HaveCount(2);
+        allResults[0].Should().BeOfType<SurrealDbLiveQueryOpenResponse>();
+        allResults[1]
+            .Should()
+            .BeOfType<SurrealDbLiveQueryCloseResponse>()
+            .Which.Reason.Should()
+            .Be(SurrealDbLiveQueryClosureReason.SocketClosed);
+    }
+
+    [Test]
+    [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    public async Task ShouldResubscribeLiveQueriesWithTheirParametersAsTheyWere(
+        string connectionString
+    )
+    {
+        var allResults = new List<SurrealDbLiveQueryResponse>();
+
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+        await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
+
+        var values = new List<int> { 1 };
+        var liveQuery = await client.LiveRawQuery<TestRecord>(
+            "LIVE SELECT * FROM test WHERE Value IN $values;",
+            new Dictionary<string, object?> { { "values", values } }
+        );
+
+        using var cts = new CancellationTokenSource();
+        _ = Task.Run(async () =>
+        {
+            await foreach (var result in liveQuery.WithCancellation(cts.Token))
+            {
+                allResults.Add(result);
+            }
+        });
+
+        await WaitLiveQueryCreationAsync();
+
+        // 💡 A later change to the caller's objects must not reach the server
+        values.Add(2);
+        await ((SurrealDbWsEngine)client.Engine).ForceReconnectAsync();
+
+        await client.Create("test", new TestRecord { Value = 2 });
+        await client.Create("test", new TestRecord { Value = 1 });
+        await WaitLiveQueryNotificationAsync();
+
+        await cts.CancelAsync();
+
+        allResults.Should().HaveCount(2);
+        allResults[1]
+            .Should()
+            .BeOfType<SurrealDbLiveQueryCreateResponse<TestRecord>>()
+            .Which.Result.Value.Should()
+            .Be(1);
     }
 
     /// <summary>

@@ -1210,7 +1210,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             )
             .ConfigureAwait(false);
 
-        SessionInfos.Get(sessionId)?.Set(key, value);
+        SessionInfos.Get(sessionId)?.Set(key, value, GetCborOptions());
     }
 
     public Task SignIn(

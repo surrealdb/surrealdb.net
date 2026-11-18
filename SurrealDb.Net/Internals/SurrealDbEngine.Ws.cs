@@ -1058,12 +1058,22 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
         if (!transactionId.HasValue)
         {
+            var session = SessionInfos.Get(sessionId);
+            var cborOptions = GetCborOptions();
+
             _liveQueryDefinitions[queryUuid] = new()
             {
                 ServerId = queryUuid,
                 SessionId = sessionId,
+                Ns = session?.Ns,
+                Db = session?.Db,
+                Identity = AuthIdentity.Of(session?.Auth),
                 Query = query,
-                Parameters = parameters,
+                // 💡 Sent again after a reconnection: a later change to the caller's objects must not reach the server
+                Parameters = parameters.ToDictionary(
+                    kv => kv.Key,
+                    kv => (object?)EncodedCborValue.Create(kv.Value, cborOptions)
+                ),
             };
         }
 
@@ -1122,10 +1132,15 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
 
         if (!transactionId.HasValue)
         {
+            var session = SessionInfos.Get(sessionId);
+
             _liveQueryDefinitions[queryUuid] = new()
             {
                 ServerId = queryUuid,
                 SessionId = sessionId,
+                Ns = session?.Ns,
+                Db = session?.Db,
+                Identity = AuthIdentity.Of(session?.Auth),
                 Table = table,
                 Diff = diff,
             };
@@ -1910,7 +1925,7 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             )
             .ConfigureAwait(false);
 
-        SessionInfos.Get(sessionId)?.Set(key, value);
+        SessionInfos.Get(sessionId)?.Set(key, value, GetCborOptions());
     }
 
     public Task SignIn(
@@ -2557,27 +2572,31 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     {
         foreach (var (queryUuid, definition) in _liveQueryDefinitions.ToArray())
         {
+            var session = SessionInfos.Get(definition.SessionId);
+
+            if (session is null || AuthIdentity.Of(session.Auth) != definition.Identity)
+            {
+                // 💡 The session is now signed in as someone else, or not at all (e.g. its token expired):
+                // started again, the query would run with rights it was not started with
+                _surrealDbLoggerFactory?.Connection?.LogConnectionReplayFailed(
+                    $"live query {queryUuid}",
+                    new InvalidOperationException(
+                        "The session that started the live query is no longer signed in as the same user."
+                    )
+                );
+
+                await EndLiveQueryAsync(queryUuid, definition).ConfigureAwait(false);
+                continue;
+            }
+
             try
             {
-                var newServerId = definition.Table is not null
-                    ? await StartLiveTable(
-                            definition.Table,
-                            definition.Diff,
-                            definition.SessionId,
-                            null,
-                            SurrealDbWsRequestPriority.High,
-                            cancellationToken
-                        )
-                        .ConfigureAwait(false)
-                    : await StartLiveRawQuery(
-                            definition.Query!,
-                            definition.Parameters!,
-                            definition.SessionId,
-                            null,
-                            SurrealDbWsRequestPriority.High,
-                            cancellationToken
-                        )
-                        .ConfigureAwait(false);
+                var newServerId = await StartLiveQueryInItsScopeAsync(
+                        definition,
+                        session,
+                        cancellationToken
+                    )
+                    .ConfigureAwait(false);
 
                 if (
                     !_liveQueryDefinitions.TryGetValue(queryUuid, out var currentDefinition)
@@ -2611,14 +2630,87 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
                     ex
                 );
 
-                _liveQueryDefinitions.TryRemove(queryUuid, out _);
-                await CloseLiveQueryChannelsAsync(
-                        queryUuid,
-                        SurrealDbLiveQueryClosureReason.SocketClosed
+                await EndLiveQueryAsync(queryUuid, definition).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Starts a live query again in the namespace and database it was started in,
+    /// then puts its session back where it is now, if the session has moved since.
+    /// </summary>
+    private async Task<Guid> StartLiveQueryInItsScopeAsync(
+        WsLiveQueryDefinition definition,
+        RpcSessionInfo session,
+        CancellationToken cancellationToken
+    )
+    {
+        string? sessionNs = session.Ns;
+        string? sessionDb = session.Db;
+        bool hasMoved = sessionNs != definition.Ns || sessionDb != definition.Db;
+
+        if (hasMoved)
+        {
+            await Use(
+                    definition.Ns,
+                    definition.Db,
+                    definition.SessionId,
+                    null,
+                    SurrealDbWsRequestPriority.High,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+        }
+
+        try
+        {
+            return definition.Table is not null
+                ? await StartLiveTable(
+                        definition.Table,
+                        definition.Diff,
+                        definition.SessionId,
+                        null,
+                        SurrealDbWsRequestPriority.High,
+                        cancellationToken
+                    )
+                    .ConfigureAwait(false)
+                : await StartLiveRawQuery(
+                        definition.Query!,
+                        definition.Parameters!,
+                        definition.SessionId,
+                        null,
+                        SurrealDbWsRequestPriority.High,
+                        cancellationToken
+                    )
+                    .ConfigureAwait(false);
+        }
+        finally
+        {
+            if (hasMoved)
+            {
+                await Use(
+                        sessionNs,
+                        sessionDb,
+                        definition.SessionId,
+                        null,
+                        SurrealDbWsRequestPriority.High,
+                        cancellationToken
                     )
                     .ConfigureAwait(false);
             }
         }
+    }
+
+    /// <summary>
+    /// Forgets a live query that cannot be started again, and closes its listeners.
+    /// </summary>
+    private async Task EndLiveQueryAsync(Guid queryUuid, WsLiveQueryDefinition definition)
+    {
+        _liveQueryDefinitions.TryRemove(queryUuid, out _);
+        _liveQueryIdsByServerId.TryRemove(definition.ServerId, out _);
+
+        await CloseLiveQueryChannelsAsync(queryUuid, SurrealDbLiveQueryClosureReason.SocketClosed)
+            .ConfigureAwait(false);
     }
 
     private void LogReceivedMessage(System.IO.Stream stream)

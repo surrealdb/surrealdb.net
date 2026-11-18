@@ -9,6 +9,17 @@ internal sealed class WsLiveQueryDefinition
     public Guid ServerId { get; set; }
     public Guid? SessionId { get; init; }
 
+    /// <summary>
+    /// The namespace and database the live query was started in, which its session may have left since.
+    /// </summary>
+    public string? Ns { get; init; }
+    public string? Db { get; init; }
+
+    /// <summary>
+    /// Who the session was signed in as when the live query was started, see <see cref="Auth.AuthIdentity"/>.
+    /// </summary>
+    public string? Identity { get; init; }
+
     public string? Table { get; init; }
     public bool Diff { get; init; }
 

@@ -1,4 +1,5 @@
-﻿using SurrealDb.Net.Models.Response;
+﻿using Microsoft.Extensions.DependencyInjection;
+using SurrealDb.Net.Models.Response;
 
 namespace SurrealDb.Net.Tests;
 
@@ -308,5 +309,56 @@ public class SetTests
         var outputValue = okResult!.GetValue<RecursiveStructure>();
 
         outputValue.Should().NotBeNull();
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    public async Task ShouldKeepTheValueAsItWasWhenSet(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        var tags = new List<string> { "a" };
+        await client.Set("tags", tags);
+
+        // 💡 A later change to the object must not reach the server
+        tags.Add("b");
+
+        var response = await client.RawQuery("RETURN $tags;");
+        response.GetValue<List<string>>(0).Should().Equal("a");
+    }
+
+    [Test]
+    [ConnectionStringFixtureGenerator]
+    [SinceSurrealVersion("3.0")]
+    public async Task ShouldForkTheValueAsItWasWhenSet(string connectionString)
+    {
+        var options = SurrealDbOptions.Create().FromConnectionString(connectionString).Build();
+        if (new Uri(options.Endpoint!).Scheme is "http" or "https")
+        {
+            // 💡 Sessions are not supported over HTTP
+            return;
+        }
+
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        await using var session = await client.CreateSession();
+        await session.Use(dbInfo.Namespace, dbInfo.Database);
+
+        var tags = new List<string> { "a" };
+        await session.Set("tags", tags);
+        tags.Add("b");
+
+        await using var fork = await session.ForkSession();
+
+        var response = await fork.RawQuery("RETURN $tags;");
+        response.GetValue<List<string>>(0).Should().Equal("a");
     }
 }

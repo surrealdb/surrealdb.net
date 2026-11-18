@@ -62,4 +62,25 @@ public class ReconnectTests
         var posts = await session.Select<Post>("post");
         posts.Should().HaveCount(2);
     }
+
+    [Test]
+    [WebsocketConnectionStringFixtureGenerator]
+    public async Task ShouldRestoreVariablesAsTheyWereWhenSet(string connectionString)
+    {
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+
+        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await client.Use(dbInfo.Namespace, dbInfo.Database);
+
+        var tags = new List<string> { "a" };
+        await client.Set("tags", tags);
+        tags.Add("b");
+
+        await ((SurrealDbWsEngine)client.Engine).ForceReconnectAsync();
+
+        // 💡 The server had ["a"] before the reconnection, it must have the same after
+        var response = await client.RawQuery("RETURN $tags;");
+        response.GetValue<List<string>>(0).Should().Equal("a");
+    }
 }

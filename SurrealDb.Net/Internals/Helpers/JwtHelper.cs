@@ -12,10 +12,59 @@ internal static class JwtHelper
     {
         expiry = default;
 
+        using var document = TryParsePayload(jwt);
+
+        if (
+            document is not null
+            && document.RootElement.TryGetProperty("exp", out var exp)
+            && exp.ValueKind == JsonValueKind.Number
+            && exp.TryGetInt64(out long seconds)
+        )
+        {
+            expiry = DateTimeOffset.FromUnixTimeSeconds(seconds);
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// The claims of a JWT that name who it was issued to (namespace, database, access method and record),
+    /// without validating it. A renewed token keeps them.
+    /// </summary>
+    public static bool TryGetSubject(string jwt, out string subject)
+    {
+        subject = string.Empty;
+
+        using var document = TryParsePayload(jwt);
+        if (document is null)
+        {
+            return false;
+        }
+
+        var builder = new StringBuilder();
+        foreach (string claim in SubjectClaims)
+        {
+            builder.Append(claim).Append('=');
+            if (document.RootElement.TryGetProperty(claim, out var value))
+            {
+                builder.Append(value.GetRawText());
+            }
+            builder.Append(';');
+        }
+
+        subject = builder.ToString();
+        return true;
+    }
+
+    private static readonly string[] SubjectClaims = ["NS", "DB", "AC", "SC", "ID"];
+
+    private static JsonDocument? TryParsePayload(string jwt)
+    {
         var parts = jwt.Split('.');
         if (parts.Length < 2)
         {
-            return false;
+            return null;
         }
 
         try
@@ -23,25 +72,21 @@ internal static class JwtHelper
             string payload = parts[1].Replace('-', '+').Replace('_', '/');
             payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
 
-            using var document = JsonDocument.Parse(
+            var document = JsonDocument.Parse(
                 Encoding.UTF8.GetString(Convert.FromBase64String(payload))
             );
 
-            if (
-                document.RootElement.ValueKind == JsonValueKind.Object
-                && document.RootElement.TryGetProperty("exp", out var exp)
-                && exp.ValueKind == JsonValueKind.Number
-                && exp.TryGetInt64(out long seconds)
-            )
+            if (document.RootElement.ValueKind == JsonValueKind.Object)
             {
-                expiry = DateTimeOffset.FromUnixTimeSeconds(seconds);
-                return true;
+                return document;
             }
+
+            document.Dispose();
         }
         catch (FormatException) { }
         catch (JsonException) { }
 
-        return false;
+        return null;
     }
 
     /// <summary>

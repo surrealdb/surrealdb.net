@@ -894,7 +894,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
 
         EnsuresFirstResultOk(dbResponse);
 
-        SessionInfos.Get(sessionId)?.Set(key, value);
+        SessionInfos
+            .Get(sessionId)
+            ?.Set(key, value, GetCborSerializerOptions(_configureCborOptions, _cbor2));
 
         static bool ShouldEscapeString(string str)
         {

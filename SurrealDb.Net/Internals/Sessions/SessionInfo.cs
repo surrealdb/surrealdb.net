@@ -1,5 +1,7 @@
 ﻿using System.Collections.Concurrent;
+using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
+using SurrealDb.Net.Internals.Cbor;
 
 namespace SurrealDb.Net.Internals.Sessions;
 
@@ -63,9 +65,13 @@ internal abstract class SessionInfo : ISessionInfo
         _variables.Clear();
     }
 
-    public void Set(string key, object? value)
+    /// <summary>
+    /// Keeps a variable, encoded as it is now: the copy sent again later (with each HTTP request,
+    /// after a reconnection, or to a forked session) must not see later changes to the object.
+    /// </summary>
+    public void Set(string key, object? value, CborOptions options)
     {
-        _variables[key] = value;
+        _variables[key] = EncodedCborValue.Create(value, options);
     }
 
     public void Unset(string key)
