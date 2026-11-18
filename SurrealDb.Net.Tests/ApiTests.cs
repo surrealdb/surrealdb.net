@@ -32,7 +32,7 @@ public class ApiTests
     {
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        var client = surrealDbClientGenerator.Create(connectionString);
+        var client = (SurrealDbClient)surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
         (await client.RawQuery(DEFINE_APIS)).EnsureAllOks();
 

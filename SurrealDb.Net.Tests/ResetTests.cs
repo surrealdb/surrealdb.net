@@ -67,7 +67,7 @@ public class ResetTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (SurrealDbClient)surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
         await client.Set("answer", 42);
 
@@ -92,14 +92,11 @@ public class ResetTests
     [SinceSurrealVersion("3.0")]
     public async Task ShouldResetScopedSessionBeforeItsFirstRequest(string connectionString)
     {
-        await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
-        surrealDbClientGenerator.Configure(
-            connectionString,
-            dbInfo.Namespace,
-            dbInfo.Database,
+        await using var surrealDbClientGenerator = new SurrealDbClientGenerator(
             ServiceLifetime.Scoped
         );
+        var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
+        surrealDbClientGenerator.Configure(connectionString, dbInfo.Namespace, dbInfo.Database);
 
         await using var scope = surrealDbClientGenerator.CreateAsyncScope()!;
         var session = scope.ServiceProvider.GetRequiredService<SurrealDbSession>();

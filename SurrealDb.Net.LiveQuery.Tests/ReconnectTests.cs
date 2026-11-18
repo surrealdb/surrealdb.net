@@ -20,7 +20,8 @@ public class ReconnectTests : BaseLiveQueryTests
             await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
             var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-            await using var client = surrealDbClientGenerator.Create(connectionString);
+            await using var client = (SurrealDbClient)
+                surrealDbClientGenerator.Create(connectionString);
             await client.Use(dbInfo.Namespace, dbInfo.Database);
 
             await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
@@ -72,7 +73,7 @@ public class ReconnectTests : BaseLiveQueryTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (SurrealDbClient)surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
         await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
 
@@ -117,7 +118,7 @@ public class ReconnectTests : BaseLiveQueryTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (SurrealDbClient)surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
         await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
 
@@ -159,7 +160,7 @@ public class ReconnectTests : BaseLiveQueryTests
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
         string otherDatabase = $"{dbInfo.Database}_other";
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (SurrealDbClient)surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, otherDatabase);
         await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
         await client.Use(dbInfo.Namespace, dbInfo.Database);
@@ -185,7 +186,7 @@ public class ReconnectTests : BaseLiveQueryTests
         // 💡 A request waits for the live queries to be resubscribed
         await client.RawQuery("RETURN 1;");
 
-        await using var writer = surrealDbClientGenerator.Create(connectionString);
+        await using var writer = (SurrealDbClient)surrealDbClientGenerator.Create(connectionString);
         await writer.Use(dbInfo.Namespace, dbInfo.Database);
         await writer.Create("test", new TestRecord { Value = 1 });
         await writer.Use(dbInfo.Namespace, otherDatabase);
@@ -218,7 +219,7 @@ public class ReconnectTests : BaseLiveQueryTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (SurrealDbClient)surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
         await client.RawQuery(
             "DEFINE TABLE test SCHEMALESS; DEFINE USER viewer ON DATABASE PASSWORD 'secret' ROLES VIEWER;"
@@ -252,7 +253,7 @@ public class ReconnectTests : BaseLiveQueryTests
         // 💡 A request waits for the live queries to be resubscribed
         await client.RawQuery("RETURN 1;");
 
-        await using var writer = surrealDbClientGenerator.Create(connectionString);
+        await using var writer = (SurrealDbClient)surrealDbClientGenerator.Create(connectionString);
         await writer.Use(dbInfo.Namespace, dbInfo.Database);
         await writer.Create("test", new TestRecord { Value = 1 });
         await WaitLiveQueryNotificationAsync();
@@ -279,7 +280,7 @@ public class ReconnectTests : BaseLiveQueryTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (SurrealDbClient)surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
         await client.RawQuery("DEFINE TABLE test SCHEMALESS;");
 

@@ -19,7 +19,7 @@ public sealed class RequiresCbor2Attribute()
         var connectionString = (string)context.TestDetails.TestMethodArguments[index]!;
 
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (SurrealDbClient)surrealDbClientGenerator.Create(connectionString);
 
         return !await IsNegotiatedAsync(client);
     }

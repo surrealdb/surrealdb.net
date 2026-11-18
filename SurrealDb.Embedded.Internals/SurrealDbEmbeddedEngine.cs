@@ -488,7 +488,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public async Task<string> Export(ExportOptions? options, CancellationToken cancellationToken)
     {
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        cancellationToken.Register(timeoutCts.Cancel);
+        await using var registration = cancellationToken.Register(timeoutCts.Cancel);
 
         await using var stream = MemoryStreamProvider.MemoryStreamManager.GetStream();
 
@@ -627,7 +627,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     public async Task Import(string input, CancellationToken cancellationToken)
     {
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        cancellationToken.Register(timeoutCts.Cancel);
+        await using var registration = cancellationToken.Register(timeoutCts.Cancel);
 
         var taskCompletionSource = new TaskCompletionSource<Unit>(
             TaskCreationOptions.RunContinuationsAsynchronously
@@ -1691,7 +1691,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         long executionStartTime = Stopwatch.GetTimestamp();
 
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        cancellationToken.Register(timeoutCts.Cancel);
+        await using var registration = cancellationToken.Register(timeoutCts.Cancel);
 
         bool requireInitialized = method != Method.Use;
 
@@ -1710,19 +1710,20 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
             throw;
         }
 
-        if (
-            sessionId.HasValue
-            && _sessionizer is not null
-            && _sessionizer.Get(sessionId.Value, out var newSessionInfo)
-            && newSessionInfo is EmbeddedSessionInfo newEmbeddedSessionInfo
-        )
+        if (sessionId.HasValue && _sessionizer is not null)
         {
-            _sessionizer.TryRemove(sessionId.Value);
-            // 💡 The provided state is shared by every scope, each session needs its own copy
-            await CreateSession(
+            await _sessionizer
+                .EnsureAttachedAsync(
                     sessionId.Value,
-                    new EmbeddedSessionInfo(newEmbeddedSessionInfo),
-                    cancellationToken
+                    info =>
+                        info is EmbeddedSessionInfo embeddedSessionInfo
+                            // 💡 The provided state is shared by every scope, each session needs its own copy
+                            ? CreateSession(
+                                sessionId.Value,
+                                new EmbeddedSessionInfo(embeddedSessionInfo),
+                                cancellationToken
+                            )
+                            : Task.CompletedTask
                 )
                 .ConfigureAwait(false);
         }
@@ -1842,8 +1843,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
                 callback = &NativeBindings.FailureCallback,
             };
 
-            var sessionBytes = sessionId.HasValue ? sessionId.Value.ToByteArray() : [];
-            var transactionBytes = transactionId.HasValue ? transactionId.Value.ToByteArray() : [];
+            var sessionBytes = sessionId.HasValue
+                ? sessionId.Value.ToByteArray(bigEndian: true)
+                : [];
+            var transactionBytes = transactionId.HasValue
+                ? transactionId.Value.ToByteArray(bigEndian: true)
+                : [];
 
             fixed (byte* session = sessionBytes.AsSpan())
             fixed (byte* transaction = transactionBytes.AsSpan())

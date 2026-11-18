@@ -13,7 +13,9 @@ public class SessionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
         bool result = await client.SupportsSession();
 
         if (client.Engine is SurrealDbHttpEngine)
@@ -33,7 +35,9 @@ public class SessionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
         bool result = await client.SupportsSession();
 
         result.Should().BeFalse();
@@ -46,7 +50,9 @@ public class SessionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
 
         bool supportsSession = await client.SupportsSession();
         if (client.Engine is SurrealDbHttpEngine)
@@ -69,7 +75,9 @@ public class SessionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
 
         bool supportsSession = await client.SupportsSession();
         if (client.Engine is SurrealDbHttpEngine)
@@ -100,7 +108,9 @@ public class SessionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
         if (client.Engine is SurrealDbHttpEngine)
         {
             return;
@@ -118,7 +128,7 @@ public class SessionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (SurrealDbClient)surrealDbClientGenerator.Create(connectionString);
         if (client.Engine is not SurrealDbHttpEngine)
         {
             return;
@@ -141,7 +151,9 @@ public class SessionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
         var firstSession = await client.CreateSession();
         await firstSession.SignIn(new RootAuth { Username = "root", Password = "root" });
         await firstSession.Use("test", "test");
@@ -199,7 +211,7 @@ public class SessionTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (SurrealDbClient)surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
         for (int index = 0; index < 50; index++)
         {
@@ -223,7 +235,7 @@ public class SessionTests
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
         var dbInfo = surrealDbClientGenerator.GenerateDatabaseInfo();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (SurrealDbClient)surrealDbClientGenerator.Create(connectionString);
         await client.Use(dbInfo.Namespace, dbInfo.Database);
         for (int index = 0; index < 50; index++)
         {
@@ -304,7 +316,9 @@ public class SessionTests
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
 
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (
+            surrealDbClientGenerator.Create(connectionString) as SurrealDbClient
+        )!;
         if (client.Engine is SurrealDbHttpEngine)
         {
             return;

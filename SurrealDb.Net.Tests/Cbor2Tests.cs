@@ -23,7 +23,7 @@ public class Cbor2Tests
     public async Task ShouldNegotiateCbor2FromSurrealDb4(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
-        await using var client = surrealDbClientGenerator.Create(connectionString);
+        await using var client = (SurrealDbClient)surrealDbClientGenerator.Create(connectionString);
 
         var version = (await client.Version()).ToSemver();
         bool negotiated = await RequiresCbor2Attribute.IsNegotiatedAsync(client);

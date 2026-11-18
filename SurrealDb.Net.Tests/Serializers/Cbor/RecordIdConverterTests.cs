@@ -44,6 +44,31 @@ public class RecordIdConverterTests : BaseCborConverterTests
     }
 
     [Test]
+    [Arguments("1a7fffffff", 2147483647L)]
+    [Arguments("3a7fffffff", -2147483648L)]
+    public async Task DeserializeIntegerIdThatFitsInInt32(string idAsHexa, long expectedId)
+    {
+        var result = await DeserializeCborBinaryAsHexaAsync<RecordId>($"c88264706f7374{idAsHexa}");
+
+        result.Should().BeOfType<RecordIdOf<int>>().Which.Id.Should().Be((int)expectedId);
+    }
+
+    [Test]
+    [Arguments("1a80000000", 2147483648L)]
+    [Arguments("3a80000000", -2147483649L)]
+    [Arguments("1b00000002540be3ff", 9999999999L)]
+    [Arguments("3b00000002540be3fe", -9999999999L)]
+    [Arguments("1b7fffffffffffffff", long.MaxValue)]
+    [Arguments("3b7fffffffffffffff", long.MinValue)]
+    public async Task DeserializeIntegerIdOutsideInt32Range(string idAsHexa, long expectedId)
+    {
+        var result = await DeserializeCborBinaryAsHexaAsync<RecordId>($"c88264706f7374{idAsHexa}");
+
+        result.Should().BeOfType<RecordIdOf<long>>().Which.Id.Should().Be(expectedId);
+        result.Should().Be(new RecordIdOf<long>("post", expectedId));
+    }
+
+    [Test]
     public async Task DeserializeFromNull()
     {
         // CBOR: f6 = null
@@ -110,4 +135,69 @@ public class RecordIdConverterTests : BaseCborConverterTests
         result.Item1.Should().Be(new RecordIdOfString("post", "first"));
         result.Item2.Should().Be(42);
     }
+
+    [Test]
+    public async Task SerializeIntegerIdAsRecordId()
+    {
+        RecordId value = RecordId.From("post", 12345);
+
+        var result = await SerializeCborBinaryAsHexaAsync(value);
+
+        result.Should().Be("c88264706f7374193039");
+    }
+
+    [Test]
+    public async Task SerializeArrayIdAsRecordId()
+    {
+        RecordId value = new RecordIdOf<string[]>("post", ["London", "Paris"]);
+
+        var result = await SerializeCborBinaryAsHexaAsync(value);
+
+        result.Should().Be("c88264706f737482664c6f6e646f6e655061726973");
+    }
+
+    [Test]
+    public async Task SerializeGuidIdAsRecordIdLikeTypedRecordId()
+    {
+        var value = RecordId.From("post", new Guid("8424486b-85b3-4448-ac8d-5d51083391c7"));
+
+        var asRecordId = await SerializeCborBinaryAsHexaAsync<RecordId>(value);
+        var asTypedRecordId = await SerializeCborBinaryAsHexaAsync((RecordIdOf<Guid>)value);
+
+        asRecordId.Should().Be(asTypedRecordId);
+    }
+
+    [Test]
+    public async Task SerializeHashedIdAsRecordId()
+    {
+        RecordId value = new RecordIdOf<int>("post", 12345);
+        _ = value.GetHashCode();
+
+        var result = await SerializeCborBinaryAsHexaAsync(value);
+
+        result.Should().Be("c88264706f7374193039");
+    }
+
+    [Test]
+    public async Task SerializeDeserializedComplexIdAsRecordId()
+    {
+        const string arrayRecordId = "c88264706f737482664c6f6e646f6e655061726973";
+        var value = await DeserializeCborBinaryAsHexaAsync<RecordId>(arrayRecordId);
+
+        var result = await SerializeCborBinaryAsHexaAsync(value);
+
+        result.Should().Be(arrayRecordId);
+    }
+
+    [Test]
+    public async Task SerializeInheritedTypedIdAsRecordId()
+    {
+        RecordId value = new PostId(12345);
+
+        var result = await SerializeCborBinaryAsHexaAsync(value);
+
+        result.Should().Be("c88264706f7374193039");
+    }
+
+    private sealed class PostId(int id) : RecordIdOf<int>("post", id);
 }

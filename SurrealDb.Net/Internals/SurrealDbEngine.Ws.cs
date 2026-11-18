@@ -3602,19 +3602,20 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
             }
         }
 
-        if (
-            sessionId.HasValue
-            && _sessionizer is not null
-            && _sessionizer.Get(sessionId.Value, out var newSessionInfo)
-            && newSessionInfo is RpcSessionInfo newRpcSessionInfo
-        )
+        if (sessionId.HasValue && _sessionizer is not null)
         {
-            _sessionizer.TryRemove(sessionId.Value);
-            // 💡 The provided state is shared by every scope, each session needs its own copy
-            await CreateSession(
+            await _sessionizer
+                .EnsureAttachedAsync(
                     sessionId.Value,
-                    new RpcSessionInfo(newRpcSessionInfo),
-                    cancellationToken
+                    info =>
+                        info is RpcSessionInfo rpcSessionInfo
+                            // 💡 The provided state is shared by every scope, each session needs its own copy
+                            ? CreateSession(
+                                sessionId.Value,
+                                new RpcSessionInfo(rpcSessionInfo),
+                                cancellationToken
+                            )
+                            : Task.CompletedTask
                 )
                 .ConfigureAwait(false);
         }

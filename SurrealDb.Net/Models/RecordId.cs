@@ -1,4 +1,6 @@
-﻿using Dahomey.Cbor;
+﻿using System.Buffers;
+using Dahomey.Cbor;
+using SurrealDb.Net.Internals.Cbor;
 
 namespace SurrealDb.Net.Models;
 
@@ -8,9 +10,19 @@ namespace SurrealDb.Net.Models;
 /// </summary>
 public partial class RecordId : IEquatable<RecordId>
 {
+    [ThreadStatic]
+    private static ArrayBufferWriter<byte>? _idBuffer;
+
+    private const int MaxRetainedIdBufferSize = 1024;
+
     private readonly CborOptions? _options;
 
-    internal readonly ReadOnlyMemory<byte>? _serializedCborId;
+    /// <summary>
+    /// The CBOR encoding of the id part.
+    /// Set by the constructor for an id without a typed representation,
+    /// or computed on first use (equality, hashing) for a <see cref="RecordIdOf{TId}"/>.
+    /// </summary>
+    private byte[]? _serializedId;
 
     /// <summary>
     /// Table part of the record id.
@@ -22,16 +34,70 @@ public partial class RecordId : IEquatable<RecordId>
         Table = table;
     }
 
-    internal RecordId(string table, CborOptions options)
+    internal RecordId(string table, CborOptions? options)
         : this(table)
     {
         _options = options;
     }
 
-    internal RecordId(string table, ReadOnlyMemory<byte> id, CborOptions options)
+    internal RecordId(string table, byte[] id, CborOptions options)
         : this(table, options)
     {
-        _serializedCborId = id;
+        _serializedId = id;
+    }
+
+    internal ReadOnlySpan<byte> GetSerializedId()
+    {
+        var serializedId = _serializedId;
+        if (serializedId is not null)
+            return serializedId;
+
+        serializedId = SerializeId(_options ?? SurrealDbCborOptions.Default.Value);
+        return Interlocked.CompareExchange(ref _serializedId, serializedId, null) ?? serializedId;
+    }
+
+    /// <summary>
+    /// Encodes the id part to CBOR. Only typed ids can do it,
+    /// other ids receive their encoding from the constructor.
+    /// </summary>
+    private protected virtual byte[] SerializeId(CborOptions options)
+    {
+        throw new InvalidOperationException(
+            $"Failed to execute {nameof(GetSerializedId)}, the record id does not contain the serialized id part."
+        );
+    }
+
+    private protected static byte[] EncodeId<T>(T id, CborOptions options)
+    {
+        var buffer = _idBuffer ?? new ArrayBufferWriter<byte>(64);
+        _idBuffer = null;
+
+        try
+        {
+            CborSerializer.Serialize(id, buffer, options);
+            return buffer.WrittenSpan.ToArray();
+        }
+        finally
+        {
+            if (buffer.Capacity <= MaxRetainedIdBufferSize)
+            {
+                buffer.Clear();
+                _idBuffer = buffer;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Writes the CBOR encoding of the id part, as part of a record id value.
+    /// </summary>
+    internal virtual void WriteId(IBufferWriter<byte> buffer, CborOptions options)
+    {
+        if (_serializedId is null)
+        {
+            throw new CborException($"Cannot serialize a {nameof(RecordId)}.");
+        }
+
+        buffer.Write(_serializedId);
     }
 
     /// <summary>
@@ -41,26 +107,26 @@ public partial class RecordId : IEquatable<RecordId>
     /// <exception cref="InvalidOperationException"></exception>
     public virtual T DeserializeId<T>()
     {
-        if (!_serializedCborId.HasValue)
+        if (_serializedId is null)
         {
             throw new InvalidOperationException(
                 $"Failed to execute {nameof(DeserializeId)}, the record id does not contain the serialized id part."
             );
         }
 
-        return CborSerializer.Deserialize<T>(_serializedCborId.Value.Span, _options);
+        return CborSerializer.Deserialize<T>(_serializedId, _options);
     }
 
     internal virtual object? DeserializeId(Type type)
     {
-        if (!_serializedCborId.HasValue)
+        if (_serializedId is null)
         {
             throw new InvalidOperationException(
                 $"Failed to execute {nameof(DeserializeId)}, the record id does not contain the serialized id part."
             );
         }
 
-        return CborSerializer.Deserialize(type, _serializedCborId.Value.Span, _options);
+        return CborSerializer.Deserialize(type, _serializedId, _options);
     }
 
     /// <summary>
@@ -71,7 +137,7 @@ public partial class RecordId : IEquatable<RecordId>
     /// <returns>Returns true if deserialization succeeded.</returns>
     public virtual bool TryDeserializeId<T>(out T value)
     {
-        if (!_serializedCborId.HasValue)
+        if (_serializedId is null)
         {
             value = default!;
             return false;
@@ -80,7 +146,7 @@ public partial class RecordId : IEquatable<RecordId>
         try
         {
             // TODO : TryDeserialize method
-            value = CborSerializer.Deserialize<T>(_serializedCborId.Value.Span, _options);
+            value = CborSerializer.Deserialize<T>(_serializedId, _options);
             return true;
         }
         catch
@@ -98,16 +164,10 @@ public partial class RecordId : IEquatable<RecordId>
         if (ReferenceEquals(this, other))
             return true;
 
-        if (Table != other.Table)
+        if (!string.Equals(Table, other.Table, StringComparison.Ordinal))
             return false;
 
-        if (!_serializedCborId.HasValue && other._serializedCborId.HasValue)
-            return other.Equals(this);
-
-        if (!_serializedCborId.HasValue || !other._serializedCborId.HasValue)
-            return false;
-
-        return _serializedCborId.Value.Span.SequenceEqual(other._serializedCborId.Value.Span);
+        return GetSerializedId().SequenceEqual(other.GetSerializedId());
     }
 
     public override bool Equals(object? obj)
@@ -120,13 +180,16 @@ public partial class RecordId : IEquatable<RecordId>
 
     public override int GetHashCode()
     {
-        if (!_serializedCborId.HasValue)
-        {
-            throw new InvalidOperationException(
-                $"Failed to execute {nameof(GetHashCode)}, the record id does not contain the serialized id part."
-            );
-        }
+        var hashCode = new HashCode();
+        hashCode.Add(Table, StringComparer.Ordinal);
 
-        return HashCode.Combine(Table, _serializedCborId.Value);
+#if NET8_0_OR_GREATER
+        hashCode.AddBytes(GetSerializedId());
+#else
+        foreach (byte value in GetSerializedId())
+            hashCode.Add(value);
+#endif
+
+        return hashCode.ToHashCode();
     }
 }

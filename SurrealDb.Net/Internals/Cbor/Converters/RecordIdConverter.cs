@@ -1,8 +1,6 @@
-﻿using System.Buffers;
-using Dahomey.Cbor;
+﻿using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
-using SurrealDb.Net.Internals.Extensions;
 using SurrealDb.Net.Models;
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
@@ -64,12 +62,22 @@ internal sealed class RecordIdConverter : CborConverterBase<RecordId>
         return idItemType switch
         {
             CborDataItemType.String => new RecordIdOfString(table, idReader.ReadString()!),
-            CborDataItemType.Signed or CborDataItemType.Unsigned => new RecordIdOf<int>(
+            CborDataItemType.Signed or CborDataItemType.Unsigned => FromIntegerId(
                 table,
-                idReader.ReadInt32()
+                idReader.ReadInt64()
             ),
-            _ => new RecordId(table, idDataItem.ToMemory(), _options),
+            _ => new RecordId(table, idDataItem.ToArray(), _options),
         };
+    }
+
+    /// <summary>
+    /// SurrealDB integers are 64-bit. Ids that fit in 32 bits stay <see cref="RecordIdOf{TId}"/> of <see cref="int"/>.
+    /// </summary>
+    private static RecordId FromIntegerId(string table, long id)
+    {
+        return id is >= int.MinValue and <= int.MaxValue
+            ? new RecordIdOf<int>(table, (int)id)
+            : new RecordIdOf<long>(table, id);
     }
 
     public override void Write(ref CborWriter writer, RecordId value)
@@ -86,63 +94,11 @@ internal sealed class RecordIdConverter : CborConverterBase<RecordId>
             return;
         }
 
-        var type = value.GetType();
-        if (type.Namespace == ConverterTypeConstants.ModelsNamespace && type.Name == "RecordIdOf`1")
-        {
-            var idType = type.GenericTypeArguments[0];
-            WriteGenericRecordId(
-                ref writer,
-                value.Table,
-                value.DeserializeId(idType),
-                idType,
-                _options
-            );
-            return;
-        }
-
-        WriteSerializedRecordId(ref writer, value);
-    }
-
-    private static void WriteSerializedRecordId(ref CborWriter writer, RecordId value)
-    {
-        if (!value._serializedCborId.HasValue)
-        {
-            throw new CborException($"Cannot serialize a {nameof(RecordId)}.");
-        }
-
         writer.WriteSemanticTag(CborTagConstants.TAG_RECORDID);
-
-        if (value is null)
-        {
-            writer.WriteNull();
-            return;
-        }
 
         writer.WriteBeginArray(2);
 
         writer.WriteString(value.Table);
-        writer.BufferWriter.Write(value._serializedCborId.Value.Span);
-    }
-
-    private static void WriteGenericRecordId(
-        ref CborWriter writer,
-        string table,
-        object? value,
-        Type idType,
-        CborOptions options
-    )
-    {
-        writer.WriteSemanticTag(CborTagConstants.TAG_RECORDID);
-
-        if (value is null)
-        {
-            writer.WriteNull();
-            return;
-        }
-
-        writer.WriteBeginArray(2);
-
-        writer.WriteString(table);
-        CborSerializer.Serialize(value, idType, writer.BufferWriter, options);
+        value.WriteId(writer.BufferWriter, _options);
     }
 }

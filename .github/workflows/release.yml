@@ -30,6 +30,30 @@ jobs:
               **/release/surreal_surrealkv.dll
               **/release/surreal_surrealkv.pdb
             continue-on-error: false
+          # 💡 cross-compiled on the x64 runner with the MSVC ARM64 build tools;
+          # aws-lc-sys needs clang-cl for this target (LLVM on the runner image)
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            libpath: |
+              **/release/surreal_memory.dll
+              **/release/surreal_memory.pdb
+              **/release/surreal_rocksdb.dll
+              **/release/surreal_rocksdb.pdb
+              **/release/surreal_surrealkv.dll
+              **/release/surreal_surrealkv.pdb
+            continue-on-error: true
+          # 💡 32-bit Windows, cross-compiled on the x64 runner; RocksDB does not
+          # officially support 32-bit Windows, so a failure does not block the release
+          - os: windows-latest
+            target: i686-pc-windows-msvc
+            libpath: |
+              **/release/surreal_memory.dll
+              **/release/surreal_memory.pdb
+              **/release/surreal_rocksdb.dll
+              **/release/surreal_rocksdb.pdb
+              **/release/surreal_surrealkv.dll
+              **/release/surreal_surrealkv.pdb
+            continue-on-error: true
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             libpath: |
@@ -176,10 +200,10 @@ jobs:
           pattern: embedded-*
           merge-multiple: true
 
-      - name: Setup dotnet 10.0
+      - name: Setup dotnet
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - name: Create Package
         run: dotnet pack /p:GenerateCompatibilitySuppressionFile=true --configuration Release --output ${{ env.NuGetDirectory }}
@@ -199,6 +223,8 @@ jobs:
       - name: Setup dotnet 10.0
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
+          # No checkout in this job, so no global.json. It only runs tools on the
+          # packed .nupkg, so the exact SDK patch does not matter here.
           dotnet-version: "10.0.x"
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -222,6 +248,8 @@ jobs:
       - name: Setup dotnet 10.0
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
+          # No checkout in this job, so no global.json. It only runs tools on the
+          # packed .nupkg, so the exact SDK patch does not matter here.
           dotnet-version: "10.0.x"
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4

@@ -474,11 +474,10 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return dbResponse.DeserializeEnumerable<T>().Single();
     }
 
-    public Task Invalidate(Guid? sessionId, Guid? transactionId, CancellationToken _)
+    public async Task Invalidate(Guid? sessionId, Guid? transactionId, CancellationToken _)
     {
-        CreateDeferredSessionInfo(sessionId);
+        await CreateDeferredSessionInfoAsync(sessionId).ConfigureAwait(false);
         SessionInfos.Get(sessionId)?.ResetAuth();
-        return Task.CompletedTask;
     }
 
     public Task Kill(
@@ -1029,15 +1028,14 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         throw new NotSupportedException();
     }
 
-    public Task Reset(Guid? sessionId, CancellationToken _)
+    public async Task Reset(Guid? sessionId, CancellationToken _)
     {
         // 💡 Each HTTP request runs in a new server session, built from the client-side state
-        CreateDeferredSessionInfo(sessionId);
+        await CreateDeferredSessionInfoAsync(sessionId).ConfigureAwait(false);
         SessionInfos.Get(sessionId)?.Reset();
-        return Task.CompletedTask;
     }
 
-    public Task Unset(string key, Guid? sessionId, Guid? transactionId, CancellationToken _)
+    public async Task Unset(string key, Guid? sessionId, Guid? transactionId, CancellationToken _)
     {
         if (key is null)
         {
@@ -1048,9 +1046,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             throw new ArgumentException("Variable name is not valid.", nameof(key));
         }
 
-        CreateDeferredSessionInfo(sessionId);
+        await CreateDeferredSessionInfoAsync(sessionId).ConfigureAwait(false);
         SessionInfos.Get(sessionId)?.Unset(key);
-        return Task.CompletedTask;
     }
 
     public async Task<T> Update<T>(
@@ -1576,19 +1573,31 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     /// <summary>
     /// Creates the state of a scoped session on first use, from the state it was given.
     /// </summary>
-    private void CreateDeferredSessionInfo(Guid? sessionId)
+    /// <remarks>
+    /// 💡 Concurrent first requests of a scope wait for the same creation,
+    /// so none of them is sent before the session has its namespace, database and auth.
+    /// </remarks>
+    private Task CreateDeferredSessionInfoAsync(Guid? sessionId)
     {
-        if (
-            sessionId.HasValue
-            && _sessionizer is not null
-            && _sessionizer.Get(sessionId.Value, out var newSessionInfo)
-            && newSessionInfo is RpcSessionInfo newRpcSessionInfo
-        )
+        if (!sessionId.HasValue || _sessionizer is null)
         {
-            _sessionizer.TryRemove(sessionId.Value);
-            // 💡 The provided state is shared by every scope, each session needs its own copy
-            SessionInfos.Set(sessionId.Value, new RpcSessionInfo(newRpcSessionInfo));
+            return Task.CompletedTask;
         }
+
+        var id = sessionId.Value;
+        return _sessionizer.EnsureAttachedAsync(
+            id,
+            info =>
+            {
+                if (info is RpcSessionInfo rpcSessionInfo)
+                {
+                    // 💡 The provided state is shared by every scope, each session needs its own copy
+                    SessionInfos.Set(id, new RpcSessionInfo(rpcSessionInfo));
+                }
+
+                return Task.CompletedTask;
+            }
+        );
     }
 
     /// <param name="request">The RPC request.</param>
@@ -1612,7 +1621,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
             await Connect(cancellationToken).ConfigureAwait(false);
         }
 
-        CreateDeferredSessionInfo(sessionId);
+        await CreateDeferredSessionInfoAsync(sessionId).ConfigureAwait(false);
 
         using var wrapper = CreateEndpointHttpClientWrapper();
         using var body = CreateBodyContent(

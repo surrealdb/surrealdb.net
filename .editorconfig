@@ -131,3 +131,9 @@ csharp_preserve_single_line_blocks = true
 [*.vb]
 # Modifier preferences
 visual_basic_preferred_modifier_order = Partial,Default,Private,Protected,Public,Friend,NotOverridable,Overridable,MustOverride,Overloads,Overrides,MustInherit,NotInheritable,Static,Shared,Shadows,ReadOnly,WriteOnly,Dim,Const,WithEvents,Widening,Narrowing,Custom,Async:suggestio
+# Generated OpenAPI client code: nullable annotations are inert here (compiled without null-state checks)
+[**/Generated/**.cs]
+dotnet_diagnostic.CS8632.severity = none
+dotnet_diagnostic.CS8600.severity = none
+dotnet_diagnostic.CS8601.severity = none
+dotnet_diagnostic.CS8603.severity = none

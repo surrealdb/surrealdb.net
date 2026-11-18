@@ -13,8 +13,12 @@ namespace SurrealDb.Net.Internals.Cbor;
 
 public static class SurrealDbCborOptions
 {
-    internal static Lazy<CborOptions> Default => new(CreateCborSerializerOptions(false));
-    internal static Lazy<CborOptions> Cbor2Default => new(CreateCborSerializerOptions(true));
+    internal static readonly Lazy<CborOptions> Default = new(
+        () => CreateCborSerializerOptions(false)
+    );
+    internal static readonly Lazy<CborOptions> Cbor2Default = new(
+        () => CreateCborSerializerOptions(true)
+    );
 
     /// <param name="cbor2">
     /// Whether the connection negotiated <c>cbor.2</c>, which carries SurrealDB 4.0's sized numbers.

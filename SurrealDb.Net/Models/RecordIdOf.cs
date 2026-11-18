@@ -1,4 +1,7 @@
-﻿namespace SurrealDb.Net.Models;
+﻿using System.Buffers;
+using Dahomey.Cbor;
+
+namespace SurrealDb.Net.Models;
 
 /// <summary>
 /// Reflects a record ID (that contains both the record's table name and id).
@@ -22,6 +25,19 @@ public class RecordIdOf<TId> : RecordId
         : base(table)
     {
         Id = id;
+    }
+
+    internal RecordIdOf(string table, TId id, CborOptions options)
+        : base(table, options)
+    {
+        Id = id;
+    }
+
+    private protected override byte[] SerializeId(CborOptions options) => EncodeId(Id, options);
+
+    internal override void WriteId(IBufferWriter<byte> buffer, CborOptions options)
+    {
+        CborSerializer.Serialize(Id, buffer, options);
     }
 
     public override T DeserializeId<T>()
@@ -52,36 +68,9 @@ public class RecordIdOf<TId> : RecordId
         return false;
     }
 
-    public override bool Equals(RecordId? other)
-    {
-        if (other is null)
-            return false;
+    public override bool Equals(RecordId? other) => base.Equals(other);
 
-        if (ReferenceEquals(this, other))
-            return true;
+    public override bool Equals(object? obj) => base.Equals(obj);
 
-        if (Table != other.Table)
-            return false;
-
-        if (other is RecordIdOf<TId> otherRecordIdOf)
-            return (Id is null && otherRecordIdOf.Id is null) || Id!.Equals(otherRecordIdOf.Id);
-
-        if (!other.TryDeserializeId(out TId otherId))
-            return false;
-
-        return (Id is null && otherId is null) || Id!.Equals(otherId);
-    }
-
-    public override bool Equals(object? obj)
-    {
-        if (obj is RecordId other)
-            return Equals(other);
-
-        return base.Equals(obj);
-    }
-
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(Table, Id);
-    }
+    public override int GetHashCode() => base.GetHashCode();
 }

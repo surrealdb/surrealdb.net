@@ -50,6 +50,39 @@ We aim to develop according to coding standards in-line with each programming la
   -->
 </details>
 
+## .NET SDK and lock files
+
+This repository pins an exact .NET SDK version in [`global.json`](/global.json), with `rollForward` set to `disable`. CI installs the same version from that file.
+
+The pin is necessary because each project commits a `packages.lock.json`. Some packages in these lock files come from the SDK itself, not from `Directory.Packages.props` (for example `Microsoft.DotNet.ILCompiler`, `Microsoft.NET.ILLink.Tasks` and `Microsoft.AspNetCore.App.Internal.Assets`). Their version follows the runtime that ships with the SDK. A different SDK patch writes different versions, and CI fails when `dotnet build` changes a lock file.
+
+### Install the pinned SDK
+
+Install the exact version from `global.json`. If it is not installed, `dotnet` stops with a "compatible .NET SDK was not found" error. You can use the [dotnet-install script](https://learn.microsoft.com/dotnet/core/tools/dotnet-install-script):
+
+```bash
+./dotnet-install.sh --jsonfile global.json
+```
+
+### Regenerate lock files
+
+Run this command from the repository root after you change a package reference or the SDK version:
+
+```bash
+dotnet restore --force-evaluate -p:NETCoreSdkRuntimeIdentifier=linux-x64 -p:NETCoreSdkPortableRuntimeIdentifier=linux-x64
+```
+
+The two `-p:` properties are necessary on macOS and Windows. `SurrealDb.Examples.TodoApi.Aot` uses Native AOT, so its lock file has a section for the host runtime identifier. CI runs on Linux and expects `net10.0/linux-x64`. Without these properties, the section changes to your platform, for example `net10.0/osx-arm64`. On Linux x64 you can omit them.
+
+### Update the SDK version
+
+When a new .NET SDK patch is available:
+
+1. Set the new version in `global.json`.
+2. Install that SDK.
+3. Regenerate the lock files with the command above.
+4. Commit `global.json` and the changed `packages.lock.json` files in the same pull request.
+
 ## Introducing new features
 
 We would &nbsp;<img width="15" alt="Love" src="https://github.com/surrealdb/surrealdb/blob/main/img/love.svg?raw=true">&nbsp; for you to contribute to SurrealDB, but we would also like to make sure SurrealDB is as great as possible and loyal to its vision and mission statement. For us to find the right balance, please open a question on [GitHub discussions](https://github.com/surrealdb/surrealdb/discussions) with any ideas before creating a [**GitHub Issue**](/issues). This will allow the SurrealDB community to have sufficient discussion about the new feature value and how it fits in the product roadmap and vision, before introducing a new pull request
