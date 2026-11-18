@@ -1,4 +1,5 @@
 ﻿using Dahomey.Cbor;
+using SurrealDb.Net.Internals.Cbor;
 using SurrealDb.Net.Internals.Extensions;
 
 namespace SurrealDb.Net.Internals.Ws;
@@ -29,7 +30,10 @@ internal sealed class SurrealDbWsOkResponse : ISurrealDbWsStandardResponse
     internal IEnumerable<T> DeserializeEnumerable<T>()
     {
         // TODO : Try to implement yield pattern in the Deserialization
-        return CborSerializer.Deserialize<IEnumerable<T>>(_binaryResult!.Value.Span, _cborOptions!);
+        return StaticConverterRegistrations.DeserializeEnumerable<T>(
+            _binaryResult!.Value.Span,
+            _cborOptions!
+        );
     }
 
     internal bool ExpectNone()

@@ -6,7 +6,7 @@ namespace SurrealDb.Net.Internals.Http;
 internal sealed record CommonHttpWrapper(
     HttpClient HttpClient,
     SemVersion? Version,
-    Action<CborOptions>? ConfigureCborOptions
+    CborOptions CborOptions
 ) : IDisposable
 {
     public void Dispose()

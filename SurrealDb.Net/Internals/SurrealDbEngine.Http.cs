@@ -38,7 +38,14 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     private const string RPC_ENDPOINT = "/rpc";
 
     internal SemVersion? _version { get; private set; }
-    internal Action<CborOptions>? _configureCborOptions { get; }
+
+    /// <summary>
+    /// The CBOR options of this engine, built once so that converters (including those
+    /// registered by a user-provided <c>CborSerializerContext</c>) are not rebuilt for every request.
+    /// </summary>
+    private readonly Lazy<CborOptions> _cborOptions;
+
+    internal CborOptions CborOptions => _cborOptions.Value;
 
     private int _pendingRequests;
 
@@ -67,7 +74,9 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         Uri = new Uri(parameters.Endpoint!);
         _parameters = parameters;
         _httpClientFactory = httpClientFactory;
-        _configureCborOptions = configureCborOptions;
+        _cborOptions = new(
+            () => SurrealDbCborOptions.GetCborSerializerOptions(configureCborOptions)
+        );
         _surrealDbLoggerFactory = surrealDbLoggerFactory;
         _sessionizer = sessionizer;
 
@@ -374,7 +383,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     {
         using var wrapper = CreateHttpClientWrapper(null);
         using var body = CreateBodyContent(
-            _configureCborOptions,
+            CborOptions,
             new SurrealDbHttpRequest { Method = "ping" },
             null
         );
@@ -615,6 +624,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where T : class
     {
+        StaticConverterRegistrations.EnsureJsonPatchDocument<T>(CborOptions);
+
         var request = new SurrealDbHttpRequest
         {
             Method = "patch",
@@ -635,6 +646,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where T : class
     {
+        StaticConverterRegistrations.EnsureJsonPatchDocument<T>(CborOptions);
+
         var request = new SurrealDbHttpRequest
         {
             Method = "patch",
@@ -655,6 +668,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     )
         where T : class
     {
+        StaticConverterRegistrations.EnsureJsonPatchDocument<T>(CborOptions);
+
         var request = new SurrealDbHttpRequest { Method = "patch", Parameters = [table, patches] };
 
         var dbResponse = await ExecuteRequestAsync(request, cancellationToken)
@@ -831,6 +846,8 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
+        StaticConverterRegistrations.EnsureRecordIdRange<TStart, TEnd>(CborOptions);
+
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
         if (_version is null || _version.Major < 2)
@@ -1283,11 +1300,6 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         return version;
     }
 
-    private static CborOptions GetCborSerializerOptions(Action<CborOptions>? configureCborOptions)
-    {
-        return SurrealDbCborOptions.GetCborSerializerOptions(configureCborOptions);
-    }
-
     private HttpClientWrapper CreateHttpClientWrapper(
         Guid? sessionId,
         IAuth? overridedAuth = null,
@@ -1471,13 +1483,13 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
     }
 
     internal static HttpContent CreateBodyContent<T>(
-        Action<CborOptions>? configureCborOptions,
+        CborOptions cborOptions,
         T data,
         ISurrealDbLoggerFactory? surrealDbLoggerFactory
     )
     {
         var writer = new ArrayBufferWriter<byte>();
-        CborSerializer.Serialize(data, writer, GetCborSerializerOptions(configureCborOptions));
+        CborSerializer.Serialize(data, writer, cborOptions);
         var payload = writer.WrittenSpan.ToArray();
 
         if (surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
@@ -1535,7 +1547,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         }
 
         using var wrapper = CreateHttpClientWrapper(request.SessionId);
-        using var body = CreateBodyContent(_configureCborOptions, request, _surrealDbLoggerFactory);
+        using var body = CreateBodyContent(CborOptions, request, _surrealDbLoggerFactory);
 
         Interlocked.Increment(ref _pendingRequests);
 
@@ -1591,7 +1603,7 @@ internal class SurrealDbHttpEngine : ISurrealDbEngine
         await using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 #endif
 
-        var cborSerializerOptions = GetCborSerializerOptions(_configureCborOptions);
+        var cborSerializerOptions = CborOptions;
 
         if (_surrealDbLoggerFactory?.Serialization?.IsEnabled(LogLevel.Debug) == true)
         {

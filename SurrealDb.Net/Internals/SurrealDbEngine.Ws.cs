@@ -44,7 +44,12 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     private static readonly ConcurrentDictionary<string, SurrealDbWsEngine> _wsEngines = new();
 
     internal SemVersion? _version { get; private set; }
-    internal Action<CborOptions>? _configureCborOptions { get; }
+
+    /// <summary>
+    /// The CBOR options of this engine, built once so that converters (including those
+    /// registered by a user-provided <c>CborSerializerContext</c>) are not rebuilt for every request.
+    /// </summary>
+    private readonly Lazy<CborOptions> _cborOptions;
 
 #if DEBUG
     public string Id => _id;
@@ -132,7 +137,9 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         Uri = new Uri(parameters.Endpoint!);
         _id = id;
         _parameters = parameters;
-        _configureCborOptions = configureCborOptions;
+        _cborOptions = new(
+            () => SurrealDbCborOptions.GetCborSerializerOptions(configureCborOptions)
+        );
         _surrealDbLoggerFactory = surrealDbLoggerFactory;
         _sessionizer = sessionizer;
 
@@ -1086,6 +1093,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     )
         where T : class
     {
+        StaticConverterRegistrations.EnsureJsonPatchDocument<T>(GetCborOptions());
+
         var dbResponse = await SendRequestAsync(
                 "patch",
                 [recordId, patches],
@@ -1107,6 +1116,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     )
         where T : class
     {
+        StaticConverterRegistrations.EnsureJsonPatchDocument<T>(GetCborOptions());
+
         var dbResponse = await SendRequestAsync(
                 "patch",
                 [recordId, patches],
@@ -1128,6 +1139,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
     )
         where T : class
     {
+        StaticConverterRegistrations.EnsureJsonPatchDocument<T>(GetCborOptions());
+
         var dbResponse = await SendRequestAsync(
                 "patch",
                 [table, patches],
@@ -1314,6 +1327,8 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         CancellationToken cancellationToken
     )
     {
+        StaticConverterRegistrations.EnsureRecordIdRange<TStart, TEnd>(GetCborOptions());
+
         await EnsureVersionIsSetAsync(cancellationToken).ConfigureAwait(false);
 
         if (_version is null || _version.Major < 2)
@@ -1859,9 +1874,9 @@ internal sealed class SurrealDbWsEngine : ISurrealDbEngine
         return version.Replace(VERSION_PREFIX, string.Empty);
     }
 
-    private CborOptions GetCborOptions()
+    internal CborOptions GetCborOptions()
     {
-        return SurrealDbCborOptions.GetCborSerializerOptions(_configureCborOptions);
+        return _cborOptions.Value;
     }
 
     private async Task ApplyReconnectConfigurationAsync(CancellationToken cancellationToken)

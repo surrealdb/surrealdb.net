@@ -37,6 +37,12 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
     private SurrealDbOptions? _parameters;
     private readonly SurrealDbEmbeddedOptions? _options;
     private Action<CborOptions>? _configureCborOptions;
+
+    /// <summary>
+    /// The CBOR options of this engine, built once so that converters (including those
+    /// registered by a user-provided <c>CborSerializerContext</c>) are not rebuilt for every request.
+    /// </summary>
+    private CborOptions? _cborOptions;
     private ISurrealDbLoggerFactory? _surrealDbLoggerFactory;
     private ISessionizer? _sessionizer;
 
@@ -80,6 +86,7 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
         Uri = new Uri(parameters.Endpoint!);
         _parameters = parameters;
         _configureCborOptions = configureCborOptions;
+        _cborOptions = null;
         _surrealDbLoggerFactory = surrealDbLoggerFactory;
         _sessionizer = sessionizer;
 
@@ -1493,7 +1500,9 @@ internal sealed partial class SurrealDbEmbeddedEngine : ISurrealDbProviderEngine
 
     private CborOptions GetCborOptions()
     {
-        return SurrealDbCborOptions.GetCborSerializerOptions(_configureCborOptions);
+        return _cborOptions ??= SurrealDbCborOptions.GetCborSerializerOptions(
+            _configureCborOptions
+        );
     }
 
     private readonly SemaphoreSlim _semaphoreConnect = new(1, 1);

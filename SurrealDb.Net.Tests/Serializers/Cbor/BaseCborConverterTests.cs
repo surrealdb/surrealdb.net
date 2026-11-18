@@ -1,4 +1,7 @@
-﻿using System.Text;
+﻿using System.Buffers;
+using System.Text;
+using Dahomey.Cbor.Serialization;
+using Dahomey.Cbor.Serialization.Converters;
 using SurrealDb.Net.Internals.Cbor;
 
 namespace SurrealDb.Net.Tests.Serializers.Cbor;
@@ -15,6 +18,34 @@ public abstract class BaseCborConverterTests
 
         var bytes = stream.ToArray();
         return ByteArrayToString(bytes);
+    }
+
+    /// <summary>
+    /// Serializes with the converter registered in the default SurrealDB options.
+    /// </summary>
+    protected static string SerializeAsHexa<T>(T value)
+    {
+        var options = SurrealDbCborOptions.Default.Value;
+        return SerializeAsHexa(value, options.Registry.ConverterRegistry.Lookup<T>());
+    }
+
+    protected static string SerializeAsHexa<T>(T value, ICborConverter<T> converter)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+        var writer = new CborWriter(buffer);
+        converter.Write(ref writer, value);
+
+        return ByteArrayToString(buffer.WrittenSpan.ToArray());
+    }
+
+    /// <summary>
+    /// Serializes with the reflection-based object converter of Dahomey.Cbor,
+    /// as used when no converter is registered for <typeparamref name="T"/>.
+    /// </summary>
+    protected static string SerializeWithReflectionAsHexa<T>(T value)
+    {
+        var converter = new ObjectConverter<T>(SurrealDbCborOptions.Default.Value);
+        return SerializeAsHexa(value, converter);
     }
 
     private static string ByteArrayToString(byte[] bytes)
