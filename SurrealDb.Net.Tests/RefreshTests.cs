@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.Extensions.DependencyInjection;
 using SurrealDb.Net.Exceptions;
+using SurrealDb.Net.Exceptions.Rpc;
 using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Auth;
 
@@ -212,10 +213,24 @@ public class RefreshTests
         await Task.Delay(TokenDuration + TimeSpan.FromSeconds(1));
 
         // 💡 The fork must not use the single-use refresh token of the original session
-        (await fork.RawQuery("RETURN <string> $auth.id;"))
-            .GetValue<string>(0)
-            .Should()
-            .StartWith("user:");
+        var queryFork = async () =>
+            (await fork.RawQuery("RETURN <string> $auth.id;")).GetValue<string>(0);
+
+        var version = await SurrealDbClientGenerator.GetSurrealTestVersion(connectionString);
+
+        if (version.Major >= 4)
+        {
+            // 💡 Since 4.0, a session authenticated with a token ends when this token expires.
+            // The fork has no refresh token to renew it
+            await queryFork
+                .Should()
+                .ThrowAsync<SurrealDbNotAllowedException>()
+                .WithMessage("*session has expired*");
+        }
+        else
+        {
+            (await queryFork()).Should().StartWith("user:");
+        }
 
         await ((SurrealDbWsEngine)client.Engine).ForceReconnectAsync();
 
