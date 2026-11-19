@@ -964,7 +964,8 @@ public class ParserTests
 
             await act.Should()
                 .ThrowAsync<CborException>()
-                .WithMessage("Expected a CBOR array with at least 2 elements*");
+                .WithMessage("Expected a CBOR array with at least 2 elements*")
+                .Where(e => e.Path == "$.value");
         }
 
         {
@@ -1009,7 +1010,8 @@ public class ParserTests
 
             await act.Should()
                 .ThrowAsync<CborException>()
-                .WithMessage("Expected a CBOR array with at least 3 elements*");
+                .WithMessage("Expected a CBOR array with at least 3 elements*")
+                .Where(e => e.Path == "$.value");
         }
 
         {
@@ -1017,7 +1019,8 @@ public class ParserTests
 
             await act.Should()
                 .ThrowAsync<CborException>()
-                .WithMessage("Expected a CBOR array with at least 3 elements*");
+                .WithMessage("Expected a CBOR array with at least 3 elements*")
+                .Where(e => e.Path == "$.value");
         }
 
         {
@@ -1056,7 +1059,8 @@ public class ParserTests
 
             await act.Should()
                 .ThrowAsync<CborException>()
-                .WithMessage("Expected a CBOR array with at least 4 elements*");
+                .WithMessage("Expected a CBOR array with at least 4 elements*")
+                .Where(e => e.Path == "$.value");
         }
 
         {
@@ -1064,7 +1068,8 @@ public class ParserTests
 
             await act.Should()
                 .ThrowAsync<CborException>()
-                .WithMessage("Expected a CBOR array with at least 4 elements*");
+                .WithMessage("Expected a CBOR array with at least 4 elements*")
+                .Where(e => e.Path == "$.value");
         }
 
         {
@@ -1072,7 +1077,8 @@ public class ParserTests
 
             await act.Should()
                 .ThrowAsync<CborException>()
-                .WithMessage("Expected a CBOR array with at least 4 elements*");
+                .WithMessage("Expected a CBOR array with at least 4 elements*")
+                .Where(e => e.Path == "$.value");
         }
 
         {
@@ -1104,7 +1110,8 @@ public class ParserTests
             var act = async () => await client.Select<NoneRecord>(("string", "unicode"));
             await act.Should()
                 .ThrowAsync<CborException>()
-                .WithMessage("Expected a CBOR type of NONE*");
+                .WithMessage("Expected a CBOR type of NONE*")
+                .Where(e => e.Path == "$.value");
         }
     }
 
