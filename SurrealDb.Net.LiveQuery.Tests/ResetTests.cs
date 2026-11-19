@@ -8,7 +8,8 @@ public class ResetTests : BaseLiveQueryTests
 {
     [Test]
     [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
-    [SinceSurrealVersion("2.0")]
+    // 💡 The `reset` method exists since 2.1
+    [SinceSurrealVersion("2.1")]
     public async Task ShouldCloseLiveQueriesOnReset(string connectionString)
     {
         var allResults = new List<SurrealDbLiveQueryResponse>();
