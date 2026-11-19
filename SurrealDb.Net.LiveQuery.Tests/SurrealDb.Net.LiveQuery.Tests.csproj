@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\SurrealDb.Net.Tests\Fixtures\SinceSurrealVersionAttribute.cs" Link="Fixtures\SinceSurrealVersionAttribute.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SurrealDb.Net.Tests.Fixtures\SurrealDb.Net.Tests.Fixtures.csproj" />
     <ProjectReference Include="..\SurrealDb.Net\SurrealDb.Net.csproj" />
     <ProjectReference Include="..\SurrealDb.Reactive\SurrealDb.Reactive.csproj" />

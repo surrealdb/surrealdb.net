@@ -271,6 +271,8 @@ public class ReconnectTests : BaseLiveQueryTests
 
     [Test]
     [Arguments("Endpoint=ws://127.0.0.1:8000/rpc;User=root;Pass=root")]
+    // 💡 Before 3.0, a live query does not receive notifications when it uses a query parameter
+    [SinceSurrealVersion("3.0")]
     public async Task ShouldResubscribeLiveQueriesWithTheirParametersAsTheyWere(
         string connectionString
     )

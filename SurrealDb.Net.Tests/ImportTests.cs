@@ -111,7 +111,8 @@ public class ImportTests
 
     [Test]
     [RemoteConnectionStringFixtureGenerator]
-    [SinceSurrealVersion("2.0")]
+    // 💡 2.0 rejects the whole import without listing the statement, and 2.1 stops answering after it
+    [SinceSurrealVersion("2.2")]
     public async Task ShouldReportParseError(string connectionString)
     {
         await using var surrealDbClientGenerator = new SurrealDbClientGenerator();
