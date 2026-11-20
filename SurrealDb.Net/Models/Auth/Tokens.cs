@@ -21,8 +21,14 @@ public sealed class Tokens
 
     internal Tokens() { }
 
-    internal Tokens(string jwt)
+    /// <summary>
+    /// Creates a token pair, e.g. to authenticate with tokens stored from a previous sign in.
+    /// </summary>
+    /// <param name="access">The access token.</param>
+    /// <param name="refresh">The refresh token, if any.</param>
+    public Tokens(string access, string? refresh = null)
     {
-        Access = jwt;
+        Access = access;
+        Refresh = refresh;
     }
 }

@@ -36,6 +36,8 @@ public interface ISurrealDbEngine
         IAsyncDisposable
 {
     Uri Uri { get; }
+    ConnectionStatus Status { get; }
+    event EventHandler<ConnectionStatusChangedEventArgs>? StatusChanged;
 
     Task Attach(Guid sessionId, CancellationToken cancellationToken);
     Task Authenticate(
@@ -112,6 +114,7 @@ public interface ISurrealDbEngine
     )
         where T : IRelationRecord;
     Task Invalidate(Guid? sessionId, Guid? transactionId, CancellationToken cancellationToken);
+    Task Reset(Guid? sessionId, CancellationToken cancellationToken);
     Task Kill(
         Guid queryUuid,
         SurrealDbLiveQueryClosureReason reason,
@@ -194,7 +197,26 @@ public interface ISurrealDbEngine
         CancellationToken cancellationToken
     )
         where T : class;
+    Task<Tokens> Refresh(
+        Tokens tokens,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
+    Task Revoke(
+        Tokens tokens,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
     Task<SurrealDbResponse> RawQuery(
+        string query,
+        IReadOnlyDictionary<string, object?> parameters,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
+    Task<SurrealDbResponse> Gql(
         string query,
         IReadOnlyDictionary<string, object?> parameters,
         Guid? sessionId,
@@ -381,8 +403,20 @@ public interface ISurrealDbEngine
     )
         where TOutput : IRecord;
     Task Use(
-        string ns,
-        string db,
+        string? ns,
+        string? db,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
+    Task UseNs(
+        string? ns,
+        Guid? sessionId,
+        Guid? transactionId,
+        CancellationToken cancellationToken
+    );
+    Task UseDb(
+        string? db,
         Guid? sessionId,
         Guid? transactionId,
         CancellationToken cancellationToken

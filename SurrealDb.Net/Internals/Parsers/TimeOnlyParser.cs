@@ -5,7 +5,11 @@ internal static class TimeOnlyParser
 {
     public static TimeOnly Convert(long? seconds, int? nanos)
     {
-        var timeSpan = TimeSpanParser.Convert(seconds, nanos);
+        return Convert(TimeSpanParser.Convert(seconds, nanos));
+    }
+
+    public static TimeOnly Convert(TimeSpan timeSpan)
+    {
         return new TimeOnly(timeSpan.Ticks % TimeSpan.TicksPerDay);
     }
 }

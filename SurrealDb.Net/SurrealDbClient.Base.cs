@@ -1,4 +1,4 @@
-using Dahomey.Cbor;
+﻿using Dahomey.Cbor;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Semver;
@@ -9,6 +9,7 @@ using SurrealDb.Net.Internals;
 using SurrealDb.Net.Internals.Auth;
 using SurrealDb.Net.Internals.DependencyInjection;
 using SurrealDb.Net.Internals.Http;
+using SurrealDb.Net.Models;
 
 namespace SurrealDb.Net;
 
@@ -18,6 +19,14 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
     internal ISurrealDbEngine Engine { get; set; } = null!;
 
     public Uri Uri { get; protected init; } = null!;
+
+    public ConnectionStatus Status => Engine.Status;
+
+    public event EventHandler<ConnectionStatusChangedEventArgs>? StatusChanged
+    {
+        add => Engine.StatusChanged += value;
+        remove => Engine.StatusChanged -= value;
+    }
 
     protected void InitializeAndSetProviderEngine(
         ISurrealDbProviderEngine engine,
@@ -54,7 +63,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
         );
     }
 
-    private async Task<CommonHttpWrapper> CreateCommonHttpWrapperAsync(
+    internal async Task<CommonHttpWrapper> CreateCommonHttpWrapperAsync(
         CancellationToken cancellationToken
     )
     {
@@ -63,12 +72,17 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
         string? db;
         IAuth? auth;
         Action<CborOptions>? configureCborOptions;
+        HttpClientWrapper httpClientWrapper;
 
         switch (Engine)
         {
             case SurrealDbHttpEngine httpEngine:
                 // 💡 Ensures underlying engine is started to retrieve some information
                 await httpEngine.Connect(cancellationToken).ConfigureAwait(false);
+                // 💡 The request below bypasses the engine, so its token is renewed here
+                await httpEngine
+                    .RenewAuthIfExpiringAsync(SessionId, cancellationToken)
+                    .ConfigureAwait(false);
 
                 {
                     var session = httpEngine.SessionInfos.Get(SessionId)!;
@@ -78,11 +92,16 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
                     db = session.Db;
                     auth = session.Auth;
                     configureCborOptions = httpEngine._configureCborOptions;
+                    httpClientWrapper = httpEngine.CreateEndpointHttpClientWrapper();
                 }
                 break;
             case SurrealDbWsEngine wsEngine:
                 // 💡 Ensures underlying engine is started to retrieve some information
                 await wsEngine.InternalConnectAsync(true, cancellationToken).ConfigureAwait(false);
+                // 💡 The request below bypasses the engine, so its token is renewed here
+                await wsEngine
+                    .RenewAuthIfExpiringAsync(SessionId, cancellationToken)
+                    .ConfigureAwait(false);
 
                 {
                     var session = wsEngine.SessionInfos.Get(SessionId)!;
@@ -92,6 +111,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
                     db = session.Db;
                     auth = session.Auth;
                     configureCborOptions = wsEngine._configureCborOptions;
+                    httpClientWrapper = new HttpClientWrapper(SharedHttpClient.Instance, false);
                 }
                 break;
             default:
@@ -107,11 +127,13 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
             throw new SurrealDbExportException("Database should be provided to export data.");
         }
 
-        var httpClient = new HttpClient();
-
-        SurrealDbHttpEngine.SetNsDbHttpClientHeaders(httpClient, version, ns, db);
-        SurrealDbHttpEngine.SetAuthHttpClientHeaders(httpClient, auth);
-
-        return new CommonHttpWrapper(httpClient, version, configureCborOptions);
+        return new CommonHttpWrapper(
+            httpClientWrapper,
+            version,
+            ns!,
+            db!,
+            auth,
+            configureCborOptions
+        );
     }
 }

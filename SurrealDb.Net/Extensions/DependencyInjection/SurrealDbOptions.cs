@@ -72,6 +72,42 @@ public sealed class SurrealDbOptions
     /// </summary>
     public TimeSpan? RequestTimeout { get; set; }
 
+    /// <summary>
+    /// When <c>false</c> (the default), an access token about to expire is renewed before it does:
+    /// with its refresh token when there is one, otherwise by signing in again with the credentials
+    /// of a system user (root, namespace or database).
+    /// When <c>true</c>, the session is invalidated once its access token has expired instead.
+    /// </summary>
+    public bool InvalidateOnExpiry { get; set; }
+
+    /// <summary>
+    /// How long before an access token expires to renew it. Defaults to 60 seconds.
+    /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException">The margin is negative.</exception>
+    public TimeSpan ExpiryMargin
+    {
+        get => _expiryMargin;
+        set
+        {
+            if (value < TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(ExpiryMargin),
+                    "The expiry margin cannot be negative."
+                );
+            }
+
+            _expiryMargin = value;
+        }
+    }
+
+    private TimeSpan _expiryMargin = TimeSpan.FromSeconds(60);
+
+    /// <summary>
+    /// How a WebSocket client reconnects after the connection is lost.
+    /// </summary>
+    public ReconnectOptions Reconnect { get; set; } = new();
+
     public SurrealDbOptions() { }
 
     public SurrealDbOptions(string endpoint)
@@ -90,6 +126,9 @@ public sealed class SurrealDbOptions
         AuthLevel = clone.AuthLevel;
         Logging = clone.Logging;
         RequestTimeout = clone.RequestTimeout;
+        InvalidateOnExpiry = clone.InvalidateOnExpiry;
+        ExpiryMargin = clone.ExpiryMargin;
+        Reconnect = new ReconnectOptions(clone.Reconnect);
     }
 
     public static SurrealDbOptionsBuilder Create()

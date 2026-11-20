@@ -50,6 +50,18 @@ internal sealed class TokensConverter : CborConverterBase<Tokens>
 
     public override void Write(ref CborWriter writer, Tokens value)
     {
-        throw new NotSupportedException();
+        // 💡 Same shape as the server: the access token alone, or the access and refresh tokens
+        if (value.Refresh is null)
+        {
+            writer.WriteString(value.Access);
+            return;
+        }
+
+        writer.WriteBeginMap(2);
+        writer.WriteString("access");
+        writer.WriteString(value.Access);
+        writer.WriteString("refresh");
+        writer.WriteString(value.Refresh);
+        writer.WriteEndMap(2);
     }
 }

@@ -62,7 +62,7 @@ pub unsafe extern "C" fn execute(
     success: SuccessAction,
     failure: FailureAction,
 ) {
-    let method: surrealdb::rpc::Method = method.into();
+    let method: surrealdb_rpc::Method = method.into();
 
     let session_id = if session_len == 16 {
         let session_bytes = unsafe { convert_csharp_to_rust_bytes(session_bytes, session_len) };

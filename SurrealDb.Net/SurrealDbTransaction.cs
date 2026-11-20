@@ -82,8 +82,12 @@ public sealed class SurrealDbTransaction : SurrealDbSession
         return Engine.Cancel(SessionId, TransactionId!.Value, cancellationToken);
     }
 
-    public new async ValueTask DisposeAsync()
+    /// <summary>
+    /// Cancels the transaction if it was neither committed nor canceled.
+    /// The session the transaction belongs to stays open.
+    /// </summary>
+    public override async ValueTask DisposeAsync()
     {
-        await CancelInternal(true, CancellationToken.None);
+        await CancelInternal(true, CancellationToken.None).ConfigureAwait(false);
     }
 }

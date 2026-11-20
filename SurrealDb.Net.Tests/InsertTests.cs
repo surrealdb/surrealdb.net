@@ -21,6 +21,9 @@ public class InsertTests
 
             await client.ApplySchemaAsync(SurrealSchemaFile.Post);
 
+            // 💡 Inserting no record does not always create the table, and selecting a missing table is an error
+            await client.RawQuery("DEFINE TABLE empty;");
+
             result = await client.Insert("empty", Enumerable.Empty<Empty>());
 
             list = await client.Select<Empty>("empty");

@@ -1,8 +1,9 @@
-using Dahomey.Cbor;
+﻿using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
 using SurrealDb.Net.Internals.Formatters;
 using SurrealDb.Net.Internals.Parsers;
+using SurrealDb.Net.Models;
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
 
@@ -10,6 +11,12 @@ internal class TimeSpanConverter : CborConverterBase<TimeSpan>
 {
     public override TimeSpan Read(ref CborReader reader)
     {
+        if (reader.GetCurrentDataItemType() == CborDataItemType.String)
+        {
+            // 💡 A duration sent as a string (CBOR tag 13)
+            return new Duration(reader.ReadString()!).ToTimeSpan();
+        }
+
         reader.ReadBeginArray();
 
         int size = reader.ReadSize();

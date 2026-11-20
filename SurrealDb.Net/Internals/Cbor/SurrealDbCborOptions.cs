@@ -1,4 +1,4 @@
-using Dahomey.Cbor;
+﻿using Dahomey.Cbor;
 using SurrealDb.Net.Internals.Cbor.Converters;
 using SurrealDb.Net.Internals.Cbor.Converters.Numerics;
 using SurrealDb.Net.Internals.Cbor.Converters.Spatial;
@@ -13,9 +13,17 @@ namespace SurrealDb.Net.Internals.Cbor;
 
 public static class SurrealDbCborOptions
 {
-    internal static readonly Lazy<CborOptions> Default = new(CreateCborSerializerOptions);
+    internal static readonly Lazy<CborOptions> Default = new(
+        () => CreateCborSerializerOptions(false)
+    );
+    internal static readonly Lazy<CborOptions> Cbor2Default = new(
+        () => CreateCborSerializerOptions(true)
+    );
 
-    private static CborOptions CreateCborSerializerOptions()
+    /// <param name="cbor2">
+    /// Whether the connection negotiated <c>cbor.2</c>, which carries SurrealDB 4.0's sized numbers.
+    /// </param>
+    private static CborOptions CreateCborSerializerOptions(bool cbor2)
     {
         var options = new CborOptions
         {
@@ -25,9 +33,12 @@ public static class SurrealDbCborOptions
         options.Registry.ObjectMappingConventionRegistry.RegisterProvider(
             new RecordIdObjectMappingConventionProvider()
         );
+        options.Registry.ObjectMappingConventionRegistry.RegisterProvider(
+            new SizedNumberObjectMappingConventionProvider()
+        );
 
         options.Registry.ConverterRegistry.RegisterConverterProvider(
-            new PrimitiveConverterProvider()
+            new PrimitiveConverterProvider(cbor2)
         );
         options.Registry.ConverterRegistry.RegisterConverterProvider(
             new HashSetConverterProvider()
@@ -60,15 +71,23 @@ public static class SurrealDbCborOptions
 
     public static CborOptions GetCborSerializerOptions(Action<CborOptions>? configureCborOptions)
     {
+        return GetCborSerializerOptions(configureCborOptions, false);
+    }
+
+    internal static CborOptions GetCborSerializerOptions(
+        Action<CborOptions>? configureCborOptions,
+        bool cbor2
+    )
+    {
         if (configureCborOptions is not null)
         {
-            var cborOptions = CreateCborSerializerOptions();
+            var cborOptions = CreateCborSerializerOptions(cbor2);
             configureCborOptions(cborOptions);
 
             return cborOptions;
         }
 
-        return Default.Value;
+        return cbor2 ? Cbor2Default.Value : Default.Value;
     }
 
     private static void RegisterWsEngineConverters(CborOptions options)
@@ -80,6 +99,10 @@ public static class SurrealDbCborOptions
         options.Registry.ConverterRegistry.RegisterConverter(
             typeof(ISurrealDbResult),
             new SurrealDbResultConverter(options)
+        );
+        options.Registry.ConverterRegistry.RegisterConverter(
+            typeof(SurrealDbQueryStreamFrame),
+            new SurrealDbQueryStreamFrameConverter(options)
         );
 
         options.Registry.ConverterRegistry.RegisterConverter(

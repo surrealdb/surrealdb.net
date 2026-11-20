@@ -10,6 +10,12 @@ internal sealed class DateTimeConverter : CborConverterBase<DateTime>
 {
     public override DateTime Read(ref CborReader reader)
     {
+        if (reader.GetCurrentDataItemType() == CborDataItemType.String)
+        {
+            // 💡 A datetime sent as an ISO 8601 string (CBOR tag 0)
+            return DateTimeParser.Parse(reader.ReadString()!);
+        }
+
         reader.ReadBeginArray();
 
         int size = reader.ReadSize();

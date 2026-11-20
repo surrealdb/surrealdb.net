@@ -133,7 +133,8 @@ public sealed class SurrealDbClientGenerator(ServiceLifetime lifetime = ServiceL
 
     private static async ValueTask CleanDatabaseAsync(DatabaseInfo databaseInfo)
     {
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+        // 💡 Generous, so that cleaning up does not fail tests on a busy machine
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
         await using var client = new SurrealDbClient("ws://127.0.0.1:8000/rpc");
         await client.SignIn(new RootAuth { Username = "root", Password = "root" }, cts.Token);

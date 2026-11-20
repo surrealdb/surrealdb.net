@@ -1,4 +1,4 @@
-using Dahomey.Cbor;
+﻿using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 using Dahomey.Cbor.Serialization.Converters;
 using SurrealDb.Net.Internals.Formatters;
@@ -10,6 +10,12 @@ internal sealed class DateTimeOffsetConverter : CborConverterBase<DateTimeOffset
 {
     public override DateTimeOffset Read(ref CborReader reader)
     {
+        if (reader.GetCurrentDataItemType() == CborDataItemType.String)
+        {
+            // 💡 A datetime sent as an ISO 8601 string (CBOR tag 0)
+            return new DateTimeOffset(DateTimeParser.Parse(reader.ReadString()!));
+        }
+
         reader.ReadBeginArray();
 
         int size = reader.ReadSize();

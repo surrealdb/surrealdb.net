@@ -27,6 +27,9 @@ public sealed class SurrealDbOkResult : ISurrealDbResult
 
     public bool IsOk => true;
 
+    internal ReadOnlyMemory<byte> RawResult => _binaryResult ?? ReadOnlyMemory<byte>.Empty;
+    internal CborOptions? CborOptions => _cborOptions;
+
     internal SurrealDbOkResult(
         TimeSpan time,
         string status,
