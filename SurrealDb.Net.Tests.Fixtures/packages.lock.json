@@ -242,7 +242,7 @@
         "type": "Project",
         "dependencies": {
           "ConcurrentHashSet": "[1.3.0, )",
-          "Dahomey.Cbor": "[1.26.3, )",
+          "Dahomey.Cbor": "[1.28.0, )",
           "Microsoft.AspNetCore.JsonPatch.SystemTextJson": "[10.0.7, )",
           "Microsoft.Extensions.Http": "[10.0.7, )",
           "Microsoft.IO.RecyclableMemoryStream": "[3.0.1, )",
@@ -259,9 +259,9 @@
       },
       "Dahomey.Cbor": {
         "type": "CentralTransitive",
-        "requested": "[1.26.3, )",
-        "resolved": "1.26.3",
-        "contentHash": "E7QwyTY9Z6uAkshpyzJ+d63ZE4r4Hx8s+qdbN1Weo5nuFa5PPJzH3q3TvF9hpIZSQ9Aj7gTyxRD4yxbVAlAIuQ=="
+        "requested": "[1.28.0, )",
+        "resolved": "1.28.0",
+        "contentHash": "ytpKLQWan43MqYHV3sGmtEYoWTl1VU+52r/5SrcJfE8VQoYuQvhxjyfgv7B2fPjVvaDo67PK1lwxY1lhxzLzaQ=="
       },
       "Microsoft.AspNetCore.JsonPatch.SystemTextJson": {
         "type": "CentralTransitive",
@@ -570,7 +570,7 @@
         "type": "Project",
         "dependencies": {
           "ConcurrentHashSet": "[1.3.0, )",
-          "Dahomey.Cbor": "[1.26.3, )",
+          "Dahomey.Cbor": "[1.28.0, )",
           "Microsoft.Extensions.Http": "[10.0.7, )",
           "Microsoft.IO.RecyclableMemoryStream": "[3.0.1, )",
           "Microsoft.Spatial": "[7.22.0, )",
@@ -589,9 +589,9 @@
       },
       "Dahomey.Cbor": {
         "type": "CentralTransitive",
-        "requested": "[1.26.3, )",
-        "resolved": "1.26.3",
-        "contentHash": "E7QwyTY9Z6uAkshpyzJ+d63ZE4r4Hx8s+qdbN1Weo5nuFa5PPJzH3q3TvF9hpIZSQ9Aj7gTyxRD4yxbVAlAIuQ==",
+        "requested": "[1.28.0, )",
+        "resolved": "1.28.0",
+        "contentHash": "ytpKLQWan43MqYHV3sGmtEYoWTl1VU+52r/5SrcJfE8VQoYuQvhxjyfgv7B2fPjVvaDo67PK1lwxY1lhxzLzaQ==",
         "dependencies": {
           "System.IO.Pipelines": "10.0.1"
         }
@@ -914,7 +914,7 @@
         "type": "Project",
         "dependencies": {
           "ConcurrentHashSet": "[1.3.0, )",
-          "Dahomey.Cbor": "[1.26.3, )",
+          "Dahomey.Cbor": "[1.28.0, )",
           "Microsoft.Extensions.Http": "[10.0.7, )",
           "Microsoft.IO.RecyclableMemoryStream": "[3.0.1, )",
           "Microsoft.Spatial": "[7.22.0, )",
@@ -933,9 +933,9 @@
       },
       "Dahomey.Cbor": {
         "type": "CentralTransitive",
-        "requested": "[1.26.3, )",
-        "resolved": "1.26.3",
-        "contentHash": "E7QwyTY9Z6uAkshpyzJ+d63ZE4r4Hx8s+qdbN1Weo5nuFa5PPJzH3q3TvF9hpIZSQ9Aj7gTyxRD4yxbVAlAIuQ==",
+        "requested": "[1.28.0, )",
+        "resolved": "1.28.0",
+        "contentHash": "ytpKLQWan43MqYHV3sGmtEYoWTl1VU+52r/5SrcJfE8VQoYuQvhxjyfgv7B2fPjVvaDo67PK1lwxY1lhxzLzaQ==",
         "dependencies": {
           "System.IO.Pipelines": "10.0.1"
         }
