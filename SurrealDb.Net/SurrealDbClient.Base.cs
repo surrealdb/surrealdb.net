@@ -62,7 +62,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
         string? ns;
         string? db;
         IAuth? auth;
-        Action<CborOptions>? configureCborOptions;
+        CborOptions cborOptions;
 
         switch (Engine)
         {
@@ -77,7 +77,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
                     ns = session.Ns;
                     db = session.Db;
                     auth = session.Auth;
-                    configureCborOptions = httpEngine._configureCborOptions;
+                    cborOptions = httpEngine.CborOptions;
                 }
                 break;
             case SurrealDbWsEngine wsEngine:
@@ -91,7 +91,7 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
                     ns = session.Ns;
                     db = session.Db;
                     auth = session.Auth;
-                    configureCborOptions = wsEngine._configureCborOptions;
+                    cborOptions = wsEngine.GetCborOptions();
                 }
                 break;
             default:
@@ -112,6 +112,6 @@ public abstract partial class BaseSurrealDbClient : ISurrealDbClient
         SurrealDbHttpEngine.SetNsDbHttpClientHeaders(httpClient, version, ns, db);
         SurrealDbHttpEngine.SetAuthHttpClientHeaders(httpClient, auth);
 
-        return new CommonHttpWrapper(httpClient, version, configureCborOptions);
+        return new CommonHttpWrapper(httpClient, version, cborOptions);
     }
 }

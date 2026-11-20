@@ -1,4 +1,5 @@
 ﻿using Dahomey.Cbor;
+using SurrealDb.Net.Internals.Cbor;
 
 namespace SurrealDb.Net.Models.Response;
 
@@ -61,7 +62,7 @@ public sealed class SurrealDbOkResult : ISurrealDbResult
     /// <exception cref="NotSupportedException">There is no compatible deserializer for T.</exception>
     public IEnumerable<T> GetValues<T>()
     {
-        var items = CborSerializer.Deserialize<IEnumerable<T>>(
+        var items = StaticConverterRegistrations.DeserializeEnumerable<T>(
             _binaryResult!.Value.Span,
             _cborOptions!
         );

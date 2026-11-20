@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using SurrealDb.Net.Models;
-#if NET7_0_OR_GREATER
-using System.Diagnostics.CodeAnalysis;
+#if NET8_0_OR_GREATER
+using System.Text.Json.Serialization.Metadata;
 #endif
 
 namespace SurrealDb.Net.Json;
@@ -18,24 +18,19 @@ public class ReadOnlyRecordIdJsonConverter<T> : JsonConverter<RecordIdOf<T>>
         throw new NotImplementedException();
     }
 
-#if NET7_0_OR_GREATER
-    [RequiresDynamicCode(
-        "Requires reflection for JSON serialization of potential objects/arrays record id"
-    )]
-    [RequiresUnreferencedCode(
-        "Requires reflection for JSON serialization of potential objects/arrays record id"
-    )]
-#endif
-#pragma warning disable IL2046 // 'RequiresUnreferencedCodeAttribute' annotations must match across all interface implementations or overrides.
-#pragma warning disable IL3051 // 'RequiresDynamicCodeAttribute' annotations must match across all interface implementations or overrides.
     public override void Write(
         Utf8JsonWriter writer,
         RecordIdOf<T> value,
         JsonSerializerOptions options
     )
-#pragma warning restore IL3051 // 'RequiresDynamicCodeAttribute' annotations must match across all interface implementations or overrides.
-#pragma warning restore IL2046 // 'RequiresUnreferencedCodeAttribute' annotations must match across all interface implementations or overrides.
     {
+#if NET8_0_OR_GREATER
+        // Resolves the id type through the options (source-generated or reflection-based),
+        // so that the write does not require reflection under Native AOT.
+        var typeInfo = (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T));
+        JsonSerializer.Serialize(writer, value.DeserializeId<T>(), typeInfo);
+#else
         JsonSerializer.Serialize(writer, value.DeserializeId<T>(), options);
+#endif
     }
 }

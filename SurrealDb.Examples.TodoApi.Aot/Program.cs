@@ -1,8 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using SurrealDb.Examples.TodoApi.Aot.Models;
 using SurrealDb.Net;
-
-// TODO : Handle AOT via CborSerializerContext
+using SurrealDb.Net.Models;
 
 HandleTimeoutFromArgs(args);
 
@@ -16,8 +15,12 @@ services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default);
 });
 
-JsonSerializerContext[] jsonSerializerContexts = { AppJsonSerializerContext.Default };
-services.AddSurreal(configuration.GetConnectionString("SurrealDB")!);
+// Native AOT: register the CBOR converters of the app models without reflection.
+services.AddSurreal(
+    configuration.GetConnectionString("SurrealDB")!,
+    ServiceLifetime.Singleton,
+    configureCborOptions: AppCborMappings.Configure
+);
 
 var app = builder.Build();
 
@@ -33,7 +36,7 @@ todosApi.MapGet(
     async (int id, ISurrealDbClient surrealDbClient, CancellationToken cancellationToken) =>
     {
         var todo = await surrealDbClient.Select<Todo>(
-            (Todo.Table, id.ToString()),
+            RecordId.From(Todo.Table, id),
             cancellationToken
         );
         return todo is not null ? Results.Ok(todo) : Results.NotFound();
@@ -55,12 +58,7 @@ async Task InitializeDbAsync()
         new(5, "Clean the car", DateOnly.FromDateTime(DateTime.Now.AddDays(2))),
     };
 
-    var surrealDbClient = new SurrealDbClient(
-        SurrealDbOptions
-            .Create()
-            .FromConnectionString(configuration.GetConnectionString("SurrealDB")!)
-            .Build()
-    );
+    var surrealDbClient = app.Services.GetRequiredService<ISurrealDbClient>();
 
     var tasks = sampleTodos.Select(async todo =>
     {
@@ -89,4 +87,5 @@ void HandleTimeoutFromArgs(string[] args)
 }
 
 [JsonSerializable(typeof(IEnumerable<Todo>))]
+[JsonSerializable(typeof(Todo))]
 internal partial class AppJsonSerializerContext : JsonSerializerContext;

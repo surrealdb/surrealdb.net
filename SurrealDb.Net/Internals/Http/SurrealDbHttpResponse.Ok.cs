@@ -1,4 +1,5 @@
 ﻿using Dahomey.Cbor;
+using SurrealDb.Net.Internals.Cbor;
 using SurrealDb.Net.Internals.Extensions;
 
 namespace SurrealDb.Net.Internals.Http;
@@ -21,7 +22,7 @@ internal class SurrealDbHttpOkResponse : ISurrealDbHttpResponse
 
     internal IEnumerable<T> DeserializeEnumerable<T>()
     {
-        var items = CborSerializer.Deserialize<IEnumerable<T>>(
+        var items = StaticConverterRegistrations.DeserializeEnumerable<T>(
             _binaryResult!.Value.Span,
             _cborOptions!
         );
