@@ -1,10 +1,14 @@
 ﻿using System.Globalization;
+using Dahomey.Cbor;
 using Dahomey.Cbor.Serialization;
 
 namespace SurrealDb.Net.Internals.Cbor.Converters;
 
 internal class DecimalConverter : Dahomey.Cbor.Serialization.Converters.DecimalConverter
 {
+    public DecimalConverter(CborOptions options)
+        : base(options) { }
+
     public override void Write(ref CborWriter writer, decimal value)
     {
         writer.WriteSemanticTag(CborTagConstants.TAG_STRING_DECIMAL);
