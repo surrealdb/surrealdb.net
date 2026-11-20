@@ -66,6 +66,9 @@ public class CborVectorTests
     private const string LEGACY_STRING_TAG =
         "Servers before 4.0 send datetimes, UUIDs and durations as strings (tags 0, 9 and 13), so the SDK decodes them on purpose. The SDK never sends them.";
 
+    private const string INDEFINITE_TEXT_CHUNKS =
+        "Dahomey.Cbor joins the chunks of an indefinite text before it decodes them, so a code point split over two chunks is accepted.";
+
     /// <summary>
     /// Vectors the SDK does not pass yet, and why. Remove an entry once the SDK passes it.
     /// </summary>
@@ -121,6 +124,7 @@ public class CborVectorTests
         ["cbor.yaml:reject-datetime-string-tag-0"] = LEGACY_STRING_TAG,
         ["cbor.yaml:reject-uuid-string-tag-9"] = LEGACY_STRING_TAG,
         ["cbor.yaml:reject-duration-string-tag-13"] = LEGACY_STRING_TAG,
+        ["cbor.yaml:reject-indefinite-text-split-code-point"] = INDEFINITE_TEXT_CHUNKS,
     };
 
     /// <summary>

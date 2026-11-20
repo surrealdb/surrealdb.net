@@ -88,7 +88,8 @@ public class SizedNumberConverterTests : BaseCborConverterTests
         Func<Task> func = async () =>
             await DeserializeCborBinaryAsHexaAsync<SizedNumber>(binary, cbor2: true);
 
-        await func.Should().ThrowAsync<CborException>().WithMessage(message);
+        // 💡 Dahomey.Cbor adds the path of the failure after the message
+        await func.Should().ThrowAsync<CborException>().WithMessage($"{message}*");
     }
 
     [Test]
